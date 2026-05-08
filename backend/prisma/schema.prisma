@@ -1,0 +1,623 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum SchoolType {
+  kindergarten
+  primary
+  secondary
+}
+
+enum UserRole {
+  super_admin
+  admin
+  teacher
+  parent
+  student
+}
+
+enum Language {
+  ar
+  fr
+}
+
+enum Gender {
+  male
+  female
+}
+
+enum LearnerType {
+  child
+  student
+}
+
+enum ContractType {
+  full_time
+  part_time
+  contract
+}
+
+enum AttendanceStatus {
+  present
+  absent
+  late
+}
+
+enum Mood {
+  happy
+  sad
+  tired
+  excited
+  calm
+}
+
+enum MessageType {
+  text
+  photo
+  document
+}
+
+enum ConsentStatus {
+  pending
+  approved
+  declined
+}
+
+enum InvoiceStatus {
+  draft
+  sent
+  paid
+  partial
+  overdue
+  cancelled
+}
+
+enum PaymentMethod {
+  online
+  cash
+}
+
+enum FeeFrequency {
+  monthly
+  quarterly
+  annual
+  one_time
+}
+
+enum DiscountType {
+  scholarship
+  sibling
+  staff
+  custom
+}
+
+enum MedicalNoteType {
+  allergy
+  condition
+  medication
+}
+
+enum Severity {
+  low
+  medium
+  high
+}
+
+enum NotificationType {
+  absence_alert
+  payment_received
+  payment_overdue
+  invoice_sent
+  daily_report
+  message_new
+  announcement
+  event_consent
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model School {
+  id           String     @id @default(uuid())
+  name         String
+  schoolType   SchoolType @map("school_type")
+  address      String
+  wilaya       String
+  logoPublicId String?    @map("logo_public_id")
+  contactEmail String     @map("contact_email")
+  contactPhone String     @map("contact_phone")
+  isActive     Boolean    @default(true) @map("is_active")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  users         User[]
+  academicYears AcademicYear[]
+  classrooms    Classroom[]
+  children      Child[]
+  feeStructures FeeStructure[]
+  invoices      Invoice[]
+  expenses      Expense[]
+
+  @@map("schools")
+}
+
+model User {
+  id                String   @id @default(uuid())
+  schoolId          String   @map("school_id")
+  firstName         String   @map("first_name")
+  lastName          String   @map("last_name")
+  email             String   @unique
+  passwordHash      String   @map("password_hash")
+  role              UserRole
+  isActive          Boolean  @default(true) @map("is_active")
+  fcmToken          String?  @map("fcm_token")
+  preferredLanguage Language @default(fr) @map("preferred_language")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  school              School              @relation(fields: [schoolId], references: [id])
+  staffProfile        StaffProfile?
+  parentLinks         ParentChildLink[]
+  notifications       Notification[]
+  sentMessages        Message[]
+  teacherConversations Conversation[]     @relation("TeacherConversations")
+  parentConversations  Conversation[]     @relation("ParentConversations")
+  classrooms          Classroom[]
+  attendanceMarks     AttendanceRecord[]
+  invoicesAsParent    Invoice[]
+  cashPaymentsReceived CashPayment[]
+  auditLogs           PaymentAuditLog[]
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@map("users")
+}
+
+model StaffProfile {
+  id            String       @id @default(uuid())
+  userId        String       @unique @map("user_id")
+  schoolId      String       @map("school_id")
+  position      String
+  contractType  ContractType @map("contract_type")
+  contractStart DateTime     @map("contract_start") @db.Date
+  contractEnd   DateTime?    @map("contract_end") @db.Date
+  documentPublicId String?   @map("document_public_id")
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("staff_profiles")
+}
+
+model AcademicYear {
+  id        String   @id @default(uuid())
+  schoolId  String   @map("school_id")
+  name      String
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+  isActive  Boolean  @default(false) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  school     School      @relation(fields: [schoolId], references: [id])
+  classrooms Classroom[]
+  children   Child[]
+  feeStructures FeeStructure[]
+
+  @@map("academic_years")
+}
+
+model Classroom {
+  id             String   @id @default(uuid())
+  schoolId       String   @map("school_id")
+  academicYearId String   @map("academic_year_id")
+  teacherUserId  String?  @map("teacher_user_id")
+  name           String
+  capacity       Int
+  roomNumber     String?  @map("room_number")
+  level          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  school       School       @relation(fields: [schoolId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+  teacher      User?        @relation(fields: [teacherUserId], references: [id])
+  enrollments  ClassroomEnrollment[]
+  attendanceRecords AttendanceRecord[]
+
+  @@map("classrooms")
+}
+
+model ClassroomEnrollment {
+  id          String   @id @default(uuid())
+  childId     String   @map("child_id")
+  classroomId String   @map("classroom_id")
+  enrolledAt  DateTime @default(now()) @map("enrolled_at")
+
+  child     Child     @relation(fields: [childId], references: [id])
+  classroom Classroom @relation(fields: [classroomId], references: [id])
+
+  @@unique([childId, classroomId])
+  @@map("classroom_enrollments")
+}
+
+model Child {
+  id             String      @id @default(uuid())
+  schoolId       String      @map("school_id")
+  academicYearId String      @map("academic_year_id")
+  firstName      String      @map("first_name")
+  lastName       String      @map("last_name")
+  dateOfBirth    DateTime    @map("date_of_birth") @db.Date
+  gender         Gender
+  photoPublicId  String?     @map("photo_public_id")
+  enrollmentDate DateTime    @map("enrollment_date") @db.Date
+  learnerType    LearnerType @default(child) @map("learner_type")
+  isActive       Boolean     @default(true) @map("is_active")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  school            School              @relation(fields: [schoolId], references: [id])
+  academicYear      AcademicYear        @relation(fields: [academicYearId], references: [id])
+  enrollments       ClassroomEnrollment[]
+  parentLinks       ParentChildLink[]
+  emergencyContacts EmergencyContact[]
+  medicalNotes      MedicalNote[]
+  attendanceRecords AttendanceRecord[]
+  dailyReports      DailyReport[]
+  invoices          Invoice[]
+  discounts         Discount[]
+  consentForms      ConsentForm[]
+
+  @@index([schoolId, academicYearId, isActive])
+  @@map("children")
+}
+
+model ParentChildLink {
+  id           String   @id @default(uuid())
+  childId      String   @map("child_id")
+  parentUserId String   @map("parent_user_id")
+  relationship String
+  isPrimary    Boolean  @default(false) @map("is_primary")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  child  Child @relation(fields: [childId], references: [id])
+  parent User  @relation(fields: [parentUserId], references: [id])
+
+  @@unique([childId, parentUserId])
+  @@map("parent_child_links")
+}
+
+model EmergencyContact {
+  id                 String  @id @default(uuid())
+  childId            String  @map("child_id")
+  name               String
+  relationship       String
+  phone              String
+  isAuthorizedPickup Boolean @default(false) @map("is_authorized_pickup")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  child Child @relation(fields: [childId], references: [id])
+
+  @@map("emergency_contacts")
+}
+
+model MedicalNote {
+  id        String          @id @default(uuid())
+  childId   String          @map("child_id")
+  type      MedicalNoteType
+  title     String
+  details   String?
+  severity  Severity        @default(low)
+  createdAt DateTime        @default(now()) @map("created_at")
+
+  child Child @relation(fields: [childId], references: [id])
+
+  @@map("medical_notes")
+}
+
+model AttendanceRecord {
+  id             String           @id @default(uuid())
+  schoolId       String           @map("school_id")
+  childId        String           @map("child_id")
+  classroomId    String           @map("classroom_id")
+  date           DateTime         @db.Date
+  status         AttendanceStatus
+  markedByUserId String           @map("marked_by_user_id")
+  note           String?
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  child     Child     @relation(fields: [childId], references: [id])
+  classroom Classroom @relation(fields: [classroomId], references: [id])
+  markedBy  User      @relation(fields: [markedByUserId], references: [id])
+
+  @@unique([childId, date])
+  @@index([classroomId, date])
+  @@index([schoolId, date])
+  @@map("attendance_records")
+}
+
+model DailyReport {
+  id                String   @id @default(uuid())
+  schoolId          String   @map("school_id")
+  childId           String   @map("child_id")
+  date              DateTime @db.Date
+  mood              Mood
+  mealsEaten        Int      @map("meals_eaten")
+  napDurationMinutes Int?    @map("nap_duration_minutes")
+  activities        String?
+  generalNote       String?  @map("general_note")
+  createdByUserId   String   @map("created_by_user_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  child  Child              @relation(fields: [childId], references: [id])
+  photos DailyReportPhoto[]
+
+  @@unique([childId, date])
+  @@map("daily_reports")
+}
+
+model DailyReportPhoto {
+  id              String @id @default(uuid())
+  dailyReportId   String @map("daily_report_id")
+  cloudinaryPublicId String @map("cloudinary_public_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  dailyReport DailyReport @relation(fields: [dailyReportId], references: [id])
+
+  @@map("daily_report_photos")
+}
+
+model Conversation {
+  id            String   @id @default(uuid())
+  schoolId      String   @map("school_id")
+  childId       String   @map("child_id")
+  teacherUserId String   @map("teacher_user_id")
+  parentUserId  String   @map("parent_user_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  lastMessageAt DateTime @map("last_message_at")
+
+  teacher  User      @relation("TeacherConversations", fields: [teacherUserId], references: [id])
+  parent   User      @relation("ParentConversations", fields: [parentUserId], references: [id])
+  messages Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id                 String      @id @default(uuid())
+  conversationId     String      @map("conversation_id")
+  senderUserId       String      @map("sender_user_id")
+  content            String?
+  messageType        MessageType @map("message_type")
+  cloudinaryPublicId String?     @map("cloudinary_public_id")
+  isRead             Boolean     @default(false) @map("is_read")
+  createdAt          DateTime    @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       User         @relation(fields: [senderUserId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model Announcement {
+  id          String    @id @default(uuid())
+  schoolId    String    @map("school_id")
+  classroomId String?   @map("classroom_id")
+  title       String
+  content     String
+  createdByUserId String @map("created_by_user_id")
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("announcements")
+}
+
+model Event {
+  id              String    @id @default(uuid())
+  schoolId        String    @map("school_id")
+  title           String
+  description     String?
+  startDatetime   DateTime  @map("start_datetime")
+  endDatetime     DateTime? @map("end_datetime")
+  location        String?
+  requiresConsent Boolean   @default(false) @map("requires_consent")
+  createdByUserId String    @map("created_by_user_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  consentForms ConsentForm[]
+
+  @@map("events")
+}
+
+model ConsentForm {
+  id          String        @id @default(uuid())
+  eventId     String        @map("event_id")
+  childId     String        @map("child_id")
+  status      ConsentStatus @default(pending)
+  respondedAt DateTime?     @map("responded_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  event Event @relation(fields: [eventId], references: [id])
+  child Child @relation(fields: [childId], references: [id])
+
+  @@unique([eventId, childId])
+  @@map("consent_forms")
+}
+
+model FeeStructure {
+  id             String       @id @default(uuid())
+  schoolId       String       @map("school_id")
+  academicYearId String       @map("academic_year_id")
+  name           String
+  amount         Decimal      @db.Decimal(10, 2)
+  currency       String       @default("DZD")
+  frequency      FeeFrequency
+  level          String?
+  description    String?
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  school       School       @relation(fields: [schoolId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+  invoices     Invoice[]
+
+  @@map("fee_structures")
+}
+
+model Invoice {
+  id                 String        @id @default(uuid())
+  schoolId           String        @map("school_id")
+  childId            String        @map("child_id")
+  parentUserId       String        @map("parent_user_id")
+  feeStructureId     String        @map("fee_structure_id")
+  amount             Decimal       @db.Decimal(10, 2)
+  discountAmount     Decimal       @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  finalAmount        Decimal       @map("final_amount") @db.Decimal(10, 2)
+  remainingAmount    Decimal?      @map("remaining_amount") @db.Decimal(10, 2)
+  currency           String        @default("DZD")
+  dueDate            DateTime      @map("due_date") @db.Date
+  status             InvoiceStatus @default(draft)
+  paymentMethod      PaymentMethod? @map("payment_method")
+  chargilyCheckoutId String?       @map("chargily_checkout_id")
+  chargilyPaymentUrl String?       @map("chargily_payment_url")
+  issuedAt           DateTime?     @map("issued_at")
+  paidAt             DateTime?     @map("paid_at")
+  createdAt          DateTime      @default(now()) @map("created_at")
+
+  school       School       @relation(fields: [schoolId], references: [id])
+  child        Child        @relation(fields: [childId], references: [id])
+  parent       User         @relation(fields: [parentUserId], references: [id])
+  feeStructure FeeStructure @relation(fields: [feeStructureId], references: [id])
+  auditLogs    PaymentAuditLog[]
+  cashPayments CashPayment[]
+
+  @@index([schoolId, status])
+  @@index([parentUserId])
+  @@index([dueDate, status])
+  @@map("invoices")
+}
+
+model CashPayment {
+  id         String   @id @default(uuid())
+  invoiceId  String   @map("invoice_id")
+  schoolId   String   @map("school_id")
+  amount     Decimal  @db.Decimal(10, 2)
+  receivedBy String   @map("received_by")
+  receivedAt DateTime @map("received_at")
+  note       String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  invoice  Invoice @relation(fields: [invoiceId], references: [id])
+  receiver User    @relation(fields: [receivedBy], references: [id])
+
+  @@map("cash_payments")
+}
+
+model PaymentAuditLog {
+  id             String   @id @default(uuid())
+  invoiceId      String   @map("invoice_id")
+  action         String
+  performedBy    String   @map("performed_by")
+  previousStatus String?  @map("previous_status")
+  newStatus      String   @map("new_status")
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  user    User    @relation(fields: [performedBy], references: [id])
+
+  @@map("payment_audit_logs")
+}
+
+model Discount {
+  id          String       @id @default(uuid())
+  childId     String       @map("child_id")
+  schoolId    String       @map("school_id")
+  type        DiscountType
+  percentage  Decimal      @db.Decimal(5, 2)
+  description String?
+  validFrom   DateTime     @map("valid_from") @db.Date
+  validTo     DateTime?    @map("valid_to") @db.Date
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  child Child @relation(fields: [childId], references: [id])
+
+  @@map("discounts")
+}
+
+model Expense {
+  id              String   @id @default(uuid())
+  schoolId        String   @map("school_id")
+  category        String
+  description     String
+  amount          Decimal  @db.Decimal(10, 2)
+  currency        String   @default("DZD")
+  date            DateTime @db.Date
+  receiptPublicId String?  @map("receipt_public_id")
+  createdByUserId String   @map("created_by_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  school School @relation(fields: [schoolId], references: [id])
+
+  @@map("expenses")
+}
+
+model Notification {
+  id            String           @id @default(uuid())
+  userId        String           @map("user_id")
+  type          NotificationType
+  title         String
+  body          String
+  referenceId   String?          @map("reference_id")
+  referenceType String?          @map("reference_type")
+  isRead        Boolean          @default(false) @map("is_read")
+  createdAt     DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead, createdAt])
+  @@map("notifications")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model InvitationToken {
+  id        String    @id @default(uuid())
+  email     String
+  schoolId  String    @map("school_id")
+  role      UserRole
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("invitation_tokens")
+}

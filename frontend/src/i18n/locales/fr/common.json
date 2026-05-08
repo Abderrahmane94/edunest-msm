@@ -1,0 +1,645 @@
+{
+  "app": {
+    "name": "EduNest",
+    "tagline": "Système de gestion de maternelle"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "enrollment": "Inscriptions",
+    "attendanceRate": "Taux de présence",
+    "outstandingInvoices": "Factures impayées",
+    "unreadMessages": "Messages non lus"
+  },
+  "auth": {
+    "login": "Se connecter",
+    "logout": "Se déconnecter",
+    "register": "Créer un compte",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "resetPassword": "Réinitialiser le mot de passe"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "schools": "Écoles",
+    "children": "Enfants",
+    "classrooms": "Classes",
+    "academicYears": "Années",
+    "attendance": "Présence",
+    "communication": "Communication",
+    "finance": "Finances",
+    "settings": "Paramètres",
+    "users": "Utilisateurs",
+    "staff": "Personnel",
+    "reports": "Rapports",
+    "messages": "Messages",
+    "invoices": "Factures",
+    "notifications": "Notifications"
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "search": "Rechercher",
+    "loading": "Chargement...",
+    "noData": "Aucune donnée"
+  },
+  "schoolSettings": {
+    "title": "Paramètres de l'école",
+    "logo": "Logo de l'école",
+    "uploadLogo": "Télécharger le logo",
+    "logoHint": "PNG, JPG ou WebP. Max 2 Mo.",
+    "logoAlt": "Logo de l'école",
+    "details": "Informations de l'école",
+    "name": "Nom de l'école",
+    "namePlaceholder": "Entrez le nom de l'école",
+    "type": "Type d'établissement",
+    "address": "Adresse",
+    "addressPlaceholder": "Entrez l'adresse",
+    "wilaya": "Wilaya",
+    "wilayaPlaceholder": "Entrez la wilaya",
+    "contactEmail": "E-mail de contact",
+    "contactEmailPlaceholder": "contact@ecole.dz",
+    "contactPhone": "Téléphone de contact",
+    "contactPhonePlaceholder": "+213 XX XX XX XX",
+    "saved": "Modifications enregistrées",
+    "types": {
+      "kindergarten": "Maternelle",
+      "primary": "Primaire",
+      "secondary": "Secondaire"
+    }
+  },
+  "users": {
+    "title": "Utilisateurs",
+    "invite": "Inviter",
+    "searchPlaceholder": "Rechercher par nom ou e-mail...",
+    "noUsers": "Aucun utilisateur trouvé",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "columns": {
+      "name": "Nom",
+      "role": "Rôle",
+      "status": "Statut",
+      "language": "Langue",
+      "joined": "Inscrit le"
+    },
+    "roles": {
+      "super_admin": "Super Admin",
+      "admin": "Administrateur",
+      "teacher": "Enseignant",
+      "parent": "Parent"
+    },
+    "invite_form": {
+      "title": "Inviter un utilisateur",
+      "description": "Envoyez une invitation par e-mail pour rejoindre l'école.",
+      "firstName": "Prénom",
+      "firstNamePlaceholder": "Entrez le prénom",
+      "firstNameRequired": "Le prénom est requis",
+      "lastName": "Nom de famille",
+      "lastNamePlaceholder": "Entrez le nom de famille",
+      "lastNameRequired": "Le nom de famille est requis",
+      "email": "Adresse e-mail",
+      "emailPlaceholder": "utilisateur@exemple.com",
+      "emailRequired": "L'adresse e-mail est requise",
+      "emailInvalid": "Adresse e-mail invalide",
+      "role": "Rôle",
+      "send": "Envoyer l'invitation"
+    }
+  },
+  "academicYears": {
+    "title": "Années scolaires",
+    "create": "Nouvelle année",
+    "noYears": "Aucune année scolaire configurée",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activate": "Activer",
+    "form": {
+      "title": "Créer une année scolaire",
+      "description": "Définissez une nouvelle période scolaire.",
+      "name": "Nom",
+      "namePlaceholder": "Ex: 2024-2025",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "nameRequired": "Le nom est requis",
+      "startDateRequired": "La date de début est requise",
+      "endDateRequired": "La date de fin est requise",
+      "endDateAfterStart": "La date de fin doit être après la date de début"
+    }
+  },
+  "classrooms": {
+    "title": "Classes",
+    "create": "Nouvelle classe",
+    "noClassrooms": "Aucune classe trouvée",
+    "noActiveYear": "Veuillez d'abord activer une année scolaire.",
+    "noTeacher": "Non assigné",
+    "columns": {
+      "name": "Nom",
+      "level": "Niveau",
+      "capacity": "Capacité",
+      "teacher": "Enseignant",
+      "roomNumber": "Salle"
+    },
+    "form": {
+      "title": "Créer une classe",
+      "description": "Ajoutez une nouvelle classe pour l'année scolaire active.",
+      "name": "Nom de la classe",
+      "namePlaceholder": "Ex: Classe A",
+      "nameRequired": "Le nom est requis",
+      "capacity": "Capacité",
+      "capacityRequired": "La capacité doit être un nombre positif",
+      "roomNumber": "Numéro de salle",
+      "roomNumberPlaceholder": "Ex: 101",
+      "level": "Niveau (groupe d'âge)",
+      "levelPlaceholder": "Ex: 3-4 ans",
+      "levelRequired": "Le niveau est requis",
+      "teacher": "Enseignant",
+      "noTeacher": "Aucun enseignant"
+    },
+    "assignTeacher": {
+      "title": "Assigner un enseignant",
+      "description": "Assigner un enseignant à la classe {{name}}.",
+      "selectTeacher": "Sélectionner un enseignant"
+    }
+  },
+  "children": {
+    "title": "Enfants",
+    "register": "Inscrire",
+    "searchPlaceholder": "Rechercher par nom...",
+    "noChildren": "Aucun enfant trouvé",
+    "noParents": "Aucun parent lié",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "columns": {
+      "name": "Nom",
+      "gender": "Genre",
+      "classroom": "Classe",
+      "parents": "Parents",
+      "status": "Statut"
+    },
+    "form": {
+      "title": "Inscrire un enfant",
+      "description": "Enregistrez un nouvel enfant dans l'école.",
+      "firstName": "Prénom",
+      "firstNamePlaceholder": "Entrez le prénom",
+      "firstNameRequired": "Le prénom est requis",
+      "lastName": "Nom de famille",
+      "lastNamePlaceholder": "Entrez le nom de famille",
+      "lastNameRequired": "Le nom de famille est requis",
+      "dateOfBirth": "Date de naissance",
+      "dobRequired": "La date de naissance est requise",
+      "gender": "Genre",
+      "male": "Garçon",
+      "female": "Fille",
+      "classroom": "Classe",
+      "noClassroom": "Aucune classe"
+    },
+    "linkParent": {
+      "title": "Lier un parent",
+      "description": "Lier un parent à {{name}}.",
+      "parent": "Parent",
+      "selectParent": "Sélectionner un parent",
+      "relationship": "Relation",
+      "mother": "Mère",
+      "father": "Père",
+      "guardian": "Tuteur"
+    },
+    "emergencyContacts": {
+      "title": "Contacts d'urgence",
+      "description": "Gérer les contacts d'urgence pour {{name}}.",
+      "addNew": "Ajouter un contact",
+      "name": "Nom",
+      "namePlaceholder": "Nom complet",
+      "nameRequired": "Le nom est requis",
+      "relationship": "Relation",
+      "relationshipPlaceholder": "Ex: Oncle",
+      "relationshipRequired": "La relation est requise",
+      "phone": "Téléphone",
+      "phoneRequired": "Le téléphone est requis",
+      "authorizedPickup": "Autorisé à récupérer l'enfant",
+      "add": "Ajouter"
+    }
+  },
+  "staff": {
+    "title": "Personnel",
+    "profile": "Profil du personnel",
+    "searchPlaceholder": "Rechercher par nom...",
+    "noStaff": "Aucun membre du personnel trouvé",
+    "noPosition": "Poste non défini",
+    "contractDetails": "Détails du contrat",
+    "position": "Poste",
+    "positionPlaceholder": "Ex: Enseignant principal",
+    "contractType": "Type de contrat",
+    "contractStart": "Début du contrat",
+    "contractEnd": "Fin du contrat",
+    "documents": "Documents",
+    "uploadDocument": "Télécharger",
+    "downloadDocument": "Télécharger le document",
+    "noDocuments": "Aucun document téléchargé",
+    "uploadedOn": "Téléchargé le {{date}}",
+    "saved": "Profil mis à jour",
+    "columns": {
+      "name": "Nom",
+      "role": "Rôle",
+      "status": "Statut",
+      "joined": "Inscrit le"
+    },
+    "contractTypes": {
+      "full_time": "Temps plein",
+      "part_time": "Temps partiel",
+      "contract": "Contractuel"
+    }
+  },
+  "attendance": {
+    "title": "Présence",
+    "dailyView": "Vue quotidienne",
+    "monthlyView": "Rapport mensuel",
+    "classroom": "Classe",
+    "selectClassroom": "Sélectionner une classe",
+    "selectClassroomPrompt": "Sélectionnez une classe pour afficher les données de présence.",
+    "date": "Date",
+    "month": "Mois",
+    "year": "Année",
+    "noRecords": "Aucun enregistrement de présence pour cette date.",
+    "noReportData": "Aucune donnée de rapport pour cette période.",
+    "columns": {
+      "childName": "Nom de l'enfant",
+      "status": "Statut",
+      "note": "Note",
+      "present": "Présent",
+      "absent": "Absent",
+      "late": "En retard",
+      "rate": "Taux"
+    },
+    "statuses": {
+      "present": "Présent",
+      "absent": "Absent",
+      "late": "En retard"
+    },
+    "kpi": {
+      "total": "Total enfants",
+      "present": "Présents",
+      "absent": "Absents",
+      "rate": "Taux de présence",
+      "totalChildren": "Enfants",
+      "schoolDays": "Jours d'école",
+      "avgRate": "Taux moyen"
+    },
+    "months": {
+      "january": "Janvier",
+      "february": "Février",
+      "march": "Mars",
+      "april": "Avril",
+      "may": "Mai",
+      "june": "Juin",
+      "july": "Juillet",
+      "august": "Août",
+      "september": "Septembre",
+      "october": "Octobre",
+      "november": "Novembre",
+      "december": "Décembre"
+    }
+  },
+  "finance": {
+    "title": "Finances",
+    "tabs": {
+      "fees": "Frais",
+      "invoices": "Factures",
+      "expenses": "Dépenses",
+      "reports": "Rapports"
+    },
+    "fees": {
+      "create": "Nouveau frais",
+      "empty": "Aucune structure de frais définie",
+      "columns": {
+        "name": "Nom",
+        "amount": "Montant",
+        "frequency": "Fréquence",
+        "level": "Niveau",
+        "description": "Description"
+      },
+      "frequencies": {
+        "monthly": "Mensuel",
+        "quarterly": "Trimestriel",
+        "annual": "Annuel",
+        "one_time": "Unique"
+      },
+      "form": {
+        "title": "Créer une structure de frais",
+        "description": "Définissez un nouveau type de frais pour l'année scolaire.",
+        "name": "Nom du frais",
+        "namePlaceholder": "Ex: Frais de scolarité",
+        "amount": "Montant (DZD)",
+        "frequency": "Fréquence",
+        "level": "Niveau (optionnel)",
+        "levelPlaceholder": "Ex: 3-4 ans",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Description du frais...",
+        "submit": "Créer"
+      }
+    },
+    "invoices": {
+      "empty": "Aucune facture trouvée",
+      "bulkGenerate": "Génération groupée",
+      "send": "Envoyer",
+      "recordCash": "Espèces",
+      "columns": {
+        "child": "Enfant",
+        "fee": "Frais",
+        "amount": "Montant",
+        "dueDate": "Échéance",
+        "status": "Statut",
+        "paymentMethod": "Paiement"
+      },
+      "statuses": {
+        "draft": "Brouillon",
+        "sent": "Envoyée",
+        "paid": "Payée",
+        "partial": "Partielle",
+        "overdue": "En retard",
+        "cancelled": "Annulée"
+      },
+      "methods": {
+        "online": "En ligne",
+        "cash": "Espèces"
+      },
+      "bulkForm": {
+        "title": "Génération groupée de factures",
+        "description": "Générez des factures pour tous les enfants d'une classe.",
+        "classroom": "Classe",
+        "classroomPlaceholder": "Sélectionner une classe",
+        "feeStructure": "Structure de frais",
+        "feePlaceholder": "Sélectionner un frais",
+        "dueDate": "Date d'échéance",
+        "submit": "Générer les factures"
+      },
+      "cashForm": {
+        "title": "Enregistrer un paiement en espèces",
+        "description": "Enregistrer un paiement en espèces pour {{child}}.",
+        "totalAmount": "Montant total",
+        "outstanding": "Solde restant",
+        "amountReceived": "Montant reçu (DZD)",
+        "receivedAt": "Date de réception",
+        "note": "Note (optionnel)",
+        "notePlaceholder": "Ex: Paiement partiel du mois de janvier",
+        "submit": "Enregistrer le paiement"
+      }
+    },
+    "expenses": {
+      "create": "Nouvelle dépense",
+      "empty": "Aucune dépense enregistrée",
+      "hasReceipt": "Reçu",
+      "columns": {
+        "category": "Catégorie",
+        "description": "Description",
+        "amount": "Montant",
+        "date": "Date",
+        "receipt": "Reçu",
+        "createdBy": "Créé par"
+      },
+      "categories": {
+        "supplies": "Fournitures",
+        "utilities": "Services publics",
+        "maintenance": "Maintenance",
+        "salaries": "Salaires",
+        "food": "Alimentation",
+        "transport": "Transport",
+        "other": "Autre"
+      },
+      "form": {
+        "title": "Enregistrer une dépense",
+        "description": "Ajoutez une nouvelle dépense à la comptabilité.",
+        "category": "Catégorie",
+        "categoryPlaceholder": "Sélectionner une catégorie",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Décrivez la dépense...",
+        "amount": "Montant (DZD)",
+        "date": "Date",
+        "submit": "Enregistrer"
+      }
+    },
+    "reports": {
+      "totalInvoiced": "Total facturé",
+      "totalCollected": "Total encaissé",
+      "totalOutstanding": "Total impayé",
+      "totalExpenses": "Total dépenses",
+      "paymentBreakdown": "Répartition par mode de paiement",
+      "collectionSummary": "Résumé des encaissements",
+      "cash": "Espèces",
+      "online": "En ligne (Chargily)",
+      "transactions": "transactions",
+      "netIncome": "Revenu net"
+    }
+  },
+  "communication": {
+    "title": "Communication",
+    "announcements": {
+      "tab": "Annonces",
+      "create": "Nouvelle annonce",
+      "noAnnouncements": "Aucune annonce publiée",
+      "schoolWide": "Toute l'école",
+      "allSchool": "Toute l'école",
+      "columns": {
+        "title": "Titre",
+        "target": "Cible",
+        "createdBy": "Créé par",
+        "publishedAt": "Publié le"
+      },
+      "form": {
+        "title": "Créer une annonce",
+        "description": "Publiez une annonce pour l'école ou une classe spécifique.",
+        "announcementTitle": "Titre",
+        "titlePlaceholder": "Entrez le titre de l'annonce",
+        "body": "Contenu",
+        "bodyPlaceholder": "Rédigez le contenu de l'annonce...",
+        "target": "Destinataires",
+        "publish": "Publier"
+      }
+    },
+    "events": {
+      "tab": "Événements",
+      "create": "Nouvel événement",
+      "noEvents": "Aucun événement planifié",
+      "noConsent": "N/A",
+      "viewConsent": "Consentements",
+      "columns": {
+        "title": "Titre",
+        "date": "Date",
+        "location": "Lieu",
+        "consent": "Consentement"
+      },
+      "form": {
+        "title": "Créer un événement",
+        "description": "Planifiez un nouvel événement scolaire.",
+        "eventTitle": "Titre",
+        "titlePlaceholder": "Entrez le titre de l'événement",
+        "eventDescription": "Description",
+        "descriptionPlaceholder": "Décrivez l'événement...",
+        "startDatetime": "Début",
+        "endDatetime": "Fin",
+        "location": "Lieu",
+        "locationPlaceholder": "Ex: Cour de l'école",
+        "requiresConsent": "Nécessite le consentement des parents",
+        "createEvent": "Créer"
+      }
+    },
+    "consent": {
+      "title": "Suivi des consentements",
+      "total": "Total",
+      "approved": "Approuvés",
+      "pending": "En attente",
+      "declined": "Refusés",
+      "noEntries": "Aucune entrée de consentement",
+      "columns": {
+        "child": "Enfant",
+        "status": "Statut",
+        "respondedAt": "Répondu le"
+      },
+      "statuses": {
+        "approved": "Approuvé",
+        "pending": "En attente",
+        "declined": "Refusé"
+      }
+    }
+  },
+  "teacherAttendance": {
+    "title": "Appel de présence",
+    "noClassroom": "Aucune classe ne vous est assignée. Contactez votre administrateur.",
+    "noChildren": "Aucun enfant inscrit dans cette classe.",
+    "selectDate": "Sélectionner la date",
+    "marked": "marqués",
+    "markAllPresent": "Marquer tous présents",
+    "submit": "Enregistrer la présence",
+    "submitting": "Enregistrement...",
+    "submitSuccess": "Présence enregistrée avec succès",
+    "submitError": "Erreur lors de l'enregistrement. Veuillez réessayer."
+  },
+  "messages": {
+    "title": "Messages",
+    "noConversations": "Aucune conversation pour le moment",
+    "selectConversation": "Sélectionnez une conversation pour commencer",
+    "back": "Retour",
+    "noMessages": "Aucun message. Commencez la conversation !",
+    "attach": "Joindre un fichier",
+    "sendPhoto": "Photo",
+    "sendDocument": "Document",
+    "placeholder": "Tapez un message...",
+    "inputLabel": "Saisie du message",
+    "send": "Envoyer le message",
+    "photoMessage": "Photo",
+    "documentMessage": "Document",
+    "read": "Lu",
+    "sent": "Envoyé"
+  },
+  "dailyReport": {
+    "title": "Rapport quotidien",
+    "noClassroom": "Aucune classe assignée",
+    "selectChild": "Sélectionner un enfant",
+    "noChildren": "Aucun enfant dans la classe",
+    "mood": "Humeur",
+    "mealsEaten": "Repas pris",
+    "decreaseMeals": "Diminuer les repas",
+    "increaseMeals": "Augmenter les repas",
+    "napDuration": "Durée de la sieste (minutes)",
+    "activities": "Activités",
+    "activitiesPlaceholder": "Quelles activités l'enfant a-t-il faites aujourd'hui ?",
+    "generalNote": "Note générale",
+    "generalNotePlaceholder": "Notes supplémentaires pour les parents...",
+    "photos": "Photos",
+    "photoAlt": "Photo {{index}}",
+    "removePhoto": "Supprimer la photo",
+    "addPhoto": "Ajouter une photo",
+    "submit": "Envoyer le rapport",
+    "submitting": "Envoi en cours...",
+    "submitSuccess": "Rapport envoyé avec succès",
+    "submitError": "Erreur lors de l'envoi. Veuillez réessayer."
+  },
+  "parentFeed": {
+    "title": "Rapports quotidiens",
+    "subtitle": "Découvrez comment s'est passée la journée de votre enfant",
+    "empty": "Aucun rapport pour le moment. Revenez plus tard !",
+    "error": "Impossible de charger les rapports. Veuillez réessayer.",
+    "reportFor": "Rapport pour {{name}}",
+    "meals": "Repas",
+    "napMin": "min sieste",
+    "activities": "Activités"
+  },
+  "parentAttendance": {
+    "title": "Présence",
+    "subtitle": "Résumé mensuel de la présence",
+    "previousMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
+    "error": "Impossible de charger les données de présence. Veuillez réessayer.",
+    "empty": "Aucun enregistrement de présence pour ce mois.",
+    "totalDays": "{{count}} jours d'école",
+    "rate": "taux",
+    "present": "Présent",
+    "absent": "Absent",
+    "late": "En retard"
+  },
+  "parentMessages": {
+    "title": "Messages",
+    "subtitle": "Discutez avec l'enseignant de votre enfant",
+    "noConversations": "Aucune conversation pour le moment. Votre enseignant vous contactera bientôt !",
+    "back": "Retour",
+    "teacher": "Enseignant",
+    "noMessages": "Aucun message. Dites bonjour !",
+    "attach": "Joindre un fichier",
+    "sendPhoto": "Photo",
+    "sendDocument": "Document",
+    "placeholder": "Tapez un message...",
+    "inputLabel": "Saisie du message",
+    "send": "Envoyer le message",
+    "photoMessage": "Photo",
+    "documentMessage": "Document",
+    "read": "Lu",
+    "sent": "Envoyé"
+  },
+  "parentNotifications": {
+    "title": "Notifications",
+    "unreadCount": "{{count}} non lue(s)",
+    "allRead": "Tout est à jour !",
+    "markAllRead": "Tout marquer comme lu",
+    "error": "Impossible de charger les notifications. Veuillez réessayer.",
+    "empty": "Aucune notification pour le moment."
+  },
+  "parentInvoices": {
+    "title": "Factures et consentements",
+    "subtitle": "Gérez les paiements et les approbations",
+    "tabs": {
+      "invoices": "Factures",
+      "consent": "Consentements"
+    },
+    "error": "Impossible de charger les factures. Veuillez réessayer.",
+    "empty": "Aucune facture pour le moment.",
+    "remaining": "Restant",
+    "dueDate": "Échéance",
+    "payOnline": "Payer en ligne",
+    "paymentHistory": "Historique des paiements",
+    "paymentHistoryTitle": "Paiements",
+    "noPayments": "Aucun enregistrement de paiement trouvé.",
+    "downloadReceipt": "Télécharger le reçu",
+    "receipt": "Reçu",
+    "consentError": "Impossible de charger les consentements. Veuillez réessayer.",
+    "noConsent": "Aucun événement nécessitant un consentement.",
+    "consentApproved": "Approuvé",
+    "consentDeclined": "Refusé",
+    "approve": "Approuver",
+    "decline": "Refuser",
+    "status": {
+      "draft": "Brouillon",
+      "sent": "Envoyée",
+      "paid": "Payée",
+      "partial": "Partielle",
+      "overdue": "En retard",
+      "cancelled": "Annulée"
+    },
+    "paymentMethod": {
+      "online": "En ligne",
+      "cash": "Espèces"
+    }
+  }
+}

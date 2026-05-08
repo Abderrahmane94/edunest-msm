@@ -1,0 +1,178 @@
+/* ─── Google Fonts: Inter Variable, Noto Sans Arabic, JetBrains Mono ─── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ─── Local Font Fallbacks ─── */
+/* Ensures text renders immediately with system fonts while Google Fonts load */
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: local('Inter'), local('Inter-Regular'), local('-apple-system'), local('BlinkMacSystemFont');
+}
+
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: local('Noto Sans Arabic'), local('NotoSansArabic-Regular');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: local('JetBrains Mono'), local('JetBrainsMono-Regular');
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── EduNest Design System — Semantic Color Tokens ─── */
+@layer base {
+  :root {
+    /* Background Surfaces */
+    --color-bg-page: #FAFAF8;
+    --color-bg-card: #FFFFFF;
+    --color-bg-subtle: #F1F5F9;
+    --color-bg-hover: #F8FAFC;
+    --color-overlay: rgba(15, 23, 42, 0.5);
+
+    /* Borders */
+    --color-border: #E2E8F0;
+    --color-border-strong: #CBD5E1;
+
+    /* Text */
+    --color-text-primary: #334155;
+    --color-text-secondary: #64748B;
+    --color-text-heading: #0F172A;
+    --color-text-disabled: #94A3B8;
+    --color-text-inverse: #FFFFFF;
+
+    /* Primary Accent — Indigo */
+    --color-accent: #4F46E5;
+    --color-accent-hover: #4338CA;
+    --color-accent-muted: #E0E7FF;
+    --color-accent-light: #6366F1;
+    --color-accent-subtle: #EEF2FF;
+
+    /* Success — Teal */
+    --color-success: #0D9488;
+    --color-success-muted: #CCFBF1;
+    --color-success-light: #14B8A6;
+    --color-success-subtle: #F0FDFA;
+
+    /* Warning — Amber */
+    --color-warning: #D97706;
+    --color-warning-muted: #FEF3C7;
+    --color-warning-light: #F59E0B;
+    --color-warning-subtle: #FFFBEB;
+
+    /* Danger — Red */
+    --color-danger: #DC2626;
+    --color-danger-muted: #FEE2E2;
+    --color-danger-light: #EF4444;
+    --color-danger-subtle: #FEF2F2;
+
+    /* Attendance & Finance Status */
+    --color-present: #0D9488;
+    --color-absent: #DC2626;
+    --color-late: #D97706;
+    --color-paid: #0D9488;
+    --color-overdue: #DC2626;
+    --color-pending: #D97706;
+
+    /* Elevation Shadows */
+    --shadow-level-1: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+    --shadow-level-2: 0 4px 12px rgba(15,23,42,0.08), 0 2px 4px rgba(15,23,42,0.04);
+    --shadow-level-3: 0 10px 30px rgba(15,23,42,0.12), 0 4px 8px rgba(15,23,42,0.06);
+    --shadow-level-4: 0 20px 60px rgba(15,23,42,0.15), 0 8px 16px rgba(15,23,42,0.08);
+    --shadow-focus-ring: 0 0 0 3px rgba(79,70,229,0.25);
+    --shadow-focus-danger: 0 0 0 3px rgba(220,38,38,0.20);
+
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-default: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+
+    /* shadcn/ui compatibility */
+    --radius: 8px;
+  }
+
+  /* ─── Base Styles ─── */
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-family: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-feature-settings: 'kern' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-bg-page);
+    color: var(--color-text-primary);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ─── RTL Support for Arabic ─── */
+  html[dir='rtl'] {
+    font-family: 'Noto Sans Arabic', 'Inter Variable', system-ui, sans-serif;
+  }
+
+  html[dir='rtl'] body {
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
+  /* Flip flex row layouts in RTL mode for containers that need explicit reversal */
+  html[dir='rtl'] .rtl-flip-row {
+    flex-direction: row-reverse;
+  }
+
+  /* ─── Heading Styles ─── */
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-text-heading);
+    font-weight: 600;
+  }
+
+  /* ─── Focus Styles ─── */
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus-ring);
+    border-radius: var(--radius-default);
+  }
+
+  /* ─── Reduced Motion ─── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ─── Utility Classes ─── */
+@layer utilities {
+  .font-mono-amount {
+    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  /* RTL-aware directional icon mirroring */
+  [dir='rtl'] .rtl-mirror {
+    transform: scaleX(-1);
+  }
+}

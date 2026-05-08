@@ -1,0 +1,32 @@
+import { SchoolType } from '@prisma/client';
+
+export interface CreateSchoolInput {
+  name: string;
+  schoolType: SchoolType;
+  address: string;
+  wilaya: string;
+  contactEmail: string;
+  contactPhone: string;
+}
+
+export interface UpdateSchoolInput {
+  name?: string;
+  schoolType?: SchoolType;
+  address?: string;
+  wilaya?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+}
+
+export interface SchoolResponse {
+  id: string;
+  name: string;
+  schoolType: SchoolType;
+  address: string;
+  wilaya: string;
+  logoPublicId: string | null;
+  contactEmail: string;
+  contactPhone: string;
+  isActive: boolean;
+  createdAt: Date;
+}

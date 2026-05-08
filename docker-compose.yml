@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: edunest-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-edunest}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-edunest_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-edunest}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edunest}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - edunest-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: edunest-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-edunest}:${POSTGRES_PASSWORD:-edunest_secret}@postgres:5432/${POSTGRES_DB:-edunest}?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      CHARGILY_API_KEY: ${CHARGILY_API_KEY}
+      CHARGILY_SECRET_KEY: ${CHARGILY_SECRET_KEY}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+      FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT}
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    networks:
+      - edunest-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000/api}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL:-http://localhost:4000}
+    container_name: edunest-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    networks:
+      - edunest-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  edunest-network:
+    driver: bridge

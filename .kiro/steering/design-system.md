@@ -1,0 +1,4 @@
+---
+inclusion: always
+---
+Always read DESIGN.md in the project root before generating any UI code. Apply the EduNest design system to every component: - Inter Variable font for all text - Use semantic color tokens from section 2 of DESIGN.md - shadcn/ui as component base with custom design tokens - TailwindCSS utility classes — no inline styles - RTL layout support (dir="rtl") for Arabic language - Admin portal: dense, data-rich layout - Teacher portal: task-focused, large touch targets - Parent portal: warm, feed-like, mobile-first - Never hardcode hex values — use CSS token variables - Never use font-weight above 700 or below 400

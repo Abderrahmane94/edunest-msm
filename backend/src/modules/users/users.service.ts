@@ -1,0 +1,376 @@
+import crypto from 'crypto';
+import bcrypt from 'bcrypt';
+import prisma from '../../lib/prisma';
+import { emailService } from '../../services/email.service';
+import type { UserRole, Language } from '@prisma/client';
+
+const INVITATION_EXPIRY_HOURS = 48;
+const BCRYPT_SALT_ROUNDS = 10;
+
+function getFrontendUrl(): string {
+  return process.env.FRONTEND_URL || 'http://localhost:5173';
+}
+
+export class UserServiceError extends Error {
+  statusCode: number;
+
+  constructor(message: string, statusCode: number) {
+    super(message);
+    this.name = 'UserServiceError';
+    this.statusCode = statusCode;
+  }
+}
+
+export const usersService = {
+  /**
+   * Send an invitation email to a user with a one-time token.
+   */
+  async invite(email: string, role: UserRole, schoolId: string): Promise<{ message: string }> {
+    // Check if user already exists in this school
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new UserServiceError('A user with this email already exists', 409);
+    }
+
+    // Get school name for the email
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId },
+    });
+
+    if (!school) {
+      throw new UserServiceError('School not found', 404);
+    }
+
+    // Invalidate any existing unused invitation tokens for this email
+    await prisma.invitationToken.updateMany({
+      where: { email, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    // Generate a secure one-time token
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + INVITATION_EXPIRY_HOURS);
+
+    await prisma.invitationToken.create({
+      data: {
+        email,
+        schoolId,
+        role,
+        token,
+        expiresAt,
+      },
+    });
+
+    // Send invitation email
+    const invitationUrl = `${getFrontendUrl()}/register?token=${token}`;
+    await emailService.sendInvitationEmail(email, invitationUrl, school.name, role);
+
+    return { message: 'Invitation sent successfully' };
+  },
+
+  /**
+   * Validate an invitation token and return the invitation info.
+   */
+  async getInvitationInfo(token: string) {
+    const invitation = await prisma.invitationToken.findUnique({
+      where: { token },
+    });
+
+    if (!invitation) {
+      throw new UserServiceError('Invalid invitation token', 400);
+    }
+
+    if (invitation.usedAt) {
+      throw new UserServiceError('Invitation token has already been used', 400);
+    }
+
+    if (invitation.expiresAt < new Date()) {
+      throw new UserServiceError('Invitation token has expired', 400);
+    }
+
+    return {
+      email: invitation.email,
+      role: invitation.role,
+      schoolId: invitation.schoolId,
+    };
+  },
+
+  /**
+   * Complete registration using an invitation token.
+   */
+  async register(
+    token: string,
+    firstName: string,
+    lastName: string,
+    password: string,
+  ) {
+    const invitation = await prisma.invitationToken.findUnique({
+      where: { token },
+    });
+
+    if (!invitation) {
+      throw new UserServiceError('Invalid invitation token', 400);
+    }
+
+    if (invitation.usedAt) {
+      throw new UserServiceError('Invitation token has already been used', 400);
+    }
+
+    if (invitation.expiresAt < new Date()) {
+      throw new UserServiceError('Invitation token has expired', 400);
+    }
+
+    // Check if user already exists (race condition guard)
+    const existingUser = await prisma.user.findUnique({
+      where: { email: invitation.email },
+    });
+
+    if (existingUser) {
+      throw new UserServiceError('A user with this email already exists', 409);
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+
+    // Create user and mark token as used in a transaction
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          schoolId: invitation.schoolId,
+          firstName,
+          lastName,
+          email: invitation.email,
+          passwordHash,
+          role: invitation.role,
+        },
+      });
+
+      await tx.invitationToken.update({
+        where: { id: invitation.id },
+        data: { usedAt: new Date() },
+      });
+
+      return newUser;
+    });
+
+    return {
+      id: user.id,
+      schoolId: user.schoolId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      preferredLanguage: user.preferredLanguage,
+      createdAt: user.createdAt,
+    };
+  },
+
+  /**
+   * List users in a school with pagination.
+   */
+  async list(schoolId: string, page: number, pageSize: number) {
+    const skip = (page - 1) * pageSize;
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where: { schoolId },
+        select: {
+          id: true,
+          schoolId: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          role: true,
+          isActive: true,
+          fcmToken: true,
+          preferredLanguage: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+      }),
+      prisma.user.count({ where: { schoolId } }),
+    ]);
+
+    return { users, total };
+  },
+
+  /**
+   * Get a user by ID within a school.
+   */
+  async getById(id: string, schoolId: string) {
+    const user = await prisma.user.findFirst({
+      where: { id, schoolId },
+      select: {
+        id: true,
+        schoolId: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        isActive: true,
+        fcmToken: true,
+        preferredLanguage: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new UserServiceError('User not found', 404);
+    }
+
+    return user;
+  },
+
+  /**
+   * Activate a user.
+   */
+  async activate(id: string, schoolId: string) {
+    const user = await prisma.user.findFirst({
+      where: { id, schoolId },
+    });
+
+    if (!user) {
+      throw new UserServiceError('User not found', 404);
+    }
+
+    if (user.isActive) {
+      throw new UserServiceError('User is already active', 400);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { isActive: true },
+      select: {
+        id: true,
+        schoolId: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        isActive: true,
+        fcmToken: true,
+        preferredLanguage: true,
+        createdAt: true,
+      },
+    });
+
+    return updated;
+  },
+
+  /**
+   * Deactivate a user and revoke access by deleting all refresh tokens.
+   */
+  async deactivate(id: string, schoolId: string) {
+    const user = await prisma.user.findFirst({
+      where: { id, schoolId },
+    });
+
+    if (!user) {
+      throw new UserServiceError('User not found', 404);
+    }
+
+    if (!user.isActive) {
+      throw new UserServiceError('User is already deactivated', 400);
+    }
+
+    // Deactivate user and revoke all refresh tokens in a transaction
+    const updated = await prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id },
+        data: { isActive: false },
+        select: {
+          id: true,
+          schoolId: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          role: true,
+          isActive: true,
+          fcmToken: true,
+          preferredLanguage: true,
+          createdAt: true,
+        },
+      });
+
+      // Revoke all refresh tokens for immediate access revocation
+      await tx.refreshToken.deleteMany({
+        where: { userId: id },
+      });
+
+      return updatedUser;
+    });
+
+    return updated;
+  },
+
+  /**
+   * Update a user's FCM token.
+   */
+  async updateFcmToken(id: string, fcmToken: string) {
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new UserServiceError('User not found', 404);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { fcmToken },
+      select: {
+        id: true,
+        schoolId: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        isActive: true,
+        fcmToken: true,
+        preferredLanguage: true,
+        createdAt: true,
+      },
+    });
+
+    return updated;
+  },
+
+  /**
+   * Update a user's preferred language.
+   */
+  async updateLanguage(id: string, preferredLanguage: Language) {
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new UserServiceError('User not found', 404);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { preferredLanguage },
+      select: {
+        id: true,
+        schoolId: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        isActive: true,
+        fcmToken: true,
+        preferredLanguage: true,
+        createdAt: true,
+      },
+    });
+
+    return updated;
+  },
+};

@@ -1,0 +1,645 @@
+{
+  "app": {
+    "name": "إيدو نست",
+    "tagline": "نظام إدارة رياض الأطفال"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "enrollment": "التسجيلات",
+    "attendanceRate": "نسبة الحضور",
+    "outstandingInvoices": "الفواتير المستحقة",
+    "unreadMessages": "الرسائل غير المقروءة"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "register": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "resetPassword": "إعادة تعيين كلمة المرور"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "schools": "المدارس",
+    "children": "الأطفال",
+    "classrooms": "الفصول",
+    "academicYears": "السنوات",
+    "attendance": "الحضور",
+    "communication": "التواصل",
+    "finance": "المالية",
+    "settings": "الإعدادات",
+    "users": "المستخدمون",
+    "staff": "الموظفون",
+    "reports": "التقارير",
+    "messages": "الرسائل",
+    "invoices": "الفواتير",
+    "notifications": "الإشعارات"
+  },
+  "common": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "create": "إنشاء",
+    "search": "بحث",
+    "loading": "جاري التحميل...",
+    "noData": "لا توجد بيانات"
+  },
+  "schoolSettings": {
+    "title": "إعدادات المدرسة",
+    "logo": "شعار المدرسة",
+    "uploadLogo": "رفع الشعار",
+    "logoHint": "PNG أو JPG أو WebP. الحد الأقصى 2 ميجابايت.",
+    "logoAlt": "شعار المدرسة",
+    "details": "معلومات المدرسة",
+    "name": "اسم المدرسة",
+    "namePlaceholder": "أدخل اسم المدرسة",
+    "type": "نوع المؤسسة",
+    "address": "العنوان",
+    "addressPlaceholder": "أدخل العنوان",
+    "wilaya": "الولاية",
+    "wilayaPlaceholder": "أدخل الولاية",
+    "contactEmail": "البريد الإلكتروني للتواصل",
+    "contactEmailPlaceholder": "contact@school.dz",
+    "contactPhone": "هاتف التواصل",
+    "contactPhonePlaceholder": "+213 XX XX XX XX",
+    "saved": "تم حفظ التعديلات",
+    "types": {
+      "kindergarten": "روضة أطفال",
+      "primary": "ابتدائي",
+      "secondary": "ثانوي"
+    }
+  },
+  "users": {
+    "title": "المستخدمون",
+    "invite": "دعوة",
+    "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
+    "noUsers": "لم يتم العثور على مستخدمين",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "activate": "تفعيل",
+    "deactivate": "إلغاء التفعيل",
+    "columns": {
+      "name": "الاسم",
+      "role": "الدور",
+      "status": "الحالة",
+      "language": "اللغة",
+      "joined": "تاريخ الانضمام"
+    },
+    "roles": {
+      "super_admin": "مدير عام",
+      "admin": "مدير",
+      "teacher": "معلم",
+      "parent": "ولي أمر"
+    },
+    "invite_form": {
+      "title": "دعوة مستخدم",
+      "description": "أرسل دعوة بالبريد الإلكتروني للانضمام إلى المدرسة.",
+      "firstName": "الاسم الأول",
+      "firstNamePlaceholder": "أدخل الاسم الأول",
+      "firstNameRequired": "الاسم الأول مطلوب",
+      "lastName": "اسم العائلة",
+      "lastNamePlaceholder": "أدخل اسم العائلة",
+      "lastNameRequired": "اسم العائلة مطلوب",
+      "email": "البريد الإلكتروني",
+      "emailPlaceholder": "user@example.com",
+      "emailRequired": "البريد الإلكتروني مطلوب",
+      "emailInvalid": "بريد إلكتروني غير صالح",
+      "role": "الدور",
+      "send": "إرسال الدعوة"
+    }
+  },
+  "academicYears": {
+    "title": "السنوات الدراسية",
+    "create": "سنة جديدة",
+    "noYears": "لم يتم تكوين أي سنة دراسية",
+    "active": "نشطة",
+    "inactive": "غير نشطة",
+    "activate": "تفعيل",
+    "form": {
+      "title": "إنشاء سنة دراسية",
+      "description": "حدد فترة دراسية جديدة.",
+      "name": "الاسم",
+      "namePlaceholder": "مثال: 2024-2025",
+      "startDate": "تاريخ البداية",
+      "endDate": "تاريخ النهاية",
+      "nameRequired": "الاسم مطلوب",
+      "startDateRequired": "تاريخ البداية مطلوب",
+      "endDateRequired": "تاريخ النهاية مطلوب",
+      "endDateAfterStart": "تاريخ النهاية يجب أن يكون بعد تاريخ البداية"
+    }
+  },
+  "classrooms": {
+    "title": "الفصول",
+    "create": "فصل جديد",
+    "noClassrooms": "لم يتم العثور على فصول",
+    "noActiveYear": "يرجى تفعيل سنة دراسية أولاً.",
+    "noTeacher": "غير معين",
+    "columns": {
+      "name": "الاسم",
+      "level": "المستوى",
+      "capacity": "السعة",
+      "teacher": "المعلم",
+      "roomNumber": "الغرفة"
+    },
+    "form": {
+      "title": "إنشاء فصل",
+      "description": "أضف فصلاً جديداً للسنة الدراسية النشطة.",
+      "name": "اسم الفصل",
+      "namePlaceholder": "مثال: الفصل أ",
+      "nameRequired": "الاسم مطلوب",
+      "capacity": "السعة",
+      "capacityRequired": "السعة يجب أن تكون رقماً موجباً",
+      "roomNumber": "رقم الغرفة",
+      "roomNumberPlaceholder": "مثال: 101",
+      "level": "المستوى (الفئة العمرية)",
+      "levelPlaceholder": "مثال: 3-4 سنوات",
+      "levelRequired": "المستوى مطلوب",
+      "teacher": "المعلم",
+      "noTeacher": "بدون معلم"
+    },
+    "assignTeacher": {
+      "title": "تعيين معلم",
+      "description": "تعيين معلم للفصل {{name}}.",
+      "selectTeacher": "اختر معلماً"
+    }
+  },
+  "children": {
+    "title": "الأطفال",
+    "register": "تسجيل",
+    "searchPlaceholder": "البحث بالاسم...",
+    "noChildren": "لم يتم العثور على أطفال",
+    "noParents": "لا يوجد أولياء أمور مرتبطون",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "columns": {
+      "name": "الاسم",
+      "gender": "الجنس",
+      "classroom": "الفصل",
+      "parents": "أولياء الأمور",
+      "status": "الحالة"
+    },
+    "form": {
+      "title": "تسجيل طفل",
+      "description": "سجل طفلاً جديداً في المدرسة.",
+      "firstName": "الاسم الأول",
+      "firstNamePlaceholder": "أدخل الاسم الأول",
+      "firstNameRequired": "الاسم الأول مطلوب",
+      "lastName": "اسم العائلة",
+      "lastNamePlaceholder": "أدخل اسم العائلة",
+      "lastNameRequired": "اسم العائلة مطلوب",
+      "dateOfBirth": "تاريخ الميلاد",
+      "dobRequired": "تاريخ الميلاد مطلوب",
+      "gender": "الجنس",
+      "male": "ذكر",
+      "female": "أنثى",
+      "classroom": "الفصل",
+      "noClassroom": "بدون فصل"
+    },
+    "linkParent": {
+      "title": "ربط ولي أمر",
+      "description": "ربط ولي أمر بـ {{name}}.",
+      "parent": "ولي الأمر",
+      "selectParent": "اختر ولي أمر",
+      "relationship": "العلاقة",
+      "mother": "أم",
+      "father": "أب",
+      "guardian": "وصي"
+    },
+    "emergencyContacts": {
+      "title": "جهات اتصال الطوارئ",
+      "description": "إدارة جهات اتصال الطوارئ لـ {{name}}.",
+      "addNew": "إضافة جهة اتصال",
+      "name": "الاسم",
+      "namePlaceholder": "الاسم الكامل",
+      "nameRequired": "الاسم مطلوب",
+      "relationship": "العلاقة",
+      "relationshipPlaceholder": "مثال: عم",
+      "relationshipRequired": "العلاقة مطلوبة",
+      "phone": "الهاتف",
+      "phoneRequired": "الهاتف مطلوب",
+      "authorizedPickup": "مخول باستلام الطفل",
+      "add": "إضافة"
+    }
+  },
+  "staff": {
+    "title": "الموظفون",
+    "profile": "ملف الموظف",
+    "searchPlaceholder": "البحث بالاسم...",
+    "noStaff": "لم يتم العثور على موظفين",
+    "noPosition": "لم يتم تحديد المنصب",
+    "contractDetails": "تفاصيل العقد",
+    "position": "المنصب",
+    "positionPlaceholder": "مثال: معلم رئيسي",
+    "contractType": "نوع العقد",
+    "contractStart": "بداية العقد",
+    "contractEnd": "نهاية العقد",
+    "documents": "المستندات",
+    "uploadDocument": "رفع",
+    "downloadDocument": "تحميل المستند",
+    "noDocuments": "لا توجد مستندات مرفوعة",
+    "uploadedOn": "تم الرفع في {{date}}",
+    "saved": "تم تحديث الملف",
+    "columns": {
+      "name": "الاسم",
+      "role": "الدور",
+      "status": "الحالة",
+      "joined": "تاريخ الانضمام"
+    },
+    "contractTypes": {
+      "full_time": "دوام كامل",
+      "part_time": "دوام جزئي",
+      "contract": "عقد مؤقت"
+    }
+  },
+  "attendance": {
+    "title": "الحضور",
+    "dailyView": "العرض اليومي",
+    "monthlyView": "التقرير الشهري",
+    "classroom": "الفصل",
+    "selectClassroom": "اختر فصلاً",
+    "selectClassroomPrompt": "اختر فصلاً لعرض بيانات الحضور.",
+    "date": "التاريخ",
+    "month": "الشهر",
+    "year": "السنة",
+    "noRecords": "لا توجد سجلات حضور لهذا التاريخ.",
+    "noReportData": "لا توجد بيانات تقرير لهذه الفترة.",
+    "columns": {
+      "childName": "اسم الطفل",
+      "status": "الحالة",
+      "note": "ملاحظة",
+      "present": "حاضر",
+      "absent": "غائب",
+      "late": "متأخر",
+      "rate": "النسبة"
+    },
+    "statuses": {
+      "present": "حاضر",
+      "absent": "غائب",
+      "late": "متأخر"
+    },
+    "kpi": {
+      "total": "إجمالي الأطفال",
+      "present": "الحاضرون",
+      "absent": "الغائبون",
+      "rate": "نسبة الحضور",
+      "totalChildren": "الأطفال",
+      "schoolDays": "أيام الدراسة",
+      "avgRate": "المعدل"
+    },
+    "months": {
+      "january": "يناير",
+      "february": "فبراير",
+      "march": "مارس",
+      "april": "أبريل",
+      "may": "مايو",
+      "june": "يونيو",
+      "july": "يوليو",
+      "august": "أغسطس",
+      "september": "سبتمبر",
+      "october": "أكتوبر",
+      "november": "نوفمبر",
+      "december": "ديسمبر"
+    }
+  },
+  "finance": {
+    "title": "المالية",
+    "tabs": {
+      "fees": "الرسوم",
+      "invoices": "الفواتير",
+      "expenses": "المصروفات",
+      "reports": "التقارير"
+    },
+    "fees": {
+      "create": "رسوم جديدة",
+      "empty": "لم يتم تحديد أي هيكل رسوم",
+      "columns": {
+        "name": "الاسم",
+        "amount": "المبلغ",
+        "frequency": "التكرار",
+        "level": "المستوى",
+        "description": "الوصف"
+      },
+      "frequencies": {
+        "monthly": "شهري",
+        "quarterly": "ربع سنوي",
+        "annual": "سنوي",
+        "one_time": "مرة واحدة"
+      },
+      "form": {
+        "title": "إنشاء هيكل رسوم",
+        "description": "حدد نوعاً جديداً من الرسوم للسنة الدراسية.",
+        "name": "اسم الرسوم",
+        "namePlaceholder": "مثال: رسوم التسجيل",
+        "amount": "المبلغ (د.ج)",
+        "frequency": "التكرار",
+        "level": "المستوى (اختياري)",
+        "levelPlaceholder": "مثال: 3-4 سنوات",
+        "descriptionLabel": "الوصف",
+        "descriptionPlaceholder": "وصف الرسوم...",
+        "submit": "إنشاء"
+      }
+    },
+    "invoices": {
+      "empty": "لم يتم العثور على فواتير",
+      "bulkGenerate": "إنشاء جماعي",
+      "send": "إرسال",
+      "recordCash": "نقدي",
+      "columns": {
+        "child": "الطفل",
+        "fee": "الرسوم",
+        "amount": "المبلغ",
+        "dueDate": "تاريخ الاستحقاق",
+        "status": "الحالة",
+        "paymentMethod": "الدفع"
+      },
+      "statuses": {
+        "draft": "مسودة",
+        "sent": "مرسلة",
+        "paid": "مدفوعة",
+        "partial": "جزئية",
+        "overdue": "متأخرة",
+        "cancelled": "ملغاة"
+      },
+      "methods": {
+        "online": "عبر الإنترنت",
+        "cash": "نقدي"
+      },
+      "bulkForm": {
+        "title": "إنشاء فواتير جماعية",
+        "description": "أنشئ فواتير لجميع أطفال الفصل.",
+        "classroom": "الفصل",
+        "classroomPlaceholder": "اختر فصلاً",
+        "feeStructure": "هيكل الرسوم",
+        "feePlaceholder": "اختر رسوماً",
+        "dueDate": "تاريخ الاستحقاق",
+        "submit": "إنشاء الفواتير"
+      },
+      "cashForm": {
+        "title": "تسجيل دفع نقدي",
+        "description": "تسجيل دفع نقدي لـ {{child}}.",
+        "totalAmount": "المبلغ الإجمالي",
+        "outstanding": "الرصيد المتبقي",
+        "amountReceived": "المبلغ المستلم (د.ج)",
+        "receivedAt": "تاريخ الاستلام",
+        "note": "ملاحظة (اختياري)",
+        "notePlaceholder": "مثال: دفعة جزئية لشهر يناير",
+        "submit": "تسجيل الدفع"
+      }
+    },
+    "expenses": {
+      "create": "مصروف جديد",
+      "empty": "لا توجد مصروفات مسجلة",
+      "hasReceipt": "إيصال",
+      "columns": {
+        "category": "الفئة",
+        "description": "الوصف",
+        "amount": "المبلغ",
+        "date": "التاريخ",
+        "receipt": "الإيصال",
+        "createdBy": "أنشأه"
+      },
+      "categories": {
+        "supplies": "لوازم",
+        "utilities": "خدمات",
+        "maintenance": "صيانة",
+        "salaries": "رواتب",
+        "food": "تغذية",
+        "transport": "نقل",
+        "other": "أخرى"
+      },
+      "form": {
+        "title": "تسجيل مصروف",
+        "description": "أضف مصروفاً جديداً إلى المحاسبة.",
+        "category": "الفئة",
+        "categoryPlaceholder": "اختر فئة",
+        "descriptionLabel": "الوصف",
+        "descriptionPlaceholder": "صف المصروف...",
+        "amount": "المبلغ (د.ج)",
+        "date": "التاريخ",
+        "submit": "تسجيل"
+      }
+    },
+    "reports": {
+      "totalInvoiced": "إجمالي الفواتير",
+      "totalCollected": "إجمالي المحصّل",
+      "totalOutstanding": "إجمالي المستحق",
+      "totalExpenses": "إجمالي المصروفات",
+      "paymentBreakdown": "توزيع طرق الدفع",
+      "collectionSummary": "ملخص التحصيل",
+      "cash": "نقدي",
+      "online": "عبر الإنترنت (شارجيلي)",
+      "transactions": "معاملات",
+      "netIncome": "صافي الدخل"
+    }
+  },
+  "communication": {
+    "title": "التواصل",
+    "announcements": {
+      "tab": "الإعلانات",
+      "create": "إعلان جديد",
+      "noAnnouncements": "لا توجد إعلانات منشورة",
+      "schoolWide": "المدرسة بأكملها",
+      "allSchool": "المدرسة بأكملها",
+      "columns": {
+        "title": "العنوان",
+        "target": "الهدف",
+        "createdBy": "أنشأه",
+        "publishedAt": "نُشر في"
+      },
+      "form": {
+        "title": "إنشاء إعلان",
+        "description": "انشر إعلاناً للمدرسة أو لفصل محدد.",
+        "announcementTitle": "العنوان",
+        "titlePlaceholder": "أدخل عنوان الإعلان",
+        "body": "المحتوى",
+        "bodyPlaceholder": "اكتب محتوى الإعلان...",
+        "target": "المستهدفون",
+        "publish": "نشر"
+      }
+    },
+    "events": {
+      "tab": "الفعاليات",
+      "create": "فعالية جديدة",
+      "noEvents": "لا توجد فعاليات مخططة",
+      "noConsent": "غير متاح",
+      "viewConsent": "الموافقات",
+      "columns": {
+        "title": "العنوان",
+        "date": "التاريخ",
+        "location": "المكان",
+        "consent": "الموافقة"
+      },
+      "form": {
+        "title": "إنشاء فعالية",
+        "description": "خطط لفعالية مدرسية جديدة.",
+        "eventTitle": "العنوان",
+        "titlePlaceholder": "أدخل عنوان الفعالية",
+        "eventDescription": "الوصف",
+        "descriptionPlaceholder": "صف الفعالية...",
+        "startDatetime": "البداية",
+        "endDatetime": "النهاية",
+        "location": "المكان",
+        "locationPlaceholder": "مثال: ساحة المدرسة",
+        "requiresConsent": "يتطلب موافقة أولياء الأمور",
+        "createEvent": "إنشاء"
+      }
+    },
+    "consent": {
+      "title": "متابعة الموافقات",
+      "total": "الإجمالي",
+      "approved": "موافق",
+      "pending": "قيد الانتظار",
+      "declined": "مرفوض",
+      "noEntries": "لا توجد إدخالات موافقة",
+      "columns": {
+        "child": "الطفل",
+        "status": "الحالة",
+        "respondedAt": "تاريخ الرد"
+      },
+      "statuses": {
+        "approved": "موافق",
+        "pending": "قيد الانتظار",
+        "declined": "مرفوض"
+      }
+    }
+  },
+  "teacherAttendance": {
+    "title": "نداء الحضور",
+    "noClassroom": "لم يتم تعيين فصل لك. تواصل مع المسؤول.",
+    "noChildren": "لا يوجد أطفال مسجلون في هذا الفصل.",
+    "selectDate": "اختر التاريخ",
+    "marked": "تم تسجيلهم",
+    "markAllPresent": "تسجيل الجميع حاضرين",
+    "submit": "حفظ الحضور",
+    "submitting": "جاري الحفظ...",
+    "submitSuccess": "تم حفظ الحضور بنجاح",
+    "submitError": "حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى."
+  },
+  "messages": {
+    "title": "الرسائل",
+    "noConversations": "لا توجد محادثات حتى الآن",
+    "selectConversation": "اختر محادثة للبدء",
+    "back": "رجوع",
+    "noMessages": "لا توجد رسائل. ابدأ المحادثة!",
+    "attach": "إرفاق ملف",
+    "sendPhoto": "صورة",
+    "sendDocument": "مستند",
+    "placeholder": "اكتب رسالة...",
+    "inputLabel": "إدخال الرسالة",
+    "send": "إرسال الرسالة",
+    "photoMessage": "صورة",
+    "documentMessage": "مستند",
+    "read": "مقروءة",
+    "sent": "مُرسلة"
+  },
+  "dailyReport": {
+    "title": "التقرير اليومي",
+    "noClassroom": "لم يتم تعيين فصل",
+    "selectChild": "اختر طفلاً",
+    "noChildren": "لا يوجد أطفال في الفصل",
+    "mood": "المزاج",
+    "mealsEaten": "الوجبات",
+    "decreaseMeals": "تقليل الوجبات",
+    "increaseMeals": "زيادة الوجبات",
+    "napDuration": "مدة القيلولة (دقائق)",
+    "activities": "الأنشطة",
+    "activitiesPlaceholder": "ما الأنشطة التي قام بها الطفل اليوم؟",
+    "generalNote": "ملاحظة عامة",
+    "generalNotePlaceholder": "ملاحظات إضافية لأولياء الأمور...",
+    "photos": "الصور",
+    "photoAlt": "صورة {{index}}",
+    "removePhoto": "حذف الصورة",
+    "addPhoto": "إضافة صورة",
+    "submit": "إرسال التقرير",
+    "submitting": "جاري الإرسال...",
+    "submitSuccess": "تم إرسال التقرير بنجاح",
+    "submitError": "حدث خطأ أثناء الإرسال. يرجى المحاولة مرة أخرى."
+  },
+  "parentFeed": {
+    "title": "التقارير اليومية",
+    "subtitle": "اطلع على كيف كان يوم طفلك",
+    "empty": "لا توجد تقارير حتى الآن. عد لاحقاً!",
+    "error": "تعذر تحميل التقارير. يرجى المحاولة مرة أخرى.",
+    "reportFor": "تقرير {{name}}",
+    "meals": "وجبات",
+    "napMin": "دقيقة قيلولة",
+    "activities": "أنشطة"
+  },
+  "parentAttendance": {
+    "title": "الحضور",
+    "subtitle": "ملخص الحضور الشهري",
+    "previousMonth": "الشهر السابق",
+    "nextMonth": "الشهر التالي",
+    "error": "تعذر تحميل بيانات الحضور. يرجى المحاولة مرة أخرى.",
+    "empty": "لا توجد سجلات حضور لهذا الشهر.",
+    "totalDays": "{{count}} يوم دراسي",
+    "rate": "النسبة",
+    "present": "حاضر",
+    "absent": "غائب",
+    "late": "متأخر"
+  },
+  "parentMessages": {
+    "title": "الرسائل",
+    "subtitle": "تحدث مع معلم طفلك",
+    "noConversations": "لا توجد محادثات حتى الآن. سيتواصل معك المعلم قريباً!",
+    "back": "رجوع",
+    "teacher": "المعلم",
+    "noMessages": "لا توجد رسائل. قل مرحباً!",
+    "attach": "إرفاق ملف",
+    "sendPhoto": "صورة",
+    "sendDocument": "مستند",
+    "placeholder": "اكتب رسالة...",
+    "inputLabel": "إدخال الرسالة",
+    "send": "إرسال الرسالة",
+    "photoMessage": "صورة",
+    "documentMessage": "مستند",
+    "read": "مقروءة",
+    "sent": "مُرسلة"
+  },
+  "parentNotifications": {
+    "title": "الإشعارات",
+    "unreadCount": "{{count}} غير مقروءة",
+    "allRead": "كل شيء محدّث!",
+    "markAllRead": "تحديد الكل كمقروء",
+    "error": "تعذر تحميل الإشعارات. يرجى المحاولة مرة أخرى.",
+    "empty": "لا توجد إشعارات حتى الآن."
+  },
+  "parentInvoices": {
+    "title": "الفواتير والموافقات",
+    "subtitle": "إدارة المدفوعات والموافقات",
+    "tabs": {
+      "invoices": "الفواتير",
+      "consent": "الموافقات"
+    },
+    "error": "تعذر تحميل الفواتير. يرجى المحاولة مرة أخرى.",
+    "empty": "لا توجد فواتير حتى الآن.",
+    "remaining": "المتبقي",
+    "dueDate": "الاستحقاق",
+    "payOnline": "الدفع عبر الإنترنت",
+    "paymentHistory": "سجل المدفوعات",
+    "paymentHistoryTitle": "المدفوعات",
+    "noPayments": "لم يتم العثور على سجلات دفع.",
+    "downloadReceipt": "تحميل الإيصال",
+    "receipt": "إيصال",
+    "consentError": "تعذر تحميل نماذج الموافقة. يرجى المحاولة مرة أخرى.",
+    "noConsent": "لا توجد فعاليات تتطلب موافقة.",
+    "consentApproved": "موافق عليه",
+    "consentDeclined": "مرفوض",
+    "approve": "موافقة",
+    "decline": "رفض",
+    "status": {
+      "draft": "مسودة",
+      "sent": "مرسلة",
+      "paid": "مدفوعة",
+      "partial": "جزئية",
+      "overdue": "متأخرة",
+      "cancelled": "ملغاة"
+    },
+    "paymentMethod": {
+      "online": "عبر الإنترنت",
+      "cash": "نقدي"
+    }
+  }
+}

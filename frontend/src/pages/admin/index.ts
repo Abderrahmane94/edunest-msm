@@ -1,0 +1,13 @@
+export { DashboardPage } from './DashboardPage';
+export { SchoolSettingsPage } from './SchoolSettingsPage';
+export { SchoolsPage } from './SchoolsPage';
+export { UsersPage } from './UsersPage';
+export { InviteUserDialog } from './InviteUserDialog';
+export { StaffListPage } from './StaffListPage';
+export { StaffProfilePage } from './StaffProfilePage';
+export { AcademicYearsPage } from './AcademicYearsPage';
+export { ClassroomsPage } from './ClassroomsPage';
+export { ChildrenPage } from './ChildrenPage';
+export { AttendancePage } from './AttendancePage';
+export { CommunicationPage } from './CommunicationPage';
+export { FinancePage } from './FinancePage';

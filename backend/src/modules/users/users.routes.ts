@@ -8,12 +8,16 @@ import {
   updateFcmTokenSchema,
   updateLanguageSchema,
   updateUserSchema,
+  createUserDirectlySchema,
 } from './users.schema';
 import { idParamSchema } from '../../utils/validators';
 
 const router = Router();
 
-// POST /api/users/invite — Send invitation (admin only)
+// POST /api/users — Create user directly in admin's school (admin only)
+router.post('/', requireAdmin, validate(createUserDirectlySchema), usersController.create);
+
+// POST /api/users/invite — Send invitation email (admin only)
 router.post('/invite', requireAdmin, validate(inviteUserSchema), usersController.invite);
 
 // POST /api/users/register — Complete registration via invitation token (public)

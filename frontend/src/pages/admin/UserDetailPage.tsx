@@ -6,12 +6,15 @@ import { Button, StatusBadge } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import { useUser, useUpdateUser, useToggleUserActive } from '@/hooks/useUsers';
+import { useAuth } from '@/contexts/AuthContext';
+import { Building2 } from 'lucide-react';
 
 export function UserDetailPage() {
   const { t } = useTranslation();
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
 
+  const { user: currentUser } = useAuth();
   const { data: user, isLoading } = useUser(userId!);
   const updateUser = useUpdateUser();
   const toggleActive = useToggleUserActive();
@@ -178,6 +181,36 @@ export function UserDetailPage() {
             {t('users.detail.joined')}: {new Date(user.created_at).toLocaleDateString()}
           </p>
         </div>
+
+        {/* School — visible to super_admin only */}
+        {currentUser?.role === 'super_admin' && (
+          <div className="bg-card border border-border rounded-lg p-6 space-y-3">
+            <h2 className="text-subsection font-semibold text-text-heading flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-primary" />
+              {t('users.detail.school')}
+            </h2>
+            {user.school ? (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-body font-medium text-foreground">{user.school.name}</p>
+                  <p className="text-caption text-text-secondary">
+                    {t(`schoolSettings.types.${user.school.schoolType}`)}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => navigate(`/admin/schools/${user.school!.id}`)}
+                >
+                  {t('users.detail.viewSchool')}
+                </Button>
+              </div>
+            ) : (
+              <p className="text-body text-text-secondary">{t('users.detail.noSchool')}</p>
+            )}
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex items-center gap-3 flex-wrap">

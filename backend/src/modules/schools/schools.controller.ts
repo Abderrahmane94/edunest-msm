@@ -3,6 +3,8 @@ import { schoolsService, SchoolServiceError } from './schools.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
 import type { CreateSchoolInput, UpdateSchoolInput } from './schools.schema';
 import { paginationSchema } from '../../utils/validators';
+import { usersService, UserServiceError } from '../users/users.service';
+import { inviteUserSchema, createUserDirectlySchema } from '../users/users.schema';
 
 export const schoolsController = {
   /**
@@ -75,6 +77,23 @@ export const schoolsController = {
   },
 
   /**
+   * PATCH /api/schools/:id/activate — Activate school (super_admin only)
+   */
+  async activate(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const school = await schoolsService.activate(id);
+      res.status(200).json(successResponse(school));
+    } catch (error) {
+      if (error instanceof SchoolServiceError) {
+        res.status(error.statusCode).json(errorResponse('SCHOOL_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
    * PATCH /api/schools/:id/deactivate — Deactivate school (super_admin only)
    */
   async deactivate(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -94,6 +113,32 @@ export const schoolsController = {
   /**
    * POST /api/schools/:id/logo — Upload school logo (admin, super_admin)
    */
+  async listUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { page, pageSize } = paginationSchema.parse(req.query);
+      const { users, total } = await usersService.list(id, page, pageSize);
+      res.status(200).json(paginatedResponse(users, page, pageSize, total));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async createUserInSchool(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const input = createUserDirectlySchema.parse(req.body);
+      const user = await usersService.createDirectly(id, input);
+      res.status(201).json(successResponse(user));
+    } catch (error) {
+      if (error instanceof UserServiceError) {
+        res.status(error.statusCode).json(errorResponse('USER_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
   async uploadLogo(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;

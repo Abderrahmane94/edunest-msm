@@ -167,7 +167,7 @@ export function UsersPage() {
         </h1>
         <Button onClick={() => setInviteDialogOpen(true)}>
           <UserPlus className="w-4 h-4" />
-          {t('users.invite')}
+          {t('users.create')}
         </Button>
       </div>
 

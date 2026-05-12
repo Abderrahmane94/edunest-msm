@@ -19,7 +19,14 @@ export function tenancyMiddleware(req: Request, res: Response, next: NextFunctio
     return;
   }
 
-  const { schoolId } = req.user;
+  const { schoolId, role } = req.user;
+
+  // super_admin operates across all schools — skip tenant scoping entirely.
+  // Their queries target explicit schoolId params/body, not filtered by JWT.
+  if (role === 'super_admin') {
+    next();
+    return;
+  }
 
   if (!schoolId) {
     res.status(403).json({

@@ -99,6 +99,28 @@ class SchoolsService {
   }
 
   /**
+   * Activate a school (super_admin only).
+   */
+  async activate(id: string): Promise<SchoolResponse> {
+    const school = await prisma.school.findUnique({ where: { id } });
+
+    if (!school) {
+      throw new SchoolServiceError('School not found', 404);
+    }
+
+    if (school.isActive) {
+      throw new SchoolServiceError('School is already active', 400);
+    }
+
+    const updated = await prisma.school.update({
+      where: { id },
+      data: { isActive: true },
+    });
+
+    return withLogoUrl(updated);
+  }
+
+  /**
    * Deactivate a school (super_admin only).
    * Sets is_active to false.
    */

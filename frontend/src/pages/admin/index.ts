@@ -1,6 +1,7 @@
 export { DashboardPage } from './DashboardPage';
 export { SchoolSettingsPage } from './SchoolSettingsPage';
 export { SchoolsPage } from './SchoolsPage';
+export { SchoolDetailPage } from './SchoolDetailPage';
 export { UsersPage } from './UsersPage';
 export { UserDetailPage } from './UserDetailPage';
 export { InviteUserDialog } from './InviteUserDialog';

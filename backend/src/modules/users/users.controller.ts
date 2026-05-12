@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { usersService, UserServiceError } from './users.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
 import { paginationSchema } from '../../utils/validators';
-import type { InviteUserInput, RegisterUserInput, UpdateFcmTokenInput, UpdateLanguageInput, UpdateUserInput } from './users.schema';
+import type { InviteUserInput, RegisterUserInput, UpdateFcmTokenInput, UpdateLanguageInput, UpdateUserInput, CreateUserDirectlyInput } from './users.schema';
 
 export const usersController = {
   /**
@@ -65,13 +65,32 @@ export const usersController = {
 
   /**
    * GET /api/users/:id — Get user by ID (admin only)
+   * super_admin can view any user; admin is scoped to their school.
    */
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId;
       const user = await usersService.getById(id, schoolId);
       res.status(200).json(successResponse(user));
+    } catch (error) {
+      if (error instanceof UserServiceError) {
+        res.status(error.statusCode).json(errorResponse('USER_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/users — Create a user directly in the admin's school (admin only)
+   */
+  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId;
+      const input = req.body as CreateUserDirectlyInput;
+      const user = await usersService.createDirectly(schoolId, input);
+      res.status(201).json(successResponse(user));
     } catch (error) {
       if (error instanceof UserServiceError) {
         res.status(error.statusCode).json(errorResponse('USER_ERROR', error.message));
@@ -87,7 +106,7 @@ export const usersController = {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId;
       const input = req.body as UpdateUserInput;
       const user = await usersService.update(id, schoolId, input as any);
       res.status(200).json(successResponse(user));

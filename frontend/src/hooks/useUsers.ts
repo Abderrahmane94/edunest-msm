@@ -74,15 +74,23 @@ export function useUsers(params: UsersParams = {}) {
   });
 }
 
+export interface UserWithSchool extends User {
+  school?: { id: string; name: string; schoolType: string } | null;
+}
+
 export function useUser(id: string) {
   return useQuery({
     queryKey: ['users', id],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>>(`/users/${id}`);
       if (!res.success) throw new Error(res.error?.message ?? 'User not found');
-      return mapUser(res.data as Record<string, unknown>);
+      const raw = res.data as Record<string, unknown>;
+      const base = mapUser(raw);
+      const school = raw.school as { id: string; name: string; schoolType: string } | null | undefined;
+      return { ...base, school: school ?? null } as UserWithSchool;
     },
     enabled: !!id,
+    staleTime: 0, // always fetch fresh — school info may not be in older cache entries
   });
 }
 

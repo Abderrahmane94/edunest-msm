@@ -36,6 +36,58 @@
     "invoices": "Factures",
     "notifications": "Notifications"
   },
+  "schools": {
+    "title": "Gestion des écoles",
+    "create": "Nouvelle école",
+    "noSchools": "Aucune école enregistrée",
+    "count": "{{count}} établissement(s)",
+    "active": "Active",
+    "inactive": "Désactivée",
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "notFound": "École introuvable",
+    "superAdminOnly": "Accès réservé au super administrateur.",
+    "columns": {
+      "name": "Nom",
+      "type": "Type",
+      "contact": "Contact",
+      "status": "Statut",
+      "createdAt": "Créée le"
+    },
+    "form": {
+      "createTitle": "Créer une école",
+      "createDescription": "Enregistrez un nouvel établissement sur la plateforme.",
+      "name": "Nom de l'école",
+      "namePlaceholder": "Ex: Maternelle An-Nour",
+      "nameRequired": "Le nom est requis",
+      "addressRequired": "L'adresse est requise",
+      "wilayaRequired": "La wilaya est requise",
+      "emailRequired": "L'email est requis",
+      "phoneRequired": "Le téléphone est requis"
+    },
+    "tabs": {
+      "info": "Informations",
+      "users": "Utilisateurs"
+    },
+    "detail": {
+      "info": "Informations",
+      "schoolId": "Identifiant",
+      "accessControl": "Contrôle d'accès",
+      "deactivateWarning": "Désactiver l'école révoque immédiatement l'accès de tous ses utilisateurs.",
+      "activateHint": "Activer l'école permet à ses utilisateurs de se reconnecter."
+    },
+    "users": {
+      "total": "{{count}} utilisateur(s)",
+      "invite": "Créer un utilisateur",
+      "noUsers": "Aucun utilisateur dans cette école",
+      "createTitle": "Créer un utilisateur",
+      "createDescription": "Créez un compte directement dans cette école.",
+      "password": "Mot de passe",
+      "passwordHint": "Minimum 8 caractères",
+      "allFieldsRequired": "Tous les champs sont requis",
+      "created": "Utilisateur créé avec succès"
+    }
+  },
   "common": {
     "save": "Enregistrer",
     "saved": "Modifications enregistrées",
@@ -104,7 +156,18 @@
       "firstName": "Prénom",
       "lastName": "Nom de famille",
       "email": "Adresse e-mail",
-      "joined": "Inscrit le"
+      "joined": "Inscrit le",
+      "school": "École rattachée",
+      "viewSchool": "Voir l'école",
+      "noSchool": "Aucune école rattachée"
+    },
+    "create": "Créer un utilisateur",
+    "create_form": {
+      "title": "Créer un utilisateur",
+      "description": "Créez un compte directement dans cette école.",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "Minimum 8 caractères",
+      "passwordMin": "Le mot de passe doit contenir au moins 8 caractères"
     },
     "invite_form": {
       "title": "Inviter un utilisateur",

@@ -11,6 +11,7 @@ import {
   DashboardPage,
   SchoolSettingsPage,
   SchoolsPage,
+  SchoolDetailPage,
   UsersPage,
   UserDetailPage,
   StaffListPage,
@@ -296,6 +297,7 @@ export const routes: RouteObject[] = [
             children: [
               { index: true, element: <DashboardPage /> },
               { path: 'schools', element: <SchoolsPage /> },
+              { path: 'schools/:schoolId', element: <SchoolDetailPage /> },
               { path: 'users', element: <UsersPage /> },
               { path: 'users/:userId', element: <UserDetailPage /> },
               { path: 'staff', element: <StaffListPage /> },

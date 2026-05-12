@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import prisma from '../../lib/prisma';
 import { emailService } from '../../services/email.service';
 import type { UserRole, Language } from '@prisma/client';
+import type { CreateUserDirectlyInput } from './users.schema';
 
 const INVITATION_EXPIRY_HOURS = 48;
 const BCRYPT_SALT_ROUNDS = 10;
@@ -176,9 +177,12 @@ export const usersService = {
   async list(schoolId: string, page: number, pageSize: number) {
     const skip = (page - 1) * pageSize;
 
+    // Exclude super_admin users — they are platform-level and not school-scoped
+    const where = { schoolId, role: { not: 'super_admin' as const } };
+
     const [users, total] = await Promise.all([
       prisma.user.findMany({
-        where: { schoolId },
+        where,
         select: {
           id: true,
           schoolId: true,
@@ -195,18 +199,21 @@ export const usersService = {
         skip,
         take: pageSize,
       }),
-      prisma.user.count({ where: { schoolId } }),
+      prisma.user.count({ where }),
     ]);
 
     return { users, total };
   },
 
   /**
-   * Get a user by ID within a school.
+   * Get a user by ID.
+   * If schoolId is provided, scopes the lookup to that school (admin).
+   * If null, looks up by ID only (super_admin).
+   * Always includes school name for super_admin context.
    */
-  async getById(id: string, schoolId: string) {
+  async getById(id: string, schoolId: string | null) {
     const user = await prisma.user.findFirst({
-      where: { id, schoolId },
+      where: schoolId ? { id, schoolId } : { id },
       select: {
         id: true,
         schoolId: true,
@@ -218,6 +225,9 @@ export const usersService = {
         fcmToken: true,
         preferredLanguage: true,
         createdAt: true,
+        school: {
+          select: { id: true, name: true, schoolType: true },
+        },
       },
     });
 
@@ -311,10 +321,42 @@ export const usersService = {
   },
 
   /**
+   * Create a user directly in a school (no invitation token required).
+   * Used by super_admin (any school) and admin (their own school).
+   */
+  async createDirectly(schoolId: string, input: CreateUserDirectlyInput) {
+    const existing = await prisma.user.findUnique({ where: { email: input.email } });
+    if (existing) {
+      throw new UserServiceError('A user with this email already exists', 409);
+    }
+
+    const passwordHash = await bcrypt.hash(input.password, BCRYPT_SALT_ROUNDS);
+
+    const user = await prisma.user.create({
+      data: {
+        schoolId,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        email: input.email,
+        passwordHash,
+        role: input.role as UserRole,
+        preferredLanguage: (input.preferredLanguage ?? 'fr') as Language,
+        isActive: true,
+      },
+      select: {
+        id: true, schoolId: true, firstName: true, lastName: true,
+        email: true, role: true, isActive: true, preferredLanguage: true, createdAt: true,
+      },
+    });
+
+    return user;
+  },
+
+  /**
    * Update a user's editable profile fields (admin only).
    */
-  async update(id: string, schoolId: string, input: { firstName?: string; lastName?: string; role?: UserRole; preferredLanguage?: Language }) {
-    const user = await prisma.user.findFirst({ where: { id, schoolId } });
+  async update(id: string, schoolId: string | null, input: { firstName?: string; lastName?: string; role?: UserRole; preferredLanguage?: Language }) {
+    const user = await prisma.user.findFirst({ where: schoolId ? { id, schoolId } : { id } });
 
     if (!user) {
       throw new UserServiceError('User not found', 404);

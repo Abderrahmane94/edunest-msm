@@ -42,6 +42,18 @@ export const updateUserSchema = z.object({
   preferredLanguage: z.enum(['ar', 'fr']).optional(),
 });
 
+export const createUserDirectlySchema = z.object({
+  firstName: z.string().min(1, 'First name is required').max(100),
+  lastName: z.string().min(1, 'Last name is required').max(100),
+  email: z.string().email('Invalid email address'),
+  role: z.enum(['admin', 'teacher', 'parent'], {
+    errorMap: () => ({ message: 'Role must be admin, teacher, or parent' }),
+  }),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128),
+  preferredLanguage: z.enum(['ar', 'fr']).optional().default('fr'),
+});
+
+export type CreateUserDirectlyInput = z.infer<typeof createUserDirectlySchema>;
 export type InviteUserInput = z.infer<typeof inviteUserSchema>;
 export type RegisterUserInput = z.infer<typeof registerUserSchema>;
 export type UpdateFcmTokenInput = z.infer<typeof updateFcmTokenSchema>;

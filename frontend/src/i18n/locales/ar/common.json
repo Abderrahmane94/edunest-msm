@@ -36,6 +36,58 @@
     "invoices": "الفواتير",
     "notifications": "الإشعارات"
   },
+  "schools": {
+    "title": "إدارة المدارس",
+    "create": "مدرسة جديدة",
+    "noSchools": "لا توجد مدارس مسجلة",
+    "count": "{{count}} مؤسسة",
+    "active": "نشطة",
+    "inactive": "معطلة",
+    "activate": "تفعيل",
+    "deactivate": "إلغاء التفعيل",
+    "notFound": "المدرسة غير موجودة",
+    "superAdminOnly": "الوصول مخصص للمدير العام فقط.",
+    "columns": {
+      "name": "الاسم",
+      "type": "النوع",
+      "contact": "جهة الاتصال",
+      "status": "الحالة",
+      "createdAt": "تاريخ الإنشاء"
+    },
+    "form": {
+      "createTitle": "إنشاء مدرسة",
+      "createDescription": "سجّل مؤسسة تعليمية جديدة في المنصة.",
+      "name": "اسم المدرسة",
+      "namePlaceholder": "مثال: روضة النور",
+      "nameRequired": "الاسم مطلوب",
+      "addressRequired": "العنوان مطلوب",
+      "wilayaRequired": "الولاية مطلوبة",
+      "emailRequired": "البريد الإلكتروني مطلوب",
+      "phoneRequired": "رقم الهاتف مطلوب"
+    },
+    "tabs": {
+      "info": "المعلومات",
+      "users": "المستخدمون"
+    },
+    "detail": {
+      "info": "المعلومات",
+      "schoolId": "المعرّف",
+      "accessControl": "التحكم في الوصول",
+      "deactivateWarning": "إلغاء التفعيل يسحب صلاحيات جميع مستخدمي المدرسة فوراً.",
+      "activateHint": "تفعيل المدرسة يتيح لمستخدميها تسجيل الدخول مجدداً."
+    },
+    "users": {
+      "total": "{{count}} مستخدم",
+      "invite": "إنشاء مستخدم",
+      "noUsers": "لا يوجد مستخدمون في هذه المدرسة",
+      "createTitle": "إنشاء مستخدم",
+      "createDescription": "أنشئ حساباً مباشرةً في هذه المدرسة.",
+      "password": "كلمة المرور",
+      "passwordHint": "8 أحرف على الأقل",
+      "allFieldsRequired": "جميع الحقول مطلوبة",
+      "created": "تم إنشاء المستخدم بنجاح"
+    }
+  },
   "common": {
     "save": "حفظ",
     "saved": "تم حفظ التغييرات",
@@ -104,7 +156,18 @@
       "firstName": "الاسم الأول",
       "lastName": "اسم العائلة",
       "email": "البريد الإلكتروني",
-      "joined": "تاريخ الانضمام"
+      "joined": "تاريخ الانضمام",
+      "school": "المدرسة المرتبطة",
+      "viewSchool": "عرض المدرسة",
+      "noSchool": "لا توجد مدرسة مرتبطة"
+    },
+    "create": "إنشاء مستخدم",
+    "create_form": {
+      "title": "إنشاء مستخدم",
+      "description": "أنشئ حساباً مباشرةً في هذه المدرسة.",
+      "password": "كلمة المرور",
+      "passwordPlaceholder": "8 أحرف على الأقل",
+      "passwordMin": "يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل"
     },
     "invite_form": {
       "title": "دعوة مستخدم",

@@ -32,8 +32,17 @@ router.get('/:id', requireAdmin, validateParams(idParamSchema), schoolsControlle
 // PUT /api/schools/:id — Update school (admin, super_admin)
 router.put('/:id', requireAdmin, validateParams(idParamSchema), validate(updateSchoolSchema), schoolsController.update);
 
+// PATCH /api/schools/:id/activate — Activate school (super_admin only)
+router.patch('/:id/activate', requireSuperAdmin, validateParams(idParamSchema), schoolsController.activate);
+
 // PATCH /api/schools/:id/deactivate — Deactivate school (super_admin only)
 router.patch('/:id/deactivate', requireSuperAdmin, validateParams(idParamSchema), schoolsController.deactivate);
+
+// GET /api/schools/:id/users — List users for a school (super_admin only)
+router.get('/:id/users', requireSuperAdmin, validateParams(idParamSchema), schoolsController.listUsers);
+
+// POST /api/schools/:id/users — Create a user directly in a specific school (super_admin only)
+router.post('/:id/users', requireSuperAdmin, validateParams(idParamSchema), schoolsController.createUserInSchool);
 
 // POST /api/schools/:id/logo — Upload school logo (admin, super_admin)
 router.post('/:id/logo', requireAdmin, validateParams(idParamSchema), upload.single('logo'), schoolsController.uploadLogo);

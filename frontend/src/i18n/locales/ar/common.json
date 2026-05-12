@@ -38,19 +38,24 @@
   },
   "common": {
     "save": "حفظ",
+    "saved": "تم حفظ التغييرات",
     "cancel": "إلغاء",
     "delete": "حذف",
     "edit": "تعديل",
     "create": "إنشاء",
     "search": "بحث",
     "loading": "جاري التحميل...",
-    "noData": "لا توجد بيانات"
+    "noData": "لا توجد بيانات",
+    "back": "رجوع",
+    "error": "حدث خطأ ما",
+    "confirm": "تأكيد"
   },
   "schoolSettings": {
     "title": "إعدادات المدرسة",
     "logo": "شعار المدرسة",
     "uploadLogo": "رفع الشعار",
-    "logoHint": "PNG أو JPG أو WebP. الحد الأقصى 2 ميجابايت.",
+    "logoHint": "PNG أو JPG أو WebP. الحد الأقصى 5 ميجابايت.",
+    "newLogoSelected": "تم اختيار شعار جديد — انقر على حفظ لتطبيقه",
     "logoAlt": "شعار المدرسة",
     "details": "معلومات المدرسة",
     "name": "اسم المدرسة",
@@ -93,6 +98,14 @@
       "teacher": "معلم",
       "parent": "ولي أمر"
     },
+    "notFound": "المستخدم غير موجود",
+    "detail": {
+      "profile": "الملف الشخصي",
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "email": "البريد الإلكتروني",
+      "joined": "تاريخ الانضمام"
+    },
     "invite_form": {
       "title": "دعوة مستخدم",
       "description": "أرسل دعوة بالبريد الإلكتروني للانضمام إلى المدرسة.",
@@ -117,6 +130,15 @@
     "active": "نشطة",
     "inactive": "غير نشطة",
     "activate": "تفعيل",
+    "currentlyActive": "السنة الحالية",
+    "notFound": "السنة الدراسية غير موجودة",
+    "detail": {
+      "info": "المعلومات",
+      "dangerZone": "منطقة الخطر",
+      "deleteWarning": "الحذف نهائي. يمكن حذف السنوات غير النشطة فقط.",
+      "delete": "حذف هذه السنة",
+      "confirmDelete": "تأكيد الحذف؟"
+    },
     "form": {
       "title": "إنشاء سنة دراسية",
       "description": "حدد فترة دراسية جديدة.",
@@ -136,6 +158,15 @@
     "noClassrooms": "لم يتم العثور على فصول",
     "noActiveYear": "يرجى تفعيل سنة دراسية أولاً.",
     "noTeacher": "غير معين",
+    "notFound": "الفصل غير موجود",
+    "detail": {
+      "info": "المعلومات",
+      "assign": "حفظ",
+      "dangerZone": "منطقة الخطر",
+      "deleteWarning": "الحذف نهائي. يمكن حذف الفصول التي ليس بها طلاب مسجلون فقط.",
+      "delete": "حذف هذا الفصل",
+      "confirmDelete": "تأكيد الحذف؟"
+    },
     "columns": {
       "name": "الاسم",
       "level": "المستوى",
@@ -171,6 +202,23 @@
     "searchPlaceholder": "البحث بالاسم...",
     "noChildren": "لم يتم العثور على أطفال",
     "noParents": "لا يوجد أولياء أمور مرتبطون",
+    "notFound": "الطفل غير موجود",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "detail": {
+      "info": "المعلومات",
+      "classroom": "الفصل الحالي",
+      "noClassroom": "لا يوجد فصل مخصص",
+      "enrollIn": "التسجيل في",
+      "selectClassroom": "اختر فصلاً",
+      "enroll": "تسجيل",
+      "parents": "أولياء الأمور المرتبطون",
+      "link": "ربط",
+      "dangerZone": "منطقة الخطر",
+      "deleteWarning": "الحذف يعطّل الطفل بشكل نهائي.",
+      "delete": "حذف هذا الطفل",
+      "confirmDelete": "تأكيد الحذف؟"
+    },
     "active": "نشط",
     "inactive": "غير نشط",
     "columns": {
@@ -194,8 +242,8 @@
       "gender": "الجنس",
       "male": "ذكر",
       "female": "أنثى",
-      "classroom": "الفصل",
-      "noClassroom": "بدون فصل"
+      "enrollmentDate": "تاريخ التسجيل",
+      "noActiveYear": "لا توجد سنة دراسية نشطة. يرجى تفعيل سنة دراسية أولاً."
     },
     "linkParent": {
       "title": "ربط ولي أمر",
@@ -314,6 +362,23 @@
     "fees": {
       "create": "رسوم جديدة",
       "empty": "لم يتم تحديد أي هيكل رسوم",
+      "notFound": "هيكل الرسوم غير موجود",
+      "detail": {
+        "info": "المعلومات",
+        "dangerZone": "منطقة الخطر",
+        "deleteWarning": "يمكن حذف الهياكل التي ليس لها فواتير مرتبطة فقط.",
+        "delete": "حذف",
+        "confirmDelete": "تأكيد الحذف؟"
+      },
+      "form": {
+        "name": "الاسم",
+        "amount": "المبلغ (دج)",
+        "frequency": "التكرار",
+        "level": "المستوى",
+        "levelPlaceholder": "مثال: قسم صغير",
+        "description": "الوصف",
+        "descriptionPlaceholder": "وصف اختياري"
+      },
       "columns": {
         "name": "الاسم",
         "amount": "المبلغ",
@@ -343,9 +408,20 @@
     },
     "invoices": {
       "empty": "لم يتم العثور على فواتير",
+      "notFound": "الفاتورة غير موجودة",
+      "cancel": "إلغاء",
       "bulkGenerate": "إنشاء جماعي",
       "send": "إرسال",
       "recordCash": "نقدي",
+      "detail": {
+        "info": "المعلومات",
+        "discount": "الخصم",
+        "finalAmount": "المبلغ النهائي",
+        "remaining": "المبلغ المتبقي",
+        "paidAt": "تاريخ الدفع",
+        "paymentHistory": "سجل المدفوعات",
+        "confirmCancel": "تأكيد الإلغاء؟"
+      },
       "columns": {
         "child": "الطفل",
         "fee": "الرسوم",
@@ -391,7 +467,21 @@
     "expenses": {
       "create": "مصروف جديد",
       "empty": "لا توجد مصروفات مسجلة",
+      "notFound": "المصروف غير موجود",
       "hasReceipt": "إيصال",
+      "detail": {
+        "info": "المعلومات",
+        "dangerZone": "منطقة الخطر",
+        "deleteWarning": "الحذف نهائي ولا يمكن التراجع عنه.",
+        "delete": "حذف",
+        "confirmDelete": "تأكيد الحذف؟"
+      },
+      "form": {
+        "category": "الفئة",
+        "amount": "المبلغ (دج)",
+        "date": "التاريخ",
+        "description": "الوصف"
+      },
       "columns": {
         "category": "الفئة",
         "description": "الوصف",
@@ -436,8 +526,17 @@
   },
   "communication": {
     "title": "التواصل",
+    "detail": {
+      "dangerZone": "منطقة الخطر",
+      "deleteAnnouncement": "حذف الإعلان",
+      "deleteAnnouncementWarning": "الحذف نهائي ولا يمكن التراجع عنه.",
+      "deleteEvent": "حذف الفعالية",
+      "deleteEventWarning": "الحذف سيزيل أيضاً جميع نماذج الموافقة المرتبطة.",
+      "confirmDelete": "تأكيد الحذف؟"
+    },
     "announcements": {
       "tab": "الإعلانات",
+      "notFound": "الإعلان غير موجود",
       "create": "إعلان جديد",
       "noAnnouncements": "لا توجد إعلانات منشورة",
       "schoolWide": "المدرسة بأكملها",
@@ -463,6 +562,8 @@
       "tab": "الفعاليات",
       "create": "فعالية جديدة",
       "noEvents": "لا توجد فعاليات مخططة",
+      "notFound": "الفعالية غير موجودة",
+      "requiresConsent": "يتطلب موافقة",
       "noConsent": "غير متاح",
       "viewConsent": "الموافقات",
       "columns": {

@@ -29,10 +29,8 @@ export function useConversations() {
   return useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
-      const res = await apiClient.get<{ conversations: Conversation[] }>(
-        '/communication/conversations'
-      );
-      return res.data?.conversations ?? [];
+      const res = await apiClient.get<Conversation[]>('/communication/conversations');
+      return Array.isArray(res.data) ? res.data : [];
     },
   });
 }
@@ -41,10 +39,10 @@ export function useMessages(conversationId?: string) {
   return useQuery({
     queryKey: ['messages', conversationId],
     queryFn: async () => {
-      const res = await apiClient.get<{ messages: Message[] }>(
+      const res = await apiClient.get<Message[]>(
         `/communication/conversations/${conversationId}/messages`
       );
-      return res.data?.messages ?? [];
+      return Array.isArray(res.data) ? res.data : [];
     },
     enabled: !!conversationId,
   });
@@ -55,14 +53,14 @@ export function useSendMessage(conversationId?: string) {
 
   return useMutation({
     mutationFn: async (data: { content: string; message_type: 'text' | 'photo' | 'document' }) => {
-      const res = await apiClient.post<{ message: Message }>(
+      const res = await apiClient.post<Message>(
         `/communication/conversations/${conversationId}/messages`,
-        data
+        { content: data.content, messageType: data.message_type }
       );
       if (!res.success) {
         throw new Error(res.error?.message || 'Failed to send message');
       }
-      return res.data!.message;
+      return res.data as Message;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });

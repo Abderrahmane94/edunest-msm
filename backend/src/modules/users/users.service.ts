@@ -311,6 +311,34 @@ export const usersService = {
   },
 
   /**
+   * Update a user's editable profile fields (admin only).
+   */
+  async update(id: string, schoolId: string, input: { firstName?: string; lastName?: string; role?: UserRole; preferredLanguage?: Language }) {
+    const user = await prisma.user.findFirst({ where: { id, schoolId } });
+
+    if (!user) {
+      throw new UserServiceError('User not found', 404);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: {
+        ...(input.firstName !== undefined && { firstName: input.firstName }),
+        ...(input.lastName !== undefined && { lastName: input.lastName }),
+        ...(input.role !== undefined && { role: input.role }),
+        ...(input.preferredLanguage !== undefined && { preferredLanguage: input.preferredLanguage }),
+      },
+      select: {
+        id: true, schoolId: true, firstName: true, lastName: true,
+        email: true, role: true, isActive: true, fcmToken: true,
+        preferredLanguage: true, createdAt: true,
+      },
+    });
+
+    return updated;
+  },
+
+  /**
    * Update a user's FCM token.
    */
   async updateFcmToken(id: string, fcmToken: string) {

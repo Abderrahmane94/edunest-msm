@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Link2, Phone } from 'lucide-react';
 import {
   Button,
@@ -33,17 +34,18 @@ function CreateChildDialog({
   const activeYear = (academicYears ?? []).find((y) => y.is_active);
   const { data: classrooms } = useClassrooms(activeYear?.id);
 
+  const today = new Date().toISOString().split('T')[0];
   const [formData, setFormData] = React.useState({
     first_name: '',
     last_name: '',
     date_of_birth: '',
     gender: 'male',
-    classroom_id: '',
+    enrollment_date: today,
   });
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   function resetForm() {
-    setFormData({ first_name: '', last_name: '', date_of_birth: '', gender: 'male', classroom_id: '' });
+    setFormData({ first_name: '', last_name: '', date_of_birth: '', gender: 'male', enrollment_date: today });
     setErrors({});
   }
 
@@ -79,13 +81,19 @@ function CreateChildDialog({
     e.preventDefault();
     if (!validate()) return;
 
+    if (!activeYear) {
+      setErrors({ form: t('children.form.noActiveYear') });
+      return;
+    }
+
     try {
       await createChild.mutateAsync({
         first_name: formData.first_name,
         last_name: formData.last_name,
         date_of_birth: formData.date_of_birth,
         gender: formData.gender,
-        classroom_id: formData.classroom_id || undefined,
+        enrollment_date: formData.enrollment_date,
+        academic_year_id: activeYear.id,
       });
       resetForm();
       onOpenChange(false);
@@ -178,13 +186,23 @@ function CreateChildDialog({
             />
           </div>
 
-          <FormSelect
-            label={t('children.form.classroom')}
-            name="classroom_id"
-            value={formData.classroom_id}
-            onChange={handleSelectChange}
-            options={classroomOptions}
-          />
+          <FormField
+            label={t('children.form.enrollmentDate')}
+            htmlFor="child-enrollment-date"
+            required
+          >
+            <Input
+              id="child-enrollment-date"
+              name="enrollment_date"
+              type="date"
+              value={formData.enrollment_date}
+              onChange={handleChange}
+            />
+          </FormField>
+
+          {errors.form && (
+            <p className="text-body text-danger mt-1">{errors.form}</p>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => handleClose(false)}>
@@ -479,6 +497,7 @@ function EmergencyContactsDialog({
 
 export function ChildrenPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [page, setPage] = React.useState(1);
   const [search, setSearch] = React.useState('');
   const pageSize = 10;
@@ -574,7 +593,7 @@ export function ChildrenPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => handleLinkParent(child)}
+            onClick={(e) => { e.stopPropagation(); handleLinkParent(child); }}
             aria-label={t('children.linkParent.title')}
             title={t('children.linkParent.title')}
           >
@@ -583,7 +602,7 @@ export function ChildrenPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => handleEmergencyContacts(child)}
+            onClick={(e) => { e.stopPropagation(); handleEmergencyContacts(child); }}
             aria-label={t('children.emergencyContacts.title')}
             title={t('children.emergencyContacts.title')}
           >
@@ -630,6 +649,7 @@ export function ChildrenPage() {
         columns={columns}
         data={children}
         keyExtractor={(child) => child.id}
+        onRowClick={(child) => navigate(`/admin/children/${child.id}`)}
         searchable
         searchPlaceholder={t('children.searchPlaceholder')}
         onSearch={handleSearch}

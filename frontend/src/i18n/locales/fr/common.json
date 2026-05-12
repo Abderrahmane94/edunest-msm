@@ -38,19 +38,24 @@
   },
   "common": {
     "save": "Enregistrer",
+    "saved": "Modifications enregistrées",
     "cancel": "Annuler",
     "delete": "Supprimer",
     "edit": "Modifier",
     "create": "Créer",
     "search": "Rechercher",
     "loading": "Chargement...",
-    "noData": "Aucune donnée"
+    "noData": "Aucune donnée",
+    "back": "Retour",
+    "error": "Une erreur est survenue",
+    "confirm": "Confirmer"
   },
   "schoolSettings": {
     "title": "Paramètres de l'école",
     "logo": "Logo de l'école",
     "uploadLogo": "Télécharger le logo",
-    "logoHint": "PNG, JPG ou WebP. Max 2 Mo.",
+    "logoHint": "PNG, JPG ou WebP. Max 5 Mo.",
+    "newLogoSelected": "Nouveau logo sélectionné — cliquez sur Enregistrer pour l'appliquer",
     "logoAlt": "Logo de l'école",
     "details": "Informations de l'école",
     "name": "Nom de l'école",
@@ -93,6 +98,14 @@
       "teacher": "Enseignant",
       "parent": "Parent"
     },
+    "notFound": "Utilisateur introuvable",
+    "detail": {
+      "profile": "Profil",
+      "firstName": "Prénom",
+      "lastName": "Nom de famille",
+      "email": "Adresse e-mail",
+      "joined": "Inscrit le"
+    },
     "invite_form": {
       "title": "Inviter un utilisateur",
       "description": "Envoyez une invitation par e-mail pour rejoindre l'école.",
@@ -117,6 +130,15 @@
     "active": "Active",
     "inactive": "Inactive",
     "activate": "Activer",
+    "currentlyActive": "Année en cours",
+    "notFound": "Année scolaire introuvable",
+    "detail": {
+      "info": "Informations",
+      "dangerZone": "Zone dangereuse",
+      "deleteWarning": "La suppression est définitive. Seules les années inactives peuvent être supprimées.",
+      "delete": "Supprimer cette année",
+      "confirmDelete": "Confirmer la suppression ?"
+    },
     "form": {
       "title": "Créer une année scolaire",
       "description": "Définissez une nouvelle période scolaire.",
@@ -136,6 +158,15 @@
     "noClassrooms": "Aucune classe trouvée",
     "noActiveYear": "Veuillez d'abord activer une année scolaire.",
     "noTeacher": "Non assigné",
+    "notFound": "Classe introuvable",
+    "detail": {
+      "info": "Informations",
+      "assign": "Enregistrer",
+      "dangerZone": "Zone dangereuse",
+      "deleteWarning": "La suppression est définitive. Seules les classes sans élèves inscrits peuvent être supprimées.",
+      "delete": "Supprimer cette classe",
+      "confirmDelete": "Confirmer la suppression ?"
+    },
     "columns": {
       "name": "Nom",
       "level": "Niveau",
@@ -171,6 +202,23 @@
     "searchPlaceholder": "Rechercher par nom...",
     "noChildren": "Aucun enfant trouvé",
     "noParents": "Aucun parent lié",
+    "notFound": "Enfant introuvable",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "detail": {
+      "info": "Informations",
+      "classroom": "Classe actuelle",
+      "noClassroom": "Aucune classe assignée",
+      "enrollIn": "Inscrire dans",
+      "selectClassroom": "Sélectionner une classe",
+      "enroll": "Inscrire",
+      "parents": "Parents liés",
+      "link": "Lier",
+      "dangerZone": "Zone dangereuse",
+      "deleteWarning": "La suppression désactive l'enfant définitivement.",
+      "delete": "Supprimer cet enfant",
+      "confirmDelete": "Confirmer la suppression ?"
+    },
     "active": "Actif",
     "inactive": "Inactif",
     "columns": {
@@ -194,8 +242,8 @@
       "gender": "Genre",
       "male": "Garçon",
       "female": "Fille",
-      "classroom": "Classe",
-      "noClassroom": "Aucune classe"
+      "enrollmentDate": "Date d'inscription",
+      "noActiveYear": "Aucune année scolaire active. Veuillez d'abord en activer une."
     },
     "linkParent": {
       "title": "Lier un parent",
@@ -314,6 +362,23 @@
     "fees": {
       "create": "Nouveau frais",
       "empty": "Aucune structure de frais définie",
+      "notFound": "Structure de frais introuvable",
+      "detail": {
+        "info": "Informations",
+        "dangerZone": "Zone dangereuse",
+        "deleteWarning": "Seules les structures sans factures associées peuvent être supprimées.",
+        "delete": "Supprimer",
+        "confirmDelete": "Confirmer la suppression ?"
+      },
+      "form": {
+        "name": "Nom",
+        "amount": "Montant (DZD)",
+        "frequency": "Fréquence",
+        "level": "Niveau",
+        "levelPlaceholder": "Ex: Petite section",
+        "description": "Description",
+        "descriptionPlaceholder": "Description optionnelle"
+      },
       "columns": {
         "name": "Nom",
         "amount": "Montant",
@@ -343,9 +408,20 @@
     },
     "invoices": {
       "empty": "Aucune facture trouvée",
+      "notFound": "Facture introuvable",
+      "cancel": "Annuler",
       "bulkGenerate": "Génération groupée",
       "send": "Envoyer",
       "recordCash": "Espèces",
+      "detail": {
+        "info": "Informations",
+        "discount": "Remise",
+        "finalAmount": "Montant final",
+        "remaining": "Reste à payer",
+        "paidAt": "Payé le",
+        "paymentHistory": "Historique des paiements",
+        "confirmCancel": "Confirmer l'annulation ?"
+      },
       "columns": {
         "child": "Enfant",
         "fee": "Frais",
@@ -391,7 +467,21 @@
     "expenses": {
       "create": "Nouvelle dépense",
       "empty": "Aucune dépense enregistrée",
+      "notFound": "Dépense introuvable",
       "hasReceipt": "Reçu",
+      "detail": {
+        "info": "Informations",
+        "dangerZone": "Zone dangereuse",
+        "deleteWarning": "La suppression est définitive.",
+        "delete": "Supprimer",
+        "confirmDelete": "Confirmer la suppression ?"
+      },
+      "form": {
+        "category": "Catégorie",
+        "amount": "Montant (DZD)",
+        "date": "Date",
+        "description": "Description"
+      },
       "columns": {
         "category": "Catégorie",
         "description": "Description",
@@ -436,8 +526,17 @@
   },
   "communication": {
     "title": "Communication",
+    "detail": {
+      "dangerZone": "Zone dangereuse",
+      "deleteAnnouncement": "Supprimer l'annonce",
+      "deleteAnnouncementWarning": "La suppression est définitive et ne peut pas être annulée.",
+      "deleteEvent": "Supprimer l'événement",
+      "deleteEventWarning": "La suppression supprimera aussi tous les formulaires de consentement associés.",
+      "confirmDelete": "Confirmer la suppression ?"
+    },
     "announcements": {
       "tab": "Annonces",
+      "notFound": "Annonce introuvable",
       "create": "Nouvelle annonce",
       "noAnnouncements": "Aucune annonce publiée",
       "schoolWide": "Toute l'école",
@@ -463,6 +562,8 @@
       "tab": "Événements",
       "create": "Nouvel événement",
       "noEvents": "Aucun événement planifié",
+      "notFound": "Événement introuvable",
+      "requiresConsent": "Consentement requis",
       "noConsent": "N/A",
       "viewConsent": "Consentements",
       "columns": {

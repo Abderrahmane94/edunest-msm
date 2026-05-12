@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { attendanceService, AttendanceServiceError } from './attendance.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
-import type { BulkMarkAttendanceInput, UpdateAttendanceInput } from './attendance.schema';
-import { classroomAttendanceQuerySchema, childAttendanceQuerySchema, attendanceReportQuerySchema, parentChildrenMonthQuerySchema } from './attendance.schema';
+import type { BulkMarkAttendanceInput, UpdateAttendanceInput, AttendanceReportQuery, ClassroomAttendanceQuery, ChildAttendanceQuery, ParentChildrenMonthQuery } from './attendance.schema';
 
 export const attendanceController = {
   /**
@@ -57,7 +56,7 @@ export const attendanceController = {
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { classroomId } = req.params;
-      const { date } = classroomAttendanceQuerySchema.parse(req.query);
+      const { date } = req.query as unknown as ClassroomAttendanceQuery;
 
       const records = await attendanceService.getByClassroom(
         classroomId,
@@ -85,7 +84,7 @@ export const attendanceController = {
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { childId } = req.params;
-      const { startDate, endDate, page, pageSize } = childAttendanceQuerySchema.parse(req.query);
+      const { startDate, endDate, page, pageSize } = req.query as unknown as ChildAttendanceQuery;
 
       const { records, total } = await attendanceService.getByChild(
         childId,
@@ -111,7 +110,7 @@ export const attendanceController = {
     try {
       const schoolId = req.user!.schoolId;
       const { classroomId } = req.params;
-      const { month, year } = attendanceReportQuerySchema.parse(req.query);
+      const { month, year } = req.query as unknown as AttendanceReportQuery;
 
       const report = await attendanceService.getClassroomMonthlyReport(
         classroomId,
@@ -138,7 +137,7 @@ export const attendanceController = {
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { childId } = req.params;
-      const { month, year } = attendanceReportQuerySchema.parse(req.query);
+      const { month, year } = req.query as unknown as AttendanceReportQuery;
 
       const summary = await attendanceService.getChildMonthlySummary(
         childId,
@@ -165,7 +164,7 @@ export const attendanceController = {
     try {
       const schoolId = req.user!.schoolId;
       const userId = req.user!.userId;
-      const { month } = parentChildrenMonthQuerySchema.parse(req.query);
+      const { month } = req.query as unknown as ParentChildrenMonthQuery;
 
       const result = await attendanceService.getParentChildrenAttendance(userId, schoolId, month);
       res.status(200).json(successResponse(result));

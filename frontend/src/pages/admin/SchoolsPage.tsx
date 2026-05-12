@@ -104,6 +104,7 @@ export function SchoolsPage() {
   const toggleSchool = useToggleSchool();
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
   const [editSchool, setEditSchool] = React.useState<School | null>(null);
+  const [actionError, setActionError] = React.useState<string | null>(null);
 
   // Only super_admin can access this page
   if (user?.role !== 'super_admin') {
@@ -192,7 +193,7 @@ export function SchoolsPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => toggleSchool.mutate(school.id)}
+            onClick={() => toggleSchool.mutate(school.id, { onError: (e) => setActionError(e instanceof Error ? e.message : 'Error') })}
             disabled={toggleSchool.isPending}
             aria-label={school.isActive ? 'Désactiver' : 'Activer'}
           >
@@ -236,6 +237,13 @@ export function SchoolsPage() {
           Nouvelle école
         </Button>
       </div>
+
+      {actionError && (
+        <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
+          <span>{actionError}</span>
+          <button onClick={() => setActionError(null)} className="text-danger hover:opacity-70 text-lg leading-none">&times;</button>
+        </div>
+      )}
 
       <DataTable<School>
         columns={columns}

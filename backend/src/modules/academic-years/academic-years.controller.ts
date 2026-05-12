@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { academicYearsService, AcademicYearServiceError } from './academic-years.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
-import type { CreateAcademicYearInput } from './academic-years.schema';
+import type { CreateAcademicYearInput, UpdateAcademicYearInput } from './academic-years.schema';
 import { paginationSchema } from '../../utils/validators';
 
 export const academicYearsController = {
@@ -50,6 +50,43 @@ export const academicYearsController = {
       const { id } = req.params;
       const academicYear = await academicYearsService.getById(id, schoolId);
       res.status(200).json(successResponse(academicYear));
+    } catch (error) {
+      if (error instanceof AcademicYearServiceError) {
+        res.status(error.statusCode).json(errorResponse('ACADEMIC_YEAR_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * PUT /api/academic-years/:id — Update an academic year
+   */
+  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId;
+      const { id } = req.params;
+      const input = req.body as UpdateAcademicYearInput;
+      const academicYear = await academicYearsService.update(id, schoolId, input);
+      res.status(200).json(successResponse(academicYear));
+    } catch (error) {
+      if (error instanceof AcademicYearServiceError) {
+        res.status(error.statusCode).json(errorResponse('ACADEMIC_YEAR_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * DELETE /api/academic-years/:id — Delete an academic year (inactive only)
+   */
+  async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId;
+      const { id } = req.params;
+      await academicYearsService.delete(id, schoolId);
+      res.status(200).json(successResponse({ message: 'Academic year deleted successfully' }));
     } catch (error) {
       if (error instanceof AcademicYearServiceError) {
         res.status(error.statusCode).json(errorResponse('ACADEMIC_YEAR_ERROR', error.message));

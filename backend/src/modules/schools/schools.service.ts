@@ -12,6 +12,15 @@ export class SchoolServiceError extends Error {
   }
 }
 
+function withLogoUrl(school: Omit<SchoolResponse, 'logoUrl'> & { logoPublicId: string | null }): SchoolResponse {
+  return {
+    ...school,
+    logoUrl: school.logoPublicId
+      ? cloudinaryService.generateSignedUrl(school.logoPublicId, 'photo')
+      : null,
+  };
+}
+
 class SchoolsService {
   /**
    * Create a new school (super_admin only).
@@ -28,7 +37,7 @@ class SchoolsService {
       },
     });
 
-    return school;
+    return withLogoUrl(school);
   }
 
   /**
@@ -44,7 +53,7 @@ class SchoolsService {
       prisma.school.count(),
     ]);
 
-    return { schools, total };
+    return { schools: schools.map(withLogoUrl), total };
   }
 
   /**
@@ -59,7 +68,7 @@ class SchoolsService {
       throw new SchoolServiceError('School not found', 404);
     }
 
-    return school;
+    return withLogoUrl(school);
   }
 
   /**
@@ -86,7 +95,7 @@ class SchoolsService {
       },
     });
 
-    return updated;
+    return withLogoUrl(updated);
   }
 
   /**
@@ -111,7 +120,7 @@ class SchoolsService {
       data: { isActive: false },
     });
 
-    return updated;
+    return withLogoUrl(updated);
   }
 
   /**
@@ -143,7 +152,7 @@ class SchoolsService {
       data: { logoPublicId: result.publicId },
     });
 
-    return updated;
+    return { ...withLogoUrl(updated), logoUrl: result.url };
   }
 }
 

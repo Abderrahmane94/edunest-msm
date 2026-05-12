@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Megaphone, Calendar, Plus, MapPin, Users, CheckCircle, XCircle, Clock } from 'lucide-react';
 import {
   Button,
@@ -109,6 +110,7 @@ export function CommunicationPage() {
 
 function AnnouncementsTab() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: announcements, isLoading } = useAnnouncements();
 
   const columns: Column<Announcement>[] = [
@@ -165,6 +167,7 @@ function AnnouncementsTab() {
       columns={columns}
       data={announcements ?? []}
       keyExtractor={(row) => row.id}
+      onRowClick={(row) => navigate(`/admin/communication/announcements/${row.id}`)}
       emptyMessage={t('communication.announcements.noAnnouncements')}
     />
   );
@@ -180,6 +183,7 @@ function EventsTab({
   onSelectEvent: (id: string | undefined) => void;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: events, isLoading } = useEvents();
 
   const columns: Column<SchoolEvent>[] = [
@@ -248,7 +252,7 @@ function EventsTab({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onSelectEvent(selectedEventId === row.id ? undefined : row.id)}
+            onClick={(e) => { e.stopPropagation(); onSelectEvent(selectedEventId === row.id ? undefined : row.id); }}
           >
             <Users className="w-4 h-4" />
             {t('communication.events.viewConsent')}
@@ -276,6 +280,7 @@ function EventsTab({
         columns={columns}
         data={events ?? []}
         keyExtractor={(row) => row.id}
+        onRowClick={(row) => navigate(`/admin/communication/events/${row.id}`)}
         emptyMessage={t('communication.events.noEvents')}
       />
 
@@ -410,6 +415,7 @@ function CreateAnnouncementDialog({
   const [title, setTitle] = React.useState('');
   const [body, setBody] = React.useState('');
   const [classroomId, setClassroomId] = React.useState('');
+  const [error, setError] = React.useState<string | null>(null);
 
   const { data: academicYears } = useAcademicYears();
   const activeYear = (academicYears ?? []).find((y) => y.is_active);
@@ -425,25 +431,24 @@ function CreateAnnouncementDialog({
     })),
   ];
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !body.trim()) return;
+    setError(null);
 
-    createAnnouncement.mutate(
-      {
+    try {
+      await createAnnouncement.mutateAsync({
         title: title.trim(),
         body: body.trim(),
         classroom_id: classroomId || undefined,
-      },
-      {
-        onSuccess: () => {
-          setTitle('');
-          setBody('');
-          setClassroomId('');
-          onOpenChange(false);
-        },
-      }
-    );
+      });
+      setTitle('');
+      setBody('');
+      setClassroomId('');
+      onOpenChange(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create announcement');
+    }
   }
 
   return (
@@ -485,6 +490,10 @@ function CreateAnnouncementDialog({
             onChange={(e) => setClassroomId(e.target.value)}
             options={classroomOptions}
           />
+
+          {error && (
+            <p className="text-body text-danger">{error}</p>
+          )}
 
           <DialogFooter>
             <Button variant="secondary" type="button" onClick={() => onOpenChange(false)}>

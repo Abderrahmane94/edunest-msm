@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Users, UserCog } from 'lucide-react';
 import {
   Button,
@@ -281,6 +282,7 @@ function AssignTeacherDialog({
 
 export function ClassroomsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: academicYears } = useAcademicYears();
   const activeYear = (academicYears ?? []).find((y) => y.is_active);
   const { data: classrooms, isLoading } = useClassrooms(activeYear?.id);
@@ -351,7 +353,7 @@ export function ClassroomsPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleAssignTeacher(classroom)}
+            onClick={(e) => { e.stopPropagation(); handleAssignTeacher(classroom); }}
             aria-label={t('classrooms.assignTeacher.title')}
           >
             <UserCog className="w-4 h-4" />
@@ -416,6 +418,7 @@ export function ClassroomsPage() {
           columns={columns}
           data={data}
           keyExtractor={(c) => c.id}
+          onRowClick={(c) => navigate(`/admin/classrooms/${c.id}`)}
           emptyMessage={t('classrooms.noClassrooms')}
         />
       )}

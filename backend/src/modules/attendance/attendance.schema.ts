@@ -112,3 +112,5 @@ export const parentChildrenMonthQuerySchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format'),
 });
+
+export type ParentChildrenMonthQuery = z.infer<typeof parentChildrenMonthQuerySchema>;

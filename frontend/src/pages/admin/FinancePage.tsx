@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
   Receipt,
   FileText,
@@ -98,6 +99,7 @@ export function FinancePage() {
 
 function FeeStructuresTab() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: feeStructures, isLoading } = useFeeStructures();
   const [showCreateDialog, setShowCreateDialog] = React.useState(false);
 
@@ -164,6 +166,7 @@ function FeeStructuresTab() {
         columns={columns}
         data={feeStructures ?? []}
         keyExtractor={(row) => row.id}
+        onRowClick={(row) => navigate(`/admin/finance/fees/${row.id}`)}
         emptyMessage={t('finance.fees.empty')}
       />
 
@@ -314,15 +317,20 @@ function CreateFeeStructureDialog({
 
 function InvoicesTab() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: invoices, isLoading } = useInvoices();
   const [showBulkDialog, setShowBulkDialog] = React.useState(false);
   const [showCashPaymentDialog, setShowCashPaymentDialog] = React.useState(false);
   const [selectedInvoice, setSelectedInvoice] = React.useState<Invoice | null>(null);
 
   const sendInvoice = useSendInvoice();
+  const [sendError, setSendError] = React.useState<string | null>(null);
 
   function handleSend(invoice: Invoice) {
-    sendInvoice.mutate(invoice.id);
+    setSendError(null);
+    sendInvoice.mutate(invoice.id, {
+      onError: (err) => setSendError(err instanceof Error ? err.message : 'Failed to send invoice'),
+    });
   }
 
   function handleRecordCash(invoice: Invoice) {
@@ -407,7 +415,7 @@ function InvoicesTab() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleSend(row)}
+              onClick={(e) => { e.stopPropagation(); handleSend(row); }}
               disabled={sendInvoice.isPending}
             >
               <Send className="w-3.5 h-3.5" />
@@ -418,7 +426,7 @@ function InvoicesTab() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleRecordCash(row)}
+              onClick={(e) => { e.stopPropagation(); handleRecordCash(row); }}
             >
               <Banknote className="w-3.5 h-3.5" />
               {t('finance.invoices.recordCash')}
@@ -442,10 +450,18 @@ function InvoicesTab() {
         </Button>
       </div>
 
+      {sendError && (
+        <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
+          <span>{sendError}</span>
+          <button onClick={() => setSendError(null)} className="text-danger hover:opacity-70 text-lg leading-none">&times;</button>
+        </div>
+      )}
+
       <DataTable<Invoice>
         columns={columns}
         data={invoices ?? []}
         keyExtractor={(row) => row.id}
+        onRowClick={(row) => navigate(`/admin/finance/invoices/${row.id}`)}
         emptyMessage={t('finance.invoices.empty')}
       />
 
@@ -692,6 +708,7 @@ function CashPaymentDialog({
 
 function ExpensesTab() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: expenses, isLoading } = useExpenses();
   const [showCreateDialog, setShowCreateDialog] = React.useState(false);
 
@@ -773,6 +790,7 @@ function ExpensesTab() {
         columns={columns}
         data={expenses ?? []}
         keyExtractor={(row) => row.id}
+        onRowClick={(row) => navigate(`/admin/finance/expenses/${row.id}`)}
         emptyMessage={t('finance.expenses.empty')}
       />
 

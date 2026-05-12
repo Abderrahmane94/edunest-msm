@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, CheckCircle, Circle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, CheckCircle, Circle, ChevronRight } from 'lucide-react';
 import {
   Button,
   Dialog,
@@ -157,6 +158,7 @@ function CreateAcademicYearDialog({
 
 export function AcademicYearsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: academicYears, isLoading } = useAcademicYears();
   const activateAcademicYear = useActivateAcademicYear();
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
@@ -211,7 +213,8 @@ export function AcademicYearsPage() {
           {years.map((year) => (
             <div
               key={year.id}
-              className="bg-card border border-border rounded-lg p-4 flex items-center justify-between hover:bg-hover transition-colors duration-150"
+              className="bg-card border border-border rounded-lg p-4 flex items-center justify-between hover:bg-hover transition-colors duration-150 cursor-pointer"
+              onClick={() => navigate(`/admin/academic-years/${year.id}`)}
             >
               <div className="flex items-center gap-3">
                 {year.is_active ? (
@@ -221,7 +224,7 @@ export function AcademicYearsPage() {
                 )}
                 <div>
                   <p className="text-body font-medium text-foreground">{year.name}</p>
-                  <p className="text-caption text-text-secondary">
+                  <p className="text-caption text-text-secondary" dir="ltr">
                     {new Date(year.start_date).toLocaleDateString()} –{' '}
                     {new Date(year.end_date).toLocaleDateString()}
                   </p>
@@ -236,12 +239,13 @@ export function AcademicYearsPage() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => handleActivate(year.id)}
+                    onClick={(e) => { e.stopPropagation(); handleActivate(year.id); }}
                     disabled={activateAcademicYear.isPending}
                   >
                     {t('academicYears.activate')}
                   </Button>
                 )}
+                <ChevronRight className="w-4 h-4 text-text-disabled" />
               </div>
             </div>
           ))}

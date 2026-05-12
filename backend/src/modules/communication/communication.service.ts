@@ -968,6 +968,21 @@ class CommunicationService {
     };
   }
 
+  async deleteAnnouncement(announcementId: string, schoolId: string): Promise<void> {
+    const announcement = await prisma.announcement.findFirst({ where: { id: announcementId, schoolId } });
+    if (!announcement) throw new CommunicationServiceError('Announcement not found', 404);
+    await prisma.announcement.delete({ where: { id: announcementId } });
+  }
+
+  async deleteEvent(eventId: string, schoolId: string): Promise<void> {
+    const event = await prisma.event.findFirst({ where: { id: eventId, schoolId } });
+    if (!event) throw new CommunicationServiceError('Event not found', 404);
+    await prisma.$transaction([
+      prisma.consentForm.deleteMany({ where: { eventId } }),
+      prisma.event.delete({ where: { id: eventId } }),
+    ]);
+  }
+
   /**
    * Verify that a user has access to a conversation.
    * Returns the conversation if access is granted.

@@ -98,17 +98,12 @@ export const schoolsController = {
     try {
       const { id } = req.params;
 
-      // Expect raw body buffer or base64 encoded file in body
-      if (!req.body || !req.body.file) {
-        res.status(400).json(errorResponse('VALIDATION_ERROR', 'File is required in request body'));
+      if (!req.file?.buffer) {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', 'Logo image file is required'));
         return;
       }
 
-      const fileBuffer = Buffer.isBuffer(req.body.file)
-        ? req.body.file
-        : Buffer.from(req.body.file, 'base64');
-
-      const school = await schoolsService.uploadLogo(id, fileBuffer);
+      const school = await schoolsService.uploadLogo(id, req.file.buffer);
       res.status(200).json(successResponse(school));
     } catch (error) {
       if (error instanceof SchoolServiceError) {

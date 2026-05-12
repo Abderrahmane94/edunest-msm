@@ -74,6 +74,56 @@ export function useUsers(params: UsersParams = {}) {
   });
 }
 
+export function useUser(id: string) {
+  return useQuery({
+    queryKey: ['users', id],
+    queryFn: async () => {
+      const res = await apiClient.get<Record<string, unknown>>(`/users/${id}`);
+      if (!res.success) throw new Error(res.error?.message ?? 'User not found');
+      return mapUser(res.data as Record<string, unknown>);
+    },
+    enabled: !!id,
+  });
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; first_name?: string; last_name?: string; role?: string; preferred_language?: string }) => {
+      const body: Record<string, unknown> = {};
+      if (data.first_name !== undefined) body.firstName = data.first_name;
+      if (data.last_name !== undefined) body.lastName = data.last_name;
+      if (data.role !== undefined) body.role = data.role;
+      if (data.preferred_language !== undefined) body.preferredLanguage = data.preferred_language;
+
+      const res = await apiClient.patch(`/users/${id}`, body);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update user');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['users', variables.id] });
+    },
+  });
+}
+
+export function useToggleUserActive() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const endpoint = isActive ? `/users/${id}/deactivate` : `/users/${id}/activate`;
+      const res = await apiClient.patch(endpoint);
+      if (!res.success) {
+        throw new Error(res.error?.message ?? 'Failed to update user status');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}
+
 export function useInviteUser() {
   const queryClient = useQueryClient();
   return useMutation({

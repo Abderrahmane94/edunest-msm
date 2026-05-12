@@ -654,7 +654,7 @@ class FinanceService {
         invoiceId,
         schoolId,
         amount: amountReceived,
-        receivedBy: input.received_by,
+        receivedBy: adminUserId,
         receivedAt: new Date(input.received_at),
         note: input.note ?? null,
       },

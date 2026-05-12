@@ -1,5 +1,5 @@
 import prisma from '../../lib/prisma';
-import type { CreateAcademicYearInput } from './academic-years.schema';
+import type { CreateAcademicYearInput, UpdateAcademicYearInput } from './academic-years.schema';
 import type { AcademicYearResponse } from './academic-years.types';
 
 export class AcademicYearServiceError extends Error {
@@ -64,6 +64,45 @@ class AcademicYearsService {
     }
 
     return academicYear;
+  }
+
+  /**
+   * Update an academic year's name, start date, or end date.
+   */
+  async update(id: string, schoolId: string, input: UpdateAcademicYearInput): Promise<AcademicYearResponse> {
+    const academicYear = await prisma.academicYear.findFirst({ where: { id, schoolId } });
+
+    if (!academicYear) {
+      throw new AcademicYearServiceError('Academic year not found', 404);
+    }
+
+    const updated = await prisma.academicYear.update({
+      where: { id },
+      data: {
+        ...(input.name !== undefined && { name: input.name }),
+        ...(input.startDate !== undefined && { startDate: new Date(input.startDate) }),
+        ...(input.endDate !== undefined && { endDate: new Date(input.endDate) }),
+      },
+    });
+
+    return updated;
+  }
+
+  /**
+   * Delete an academic year. Cannot delete an active year.
+   */
+  async delete(id: string, schoolId: string): Promise<void> {
+    const academicYear = await prisma.academicYear.findFirst({ where: { id, schoolId } });
+
+    if (!academicYear) {
+      throw new AcademicYearServiceError('Academic year not found', 404);
+    }
+
+    if (academicYear.isActive) {
+      throw new AcademicYearServiceError('Cannot delete an active academic year. Deactivate it first.', 400);
+    }
+
+    await prisma.academicYear.delete({ where: { id } });
   }
 
   /**

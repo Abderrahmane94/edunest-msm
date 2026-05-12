@@ -102,7 +102,6 @@ export const recordCashPaymentSchema = z.object({
     .number()
     .positive('Amount received must be a positive number')
     .max(99999999.99, 'Amount must not exceed 99999999.99'),
-  received_by: uuidSchema,
   received_at: z
     .string()
     .datetime({ message: 'received_at must be a valid ISO 8601 datetime string' }),

@@ -23,7 +23,7 @@ function mapSchool(raw: Record<string, unknown>): School {
     wilaya: raw.wilaya as string,
     contact_email: (raw.contactEmail ?? raw.contact_email) as string,
     contact_phone: (raw.contactPhone ?? raw.contact_phone) as string,
-    logo_url: (raw.logoPublicId ?? raw.logo_url) as string | undefined,
+    logo_url: (raw.logoUrl ?? raw.logo_url) as string | undefined,
     is_active: (raw.isActive ?? raw.is_active) as boolean,
   };
 }
@@ -43,6 +43,34 @@ export function useSchool() {
   });
 }
 
+export function useUploadSchoolLogo() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const token = localStorage.getItem('access_token');
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+      const formData = new FormData();
+      formData.append('logo', file);
+
+      const response = await fetch(`${baseUrl}/schools/${user!.schoolId}/logo`, {
+        method: 'POST',
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error?.message ?? 'Failed to upload logo');
+      }
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['school'] });
+    },
+  });
+}
+
 export function useUpdateSchool() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -58,6 +86,9 @@ export function useUpdateSchool() {
       if (data.contact_phone !== undefined) body.contactPhone = data.contact_phone;
 
       const res = await apiClient.put(`/schools/${user!.schoolId}`, body);
+      if (!res.success) {
+        throw new Error(res.error?.message ?? 'Failed to update school');
+      }
       return res.data;
     },
     onSuccess: () => {

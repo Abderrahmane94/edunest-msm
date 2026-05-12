@@ -78,8 +78,49 @@ export function useFeeStructures() {
   return useQuery({
     queryKey: ['fee-structures'],
     queryFn: async () => {
-      const res = await apiClient.get<{ fee_structures: FeeStructure[] }>('/finance/fee-structures');
-      return res.data?.fee_structures ?? [];
+      const res = await apiClient.get<FeeStructure[]>('/finance/fee-structures');
+      return Array.isArray(res.data) ? res.data : [];
+    },
+  });
+}
+
+export function useFeeStructure(id: string) {
+  return useQuery({
+    queryKey: ['fee-structures', id],
+    queryFn: async () => {
+      const res = await apiClient.get<Record<string, unknown>>(`/finance/fee-structures/${id}`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Not found');
+      return res.data as FeeStructure;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useUpdateFeeStructure() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; name?: string; amount?: number; frequency?: string; level?: string; description?: string }) => {
+      const res = await apiClient.put(`/finance/fee-structures/${id}`, data);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update fee structure');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['fee-structures'] });
+      queryClient.invalidateQueries({ queryKey: ['fee-structures', variables.id] });
+    },
+  });
+}
+
+export function useDeleteFeeStructure() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.delete(`/finance/fee-structures/${id}`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to delete fee structure');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fee-structures'] });
     },
   });
 }
@@ -96,7 +137,18 @@ export function useCreateFeeStructure() {
       description?: string;
       academic_year_id: string;
     }) => {
-      const res = await apiClient.post('/finance/fee-structures', data);
+      const res = await apiClient.post('/finance/fee-structures', {
+        name: data.name,
+        amount: data.amount,
+        currency: data.currency,
+        frequency: data.frequency,
+        level: data.level,
+        description: data.description,
+        academicYearId: data.academic_year_id,
+      });
+      if (!res.success) {
+        throw new Error(res.error?.message ?? 'Failed to create fee structure');
+      }
       return res.data;
     },
     onSuccess: () => {
@@ -111,8 +163,34 @@ export function useInvoices() {
   return useQuery({
     queryKey: ['invoices'],
     queryFn: async () => {
-      const res = await apiClient.get<{ invoices: Invoice[] }>('/finance/invoices');
-      return res.data?.invoices ?? [];
+      const res = await apiClient.get<Invoice[]>('/finance/invoices');
+      return Array.isArray(res.data) ? res.data : [];
+    },
+  });
+}
+
+export function useInvoice(id: string) {
+  return useQuery({
+    queryKey: ['invoices', id],
+    queryFn: async () => {
+      const res = await apiClient.get<Record<string, unknown>>(`/finance/invoices/${id}`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Not found');
+      return res.data as Invoice;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCancelInvoice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (invoiceId: string) => {
+      const res = await apiClient.patch(`/finance/invoices/${invoiceId}/cancel`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to cancel invoice');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
     },
   });
 }
@@ -125,8 +203,18 @@ export function useCreateInvoice() {
       parent_user_id: string;
       fee_structure_id: string;
       due_date: string;
+      amount: number;
     }) => {
-      const res = await apiClient.post('/finance/invoices', data);
+      const res = await apiClient.post('/finance/invoices', {
+        childId: data.child_id,
+        parentUserId: data.parent_user_id,
+        feeStructureId: data.fee_structure_id,
+        dueDate: data.due_date,
+        amount: data.amount,
+      });
+      if (!res.success) {
+        throw new Error(res.error?.message ?? 'Failed to create invoice');
+      }
       return res.data;
     },
     onSuccess: () => {
@@ -142,8 +230,17 @@ export function useBulkGenerateInvoices() {
       classroom_id: string;
       fee_structure_id: string;
       due_date: string;
+      amount: number;
     }) => {
-      const res = await apiClient.post('/finance/invoices/bulk', data);
+      const res = await apiClient.post('/finance/invoices/bulk', {
+        classroomId: data.classroom_id,
+        feeStructureId: data.fee_structure_id,
+        dueDate: data.due_date,
+        amount: data.amount,
+      });
+      if (!res.success) {
+        throw new Error(res.error?.message ?? 'Failed to bulk generate invoices');
+      }
       return res.data;
     },
     onSuccess: () => {
@@ -157,6 +254,7 @@ export function useSendInvoice() {
   return useMutation({
     mutationFn: async (invoiceId: string) => {
       const res = await apiClient.post(`/finance/invoices/${invoiceId}/send`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to send invoice');
       return res.data;
     },
     onSuccess: () => {
@@ -191,10 +289,10 @@ export function useCashPayments(invoiceId?: string) {
   return useQuery({
     queryKey: ['cash-payments', invoiceId],
     queryFn: async () => {
-      const res = await apiClient.get<{ cash_payments: CashPayment[] }>(
+      const res = await apiClient.get<CashPayment[]>(
         `/finance/invoices/${invoiceId}/cash-payments`
       );
-      return res.data?.cash_payments ?? [];
+      return Array.isArray(res.data) ? res.data : [];
     },
     enabled: !!invoiceId,
   });
@@ -206,8 +304,49 @@ export function useExpenses() {
   return useQuery({
     queryKey: ['expenses'],
     queryFn: async () => {
-      const res = await apiClient.get<{ expenses: Expense[] }>('/finance/expenses');
-      return res.data?.expenses ?? [];
+      const res = await apiClient.get<Expense[]>('/finance/expenses');
+      return Array.isArray(res.data) ? res.data : [];
+    },
+  });
+}
+
+export function useExpense(id: string) {
+  return useQuery({
+    queryKey: ['expenses', id],
+    queryFn: async () => {
+      const res = await apiClient.get<Record<string, unknown>>(`/finance/expenses/${id}`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Not found');
+      return res.data as Expense;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useUpdateExpense() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; category?: string; description?: string; amount?: number; date?: string }) => {
+      const res = await apiClient.put(`/finance/expenses/${id}`, data);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update expense');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses', variables.id] });
+    },
+  });
+}
+
+export function useDeleteExpense() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.delete(`/finance/expenses/${id}`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to delete expense');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
     },
   });
 }
@@ -237,8 +376,21 @@ export function useFinanceSummary() {
   return useQuery({
     queryKey: ['finance-summary'],
     queryFn: async () => {
-      const res = await apiClient.get<FinanceSummary>('/finance/report/summary');
-      return res.data ?? { total_invoiced: 0, total_collected: 0, total_outstanding: 0, total_expenses: 0 };
+      const res = await apiClient.get<Record<string, unknown>>('/finance/report/summary');
+      const d = res.data as Record<string, unknown> | null;
+      if (!d) return { total_invoiced: 0, total_collected: 0, total_outstanding: 0, total_expenses: 0 };
+
+      // Backend returns: { totalRevenue, collectionRate, totalExpenses, paymentMethodBreakdown }
+      const pm = d.paymentMethodBreakdown as { online?: { total?: number }; cash?: { total?: number } } | undefined;
+      const total_collected = (pm?.online?.total ?? 0) + (pm?.cash?.total ?? 0);
+      const total_invoiced = (d.totalRevenue as number) ?? 0;
+
+      return {
+        total_invoiced,
+        total_collected,
+        total_outstanding: Math.max(0, total_invoiced - total_collected),
+        total_expenses: (d.totalExpenses as number) ?? 0,
+      } as FinanceSummary;
     },
   });
 }
@@ -247,8 +399,14 @@ export function usePaymentMethodBreakdown() {
   return useQuery({
     queryKey: ['payment-methods'],
     queryFn: async () => {
-      const res = await apiClient.get<PaymentMethodBreakdown>('/finance/report/payment-methods');
-      return res.data ?? { cash_total: 0, online_total: 0, cash_count: 0, online_count: 0 };
+      const res = await apiClient.get<Record<string, unknown>>('/finance/report/payment-methods');
+      const d = res.data as { online?: { count?: number; total?: number }; cash?: { count?: number; total?: number } } | null;
+      return {
+        cash_total: d?.cash?.total ?? 0,
+        online_total: d?.online?.total ?? 0,
+        cash_count: d?.cash?.count ?? 0,
+        online_count: d?.online?.count ?? 0,
+      } as PaymentMethodBreakdown;
     },
   });
 }

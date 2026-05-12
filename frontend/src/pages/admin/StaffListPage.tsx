@@ -51,11 +51,7 @@ export function StaffListPage() {
       header: t('staff.columns.name'),
       sortable: true,
       render: (user) => (
-        <button
-          type="button"
-          className="flex items-center gap-2 text-start hover:underline cursor-pointer"
-          onClick={() => navigate(`/admin/staff/${user.id}`)}
-        >
+        <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-[var(--color-accent-muted)] text-primary flex items-center justify-center text-label font-semibold">
             {user.first_name.charAt(0)}{user.last_name.charAt(0)}
           </div>
@@ -65,7 +61,7 @@ export function StaffListPage() {
             </p>
             <p className="text-caption text-text-secondary">{user.email}</p>
           </div>
-        </button>
+        </div>
       ),
     },
     {
@@ -133,6 +129,7 @@ export function StaffListPage() {
         columns={columns}
         data={staffUsers}
         keyExtractor={(user) => user.id}
+        onRowClick={(user) => navigate(`/admin/staff/${user.id}`)}
         searchable
         searchPlaceholder={t('staff.searchPlaceholder')}
         onSearch={handleSearch}

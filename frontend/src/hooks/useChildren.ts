@@ -79,11 +79,121 @@ function mapChild(raw: Record<string, unknown>): Child {
   };
 }
 
+export function useChild(id: string) {
+  return useQuery({
+    queryKey: ['children', id],
+    queryFn: async () => {
+      const res = await apiClient.get<Record<string, unknown>>(`/children/${id}`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Child not found');
+      return mapChild(res.data as Record<string, unknown>);
+    },
+    enabled: !!id,
+  });
+}
+
+export function useUpdateChild() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; first_name?: string; last_name?: string; date_of_birth?: string; gender?: string; enrollment_date?: string }) => {
+      const body: Record<string, unknown> = {};
+      if (data.first_name !== undefined) body.firstName = data.first_name;
+      if (data.last_name !== undefined) body.lastName = data.last_name;
+      if (data.date_of_birth !== undefined) body.dateOfBirth = data.date_of_birth;
+      if (data.gender !== undefined) body.gender = data.gender;
+      if (data.enrollment_date !== undefined) body.enrollmentDate = data.enrollment_date;
+      const res = await apiClient.put(`/children/${id}`, body);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update child');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['children'] });
+      queryClient.invalidateQueries({ queryKey: ['children', variables.id] });
+    },
+  });
+}
+
+export function useDeleteChild() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.delete(`/children/${id}`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to delete child');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['children'] });
+    },
+  });
+}
+
+export function useEnrollChild() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, classroomId }: { childId: string; classroomId: string }) => {
+      const res = await apiClient.post(`/children/${childId}/enroll`, { classroomId });
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to enroll child');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['children'] });
+      queryClient.invalidateQueries({ queryKey: ['children', variables.childId] });
+    },
+  });
+}
+
+export function useParentLinks(childId: string) {
+  return useQuery({
+    queryKey: ['parent-links', childId],
+    queryFn: async () => {
+      const res = await apiClient.get<Record<string, unknown>[]>(`/children/${childId}/parent-links`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load parent links');
+      return Array.isArray(res.data) ? res.data : [];
+    },
+    enabled: !!childId,
+  });
+}
+
+export function useRemoveParentLink() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, linkId }: { childId: string; linkId: string }) => {
+      const res = await apiClient.delete(`/children/${childId}/parent-links/${linkId}`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to remove parent link');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['parent-links', variables.childId] });
+    },
+  });
+}
+
+export function useEmergencyContacts(childId: string) {
+  return useQuery({
+    queryKey: ['emergency-contacts', childId],
+    queryFn: async () => {
+      const res = await apiClient.get<Record<string, unknown>[]>(`/children/${childId}/emergency-contacts`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load emergency contacts');
+      return Array.isArray(res.data) ? res.data : [];
+    },
+    enabled: !!childId,
+  });
+}
+
 export function useCreateChild() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { first_name: string; last_name: string; date_of_birth: string; gender: string; classroom_id?: string }) => {
-      const res = await apiClient.post('/children', data);
+    mutationFn: async (data: { first_name: string; last_name: string; date_of_birth: string; gender: string; enrollment_date: string; academic_year_id: string }) => {
+      const res = await apiClient.post('/children', {
+        firstName: data.first_name,
+        lastName: data.last_name,
+        dateOfBirth: data.date_of_birth,
+        gender: data.gender,
+        enrollmentDate: data.enrollment_date,
+        academicYearId: data.academic_year_id,
+      });
+      if (!res.success) {
+        throw new Error(res.error?.message ?? 'Failed to create child');
+      }
       return res.data;
     },
     onSuccess: () => {
@@ -96,7 +206,10 @@ export function useLinkParent() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ childId, parentId, relationship }: { childId: string; parentId: string; relationship: string }) => {
-      const res = await apiClient.post(`/children/${childId}/parents`, { parent_id: parentId, relationship });
+      const res = await apiClient.post(`/children/${childId}/parent-links`, { parentUserId: parentId, relationship });
+      if (!res.success) {
+        throw new Error(res.error?.message ?? 'Failed to link parent');
+      }
       return res.data;
     },
     onSuccess: () => {

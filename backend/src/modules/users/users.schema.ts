@@ -33,7 +33,17 @@ export const updateLanguageSchema = z.object({
   }),
 });
 
+export const updateUserSchema = z.object({
+  firstName: z.string().min(1, 'First name is required').max(100).optional(),
+  lastName: z.string().min(1, 'Last name is required').max(100).optional(),
+  role: z.enum(['admin', 'teacher', 'parent'], {
+    errorMap: () => ({ message: 'Role must be admin, teacher, or parent' }),
+  }).optional(),
+  preferredLanguage: z.enum(['ar', 'fr']).optional(),
+});
+
 export type InviteUserInput = z.infer<typeof inviteUserSchema>;
 export type RegisterUserInput = z.infer<typeof registerUserSchema>;
 export type UpdateFcmTokenInput = z.infer<typeof updateFcmTokenSchema>;
 export type UpdateLanguageInput = z.infer<typeof updateLanguageSchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;

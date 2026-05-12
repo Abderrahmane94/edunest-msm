@@ -15,6 +15,7 @@ export interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
   keyExtractor: (row: T) => string;
+  onRowClick?: (row: T) => void;
   searchable?: boolean;
   searchPlaceholder?: string;
   onSearch?: (query: string) => void;
@@ -33,6 +34,7 @@ export function DataTable<T>({
   columns,
   data,
   keyExtractor,
+  onRowClick,
   searchable = false,
   searchPlaceholder = 'Search...',
   onSearch,
@@ -133,7 +135,11 @@ export function DataTable<T>({
                 data.map((row) => (
                   <tr
                     key={keyExtractor(row)}
-                    className="border-b border-subtle last:border-b-0 hover:bg-hover transition-colors duration-150"
+                    className={cn(
+                      'border-b border-subtle last:border-b-0 hover:bg-hover transition-colors duration-150',
+                      onRowClick && 'cursor-pointer'
+                    )}
+                    onClick={onRowClick ? () => onRowClick(row) : undefined}
                   >
                     {columns.map((col) => (
                       <td

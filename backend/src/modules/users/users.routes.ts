@@ -7,6 +7,7 @@ import {
   registerUserSchema,
   updateFcmTokenSchema,
   updateLanguageSchema,
+  updateUserSchema,
 } from './users.schema';
 import { idParamSchema } from '../../utils/validators';
 
@@ -23,6 +24,9 @@ router.get('/', requireAdmin, usersController.list);
 
 // GET /api/users/:id — Get user by ID (admin only)
 router.get('/:id', requireAdmin, validateParams(idParamSchema), usersController.getById);
+
+// PATCH /api/users/:id — Update user profile (admin only)
+router.patch('/:id', requireAdmin, validateParams(idParamSchema), validate(updateUserSchema), usersController.update);
 
 // PATCH /api/users/:id/activate — Activate user (admin only)
 router.patch('/:id/activate', requireAdmin, validateParams(idParamSchema), usersController.activate);

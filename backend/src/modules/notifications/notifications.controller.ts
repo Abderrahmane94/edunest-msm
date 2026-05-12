@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../../lib/prisma';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
-import { listNotificationsQuerySchema } from './notifications.schema';
+import type { ListNotificationsQuery } from './notifications.schema';
 
 export const notificationsController = {
   /**
@@ -10,7 +10,7 @@ export const notificationsController = {
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.userId;
-      const { page, pageSize } = listNotificationsQuerySchema.parse(req.query);
+      const { page, pageSize } = req.query as unknown as ListNotificationsQuery;
 
       const [notifications, total] = await Promise.all([
         prisma.notification.findMany({

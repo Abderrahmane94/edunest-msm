@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { UserPlus, MoreVertical, Shield, ShieldOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { UserPlus, Shield, ShieldOff } from 'lucide-react';
 import { Button, DataTable, StatusBadge } from '@/components/ui';
 import type { Column } from '@/components/ui';
-import { useUsers, type User } from '@/hooks/useUsers';
+import { useUsers, useToggleUserActive, type User } from '@/hooks/useUsers';
 import { InviteUserDialog } from './InviteUserDialog';
 
 function RoleBadge({ role }: { role: string }) {
@@ -32,7 +33,9 @@ export function UsersPage() {
   const [sortColumn, setSortColumn] = React.useState<string>('created_at');
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('desc');
   const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false);
-
+  const [actionError, setActionError] = React.useState<string | null>(null);
+  const navigate = useNavigate();
+  const toggleUserActive = useToggleUserActive();
   const pageSize = 10;
 
   const { data, isLoading } = useUsers({
@@ -122,15 +125,14 @@ export function UsersPage() {
             size="icon"
             aria-label={user.is_active ? t('users.deactivate') : t('users.activate')}
             title={user.is_active ? t('users.deactivate') : t('users.activate')}
+            disabled={toggleUserActive.isPending}
+            onClick={(e) => { e.stopPropagation(); toggleUserActive.mutate({ id: user.id, isActive: user.is_active }, { onError: (err) => setActionError(err instanceof Error ? err.message : 'Error') }); }}
           >
             {user.is_active ? (
-              <ShieldOff className="w-4 h-4" />
+              <ShieldOff className="w-4 h-4 text-danger" />
             ) : (
-              <Shield className="w-4 h-4" />
+              <Shield className="w-4 h-4 text-success" />
             )}
-          </Button>
-          <Button variant="ghost" size="icon" aria-label={t('common.edit')}>
-            <MoreVertical className="w-4 h-4" />
           </Button>
         </div>
       ),
@@ -169,10 +171,18 @@ export function UsersPage() {
         </Button>
       </div>
 
+      {actionError && (
+        <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
+          <span>{actionError}</span>
+          <button onClick={() => setActionError(null)} className="text-danger hover:opacity-70 text-lg leading-none">&times;</button>
+        </div>
+      )}
+
       <DataTable<User>
         columns={columns}
         data={users}
         keyExtractor={(user) => user.id}
+        onRowClick={(user) => navigate(`/admin/users/${user.id}`)}
         searchable
         searchPlaceholder={t('users.searchPlaceholder')}
         onSearch={handleSearch}

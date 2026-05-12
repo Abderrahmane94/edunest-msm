@@ -5,13 +5,15 @@ import { Button } from '@/components/ui';
 import { Input } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { FormSelect } from '@/components/forms';
-import { useSchool, useUpdateSchool } from '@/hooks/useSchool';
+import { useSchool, useUpdateSchool, useUploadSchoolLogo } from '@/hooks/useSchool';
 
 export function SchoolSettingsPage() {
   const { t } = useTranslation();
   const { data: school, isLoading } = useSchool();
   const updateSchool = useUpdateSchool();
+  const uploadLogo = useUploadSchoolLogo();
 
+  const [selectedLogoFile, setSelectedLogoFile] = React.useState<File | null>(null);
   const [formData, setFormData] = React.useState({
     name: '',
     school_type: 'kindergarten',
@@ -22,6 +24,7 @@ export function SchoolSettingsPage() {
   });
   const [logoPreview, setLogoPreview] = React.useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = React.useState(false);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -34,9 +37,7 @@ export function SchoolSettingsPage() {
         contact_email: school.contact_email || '',
         contact_phone: school.contact_phone || '',
       });
-      if (school.logo_url) {
-        setLogoPreview(school.logo_url);
-      }
+      setLogoPreview(school.logo_url ?? null);
     }
   }, [school]);
 
@@ -57,6 +58,7 @@ export function SchoolSettingsPage() {
   function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedLogoFile(file);
       const reader = new FileReader();
       reader.onload = (ev) => {
         setLogoPreview(ev.target?.result as string);
@@ -68,13 +70,20 @@ export function SchoolSettingsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaveSuccess(false);
+    setSaveError(null);
 
     try {
+      // Upload logo first if a new file was selected
+      if (selectedLogoFile) {
+        await uploadLogo.mutateAsync(selectedLogoFile);
+        setSelectedLogoFile(null);
+      }
+      // Then save the school info
       await updateSchool.mutateAsync(formData);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch {
-      // Error handled by React Query
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 
@@ -234,13 +243,24 @@ export function SchoolSettingsPage() {
 
         {/* Actions */}
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={updateSchool.isPending}>
-            {updateSchool.isPending ? t('common.loading') : t('common.save')}
+          <Button type="submit" disabled={updateSchool.isPending || uploadLogo.isPending}>
+            {(updateSchool.isPending || uploadLogo.isPending) ? t('common.loading') : t('common.save')}
           </Button>
+          {selectedLogoFile && !saveSuccess && (
+            <span className="text-caption text-text-secondary animate-fade-in">
+              {t('schoolSettings.newLogoSelected')}
+            </span>
+          )}
 
           {saveSuccess && (
             <span className="text-body text-success animate-fade-in">
               {t('schoolSettings.saved')}
+            </span>
+          )}
+
+          {saveError && (
+            <span className="text-body text-danger animate-fade-in">
+              {saveError}
             </span>
           )}
         </div>

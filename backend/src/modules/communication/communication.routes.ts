@@ -138,6 +138,14 @@ router.get(
   communicationController.getAnnouncement,
 );
 
+// DELETE /api/communication/announcements/:id — Delete announcement (admin only)
+router.delete(
+  '/announcements/:id',
+  requireAdmin,
+  validateParams(announcementIdParamSchema),
+  communicationController.deleteAnnouncement,
+);
+
 // ─── Events & Consent Forms ─────────────────────────────────────────────────
 
 // POST /api/communication/events — Create event (admin only)
@@ -162,6 +170,14 @@ router.get(
   requireActiveRole,
   validateParams(eventIdParamSchema),
   communicationController.getEvent,
+);
+
+// DELETE /api/communication/events/:id — Delete event (admin only)
+router.delete(
+  '/events/:id',
+  requireAdmin,
+  validateParams(eventIdParamSchema),
+  communicationController.deleteEvent,
 );
 
 // PATCH /api/communication/events/:eventId/consent/:childId — Respond to consent form (parent only)

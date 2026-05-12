@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { usersService, UserServiceError } from './users.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
 import { paginationSchema } from '../../utils/validators';
-import type { InviteUserInput, RegisterUserInput, UpdateFcmTokenInput, UpdateLanguageInput } from './users.schema';
+import type { InviteUserInput, RegisterUserInput, UpdateFcmTokenInput, UpdateLanguageInput, UpdateUserInput } from './users.schema';
 
 export const usersController = {
   /**
@@ -71,6 +71,25 @@ export const usersController = {
       const { id } = req.params;
       const schoolId = req.user!.schoolId;
       const user = await usersService.getById(id, schoolId);
+      res.status(200).json(successResponse(user));
+    } catch (error) {
+      if (error instanceof UserServiceError) {
+        res.status(error.statusCode).json(errorResponse('USER_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * PATCH /api/users/:id — Update user profile (admin only)
+   */
+  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const schoolId = req.user!.schoolId;
+      const input = req.body as UpdateUserInput;
+      const user = await usersService.update(id, schoolId, input as any);
       res.status(200).json(successResponse(user));
     } catch (error) {
       if (error instanceof UserServiceError) {

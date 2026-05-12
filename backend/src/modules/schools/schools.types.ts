@@ -25,6 +25,7 @@ export interface SchoolResponse {
   address: string;
   wilaya: string;
   logoPublicId: string | null;
+  logoUrl: string | null;
   contactEmail: string;
   contactPhone: string;
   isActive: boolean;

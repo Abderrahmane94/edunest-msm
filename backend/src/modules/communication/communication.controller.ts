@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { communicationService, CommunicationServiceError } from './communication.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
-import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, UploadDailyReportPhotoInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput } from './communication.schema';
-import { messagesQuerySchema, dailyReportsQuerySchema, announcementsQuerySchema, eventsQuerySchema } from './communication.schema';
+import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, UploadDailyReportPhotoInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput, MessagesQuery, DailyReportsQuery, AnnouncementsQuery, EventsQuery } from './communication.schema';
 
 export const communicationController = {
   /**
@@ -39,7 +38,7 @@ export const communicationController = {
       const schoolId = req.user!.schoolId;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
-      const { page, pageSize } = messagesQuerySchema.parse(req.query);
+      const { page, pageSize } = req.query as unknown as MessagesQuery;
 
       const { conversations, total } = await communicationService.listConversations(
         schoolId,
@@ -67,7 +66,7 @@ export const communicationController = {
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { id } = req.params;
-      const { page, pageSize } = messagesQuerySchema.parse(req.query);
+      const { page, pageSize } = req.query as unknown as MessagesQuery;
 
       const { messages, total } = await communicationService.getMessages(
         id,
@@ -195,7 +194,7 @@ export const communicationController = {
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { childId } = req.params;
-      const { page, pageSize, date } = dailyReportsQuerySchema.parse(req.query);
+      const { page, pageSize, date } = req.query as unknown as DailyReportsQuery;
 
       const { reports, total } = await communicationService.getDailyReportsForChild(
         childId,
@@ -302,7 +301,7 @@ export const communicationController = {
   async listAnnouncements(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const schoolId = req.user!.schoolId;
-      const { page, pageSize, classroomId } = announcementsQuerySchema.parse(req.query);
+      const { page, pageSize, classroomId } = req.query as unknown as AnnouncementsQuery;
 
       const { announcements, total } = await communicationService.listAnnouncements(
         schoolId,
@@ -330,6 +329,21 @@ export const communicationController = {
 
       const announcement = await communicationService.getAnnouncementById(id, schoolId);
       res.status(200).json(successResponse(announcement));
+    } catch (error) {
+      if (error instanceof CommunicationServiceError) {
+        res.status(error.statusCode).json(errorResponse('COMMUNICATION_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  async deleteAnnouncement(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId;
+      const { id } = req.params;
+      await communicationService.deleteAnnouncement(id, schoolId);
+      res.status(200).json(successResponse({ message: 'Announcement deleted' }));
     } catch (error) {
       if (error instanceof CommunicationServiceError) {
         res.status(error.statusCode).json(errorResponse('COMMUNICATION_ERROR', error.message));
@@ -367,7 +381,7 @@ export const communicationController = {
   async listEvents(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const schoolId = req.user!.schoolId;
-      const { page, pageSize } = eventsQuerySchema.parse(req.query);
+      const { page, pageSize } = req.query as unknown as EventsQuery;
 
       const { events, total } = await communicationService.listEvents(schoolId, page, pageSize);
       res.status(200).json(paginatedResponse(events, page, pageSize, total));
@@ -390,6 +404,21 @@ export const communicationController = {
 
       const event = await communicationService.getEventById(id, schoolId);
       res.status(200).json(successResponse(event));
+    } catch (error) {
+      if (error instanceof CommunicationServiceError) {
+        res.status(error.statusCode).json(errorResponse('COMMUNICATION_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  async deleteEvent(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId;
+      const { id } = req.params;
+      await communicationService.deleteEvent(id, schoolId);
+      res.status(200).json(successResponse({ message: 'Event deleted' }));
     } catch (error) {
       if (error instanceof CommunicationServiceError) {
         res.status(error.statusCode).json(errorResponse('COMMUNICATION_ERROR', error.message));

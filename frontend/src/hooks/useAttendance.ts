@@ -92,6 +92,24 @@ export interface BulkAttendancePayload {
 }
 
 /**
+ * Mutation to update a single attendance record.
+ * PATCH /api/attendance/:id
+ */
+export function useUpdateAttendanceRecord() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ recordId, status, note }: { recordId: string; status: string; note?: string }) => {
+      const res = await apiClient.patch<AttendanceRecord>(`/attendance/${recordId}`, { status, note });
+      if (!res.success) throw new Error(res.error?.message || 'Failed to update attendance');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendance'] });
+    },
+  });
+}
+
+/**
  * Mutation to bulk mark attendance for a classroom.
  * POST /api/attendance/bulk-mark
  */

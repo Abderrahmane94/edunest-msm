@@ -8,17 +8,20 @@ import {
   ArrowLeft,
   CheckCheck,
   Check,
+  Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Avatar } from '@/components/ui';
+import { Avatar, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/hooks/useSocket';
+import { useTeacherClassroom, useClassroomChildren } from '@/hooks/useTeacherClassroom';
 import {
   useConversations,
   useMessages,
   useSendMessage,
   useSendFileMessage,
   useMarkMessageRead,
+  useCreateConversation,
   type Conversation,
   type Message,
 } from '@/hooks/useMessaging';
@@ -31,6 +34,7 @@ export function TeacherMessagesPage() {
   const [activeConversationId, setActiveConversationId] = React.useState<string | null>(null);
   const [messageInput, setMessageInput] = React.useState('');
   const [showAttachMenu, setShowAttachMenu] = React.useState(false);
+  const [showNewConversationDialog, setShowNewConversationDialog] = React.useState(false);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const photoInputRef = React.useRef<HTMLInputElement>(null);
@@ -95,16 +99,26 @@ export function TeacherMessagesPage() {
   }, [messages]);
 
   // Mark unread messages as read when opening a conversation
+  const markedReadRef = React.useRef<Set<string>>(new Set());
+
   React.useEffect(() => {
     if (messages.length > 0 && user?.id) {
       const unreadMessages = messages.filter(
-        (m) => !m.is_read && m.sender_user_id !== user.id
+        (m) => !m.is_read && m.sender_user_id !== user.id && !markedReadRef.current.has(m.id)
       );
-      unreadMessages.forEach((m) => {
-        markRead.mutate(m.id);
-      });
+      if (unreadMessages.length > 0) {
+        unreadMessages.forEach((m) => {
+          markedReadRef.current.add(m.id);
+          markRead.mutate(m.id);
+        });
+      }
     }
   }, [messages, user?.id, markRead]);
+
+  // Reset marked-read tracking when conversation changes
+  React.useEffect(() => {
+    markedReadRef.current.clear();
+  }, [activeConversationId]);
 
   // Close attach menu on outside click
   React.useEffect(() => {
@@ -165,11 +179,31 @@ export function TeacherMessagesPage() {
 
   return (
     <div className="h-screen flex flex-col bg-page">
+      {/* New Conversation Dialog */}
+      <NewConversationDialog
+        open={showNewConversationDialog}
+        onOpenChange={setShowNewConversationDialog}
+        onConversationCreated={(conversationId) => {
+          setActiveConversationId(conversationId);
+          setShowNewConversationDialog(false);
+        }}
+      />
+
       {/* Header */}
       <header className="shrink-0 bg-card border-b border-border px-4 py-3">
-        <h1 className="text-subsection font-semibold text-text-heading">
-          {t('messages.title', 'Messages')}
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-subsection font-semibold text-text-heading">
+            {t('messages.title', 'Messages')}
+          </h1>
+          <button
+            type="button"
+            onClick={() => setShowNewConversationDialog(true)}
+            className="flex items-center justify-center min-w-[36px] min-h-[36px] rounded-lg bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] transition-all duration-150 active:scale-[0.98]"
+            aria-label={t('messages.newConversation', 'New conversation')}
+          >
+            <Plus className="w-5 h-5" />
+          </button>
+        </div>
       </header>
 
       {/* Main content: 2-column layout */}
@@ -406,6 +440,96 @@ export function TeacherMessagesPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+/**
+ * Dialog for creating a new conversation by selecting a child
+ */
+function NewConversationDialog({
+  open,
+  onOpenChange,
+  onConversationCreated,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConversationCreated: (conversationId: string) => void;
+}) {
+  const { t } = useTranslation();
+  const { data: classroom } = useTeacherClassroom();
+  const { data: children, isLoading: childrenLoading } = useClassroomChildren(classroom?.id);
+  const createConversation = useCreateConversation();
+
+  const handleSelectChild = React.useCallback(
+    (childId: string) => {
+      createConversation.mutate(
+        { childId },
+        {
+          onSuccess: (data) => {
+            const conversation = (data as { conversation?: { id: string } })?.conversation ?? data;
+            const id = (conversation as { id: string })?.id;
+            if (id) {
+              onConversationCreated(id);
+            } else {
+              onOpenChange(false);
+            }
+          },
+        }
+      );
+    },
+    [createConversation, onConversationCreated, onOpenChange]
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t('messages.newConversation', 'New conversation')}
+          </DialogTitle>
+          <DialogDescription>
+            {t('messages.selectChildForConversation', 'Select a child to start a conversation with their parent')}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4 space-y-2 max-h-[60vh] overflow-y-auto">
+          {childrenLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="animate-pulse h-12 bg-subtle rounded-lg" />
+              ))}
+            </div>
+          ) : children && children.length > 0 ? (
+            children.map((child) => (
+              <button
+                key={child.id}
+                type="button"
+                onClick={() => handleSelectChild(child.id)}
+                disabled={createConversation.isPending}
+                className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-hover hover:border-[var(--color-border-strong)] transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Avatar
+                  src={child.photo_url}
+                  name={`${child.first_name} ${child.last_name}`}
+                  size="sm"
+                />
+                <span className="text-body font-medium text-text-primary">
+                  {child.first_name} {child.last_name}
+                </span>
+              </button>
+            ))
+          ) : (
+            <p className="text-body text-text-secondary text-center py-4">
+              {t('messages.noChildrenAvailable', 'No children available')}
+            </p>
+          )}
+          {createConversation.isError && (
+            <p className="text-caption text-[var(--color-danger)] text-center mt-2">
+              {createConversation.error?.message || t('messages.createError', 'Failed to create conversation')}
+            </p>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

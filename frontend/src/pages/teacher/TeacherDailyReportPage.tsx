@@ -266,7 +266,7 @@ export function TeacherDailyReportPage() {
       </header>
 
       {/* Form content */}
-      <div className="flex-1 px-4 py-5 pb-32 max-w-2xl mx-auto w-full space-y-6">
+      <div className="flex-1 px-4 py-5 pb-4 max-w-2xl mx-auto w-full space-y-6">
         {/* Child Selector */}
         <section>
           <label className="block text-label font-medium text-text-primary mb-2">
@@ -495,7 +495,7 @@ export function TeacherDailyReportPage() {
       </div>
 
       {/* Fixed bottom submit button */}
-      <div className="fixed bottom-0 inset-x-0 bg-card border-t border-border p-4 z-10">
+      <div className="sticky bottom-0 bg-card border-t border-border p-4 z-10">
         <div className="max-w-2xl mx-auto">
           {submitSuccess ? (
             <div className="flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">
@@ -528,7 +528,7 @@ export function TeacherDailyReportPage() {
 
           {createReport.isError && (
             <p className="text-caption text-[var(--color-danger)] text-center mt-2">
-              {t('dailyReport.submitError', 'Failed to send report. Please try again.')}
+              {createReport.error?.message || t('dailyReport.submitError', 'Failed to send report. Please try again.')}
             </p>
           )}
         </div>

@@ -19,7 +19,9 @@
         "browser_wait_for",
         "browser_type",
         "browser_press_key",
-        "browser_resize"
+        "browser_resize",
+        "browser_file_upload",
+        "browser_close"
       ]
     }
   }

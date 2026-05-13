@@ -7,6 +7,7 @@ import { useTeacherClassroom, useClassroomChildren } from '@/hooks/useTeacherCla
 import {
   useClassroomAttendance,
   useBulkMarkAttendance,
+  useUpdateAttendanceRecord,
   type AttendanceRecord,
 } from '@/hooks/useAttendance';
 
@@ -44,6 +45,9 @@ export function TeacherAttendancePage() {
 
   // Bulk mark mutation
   const bulkMark = useBulkMarkAttendance();
+
+  // Single record update mutation
+  const updateRecord = useUpdateAttendanceRecord();
 
   const justSubmittedRef = React.useRef(false);
 
@@ -109,14 +113,46 @@ export function TeacherAttendancePage() {
 
     if (records.length === 0) return;
 
-    await bulkMark.mutateAsync({
-      classroom_id: classroom.id,
-      date: selectedDate,
-      records,
-    });
+    // Split into new records and updates to existing records
+    const newRecords: typeof records = [];
+    const updatedRecords: { recordId: string; status: AttendanceStatus; note?: string }[] = [];
+
+    for (const record of records) {
+      const existing = existingRecords?.find((r: AttendanceRecord) => r.childId === record.child_id);
+      if (existing) {
+        // Only update if status or note changed
+        if (existing.status !== record.status || existing.note !== (record.note ?? null)) {
+          updatedRecords.push({
+            recordId: existing.id,
+            status: record.status,
+            note: record.note,
+          });
+        }
+      } else {
+        newRecords.push(record);
+      }
+    }
+
+    // Execute updates for existing records
+    const updatePromises = updatedRecords.map((r) =>
+      updateRecord.mutateAsync({ recordId: r.recordId, status: r.status, note: r.note })
+    );
+
+    // Execute bulk-mark for new records
+    const bulkPromise =
+      newRecords.length > 0
+        ? bulkMark.mutateAsync({
+            classroom_id: classroom.id,
+            date: selectedDate,
+            records: newRecords,
+          })
+        : Promise.resolve();
+
+    await Promise.all([...updatePromises, bulkPromise]);
+
     justSubmittedRef.current = true;
     setSubmitSuccess(true);
-  }, [classroom, attendanceMap, selectedDate, bulkMark]);
+  }, [classroom, attendanceMap, selectedDate, existingRecords, bulkMark, updateRecord]);
 
   // Count stats
   const stats = React.useMemo(() => {
@@ -220,7 +256,7 @@ export function TeacherAttendancePage() {
       </div>
 
       {/* Children list */}
-      <div className="flex-1 px-4 pb-32 max-w-2xl mx-auto w-full">
+      <div className="flex-1 px-4 pb-4 max-w-2xl mx-auto w-full">
         <div className="space-y-3">
           {children && children.length > 0 ? (
             children.map((child) => {
@@ -314,7 +350,7 @@ export function TeacherAttendancePage() {
       </div>
 
       {/* Fixed bottom submit button */}
-      <div className="fixed bottom-0 inset-x-0 bg-card border-t border-border p-4 z-10">
+      <div className="sticky bottom-0 bg-card border-t border-border p-4 z-10">
         <div className="max-w-2xl mx-auto">
           {submitSuccess ? (
             <div className="flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">
@@ -325,19 +361,19 @@ export function TeacherAttendancePage() {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={stats.marked === 0 || bulkMark.isPending}
+              disabled={stats.marked === 0 || bulkMark.isPending || updateRecord.isPending}
               className={cn(
                 'w-full flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 font-medium text-body rounded-lg transition-all duration-150 active:scale-[0.98]',
                 allMarked
                   ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
                   : 'bg-primary text-primary-foreground hover:bg-primary-hover',
-                (stats.marked === 0 || bulkMark.isPending) &&
+                (stats.marked === 0 || bulkMark.isPending || updateRecord.isPending) &&
                   'opacity-50 cursor-not-allowed active:scale-100'
               )}
               aria-label={t('teacherAttendance.submit')}
             >
               <Send className="w-5 h-5" />
-              {bulkMark.isPending
+              {bulkMark.isPending || updateRecord.isPending
                 ? t('teacherAttendance.submitting')
                 : t('teacherAttendance.submit')}
               {stats.marked > 0 && !bulkMark.isPending && (
@@ -348,9 +384,9 @@ export function TeacherAttendancePage() {
             </button>
           )}
 
-          {bulkMark.isError && (
+          {(bulkMark.isError || updateRecord.isError) && (
             <p className="text-caption text-[var(--color-danger)] text-center mt-2">
-              {t('teacherAttendance.submitError')}
+              {bulkMark.error?.message || updateRecord.error?.message || t('teacherAttendance.submitError')}
             </p>
           )}
         </div>

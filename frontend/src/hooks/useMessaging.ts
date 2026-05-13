@@ -29,8 +29,26 @@ export function useConversations() {
   return useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
-      const res = await apiClient.get<Conversation[]>('/communication/conversations');
-      return Array.isArray(res.data) ? res.data : [];
+      const res = await apiClient.get<unknown>('/communication/conversations');
+      const raw = Array.isArray(res.data) ? res.data : [];
+      return raw.map((c: Record<string, unknown>) => {
+        const parent = c.parent as Record<string, unknown> | undefined;
+        const child = c.child as Record<string, unknown> | undefined;
+        const parentName = parent ? `${parent.firstName} ${parent.lastName}` : (c.parentName ?? c.parent_name ?? '') as string;
+        const childName = child ? `${child.firstName} ${child.lastName}` : (c.childName ?? c.child_name ?? '') as string;
+
+        return {
+          id: c.id as string,
+          child_id: (c.childId ?? c.child_id) as string,
+          child_name: childName,
+          teacher_user_id: (c.teacherUserId ?? c.teacher_user_id) as string,
+          parent_user_id: (c.parentUserId ?? c.parent_user_id) as string,
+          parent_name: parentName,
+          last_message: (c.lastMessage ?? c.last_message) as string | undefined,
+          last_message_at: (c.lastMessageAt ?? c.last_message_at ?? '') as string,
+          unread_count: (c.unreadCount ?? c.unread_count ?? 0) as number,
+        };
+      }) as Conversation[];
     },
   });
 }
@@ -39,10 +57,21 @@ export function useMessages(conversationId?: string) {
   return useQuery({
     queryKey: ['messages', conversationId],
     queryFn: async () => {
-      const res = await apiClient.get<Message[]>(
+      const res = await apiClient.get<unknown>(
         `/communication/conversations/${conversationId}/messages`
       );
-      return Array.isArray(res.data) ? res.data : [];
+      const raw = Array.isArray(res.data) ? res.data : [];
+      return raw.map((m: Record<string, unknown>) => ({
+        id: m.id as string,
+        conversation_id: (m.conversationId ?? m.conversation_id) as string,
+        sender_user_id: (m.senderUserId ?? m.sender_user_id) as string,
+        content: (m.content ?? null) as string | null,
+        message_type: (m.messageType ?? m.message_type ?? 'text') as 'text' | 'photo' | 'document',
+        cloudinary_public_id: (m.cloudinaryPublicId ?? m.cloudinary_public_id) as string | undefined,
+        file_url: (m.fileUrl ?? m.file_url) as string | undefined,
+        is_read: (m.isRead ?? m.is_read ?? false) as boolean,
+        created_at: (m.createdAt ?? m.created_at ?? '') as string,
+      })) as Message[];
     },
     enabled: !!conversationId,
   });
@@ -74,10 +103,24 @@ export function useMarkMessageRead() {
 
   return useMutation({
     mutationFn: async (messageId: string) => {
-      const res = await apiClient.put(`/communication/messages/${messageId}/read`);
+      const res = await apiClient.patch(`/communication/messages/${messageId}/read`);
       if (!res.success) {
         throw new Error(res.error?.message || 'Failed to mark message as read');
       }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+export function useCreateConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { childId: string; parentUserId?: string }) => {
+      const res = await apiClient.post<{ conversation: Conversation }>('/communication/conversations', data);
+      if (!res.success) throw new Error(res.error?.message || 'Failed to create conversation');
       return res.data;
     },
     onSuccess: () => {

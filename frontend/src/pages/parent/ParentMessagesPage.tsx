@@ -96,16 +96,26 @@ export function ParentMessagesPage() {
   }, [messages]);
 
   // Mark unread messages as read when opening a conversation
+  const markedReadRef = React.useRef<Set<string>>(new Set());
+
   React.useEffect(() => {
     if (messages.length > 0 && user?.id) {
       const unreadMessages = messages.filter(
-        (m) => !m.is_read && m.sender_user_id !== user.id
+        (m) => !m.is_read && m.sender_user_id !== user.id && !markedReadRef.current.has(m.id)
       );
-      unreadMessages.forEach((m) => {
-        markRead.mutate(m.id);
-      });
+      if (unreadMessages.length > 0) {
+        unreadMessages.forEach((m) => {
+          markedReadRef.current.add(m.id);
+          markRead.mutate(m.id);
+        });
+      }
     }
   }, [messages, user?.id, markRead]);
+
+  // Reset marked-read tracking when conversation changes
+  React.useEffect(() => {
+    markedReadRef.current.clear();
+  }, [activeConversationId]);
 
   // Close attach menu on outside click
   React.useEffect(() => {

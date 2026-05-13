@@ -59,7 +59,7 @@ export type DailyReportsQuery = z.infer<typeof dailyReportsQuerySchema>;
  */
 export const createConversationSchema = z.object({
   childId: uuidSchema,
-  parentUserId: uuidSchema,
+  parentUserId: uuidSchema.optional(),
 });
 
 /**

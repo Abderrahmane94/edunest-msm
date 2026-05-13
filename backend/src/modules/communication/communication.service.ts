@@ -41,7 +41,8 @@ class CommunicationService {
     userRole: string,
     input: CreateConversationInput,
   ): Promise<ConversationWithParticipants> {
-    const { childId, parentUserId } = input;
+    const { childId } = input;
+    let { parentUserId } = input;
 
     // Verify the child belongs to this school
     const child = await prisma.child.findFirst({
@@ -51,6 +52,29 @@ class CommunicationService {
 
     if (!child) {
       throw new CommunicationServiceError('Child not found or does not belong to this school', 404);
+    }
+
+    // If parentUserId not provided, auto-resolve from child's primary parent link
+    if (!parentUserId) {
+      const primaryLink = await prisma.parentChildLink.findFirst({
+        where: { childId, isPrimary: true },
+        select: { parentUserId: true },
+      });
+
+      if (!primaryLink) {
+        // Fallback to any linked parent
+        const anyLink = await prisma.parentChildLink.findFirst({
+          where: { childId },
+          select: { parentUserId: true },
+        });
+
+        if (!anyLink) {
+          throw new CommunicationServiceError('No parent is linked to this child', 400);
+        }
+        parentUserId = anyLink.parentUserId;
+      } else {
+        parentUserId = primaryLink.parentUserId;
+      }
     }
 
     // Verify the parent user exists, belongs to this school, and has parent role

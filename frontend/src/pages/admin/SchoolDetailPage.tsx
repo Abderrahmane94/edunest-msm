@@ -66,7 +66,7 @@ function useSchoolUsers(schoolId: string) {
 function useCreateUserInSchool(schoolId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { firstName: string; lastName: string; email: string; role: string; password: string; preferredLanguage: string }) => {
+    mutationFn: async (data: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string }) => {
       const res = await apiClient.post(`/schools/${schoolId}/users`, data);
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to create user');
       return res.data;
@@ -387,7 +387,7 @@ function CreateUserDialog({
 }: { open: boolean; onOpenChange: (v: boolean) => void; schoolId: string }) {
   const { t } = useTranslation();
   const createUser = useCreateUserInSchool(schoolId);
-  const emptyForm = { firstName: '', lastName: '', email: '', role: 'teacher', password: '', preferredLanguage: 'fr' };
+  const emptyForm = { firstName: '', lastName: '', email: '', role: 'teacher', preferredLanguage: 'fr' };
   const [form, setForm] = React.useState(emptyForm);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
@@ -412,7 +412,7 @@ function CreateUserDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!form.firstName || !form.lastName || !form.email || !form.password) {
+    if (!form.firstName || !form.lastName || !form.email) {
       setError(t('schools.users.allFieldsRequired'));
       return;
     }
@@ -445,9 +445,7 @@ function CreateUserDialog({
           <FormField label={t('users.detail.email')} htmlFor="cu-email" required>
             <Input id="cu-email" name="email" type="email" value={form.email} onChange={handleChange} placeholder="user@example.dz" />
           </FormField>
-          <FormField label={t('schools.users.password')} htmlFor="cu-pwd" required>
-            <Input id="cu-pwd" name="password" type="password" value={form.password} onChange={handleChange} placeholder={t('schools.users.passwordHint')} />
-          </FormField>
+          <p className="text-caption text-text-secondary mb-2">{t('users.create_form.defaultPasswordHint')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormSelect label={t('users.columns.role')} name="role" value={form.role} onChange={handleSelect} options={roleOptions} />
             <FormSelect label={t('users.columns.language')} name="preferredLanguage" value={form.preferredLanguage} onChange={handleSelect} options={langOptions} />

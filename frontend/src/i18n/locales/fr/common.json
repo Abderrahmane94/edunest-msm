@@ -13,6 +13,19 @@
   "auth": {
     "login": "Se connecter",
     "logout": "Se déconnecter",
+    "changePassword": {
+      "title": "Changez votre mot de passe",
+      "subtitle": "Bonjour {{name}}, votre compte utilise un mot de passe temporaire. Veuillez en définir un nouveau.",
+      "newPassword": "Nouveau mot de passe",
+      "newPasswordPlaceholder": "Minimum 8 caractères",
+      "confirmPassword": "Confirmer le mot de passe",
+      "confirmPasswordPlaceholder": "Répétez le mot de passe",
+      "submit": "Définir le nouveau mot de passe",
+      "logout": "Se déconnecter",
+      "minLength": "Le mot de passe doit contenir au moins 8 caractères",
+      "mismatch": "Les mots de passe ne correspondent pas",
+      "sameAsDefault": "Veuillez choisir un mot de passe différent du mot de passe par défaut"
+    },
     "register": "Créer un compte",
     "email": "Adresse e-mail",
     "password": "Mot de passe",
@@ -63,7 +76,14 @@
       "addressRequired": "L'adresse est requise",
       "wilayaRequired": "La wilaya est requise",
       "emailRequired": "L'email est requis",
-      "phoneRequired": "Le téléphone est requis"
+      "phoneRequired": "Le téléphone est requis",
+      "director": {
+        "title": "Directeur / Administrateur",
+        "firstNameRequired": "Le prénom du directeur est requis",
+        "lastNameRequired": "Le nom du directeur est requis",
+        "emailRequired": "L'email du directeur est requis",
+        "passwordMin": "Le mot de passe doit contenir au moins 8 caractères"
+      }
     },
     "tabs": {
       "info": "Informations",
@@ -142,7 +162,8 @@
       "role": "Rôle",
       "status": "Statut",
       "language": "Langue",
-      "joined": "Inscrit le"
+      "joined": "Inscrit le",
+      "school": "École"
     },
     "roles": {
       "super_admin": "Super Admin",
@@ -165,9 +186,10 @@
     "create_form": {
       "title": "Créer un utilisateur",
       "description": "Créez un compte directement dans cette école.",
-      "password": "Mot de passe",
-      "passwordPlaceholder": "Minimum 8 caractères",
-      "passwordMin": "Le mot de passe doit contenir au moins 8 caractères"
+      "defaultPasswordHint": "Mot de passe par défaut : edunest26 — l'utilisateur devra le changer à sa première connexion.",
+      "school": "École",
+      "selectSchool": "Sélectionner une école",
+      "schoolRequired": "Veuillez sélectionner une école"
     },
     "invite_form": {
       "title": "Inviter un utilisateur",

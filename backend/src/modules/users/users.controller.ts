@@ -50,7 +50,8 @@ export const usersController = {
    */
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      // super_admin sees all users across all schools; admin sees only their school
+      const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId;
       const { page, pageSize } = paginationSchema.parse(req.query);
       const { users, total } = await usersService.list(schoolId, page, pageSize);
       res.status(200).json(paginatedResponse(users, page, pageSize, total));
@@ -87,8 +88,17 @@ export const usersController = {
    */
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
       const input = req.body as CreateUserDirectlyInput;
+      // super_admin can specify any school via body; admin is always scoped to their own school
+      const schoolId = req.user!.role === 'super_admin'
+        ? (input.schoolId ?? req.user!.schoolId)
+        : req.user!.schoolId;
+
+      if (!schoolId) {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', 'School is required'));
+        return;
+      }
+
       const user = await usersService.createDirectly(schoolId, input);
       res.status(201).json(successResponse(user));
     } catch (error) {

@@ -172,13 +172,18 @@ export const usersService = {
   },
 
   /**
-   * List users in a school with pagination.
+   * List users with pagination.
+   * schoolId = null → super_admin: return all users across all schools.
+   * schoolId = string → admin: return users for that school only.
+   * Always excludes super_admin role users.
    */
-  async list(schoolId: string, page: number, pageSize: number) {
+  async list(schoolId: string | null, page: number, pageSize: number) {
     const skip = (page - 1) * pageSize;
 
     // Exclude super_admin users — they are platform-level and not school-scoped
-    const where = { schoolId, role: { not: 'super_admin' as const } };
+    const where = schoolId
+      ? { schoolId, role: { not: 'super_admin' as const } }
+      : { role: { not: 'super_admin' as const } };
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
@@ -194,6 +199,7 @@ export const usersService = {
           fcmToken: true,
           preferredLanguage: true,
           createdAt: true,
+          school: { select: { id: true, name: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -330,7 +336,7 @@ export const usersService = {
       throw new UserServiceError('A user with this email already exists', 409);
     }
 
-    const passwordHash = await bcrypt.hash(input.password, BCRYPT_SALT_ROUNDS);
+    const passwordHash = await bcrypt.hash('edunest26', BCRYPT_SALT_ROUNDS);
 
     const user = await prisma.user.create({
       data: {
@@ -342,6 +348,7 @@ export const usersService = {
         role: input.role as UserRole,
         preferredLanguage: (input.preferredLanguage ?? 'fr') as Language,
         isActive: true,
+        mustChangePassword: true,
       },
       select: {
         id: true, schoolId: true, firstName: true, lastName: true,

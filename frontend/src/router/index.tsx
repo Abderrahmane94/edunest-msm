@@ -6,6 +6,7 @@ import {
   RegisterPage,
   ResetPasswordRequestPage,
   ResetPasswordConfirmPage,
+  ChangePasswordPage,
 } from '@/pages/auth';
 import {
   DashboardPage,
@@ -60,14 +61,19 @@ import {
  * Redirects to /login if not authenticated.
  */
 function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
-    return null; // Or a loading spinner
+    return null;
   }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Intercept first-login: force password change before accessing any page
+  if (user?.mustChangePassword) {
+    return <ChangePasswordPage />;
   }
 
   return <Outlet />;

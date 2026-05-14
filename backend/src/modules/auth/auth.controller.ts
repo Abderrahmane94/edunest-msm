@@ -6,6 +6,7 @@ import type {
   LogoutInput,
   PasswordResetRequestInput,
   PasswordResetConfirmInput,
+  ChangePasswordInput,
 } from './auth.schema';
 
 export const authController = {
@@ -75,6 +76,24 @@ export const authController = {
         success: true,
         data: { message: 'Password has been reset successfully' },
       });
+    } catch (error) {
+      if (error instanceof AuthError) {
+        res.status(error.statusCode).json({
+          success: false,
+          error: { code: 'AUTH_ERROR', message: error.message },
+        });
+        return;
+      }
+      next(error);
+    }
+  },
+
+  async changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+      const { newPassword } = req.body as ChangePasswordInput;
+      await authService.changePassword(userId, newPassword);
+      res.status(200).json({ success: true, data: { message: 'Password changed successfully' } });
     } catch (error) {
       if (error instanceof AuthError) {
         res.status(error.statusCode).json({

@@ -10,6 +10,8 @@ export interface User {
   is_active: boolean;
   preferred_language: string;
   created_at: string;
+  school_id?: string;
+  school_name?: string;
 }
 
 interface UsersParams {
@@ -27,6 +29,7 @@ interface UsersResult {
 
 // The API returns camelCase fields; map them to the interface the UI expects
 function mapUser(raw: Record<string, unknown>): User {
+  const school = raw.school as Record<string, unknown> | undefined;
   return {
     id: raw.id as string,
     email: raw.email as string,
@@ -36,6 +39,8 @@ function mapUser(raw: Record<string, unknown>): User {
     is_active: (raw.isActive ?? raw.is_active) as boolean,
     preferred_language: (raw.preferredLanguage ?? raw.preferred_language) as string,
     created_at: (raw.createdAt ?? raw.created_at) as string,
+    school_id: (raw.schoolId ?? raw.school_id) as string | undefined,
+    school_name: school ? (school.name as string) : undefined,
   };
 }
 

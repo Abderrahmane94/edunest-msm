@@ -19,6 +19,7 @@ export interface UserInfo {
   lastName: string;
   role: UserRole;
   schoolId: string;
+  mustChangePassword: boolean;
 }
 
 export interface RefreshResponse {

@@ -49,8 +49,8 @@ export const createUserDirectlySchema = z.object({
   role: z.enum(['admin', 'teacher', 'parent'], {
     errorMap: () => ({ message: 'Role must be admin, teacher, or parent' }),
   }),
-  password: z.string().min(8, 'Password must be at least 8 characters').max(128),
   preferredLanguage: z.enum(['ar', 'fr']).optional().default('fr'),
+  schoolId: z.string().uuid('Invalid school ID').optional(), // only used when super_admin provides it
 });
 
 export type CreateUserDirectlyInput = z.infer<typeof createUserDirectlySchema>;

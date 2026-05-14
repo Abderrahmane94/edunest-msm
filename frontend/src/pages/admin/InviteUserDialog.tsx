@@ -7,11 +7,13 @@ import {
 import { FormField, FormSelect } from '@/components/forms';
 import { apiClient } from '@/lib/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSchoolsList } from './SchoolsPage';
 
 function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { firstName: string; lastName: string; email: string; role: string; password: string; preferredLanguage: string }) => {
+    mutationFn: async (data: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string; schoolId?: string }) => {
       const res = await apiClient.post('/users', data);
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to create user');
       return res.data;
@@ -29,9 +31,13 @@ interface InviteUserDialogProps {
 
 export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) {
   const { t } = useTranslation();
-  const createUser = useCreateUser();
+  const { user: currentUser } = useAuth();
+  const isSuperAdmin = currentUser?.role === 'super_admin';
 
-  const emptyForm = { firstName: '', lastName: '', email: '', role: 'teacher', password: '', preferredLanguage: 'fr' };
+  const createUser = useCreateUser();
+  const { data: schools } = useSchoolsList();
+
+  const emptyForm = { firstName: '', lastName: '', email: '', role: 'teacher', preferredLanguage: 'fr', schoolId: '' };
   const [form, setForm] = React.useState(emptyForm);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [createError, setCreateError] = React.useState<string | null>(null);
@@ -50,6 +56,7 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
 
   function handleSelect(e: React.ChangeEvent<HTMLSelectElement>) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    if (errors[e.target.name]) setErrors((prev) => ({ ...prev, [e.target.name]: '' }));
   }
 
   function validate(): boolean {
@@ -58,7 +65,7 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
     if (!form.lastName.trim()) newErrors.lastName = t('users.invite_form.lastNameRequired');
     if (!form.email.trim()) newErrors.email = t('users.invite_form.emailRequired');
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = t('users.invite_form.emailInvalid');
-    if (!form.password || form.password.length < 8) newErrors.password = t('users.create_form.passwordMin');
+    if (isSuperAdmin && !form.schoolId) newErrors.schoolId = t('users.create_form.schoolRequired');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -68,7 +75,15 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
     if (!validate()) return;
     setCreateError(null);
     try {
-      await createUser.mutateAsync(form);
+      const payload: Record<string, string> = {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        role: form.role,
+        preferredLanguage: form.preferredLanguage,
+      };
+      if (isSuperAdmin && form.schoolId) payload.schoolId = form.schoolId;
+      await createUser.mutateAsync(payload);
       resetForm();
       onOpenChange(false);
     } catch (err) {
@@ -87,6 +102,9 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
     { value: 'ar', label: 'العربية' },
   ];
 
+  const activeSchools = (schools ?? []).filter((s) => s.isActive);
+  const schoolOptions = activeSchools.map((s) => ({ value: s.id, label: s.name }));
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
       <DialogContent>
@@ -96,6 +114,20 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
+          {/* School selector — super_admin only */}
+          {isSuperAdmin && (
+            <FormField label={t('users.create_form.school')} htmlFor="cu-school" error={errors.schoolId} required>
+              <FormSelect
+                label=""
+                name="schoolId"
+                value={form.schoolId}
+                onChange={handleSelect}
+                options={schoolOptions}
+                placeholder={t('users.create_form.selectSchool')}
+              />
+            </FormField>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormField label={t('users.invite_form.firstName')} htmlFor="cu-first" error={errors.firstName} required>
               <Input id="cu-first" name="firstName" value={form.firstName} onChange={handleChange} placeholder={t('users.invite_form.firstNamePlaceholder')} />
@@ -109,9 +141,7 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
             <Input id="cu-email" name="email" type="email" value={form.email} onChange={handleChange} placeholder={t('users.invite_form.emailPlaceholder')} />
           </FormField>
 
-          <FormField label={t('users.create_form.password')} htmlFor="cu-pwd" error={errors.password} required>
-            <Input id="cu-pwd" name="password" type="password" value={form.password} onChange={handleChange} placeholder={t('users.create_form.passwordPlaceholder')} />
-          </FormField>
+          <p className="text-caption text-text-secondary -mt-1 mb-2">{t('users.create_form.defaultPasswordHint')}</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormSelect label={t('users.invite_form.role')} name="role" value={form.role} onChange={handleSelect} options={roleOptions} />

@@ -10,9 +10,14 @@ import {
   updateUserSchema,
   createUserDirectlySchema,
 } from './users.schema';
+import { authController } from '../auth/auth.controller';
+import { changePasswordSchema } from '../auth/auth.schema';
 import { idParamSchema } from '../../utils/validators';
 
 const router = Router();
+
+// POST /api/users/change-password — Change own password (authenticated, first-login forced change)
+router.post('/change-password', requireActiveRole, validate(changePasswordSchema), authController.changePassword);
 
 // POST /api/users — Create user directly in admin's school (admin only)
 router.post('/', requireAdmin, validate(createUserDirectlySchema), usersController.create);

@@ -17,7 +17,20 @@
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
     "forgotPassword": "نسيت كلمة المرور؟",
-    "resetPassword": "إعادة تعيين كلمة المرور"
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "changePassword": {
+      "title": "تغيير كلمة المرور",
+      "subtitle": "مرحباً {{name}}، حسابك يستخدم كلمة مرور مؤقتة. يرجى تعيين كلمة مرور جديدة.",
+      "newPassword": "كلمة المرور الجديدة",
+      "newPasswordPlaceholder": "8 أحرف على الأقل",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "confirmPasswordPlaceholder": "أعد إدخال كلمة المرور",
+      "submit": "تعيين كلمة المرور الجديدة",
+      "logout": "تسجيل الخروج",
+      "minLength": "يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل",
+      "mismatch": "كلمتا المرور غير متطابقتين",
+      "sameAsDefault": "يرجى اختيار كلمة مرور مختلفة عن كلمة المرور الافتراضية"
+    }
   },
   "nav": {
     "dashboard": "لوحة التحكم",
@@ -63,7 +76,14 @@
       "addressRequired": "العنوان مطلوب",
       "wilayaRequired": "الولاية مطلوبة",
       "emailRequired": "البريد الإلكتروني مطلوب",
-      "phoneRequired": "رقم الهاتف مطلوب"
+      "phoneRequired": "رقم الهاتف مطلوب",
+      "director": {
+        "title": "المدير / المسؤول",
+        "firstNameRequired": "الاسم الأول للمدير مطلوب",
+        "lastNameRequired": "اسم العائلة للمدير مطلوب",
+        "emailRequired": "البريد الإلكتروني للمدير مطلوب",
+        "passwordMin": "يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل"
+      }
     },
     "tabs": {
       "info": "المعلومات",
@@ -137,12 +157,14 @@
     "inactive": "غير نشط",
     "activate": "تفعيل",
     "deactivate": "إلغاء التفعيل",
+    "create": "إنشاء مستخدم",
     "columns": {
       "name": "الاسم",
       "role": "الدور",
       "status": "الحالة",
       "language": "اللغة",
-      "joined": "تاريخ الانضمام"
+      "joined": "تاريخ الانضمام",
+      "school": "المدرسة"
     },
     "roles": {
       "super_admin": "مدير عام",
@@ -165,9 +187,10 @@
     "create_form": {
       "title": "إنشاء مستخدم",
       "description": "أنشئ حساباً مباشرةً في هذه المدرسة.",
-      "password": "كلمة المرور",
-      "passwordPlaceholder": "8 أحرف على الأقل",
-      "passwordMin": "يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل"
+      "defaultPasswordHint": "كلمة المرور الافتراضية: edunest26 — سيُطلب من المستخدم تغييرها عند أول تسجيل دخول.",
+      "school": "المدرسة",
+      "selectSchool": "اختر مدرسة",
+      "schoolRequired": "يرجى اختيار مدرسة"
     },
     "invite_form": {
       "title": "دعوة مستخدم",

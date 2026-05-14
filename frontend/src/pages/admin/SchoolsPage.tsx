@@ -52,7 +52,10 @@ export function useSchoolsList() {
 export function useCreateSchool() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { name: string; schoolType: string; address: string; wilaya: string; contactEmail: string; contactPhone: string }) => {
+    mutationFn: async (data: {
+      name: string; schoolType: string; address: string; wilaya: string; contactEmail: string; contactPhone: string;
+      director: { firstName: string; lastName: string; email: string; password: string; preferredLanguage: string };
+    }) => {
       const res = await apiClient.post('/schools', data);
       if (!res.success) throw new Error(res.error?.message || 'Failed to create school');
       return res.data;
@@ -239,14 +242,16 @@ export function SchoolsPage() {
 function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { t } = useTranslation();
   const createSchool = useCreateSchool();
-  const [formData, setFormData] = React.useState({
-    name: '', schoolType: 'kindergarten', address: '', wilaya: '', contactEmail: '', contactPhone: '',
-  });
+  const emptySchool = { name: '', schoolType: 'kindergarten', address: '', wilaya: '', contactEmail: '', contactPhone: '' };
+  const emptyDirector = { firstName: '', lastName: '', email: '', preferredLanguage: 'fr' };
+  const [formData, setFormData] = React.useState(emptySchool);
+  const [director, setDirector] = React.useState(emptyDirector);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [createError, setCreateError] = React.useState<string | null>(null);
 
   function resetForm() {
-    setFormData({ name: '', schoolType: 'kindergarten', address: '', wilaya: '', contactEmail: '', contactPhone: '' });
+    setFormData(emptySchool);
+    setDirector(emptyDirector);
     setErrors({});
     setCreateError(null);
   }
@@ -257,8 +262,18 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   }
 
+  function handleDirectorChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const { name, value } = e.target;
+    setDirector((prev) => ({ ...prev, [name]: value }));
+    if (errors[`d_${name}`]) setErrors((prev) => ({ ...prev, [`d_${name}`]: '' }));
+  }
+
   function handleSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
+  function handleDirectorSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setDirector((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
   function validate(): boolean {
@@ -268,6 +283,9 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
     if (!formData.wilaya.trim()) newErrors.wilaya = t('schools.form.wilayaRequired');
     if (!formData.contactEmail.trim()) newErrors.contactEmail = t('schools.form.emailRequired');
     if (!formData.contactPhone.trim()) newErrors.contactPhone = t('schools.form.phoneRequired');
+    if (!director.firstName.trim()) newErrors.d_firstName = t('schools.form.director.firstNameRequired');
+    if (!director.lastName.trim()) newErrors.d_lastName = t('schools.form.director.lastNameRequired');
+    if (!director.email.trim()) newErrors.d_email = t('schools.form.director.emailRequired');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -277,7 +295,7 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
     if (!validate()) return;
     setCreateError(null);
     try {
-      await createSchool.mutateAsync(formData);
+      await createSchool.mutateAsync({ ...formData, director });
       resetForm();
       onOpenChange(false);
     } catch (err) {
@@ -291,14 +309,21 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
     { value: 'secondary', label: t('schoolSettings.types.secondary') },
   ];
 
+  const langOptions = [
+    { value: 'fr', label: 'Français' },
+    { value: 'ar', label: 'العربية' },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
-      <DialogContent className="max-w-[520px]">
+      <DialogContent className="max-w-[560px]">
         <DialogHeader>
           <DialogTitle>{t('schools.form.createTitle')}</DialogTitle>
           <DialogDescription>{t('schools.form.createDescription')}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
+
+          {/* School info */}
           <FormField label={t('schools.form.name')} htmlFor="s-name" error={errors.name} required>
             <Input id="s-name" name="name" value={formData.name} onChange={handleChange} placeholder={t('schools.form.namePlaceholder')} />
           </FormField>
@@ -319,7 +344,30 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
               <Input id="s-phone" name="contactPhone" type="tel" value={formData.contactPhone} onChange={handleChange} placeholder={t('schoolSettings.contactPhonePlaceholder')} />
             </FormField>
           </div>
-          {createError && <p className="text-body text-danger mb-4">{createError}</p>}
+
+          {/* Director section */}
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-subsection font-semibold text-text-heading mb-3">
+              {t('schools.form.director.title')}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+              <FormField label={t('users.detail.firstName')} htmlFor="d-first" error={errors.d_firstName} required>
+                <Input id="d-first" name="firstName" value={director.firstName} onChange={handleDirectorChange} />
+              </FormField>
+              <FormField label={t('users.detail.lastName')} htmlFor="d-last" error={errors.d_lastName} required>
+                <Input id="d-last" name="lastName" value={director.lastName} onChange={handleDirectorChange} />
+              </FormField>
+            </div>
+            <FormField label={t('users.detail.email')} htmlFor="d-email" error={errors.d_email} required>
+              <Input id="d-email" name="email" type="email" value={director.email} onChange={handleDirectorChange} placeholder="directeur@ecole.dz" />
+            </FormField>
+            <div className="flex items-center gap-2">
+              <FormSelect label={t('users.columns.language')} name="preferredLanguage" value={director.preferredLanguage} onChange={handleDirectorSelectChange} options={langOptions} />
+            </div>
+            <p className="text-caption text-text-secondary">{t('users.create_form.defaultPasswordHint')}</p>
+          </div>
+
+          {createError && <p className="text-body text-danger mt-3">{createError}</p>}
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => { resetForm(); onOpenChange(false); }}>{t('common.cancel')}</Button>
             <Button type="submit" disabled={createSchool.isPending}>

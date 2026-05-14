@@ -5,6 +5,7 @@ import { UserPlus, Shield, ShieldOff } from 'lucide-react';
 import { Button, DataTable, StatusBadge } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { useUsers, useToggleUserActive, type User } from '@/hooks/useUsers';
+import { useAuth } from '@/contexts/AuthContext';
 import { InviteUserDialog } from './InviteUserDialog';
 
 function RoleBadge({ role }: { role: string }) {
@@ -35,6 +36,8 @@ export function UsersPage() {
   const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
+  const isSuperAdmin = currentUser?.role === 'super_admin';
   const toggleUserActive = useToggleUserActive();
   const pageSize = 10;
 
@@ -115,6 +118,22 @@ export function UsersPage() {
         </span>
       ),
     },
+    ...(isSuperAdmin ? [{
+      key: 'school_name',
+      header: t('users.columns.school'),
+      render: (user: User) => (
+        user.school_name ? (
+          <button
+            className="text-body text-primary hover:underline text-start"
+            onClick={(e) => { e.stopPropagation(); navigate(`/admin/schools/${user.school_id}`); }}
+          >
+            {user.school_name}
+          </button>
+        ) : (
+          <span className="text-body text-text-disabled">—</span>
+        )
+      ),
+    }] : []),
     {
       key: 'actions',
       header: '',

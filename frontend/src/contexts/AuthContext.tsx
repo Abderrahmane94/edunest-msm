@@ -9,6 +9,7 @@ interface User {
   role: 'super_admin' | 'admin' | 'teacher' | 'parent';
   schoolId: string;
   preferredLanguage: 'ar' | 'fr';
+  mustChangePassword?: boolean;
 }
 
 interface AuthState {
@@ -21,6 +22,7 @@ interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setTokens: (accessToken: string, refreshToken: string) => void;
+  clearMustChangePassword: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -128,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: userData.role,
       schoolId: userData.schoolId,
       preferredLanguage: userData.preferredLanguage || 'fr',
+      mustChangePassword: (userData as any).mustChangePassword ?? false,
     };
     localStorage.setItem('user', JSON.stringify(user));
 
@@ -153,8 +156,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ user, isAuthenticated: true, isLoading: false });
   }, []);
 
+  const clearMustChangePassword = useCallback(() => {
+    setState((prev) => {
+      if (!prev.user) return prev;
+      const updated = { ...prev.user, mustChangePassword: false };
+      localStorage.setItem('user', JSON.stringify(updated));
+      return { ...prev, user: updated };
+    });
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, setTokens }}>
+    <AuthContext.Provider value={{ ...state, login, logout, setTokens, clearMustChangePassword }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,6 +1,9 @@
+import bcrypt from 'bcrypt';
 import prisma from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import type { CreateSchoolInput, UpdateSchoolInput, SchoolResponse } from './schools.types';
+
+const BCRYPT_ROUNDS = 10;
 
 export class SchoolServiceError extends Error {
   constructor(
@@ -25,19 +28,46 @@ class SchoolsService {
   /**
    * Create a new school (super_admin only).
    */
-  async create(input: CreateSchoolInput): Promise<SchoolResponse> {
-    const school = await prisma.school.create({
-      data: {
-        name: input.name,
-        schoolType: input.schoolType,
-        address: input.address,
-        wilaya: input.wilaya,
-        contactEmail: input.contactEmail,
-        contactPhone: input.contactPhone,
-      },
+  async create(input: CreateSchoolInput): Promise<SchoolResponse & { director: { id: string; email: string; firstName: string; lastName: string } }> {
+    // Check if director email is already taken
+    const existingUser = await prisma.user.findUnique({ where: { email: input.director.email } });
+    if (existingUser) {
+      throw new SchoolServiceError('A user with this email already exists', 409);
+    }
+
+    const passwordHash = await bcrypt.hash('edunest26', BCRYPT_ROUNDS);
+
+    const { school, director } = await prisma.$transaction(async (tx) => {
+      const newSchool = await tx.school.create({
+        data: {
+          name: input.name,
+          schoolType: input.schoolType,
+          address: input.address,
+          wilaya: input.wilaya,
+          contactEmail: input.contactEmail,
+          contactPhone: input.contactPhone,
+        },
+      });
+
+      const newDirector = await tx.user.create({
+        data: {
+          schoolId: newSchool.id,
+          firstName: input.director.firstName,
+          lastName: input.director.lastName,
+          email: input.director.email,
+          passwordHash,
+          role: 'admin',
+          preferredLanguage: (input.director.preferredLanguage ?? 'fr') as any,
+          isActive: true,
+          mustChangePassword: true,
+        },
+        select: { id: true, email: true, firstName: true, lastName: true },
+      });
+
+      return { school: newSchool, director: newDirector };
     });
 
-    return withLogoUrl(school);
+    return { ...withLogoUrl(school), director };
   }
 
   /**

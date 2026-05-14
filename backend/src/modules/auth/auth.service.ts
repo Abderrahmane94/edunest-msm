@@ -102,6 +102,7 @@ export const authService = {
       lastName: user.lastName,
       role: user.role,
       schoolId: user.schoolId,
+      mustChangePassword: user.mustChangePassword,
     };
 
     return { accessToken, refreshToken, user: userInfo };
@@ -214,6 +215,20 @@ export const authService = {
         where: { userId: resetToken.userId },
       }),
     ]);
+  },
+
+  async changePassword(userId: string, newPassword: string): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new AuthError('User not found', 404);
+
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash, mustChangePassword: false },
+    });
+
+    // Invalidate all existing refresh tokens so the user re-authenticates with new password
+    await prisma.refreshToken.deleteMany({ where: { userId } });
   },
 
   verifyAccessToken,

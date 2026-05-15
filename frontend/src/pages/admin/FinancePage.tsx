@@ -6,7 +6,6 @@ import {
   FileText,
   TrendingUp,
   Wallet,
-  Plus,
   Send,
   Banknote,
   CreditCard,
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react';
 import {
   Button,
+  CreateButton,
   DataTable,
   StatusBadge,
   KPICard,
@@ -156,10 +156,7 @@ function FeeStructuresTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end">
-        <Button variant="primary" size="sm" onClick={() => setShowCreateDialog(true)}>
-          <Plus className="w-4 h-4" />
-          {t('finance.fees.create')}
-        </Button>
+        <CreateButton label={t('finance.fees.create')} onClick={() => setShowCreateDialog(true)} />
       </div>
 
       <DataTable<FeeStructure>
@@ -444,10 +441,7 @@ function InvoicesTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end">
-        <Button variant="primary" size="sm" onClick={() => setShowBulkDialog(true)}>
-          <Plus className="w-4 h-4" />
-          {t('finance.invoices.bulkGenerate')}
-        </Button>
+        <CreateButton label={t('finance.invoices.bulkGenerate')} onClick={() => setShowBulkDialog(true)} />
       </div>
 
       {sendError && (
@@ -516,8 +510,9 @@ function BulkInvoiceDialog({
     e.preventDefault();
     if (!classroomId || !feeStructureId || !dueDate) return;
 
+    const selectedFee = feeStructures?.find((f) => f.id === feeStructureId);
     bulkGenerate.mutate(
-      { classroom_id: classroomId, fee_structure_id: feeStructureId, due_date: dueDate },
+      { classroom_id: classroomId, fee_structure_id: feeStructureId, due_date: dueDate, amount: selectedFee?.amount ?? 0 },
       {
         onSuccess: () => {
           setClassroomId('');
@@ -780,10 +775,7 @@ function ExpensesTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end">
-        <Button variant="primary" size="sm" onClick={() => setShowCreateDialog(true)}>
-          <Plus className="w-4 h-4" />
-          {t('finance.expenses.create')}
-        </Button>
+        <CreateButton label={t('finance.expenses.create')} onClick={() => setShowCreateDialog(true)} />
       </div>
 
       <DataTable<Expense>

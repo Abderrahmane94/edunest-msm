@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Plus, Building2, Power, PowerOff, ChevronRight } from 'lucide-react';
+import { Building2, Power, PowerOff, ChevronRight } from 'lucide-react';
 import {
   Button,
+  CreateButton,
   DataTable,
   StatusBadge,
   Dialog,
@@ -54,7 +55,7 @@ export function useCreateSchool() {
   return useMutation({
     mutationFn: async (data: {
       name: string; schoolType: string; address: string; wilaya: string; contactEmail: string; contactPhone: string;
-      director: { firstName: string; lastName: string; email: string; password: string; preferredLanguage: string };
+      director: { firstName: string; lastName: string; email: string; preferredLanguage: string };
     }) => {
       const res = await apiClient.post('/schools', data);
       if (!res.success) throw new Error(res.error?.message || 'Failed to create school');
@@ -213,10 +214,7 @@ export function SchoolsPage() {
             {t('schools.count', { count: (schools ?? []).length })}
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="w-4 h-4" />
-          {t('schools.create')}
-        </Button>
+        <CreateButton label={t('schools.create')} onClick={() => setCreateDialogOpen(true)} />
       </div>
 
       {actionError && (

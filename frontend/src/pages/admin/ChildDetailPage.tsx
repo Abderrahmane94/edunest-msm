@@ -257,7 +257,7 @@ export function ChildDetailPage() {
                     {(link.parent as Record<string, unknown>)?.firstName as string} {(link.parent as Record<string, unknown>)?.lastName as string}
                   </span>
                   <span className="text-caption text-text-secondary ms-2">({link.relationship as string})</span>
-                  {link.isPrimary && <span className="ms-2 text-micro text-success font-medium">★</span>}
+                  {!!link.isPrimary && <span className="ms-2 text-micro text-success font-medium">★</span>}
                 </div>
                 <Button
                   variant="ghost"
@@ -313,7 +313,7 @@ export function ChildDetailPage() {
                   <span className="text-body font-medium text-foreground">{c.name as string}</span>
                   <span className="text-caption text-text-secondary ms-2">({c.relationship as string})</span>
                   <span className="text-caption text-text-secondary ms-2">{c.phone as string}</span>
-                  {c.isAuthorizedPickup && <span className="ms-2 text-micro text-success font-medium">{t('children.emergencyContacts.authorizedPickup')}</span>}
+                  {!!c.isAuthorizedPickup && <span className="ms-2 text-micro text-success font-medium">{t('children.emergencyContacts.authorizedPickup')}</span>}
                 </div>
               </div>
             ))}

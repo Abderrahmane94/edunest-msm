@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Megaphone, Calendar, Plus, MapPin, Users, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Megaphone, Calendar, MapPin, Users, CheckCircle, XCircle, Clock } from 'lucide-react';
 import {
   Button,
+  CreateButton,
   DataTable,
   StatusBadge,
   Dialog,
@@ -48,16 +49,10 @@ export function CommunicationPage() {
         </h1>
         <div>
           {activeTab === 'announcements' && (
-            <Button variant="primary" size="sm" onClick={() => setShowAnnouncementDialog(true)}>
-              <Plus className="w-4 h-4" />
-              {t('communication.announcements.create')}
-            </Button>
+            <CreateButton label={t('communication.announcements.create')} onClick={() => setShowAnnouncementDialog(true)} />
           )}
           {activeTab === 'events' && (
-            <Button variant="primary" size="sm" onClick={() => setShowEventDialog(true)}>
-              <Plus className="w-4 h-4" />
-              {t('communication.events.create')}
-            </Button>
+            <CreateButton label={t('communication.events.create')} onClick={() => setShowEventDialog(true)} />
           )}
         </div>
       </div>

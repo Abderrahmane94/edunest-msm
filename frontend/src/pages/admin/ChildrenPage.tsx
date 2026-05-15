@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Link2, Phone } from 'lucide-react';
 import {
   Button,
+  CreateButton,
   DataTable,
   StatusBadge,
   Dialog,
@@ -17,7 +18,6 @@ import {
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { useChildren, useCreateChild, useLinkParent, type Child } from '@/hooks/useChildren';
-import { useClassrooms } from '@/hooks/useClassrooms';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
 import { useUsers } from '@/hooks/useUsers';
 
@@ -32,8 +32,6 @@ function CreateChildDialog({
   const createChild = useCreateChild();
   const { data: academicYears } = useAcademicYears();
   const activeYear = (academicYears ?? []).find((y) => y.is_active);
-  const { data: classrooms } = useClassrooms(activeYear?.id);
-
   const today = new Date().toISOString().split('T')[0];
   const [formData, setFormData] = React.useState({
     first_name: '',
@@ -112,13 +110,7 @@ function CreateChildDialog({
     { value: 'female', label: t('children.form.female') },
   ];
 
-  const classroomOptions = [
-    { value: '', label: t('children.form.noClassroom') },
-    ...(classrooms ?? []).map((c) => ({
-      value: c.id,
-      label: c.name,
-    })),
-  ];
+
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -639,10 +631,7 @@ export function ChildrenPage() {
         <h1 className="text-page-title font-semibold text-text-heading">
           {t('children.title')}
         </h1>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="w-4 h-4" />
-          {t('children.register')}
-        </Button>
+        <CreateButton label={t('children.register')} onClick={() => setCreateDialogOpen(true)} />
       </div>
 
       <DataTable<Child>

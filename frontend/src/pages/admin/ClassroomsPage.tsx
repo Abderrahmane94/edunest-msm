@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, UserCog } from 'lucide-react';
+import { Users, UserCog } from 'lucide-react';
 import {
   Button,
+  CreateButton,
   DataTable,
   Dialog,
   DialogContent,
@@ -92,7 +93,6 @@ function CreateClassroomDialog({
         room_number: formData.room_number || undefined,
         level: formData.level,
         academic_year_id: academicYearId,
-        teacher_id: formData.teacher_id || undefined,
       });
       resetForm();
       onOpenChange(false);
@@ -398,13 +398,11 @@ export function ClassroomsPage() {
             </p>
           )}
         </div>
-        <Button
+        <CreateButton
+          label={t('classrooms.create')}
           onClick={() => setCreateDialogOpen(true)}
           disabled={!activeYear}
-        >
-          <Plus className="w-4 h-4" />
-          {t('classrooms.create')}
-        </Button>
+        />
       </div>
 
       {!activeYear ? (

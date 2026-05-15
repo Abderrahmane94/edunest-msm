@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Plus, CheckCircle, Circle, ChevronRight } from 'lucide-react';
+import { CheckCircle, Circle, ChevronRight } from 'lucide-react';
 import {
   Button,
+  CreateButton,
   Dialog,
   DialogContent,
   DialogHeader,
@@ -198,10 +199,7 @@ export function AcademicYearsPage() {
         <h1 className="text-page-title font-semibold text-text-heading">
           {t('academicYears.title')}
         </h1>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="w-4 h-4" />
-          {t('academicYears.create')}
-        </Button>
+        <CreateButton label={t('academicYears.create')} onClick={() => setCreateDialogOpen(true)} />
       </div>
 
       {years.length === 0 ? (

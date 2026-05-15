@@ -90,7 +90,7 @@ export function useFeeStructure(id: string) {
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>>(`/finance/fee-structures/${id}`);
       if (!res.success) throw new Error(res.error?.message ?? 'Not found');
-      return res.data as FeeStructure;
+      return res.data as unknown as FeeStructure;
     },
     enabled: !!id,
   });
@@ -175,7 +175,7 @@ export function useInvoice(id: string) {
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>>(`/finance/invoices/${id}`);
       if (!res.success) throw new Error(res.error?.message ?? 'Not found');
-      return res.data as Invoice;
+      return res.data as unknown as Invoice;
     },
     enabled: !!id,
   });
@@ -316,7 +316,7 @@ export function useExpense(id: string) {
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>>(`/finance/expenses/${id}`);
       if (!res.success) throw new Error(res.error?.message ?? 'Not found');
-      return res.data as Expense;
+      return res.data as unknown as Expense;
     },
     enabled: !!id,
   });

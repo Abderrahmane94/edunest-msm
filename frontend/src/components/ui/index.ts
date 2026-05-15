@@ -1,4 +1,5 @@
 export { Button, buttonVariants, type ButtonProps } from './Button';
+export { CreateButton } from './CreateButton';
 export { Input, type InputProps } from './Input';
 export { StatusBadge, type StatusBadgeProps } from './StatusBadge';
 export { Avatar, type AvatarProps } from './Avatar';

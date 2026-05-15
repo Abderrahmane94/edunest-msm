@@ -113,16 +113,6 @@ function getDefaultPath(role?: string): string {
   }
 }
 
-/**
- * Placeholder component for routes that haven't been implemented yet.
- */
-function Placeholder({ title }: { title: string }) {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <p className="text-color-text-secondary">{title}</p>
-    </div>
-  );
-}
 
 // ─── Navigation Items ────────────────────────────────────────────────────────
 

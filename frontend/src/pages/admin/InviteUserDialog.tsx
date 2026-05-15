@@ -75,7 +75,7 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
     if (!validate()) return;
     setCreateError(null);
     try {
-      const payload: Record<string, string> = {
+      const payload: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string; schoolId?: string } = {
         firstName: form.firstName,
         lastName: form.lastName,
         email: form.email,

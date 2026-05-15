@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Shield, ShieldOff } from 'lucide-react';
-import { Button, DataTable, StatusBadge } from '@/components/ui';
+import { Shield, ShieldOff } from 'lucide-react';
+import { Button, CreateButton, DataTable, StatusBadge } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { useUsers, useToggleUserActive, type User } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
@@ -184,10 +184,7 @@ export function UsersPage() {
         <h1 className="text-page-title font-semibold text-text-heading">
           {t('users.title')}
         </h1>
-        <Button onClick={() => setInviteDialogOpen(true)}>
-          <UserPlus className="w-4 h-4" />
-          {t('users.create')}
-        </Button>
+        <CreateButton label={t('users.create')} onClick={() => setInviteDialogOpen(true)} />
       </div>
 
       {actionError && (

@@ -9,9 +9,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'bg-primary text-primary-foreground hover:bg-primary-hover border-none',
+          'bg-gradient-to-b from-[var(--color-accent-light)] to-[var(--color-accent)] text-white hover:text-white border-none shadow-level-1 hover:shadow-level-2 hover:from-[var(--color-accent)] hover:to-[var(--color-accent-hover)]',
         secondary:
-          'bg-card text-foreground border border-border hover:bg-hover hover:border-border-strong',
+          'bg-card text-foreground border border-border hover:bg-hover hover:border-border-strong shadow-level-0',
         danger:
           'bg-card text-danger border border-danger-muted hover:bg-[var(--color-danger-subtle)] hover:border-danger focus-visible:shadow-focus-danger',
         ghost:

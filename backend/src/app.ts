@@ -17,6 +17,7 @@ import communicationRoutes from './modules/communication/communication.routes';
 import notificationRoutes from './modules/notifications/notifications.routes';
 import financeRoutes from './modules/finance/finance.routes';
 import adminRoutes from './modules/admin/admin.routes';
+import billingRoutes from './modules/billing/billing.routes';
 
 const app = express();
 
@@ -67,6 +68,7 @@ app.use('/api/communication', communicationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/billing', billingRoutes);
 
 // 404 handler for unmatched routes
 app.use((_req: Request, res: Response) => {

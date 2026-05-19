@@ -18,6 +18,7 @@ export { CommunicationPage } from './CommunicationPage';
 export { AnnouncementDetailPage } from './AnnouncementDetailPage';
 export { EventDetailPage } from './EventDetailPage';
 export { FinancePage } from './FinancePage';
+export { BillingPage } from './BillingPage';
 export { FeeStructureDetailPage } from './FeeStructureDetailPage';
 export { InvoiceDetailPage } from './InvoiceDetailPage';
 export { ExpenseDetailPage } from './ExpenseDetailPage';

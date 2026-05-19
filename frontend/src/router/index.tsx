@@ -13,6 +13,7 @@ import {
   SchoolSettingsPage,
   SchoolsPage,
   SchoolDetailPage,
+  BillingPage,
   UsersPage,
   UserDetailPage,
   StaffListPage,
@@ -123,7 +124,7 @@ function getAdminNavItems(role: string): NavItem[] {
       { label: 'nav.dashboard', href: '/admin', icon: LayoutDashboard },
       { label: 'nav.schools',   href: '/admin/schools', icon: Building2 },
       { label: 'nav.users',     href: '/admin/users', icon: Users },
-      { label: 'nav.finance',   href: '/admin/finance', icon: Wallet },
+      { label: 'nav.billing',   href: '/admin/billing', icon: Wallet },
     ];
   }
 
@@ -308,6 +309,7 @@ export const routes: RouteObject[] = [
               { path: 'communication/announcements/:announcementId', element: <AnnouncementDetailPage /> },
               { path: 'communication/events/:eventId', element: <EventDetailPage /> },
               { path: 'finance', element: <FinancePage /> },
+              { path: 'billing', element: <BillingPage /> },
               { path: 'finance/fees/:feeId', element: <FeeStructureDetailPage /> },
               { path: 'finance/invoices/:invoiceId', element: <InvoiceDetailPage /> },
               { path: 'finance/expenses/:expenseId', element: <ExpenseDetailPage /> },

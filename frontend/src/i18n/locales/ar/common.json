@@ -62,6 +62,7 @@
     "attendance": "الحضور",
     "communication": "التواصل",
     "finance": "المالية",
+    "billing": "الفوترة",
     "settings": "الإعدادات",
     "users": "المستخدمون",
     "staff": "الموظفون",
@@ -456,6 +457,67 @@
       "october": "أكتوبر",
       "november": "نوفمبر",
       "december": "ديسمبر"
+    }
+  },
+  "billing": {
+    "title": "الفوترة",
+    "tabs": {
+      "dashboard": "لوحة التحكم",
+      "plans": "الخطط",
+      "subscriptions": "الاشتراكات"
+    },
+    "dashboard": {
+      "mrr": "الإيرادات الشهرية المتكررة",
+      "revenueThisMonth": "إيرادات هذا الشهر",
+      "totalRevenue": "إجمالي الإيرادات",
+      "subscriptionStatus": "حالة الاشتراكات"
+    },
+    "status": {
+      "active": "نشط",
+      "trial": "تجريبي",
+      "overdue": "متأخر",
+      "cancelled": "ملغى",
+      "suspended": "موقوف"
+    },
+    "plans": {
+      "create": "خطة جديدة",
+      "edit": "تعديل الخطة",
+      "formDescription": "حدد أسعار وحدود الخطة.",
+      "name": "اسم الخطة",
+      "description": "الوصف",
+      "descriptionPlaceholder": "صف ما تتضمنه الخطة",
+      "priceMonthly": "السعر الشهري (دج)",
+      "priceAnnual": "السعر السنوي (دج)",
+      "maxChildren": "الحد الأقصى للأطفال",
+      "maxUsers": "الحد الأقصى للمستخدمين",
+      "unlimited": "غير محدود",
+      "empty": "لم يتم تحديد أي خطة"
+    },
+    "subscriptions": {
+      "assign": "تعيين خطة",
+      "assignDescription": "خصص خطة اشتراك لمؤسسة.",
+      "school": "المدرسة",
+      "selectSchool": "اختر مدرسة",
+      "plan": "الخطة",
+      "selectPlan": "اختر خطة",
+      "billingCycle": "دورة الفوترة",
+      "monthly": "شهري",
+      "annual": "سنوي",
+      "startDate": "تاريخ البدء",
+      "trialDays": "أيام التجربة",
+      "status": "الحالة",
+      "period": "الفترة",
+      "price": "السعر",
+      "empty": "لا توجد اشتراكات"
+    },
+    "payments": {
+      "record": "تسجيل دفعة",
+      "amount": "المبلغ (دج)",
+      "periodStart": "بداية الفترة",
+      "periodEnd": "نهاية الفترة",
+      "paidAt": "تاريخ الدفع",
+      "note": "ملاحظة",
+      "notePlaceholder": "مرجع الدفع، إلخ."
     }
   },
   "finance": {

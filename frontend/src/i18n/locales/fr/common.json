@@ -62,6 +62,7 @@
     "attendance": "Présence",
     "communication": "Communication",
     "finance": "Finances",
+    "billing": "Facturation",
     "settings": "Paramètres",
     "users": "Utilisateurs",
     "staff": "Personnel",
@@ -455,6 +456,68 @@
       "october": "Octobre",
       "november": "Novembre",
       "december": "Décembre"
+    }
+  },
+  "billing": {
+    "title": "Facturation",
+    "tabs": {
+      "dashboard": "Tableau de bord",
+      "plans": "Plans",
+      "subscriptions": "Abonnements"
+    },
+    "dashboard": {
+      "mrr": "Revenus récurrents mensuels",
+      "revenueThisMonth": "Revenus ce mois",
+      "totalRevenue": "Revenus totaux",
+      "subscriptionStatus": "Statut des abonnements"
+    },
+    "status": {
+      "active": "Actif",
+      "trial": "Essai",
+      "overdue": "En retard",
+      "cancelled": "Annulé",
+      "suspended": "Suspendu"
+    },
+    "plans": {
+      "create": "Nouveau plan",
+      "edit": "Modifier le plan",
+      "formDescription": "Définissez les tarifs et limites du plan.",
+      "name": "Nom du plan",
+      "description": "Description",
+      "descriptionPlaceholder": "Décrivez ce que le plan inclut",
+      "priceMonthly": "Prix mensuel (DZD)",
+      "priceAnnual": "Prix annuel (DZD)",
+      "maxChildren": "Max enfants",
+      "maxUsers": "Max utilisateurs",
+      "unlimited": "Illimité",
+      "empty": "Aucun plan défini"
+    },
+    "subscriptions": {
+      "assign": "Assigner un plan",
+      "assignDescription": "Attribuez un plan d'abonnement à un établissement.",
+      "school": "École",
+      "selectSchool": "Sélectionner une école",
+      "plan": "Plan",
+      "selectPlan": "Sélectionner un plan",
+      "billingCycle": "Cycle de facturation",
+      "monthly": "Mensuel",
+      "annual": "Annuel",
+      "startDate": "Date de début",
+      "trialDays": "Jours d'essai",
+      "status": "Statut",
+      "period": "Période",
+      "price": "Tarif",
+      "empty": "Aucun abonnement"
+    },
+    "payments": {
+      "record": "Enregistrer un paiement",
+      "amount": "Montant (DZD)",
+      "periodStart": "Début de période",
+      "periodEnd": "Fin de période",
+      "paidAt": "Date de paiement",
+      "note": "Note",
+      "notePlaceholder": "Référence de paiement, etc.",
+      "alreadyPaid": "Période déjà payée — prochain paiement disponible après expiration"
     }
   },
   "finance": {

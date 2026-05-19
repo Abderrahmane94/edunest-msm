@@ -2,7 +2,7 @@ import { UserRole } from '@prisma/client';
 
 export interface TokenPayload {
   userId: string;
-  schoolId: string;
+  schoolId: string | null;
   role: UserRole;
 }
 
@@ -18,7 +18,7 @@ export interface UserInfo {
   firstName: string;
   lastName: string;
   role: UserRole;
-  schoolId: string;
+  schoolId: string | null;
   mustChangePassword: boolean;
 }
 

@@ -10,7 +10,7 @@ export const academicYearsController = {
    */
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const input = req.body as CreateAcademicYearInput;
       const academicYear = await academicYearsService.create(schoolId, input);
       res.status(201).json(successResponse(academicYear));
@@ -28,7 +28,7 @@ export const academicYearsController = {
    */
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
       const { academicYears, total } = await academicYearsService.list(schoolId, page, pageSize);
       res.status(200).json(paginatedResponse(academicYears, page, pageSize, total));
@@ -46,7 +46,7 @@ export const academicYearsController = {
    */
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const academicYear = await academicYearsService.getById(id, schoolId);
       res.status(200).json(successResponse(academicYear));
@@ -64,7 +64,7 @@ export const academicYearsController = {
    */
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const input = req.body as UpdateAcademicYearInput;
       const academicYear = await academicYearsService.update(id, schoolId, input);
@@ -83,7 +83,7 @@ export const academicYearsController = {
    */
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       await academicYearsService.delete(id, schoolId);
       res.status(200).json(successResponse({ message: 'Academic year deleted successfully' }));
@@ -101,7 +101,7 @@ export const academicYearsController = {
    */
   async activate(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const academicYear = await academicYearsService.activate(id, schoolId);
       res.status(200).json(successResponse(academicYear));
@@ -119,7 +119,7 @@ export const academicYearsController = {
    */
   async deactivate(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const academicYear = await academicYearsService.deactivate(id, schoolId);
       res.status(200).json(successResponse(academicYear));

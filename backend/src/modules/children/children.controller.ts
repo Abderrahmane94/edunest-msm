@@ -10,7 +10,7 @@ export const childrenController = {
    */
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const input = req.body as CreateChildInput;
       const child = await childrenService.create(schoolId, input);
       res.status(201).json(successResponse(child));
@@ -28,7 +28,7 @@ export const childrenController = {
    */
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
       const { children, total } = await childrenService.list(schoolId, page, pageSize);
       res.status(200).json(paginatedResponse(children, page, pageSize, total));
@@ -46,7 +46,7 @@ export const childrenController = {
    */
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const child = await childrenService.getById(id, schoolId);
       res.status(200).json(successResponse(child));
@@ -64,7 +64,7 @@ export const childrenController = {
    */
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const input = req.body as UpdateChildInput;
       const child = await childrenService.update(id, schoolId, input);
@@ -83,7 +83,7 @@ export const childrenController = {
    */
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       await childrenService.softDelete(id, schoolId);
       res.status(200).json(successResponse({ message: 'Child deactivated successfully' }));
@@ -101,7 +101,7 @@ export const childrenController = {
    */
   async enroll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const input = req.body as EnrollChildInput;
       const enrollment = await childrenService.enrollInClassroom(id, schoolId, input);
@@ -120,7 +120,7 @@ export const childrenController = {
    */
   async uploadPhoto(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
 
       if (!req.body || !Buffer.isBuffer(req.body)) {
@@ -144,7 +144,7 @@ export const childrenController = {
    */
   async getPhotoUrl(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const photoUrl = await childrenService.getPhotoUrl(id, schoolId);
       res.status(200).json(successResponse(photoUrl));
@@ -162,7 +162,7 @@ export const childrenController = {
    */
   async createParentLink(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const input = req.body as CreateParentLinkInput;
       const link = await childrenService.createParentLink(id, schoolId, input);
@@ -181,7 +181,7 @@ export const childrenController = {
    */
   async getParentLinks(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const links = await childrenService.getParentLinks(id, schoolId);
       res.status(200).json(successResponse(links));
@@ -199,7 +199,7 @@ export const childrenController = {
    */
   async removeParentLink(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id, linkId } = req.params;
       await childrenService.removeParentLink(id, schoolId, linkId);
       res.status(200).json(successResponse({ message: 'Parent-child link removed successfully' }));
@@ -217,7 +217,7 @@ export const childrenController = {
    */
   async setPrimaryLink(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id, linkId } = req.params;
       const link = await childrenService.setPrimaryLink(id, schoolId, linkId);
       res.status(200).json(successResponse(link));
@@ -237,7 +237,7 @@ export const childrenController = {
    */
   async addEmergencyContact(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const input = req.body as CreateEmergencyContactInput;
       const contact = await childrenService.addEmergencyContact(id, schoolId, input);
@@ -256,7 +256,7 @@ export const childrenController = {
    */
   async getEmergencyContacts(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const contacts = await childrenService.getEmergencyContacts(id, schoolId);
       res.status(200).json(successResponse(contacts));
@@ -274,7 +274,7 @@ export const childrenController = {
    */
   async updateEmergencyContact(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id, contactId } = req.params;
       const input = req.body as UpdateEmergencyContactInput;
       const contact = await childrenService.updateEmergencyContact(id, schoolId, contactId, input);
@@ -293,7 +293,7 @@ export const childrenController = {
    */
   async removeEmergencyContact(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id, contactId } = req.params;
       await childrenService.removeEmergencyContact(id, schoolId, contactId);
       res.status(200).json(successResponse({ message: 'Emergency contact removed successfully' }));

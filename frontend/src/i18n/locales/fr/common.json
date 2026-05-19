@@ -5,10 +5,31 @@
   },
   "dashboard": {
     "title": "Tableau de bord",
-    "enrollment": "Inscriptions",
+    "enrollment": "Enfants inscrits",
     "attendanceRate": "Taux de présence",
     "outstandingInvoices": "Factures impayées",
-    "unreadMessages": "Messages non lus"
+    "unreadMessages": "Messages non lus",
+    "admin": {
+      "overview": "Vue d'ensemble",
+      "welcome": "Bonjour, {{name}} 👋",
+      "activeChildren": "Enfants actifs",
+      "last30Days": "30 derniers jours",
+      "sentOrOverdue": "Envoyées ou en retard",
+      "pendingReply": "En attente de réponse"
+    },
+    "platform": {
+      "overview": "Vue d'ensemble",
+      "welcome": "Bonjour, {{name}} 👋",
+      "subtitle": "Vous gérez {{count}} établissement(s) sur la plateforme.",
+      "schools": "Établissements",
+      "totalSchools": "Total établissements",
+      "activeSchools": "Établissements actifs",
+      "inactiveSchools": "Établissements inactifs",
+      "activeRate": "Taux d'activité",
+      "people": "Utilisateurs & enfants",
+      "totalUsers": "Total utilisateurs",
+      "totalChildren": "Total enfants inscrits"
+    }
   },
   "auth": {
     "login": "Se connecter",

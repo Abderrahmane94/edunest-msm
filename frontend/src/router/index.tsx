@@ -117,30 +117,29 @@ function getDefaultPath(role?: string): string {
 // ─── Navigation Items ────────────────────────────────────────────────────────
 
 function getAdminNavItems(role: string): NavItem[] {
-  const items: NavItem[] = [
-    { label: 'nav.dashboard', href: '/admin', icon: LayoutDashboard },
-  ];
-
+  // super_admin: platform-level only
   if (role === 'super_admin') {
-    items.push({ label: 'nav.schools', href: '/admin/schools', icon: Building2 });
+    return [
+      { label: 'nav.dashboard', href: '/admin', icon: LayoutDashboard },
+      { label: 'nav.schools',   href: '/admin/schools', icon: Building2 },
+      { label: 'nav.users',     href: '/admin/users', icon: Users },
+      { label: 'nav.finance',   href: '/admin/finance', icon: Wallet },
+    ];
   }
 
-  items.push(
-    { label: 'nav.users', href: '/admin/users', icon: Users },
-    { label: 'nav.staff', href: '/admin/staff', icon: UserCog },
+  // admin (school director): full school management
+  return [
+    { label: 'nav.dashboard',     href: '/admin', icon: LayoutDashboard },
+    { label: 'nav.users',         href: '/admin/users', icon: Users },
+    { label: 'nav.staff',         href: '/admin/staff', icon: UserCog },
     { label: 'nav.academicYears', href: '/admin/academic-years', icon: GraduationCap },
-    { label: 'nav.classrooms', href: '/admin/classrooms', icon: School },
-    { label: 'nav.children', href: '/admin/children', icon: Baby },
-    { label: 'nav.attendance', href: '/admin/attendance', icon: ClipboardCheck },
+    { label: 'nav.classrooms',    href: '/admin/classrooms', icon: School },
+    { label: 'nav.children',      href: '/admin/children', icon: Baby },
+    { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck },
     { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle },
-    { label: 'nav.finance', href: '/admin/finance', icon: Wallet },
-  );
-
-  if (role === 'admin') {
-    items.push({ label: 'nav.settings', href: '/admin/settings', icon: Settings });
-  }
-
-  return items;
+    { label: 'nav.finance',       href: '/admin/finance', icon: Wallet },
+    { label: 'nav.settings',      href: '/admin/settings', icon: Settings },
+  ];
 }
 
 const teacherNavItems: NavItem[] = [

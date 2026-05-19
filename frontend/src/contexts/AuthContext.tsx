@@ -7,7 +7,7 @@ interface User {
   firstName: string;
   lastName: string;
   role: 'super_admin' | 'admin' | 'teacher' | 'parent';
-  schoolId: string;
+  schoolId: string | null;
   preferredLanguage: 'ar' | 'fr';
   mustChangePassword?: boolean;
 }
@@ -53,7 +53,7 @@ function extractUserFromToken(token: string): User | null {
     firstName: payload.firstName as string,
     lastName: payload.lastName as string,
     role: payload.role as User['role'],
-    schoolId: payload.schoolId as string,
+    schoolId: (payload.schoolId as string | null) ?? null,
     preferredLanguage: (payload.preferredLanguage as User['preferredLanguage']) || 'fr',
   };
 }
@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         firstName: string;
         lastName: string;
         role: User['role'];
-        schoolId: string;
+        schoolId: string | null;
         preferredLanguage?: User['preferredLanguage'];
       };
     }>(

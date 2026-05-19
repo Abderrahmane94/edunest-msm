@@ -9,7 +9,7 @@ export const attendanceController = {
    */
   async bulkMark(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const input = req.body as BulkMarkAttendanceInput;
@@ -30,7 +30,7 @@ export const attendanceController = {
    */
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { id } = req.params;
@@ -52,7 +52,7 @@ export const attendanceController = {
    */
   async getByClassroom(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { classroomId } = req.params;
@@ -80,7 +80,7 @@ export const attendanceController = {
    */
   async getByChild(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { childId } = req.params;
@@ -108,7 +108,7 @@ export const attendanceController = {
    */
   async getClassroomReport(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { classroomId } = req.params;
       const { month, year } = req.query as unknown as AttendanceReportQuery;
 
@@ -133,7 +133,7 @@ export const attendanceController = {
    */
   async getChildReport(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { childId } = req.params;
@@ -162,7 +162,7 @@ export const attendanceController = {
    */
   async getMyChildrenAttendance(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const { month } = req.query as unknown as ParentChildrenMonthQuery;
 

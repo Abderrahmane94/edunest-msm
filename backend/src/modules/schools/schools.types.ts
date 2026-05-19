@@ -6,6 +6,12 @@ export interface CreateSchoolInput {
   wilaya: string;
   contactEmail: string;
   contactPhone: string;
+  director: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    preferredLanguage?: string;
+  };
 }
 
 export interface UpdateSchoolInput {

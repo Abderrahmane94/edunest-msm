@@ -11,7 +11,7 @@ export const staffController = {
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const input = req.body as CreateStaffProfileInput;
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
 
       const profile = await staffService.create(
         schoolId,
@@ -37,7 +37,7 @@ export const staffController = {
    */
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
       const { profiles, total } = await staffService.list(schoolId, page, pageSize);
       res.status(200).json(paginatedResponse(profiles, page, pageSize, total));
@@ -56,7 +56,7 @@ export const staffController = {
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const profile = await staffService.getById(id, schoolId);
       res.status(200).json(successResponse(profile));
     } catch (error) {
@@ -74,7 +74,7 @@ export const staffController = {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const input = req.body as UpdateStaffProfileInput;
 
       const profile = await staffService.update(id, schoolId, {
@@ -100,7 +100,7 @@ export const staffController = {
   async uploadDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
 
       if (!req.body || !Buffer.isBuffer(req.body)) {
         res.status(400).json(errorResponse('VALIDATION_ERROR', 'Request body must contain a file buffer'));
@@ -124,7 +124,7 @@ export const staffController = {
   async getDocumentUrl(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const result = await staffService.getDocumentUrl(id, schoolId);
       res.status(200).json(successResponse(result));
     } catch (error) {

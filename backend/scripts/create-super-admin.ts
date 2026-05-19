@@ -9,16 +9,18 @@ async function main() {
   const adapter = new PrismaPg(pool);
   const prisma = new PrismaClient({ adapter });
 
-  const school = await prisma.school.findFirst();
-  if (!school) {
-    console.error('No school found');
-    process.exit(1);
+  const existing = await prisma.user.findUnique({ where: { email: 'super@edunest.dz' } });
+  if (existing) {
+    console.log('super_admin already exists:', existing.email);
+    await prisma.$disconnect();
+    await pool.end();
+    return;
   }
 
   const hash = await bcrypt.hash('super123', 10);
   const user = await prisma.user.create({
     data: {
-      schoolId: school.id,
+      schoolId: null,           // super_admin has no school
       firstName: 'Super',
       lastName: 'Admin',
       email: 'super@edunest.dz',

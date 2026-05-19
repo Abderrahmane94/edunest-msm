@@ -11,7 +11,7 @@ export const usersController = {
   async invite(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const input = req.body as InviteUserInput;
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const result = await usersService.invite(input.email, input.role as any, schoolId);
       res.status(200).json(successResponse(result));
     } catch (error) {
@@ -51,7 +51,7 @@ export const usersController = {
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       // super_admin sees all users across all schools; admin sees only their school
-      const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId;
+      const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
       const { users, total } = await usersService.list(schoolId, page, pageSize);
       res.status(200).json(paginatedResponse(users, page, pageSize, total));
@@ -71,7 +71,7 @@ export const usersController = {
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId;
+      const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId!;
       const user = await usersService.getById(id, schoolId);
       res.status(200).json(successResponse(user));
     } catch (error) {
@@ -91,8 +91,8 @@ export const usersController = {
       const input = req.body as CreateUserDirectlyInput;
       // super_admin can specify any school via body; admin is always scoped to their own school
       const schoolId = req.user!.role === 'super_admin'
-        ? (input.schoolId ?? req.user!.schoolId)
-        : req.user!.schoolId;
+        ? (input.schoolId ?? req.user!.schoolId!)
+        : req.user!.schoolId!;
 
       if (!schoolId) {
         res.status(400).json(errorResponse('VALIDATION_ERROR', 'School is required'));
@@ -116,7 +116,7 @@ export const usersController = {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId;
+      const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId!;
       const input = req.body as UpdateUserInput;
       const user = await usersService.update(id, schoolId, input as any);
       res.status(200).json(successResponse(user));
@@ -135,7 +135,7 @@ export const usersController = {
   async activate(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const user = await usersService.activate(id, schoolId);
       res.status(200).json(successResponse(user));
     } catch (error) {
@@ -153,7 +153,7 @@ export const usersController = {
   async deactivate(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const user = await usersService.deactivate(id, schoolId);
       res.status(200).json(successResponse(user));
     } catch (error) {

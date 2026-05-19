@@ -5,10 +5,31 @@
   },
   "dashboard": {
     "title": "لوحة التحكم",
-    "enrollment": "التسجيلات",
+    "enrollment": "الأطفال المسجلون",
     "attendanceRate": "نسبة الحضور",
     "outstandingInvoices": "الفواتير المستحقة",
-    "unreadMessages": "الرسائل غير المقروءة"
+    "unreadMessages": "الرسائل غير المقروءة",
+    "admin": {
+      "overview": "نظرة عامة",
+      "welcome": "مرحباً، {{name}} 👋",
+      "activeChildren": "أطفال نشطون",
+      "last30Days": "آخر 30 يوماً",
+      "sentOrOverdue": "مرسلة أو متأخرة",
+      "pendingReply": "في انتظار الرد"
+    },
+    "platform": {
+      "overview": "نظرة عامة",
+      "welcome": "مرحباً، {{name}} 👋",
+      "subtitle": "تدير {{count}} مؤسسة على المنصة.",
+      "schools": "المؤسسات",
+      "totalSchools": "إجمالي المؤسسات",
+      "activeSchools": "المؤسسات النشطة",
+      "inactiveSchools": "المؤسسات المعطلة",
+      "activeRate": "نسبة النشاط",
+      "people": "المستخدمون والأطفال",
+      "totalUsers": "إجمالي المستخدمين",
+      "totalChildren": "إجمالي الأطفال المسجلين"
+    }
   },
   "auth": {
     "login": "تسجيل الدخول",

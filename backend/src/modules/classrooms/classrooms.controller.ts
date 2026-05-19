@@ -10,7 +10,7 @@ export const classroomsController = {
    */
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const input = req.body as CreateClassroomInput;
       const classroom = await classroomsService.create(schoolId, input);
       res.status(201).json(successResponse(classroom));
@@ -28,7 +28,7 @@ export const classroomsController = {
    */
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
       const { classrooms, total } = await classroomsService.list(schoolId, page, pageSize);
       res.status(200).json(paginatedResponse(classrooms, page, pageSize, total));
@@ -46,7 +46,7 @@ export const classroomsController = {
    */
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const classroom = await classroomsService.getById(id, schoolId);
       res.status(200).json(successResponse(classroom));
@@ -64,7 +64,7 @@ export const classroomsController = {
    */
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const input = req.body as UpdateClassroomInput;
       const classroom = await classroomsService.update(id, schoolId, input);
@@ -83,7 +83,7 @@ export const classroomsController = {
    */
   async assignTeacher(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const input = req.body as AssignTeacherInput;
       const classroom = await classroomsService.assignTeacher(id, schoolId, input);
@@ -102,7 +102,7 @@ export const classroomsController = {
    */
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       await classroomsService.delete(id, schoolId);
       res.status(200).json(successResponse({ message: 'Classroom deleted successfully' }));

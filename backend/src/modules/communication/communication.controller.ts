@@ -9,7 +9,7 @@ export const communicationController = {
    */
   async createConversation(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const input = req.body as CreateConversationInput;
@@ -35,7 +35,7 @@ export const communicationController = {
    */
   async listConversations(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { page, pageSize } = req.query as unknown as MessagesQuery;
@@ -62,7 +62,7 @@ export const communicationController = {
    */
   async getMessages(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { id } = req.params;
@@ -91,7 +91,7 @@ export const communicationController = {
    */
   async sendMessage(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { id } = req.params;
@@ -119,7 +119,7 @@ export const communicationController = {
    */
   async markAsRead(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { id } = req.params;
@@ -145,7 +145,7 @@ export const communicationController = {
    */
   async createDailyReport(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const input = req.body as CreateDailyReportInput;
@@ -171,7 +171,7 @@ export const communicationController = {
    */
   async getReportsForMyChildren(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
 
       const reports = await communicationService.getReportsForParent(schoolId, userId);
@@ -190,7 +190,7 @@ export const communicationController = {
    */
   async getDailyReportsForChild(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { childId } = req.params;
@@ -220,7 +220,7 @@ export const communicationController = {
    */
   async getDailyReport(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { id } = req.params;
@@ -246,7 +246,7 @@ export const communicationController = {
    */
   async uploadDailyReportPhoto(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { id } = req.params;
@@ -276,7 +276,7 @@ export const communicationController = {
    */
   async createAnnouncement(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const input = req.body as CreateAnnouncementInput;
 
@@ -300,7 +300,7 @@ export const communicationController = {
    */
   async listAnnouncements(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { page, pageSize, classroomId } = req.query as unknown as AnnouncementsQuery;
 
       const { announcements, total } = await communicationService.listAnnouncements(
@@ -324,7 +324,7 @@ export const communicationController = {
    */
   async getAnnouncement(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
 
       const announcement = await communicationService.getAnnouncementById(id, schoolId);
@@ -340,7 +340,7 @@ export const communicationController = {
 
   async deleteAnnouncement(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       await communicationService.deleteAnnouncement(id, schoolId);
       res.status(200).json(successResponse({ message: 'Announcement deleted' }));
@@ -360,7 +360,7 @@ export const communicationController = {
    */
   async createEvent(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const input = req.body as CreateEventInput;
 
@@ -380,7 +380,7 @@ export const communicationController = {
    */
   async listEvents(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { page, pageSize } = req.query as unknown as EventsQuery;
 
       const { events, total } = await communicationService.listEvents(schoolId, page, pageSize);
@@ -399,7 +399,7 @@ export const communicationController = {
    */
   async getEvent(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
 
       const event = await communicationService.getEventById(id, schoolId);
@@ -415,7 +415,7 @@ export const communicationController = {
 
   async deleteEvent(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       await communicationService.deleteEvent(id, schoolId);
       res.status(200).json(successResponse({ message: 'Event deleted' }));
@@ -433,7 +433,7 @@ export const communicationController = {
    */
   async respondToConsent(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const { eventId, childId } = req.params;
       const input = req.body as RespondConsentInput;

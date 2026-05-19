@@ -150,7 +150,7 @@ model School {
 
 model User {
   id                String   @id @default(uuid())
-  schoolId          String   @map("school_id")
+  schoolId          String?  @map("school_id")
   firstName         String   @map("first_name")
   lastName          String   @map("last_name")
   email             String   @unique
@@ -162,7 +162,7 @@ model User {
   preferredLanguage   Language @default(fr) @map("preferred_language")
   createdAt           DateTime @default(now()) @map("created_at")
 
-  school              School              @relation(fields: [schoolId], references: [id])
+  school              School?             @relation(fields: [schoolId], references: [id])
   staffProfile        StaffProfile?
   parentLinks         ParentChildLink[]
   notifications       Notification[]

@@ -12,7 +12,7 @@ export const financeController = {
    */
   async createFeeStructure(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const input = req.body as CreateFeeStructureInput;
       const feeStructure = await financeService.createFeeStructure(schoolId, input);
       res.status(201).json(successResponse(feeStructure));
@@ -30,7 +30,7 @@ export const financeController = {
    */
   async listFeeStructures(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
       const { feeStructures, total } = await financeService.listFeeStructures(schoolId, page, pageSize);
       res.status(200).json(paginatedResponse(feeStructures, page, pageSize, total));
@@ -48,7 +48,7 @@ export const financeController = {
    */
   async getFeeStructureById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const feeStructure = await financeService.getFeeStructureById(id, schoolId);
       res.status(200).json(successResponse(feeStructure));
@@ -66,7 +66,7 @@ export const financeController = {
    */
   async updateFeeStructure(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const input = req.body as UpdateFeeStructureInput;
       const feeStructure = await financeService.updateFeeStructure(id, schoolId, input);
@@ -85,7 +85,7 @@ export const financeController = {
    */
   async deleteFeeStructure(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       await financeService.deleteFeeStructure(id, schoolId);
       res.status(200).json(successResponse({ message: 'Fee structure deleted successfully' }));
@@ -105,7 +105,7 @@ export const financeController = {
    */
   async createInvoice(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const input = req.body as CreateInvoiceInput;
       const invoice = await financeService.createInvoice(schoolId, input);
       res.status(201).json(successResponse(invoice));
@@ -123,7 +123,7 @@ export const financeController = {
    */
   async bulkGenerateInvoices(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const input = req.body as BulkGenerateInvoicesInput;
       const invoices = await financeService.bulkGenerateInvoices(schoolId, input);
       res.status(201).json(successResponse(invoices));
@@ -141,7 +141,7 @@ export const financeController = {
    */
   async listInvoices(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
       const { invoices, total } = await financeService.listInvoices(schoolId, page, pageSize);
       res.status(200).json(paginatedResponse(invoices, page, pageSize, total));
@@ -159,7 +159,7 @@ export const financeController = {
    */
   async getInvoiceById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { id } = req.params;
@@ -179,7 +179,7 @@ export const financeController = {
    */
   async sendInvoice(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const { id } = req.params;
       const invoice = await financeService.sendInvoice(id, schoolId, userId);
@@ -198,7 +198,7 @@ export const financeController = {
    */
   async cancelInvoice(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const { id } = req.params;
       const invoice = await financeService.cancelInvoice(id, schoolId, userId);
@@ -273,7 +273,7 @@ export const financeController = {
    */
   async recordCashPayment(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const adminUserId = req.user!.userId;
       const { id } = req.params;
       const input = req.body as RecordCashPaymentInput;
@@ -293,7 +293,7 @@ export const financeController = {
    */
   async listCashPayments(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { id } = req.params;
@@ -336,7 +336,7 @@ export const financeController = {
    */
   async getPaymentMethodBreakdown(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const breakdown = await financeService.getPaymentMethodBreakdown(schoolId);
       res.status(200).json(successResponse(breakdown));
     } catch (error) {
@@ -355,7 +355,7 @@ export const financeController = {
    */
   async createDiscount(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const input = req.body as CreateDiscountInput;
       const discount = await financeService.createDiscount(schoolId, input);
       res.status(201).json(successResponse(discount));
@@ -373,7 +373,7 @@ export const financeController = {
    */
   async listDiscounts(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
       const childId = req.query.childId as string | undefined;
       const { discounts, total } = await financeService.listDiscounts(schoolId, page, pageSize, childId);
@@ -392,7 +392,7 @@ export const financeController = {
    */
   async getDiscountById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const discount = await financeService.getDiscountById(id, schoolId);
       res.status(200).json(successResponse(discount));
@@ -410,7 +410,7 @@ export const financeController = {
    */
   async updateDiscount(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const input = req.body as UpdateDiscountInput;
       const discount = await financeService.updateDiscount(id, schoolId, input);
@@ -429,7 +429,7 @@ export const financeController = {
    */
   async deleteDiscount(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       await financeService.deleteDiscount(id, schoolId);
       res.status(200).json(successResponse({ message: 'Discount deleted successfully' }));
@@ -449,7 +449,7 @@ export const financeController = {
    */
   async createExpense(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const input = req.body as CreateExpenseInput;
       const expense = await financeService.createExpense(schoolId, input, userId);
@@ -468,7 +468,7 @@ export const financeController = {
    */
   async listExpenses(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
       const { expenses, total } = await financeService.listExpenses(schoolId, page, pageSize);
       res.status(200).json(paginatedResponse(expenses, page, pageSize, total));
@@ -486,7 +486,7 @@ export const financeController = {
    */
   async getExpenseById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const expense = await financeService.getExpenseById(id, schoolId);
       res.status(200).json(successResponse(expense));
@@ -504,7 +504,7 @@ export const financeController = {
    */
   async updateExpense(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const input = req.body as UpdateExpenseInput;
       const expense = await financeService.updateExpense(id, schoolId, input);
@@ -523,7 +523,7 @@ export const financeController = {
    */
   async deleteExpense(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       await financeService.deleteExpense(id, schoolId);
       res.status(200).json(successResponse({ message: 'Expense deleted successfully' }));
@@ -541,7 +541,7 @@ export const financeController = {
    */
   async uploadExpenseReceipt(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
 
       if (!req.file) {
@@ -565,7 +565,7 @@ export const financeController = {
    */
   async getExpenseReceiptUrl(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const url = await financeService.getExpenseReceiptUrl(id, schoolId);
       res.status(200).json(successResponse({ url }));
@@ -585,7 +585,7 @@ export const financeController = {
    */
   async getInvoiceAuditLog(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const auditLogs = await financeService.getInvoiceAuditLog(id, schoolId);
       res.status(200).json(successResponse(auditLogs));
@@ -605,7 +605,7 @@ export const financeController = {
    */
   async getMonthlyReport(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const { month, year } = monthlyReportQuerySchema.parse(req.query);
       const report = await financeService.getMonthlyReport(schoolId, month, year);
       res.status(200).json(successResponse(report));
@@ -623,7 +623,7 @@ export const financeController = {
    */
   async getFinancialSummary(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId;
+      const schoolId = req.user!.schoolId!;
       const summary = await financeService.getFinancialSummary(schoolId);
       res.status(200).json(successResponse(summary));
     } catch (error) {

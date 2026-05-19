@@ -4,7 +4,7 @@ import { successResponse, paginatedResponse, errorResponse } from '../../utils/r
 import type { CreateSchoolInput, UpdateSchoolInput } from './schools.schema';
 import { paginationSchema } from '../../utils/validators';
 import { usersService, UserServiceError } from '../users/users.service';
-import { inviteUserSchema, createUserDirectlySchema } from '../users/users.schema';
+import { createUserDirectlySchema } from '../users/users.schema';
 
 export const schoolsController = {
   /**

@@ -6,10 +6,14 @@ interface DashboardStats {
   attendanceRate: number;
   outstandingInvoices: number;
   unreadMessages: number;
-  enrollmentTrend?: { direction: 'up' | 'down'; value: string };
-  attendanceTrend?: { direction: 'up' | 'down'; value: string };
-  invoiceTrend?: { direction: 'up' | 'down'; value: string };
-  messageTrend?: { direction: 'up' | 'down'; value: string };
+}
+
+interface PlatformStats {
+  totalSchools: number;
+  activeSchools: number;
+  inactiveSchools: number;
+  totalUsers: number;
+  totalChildren: number;
 }
 
 export function useAdminDashboard() {
@@ -22,6 +26,22 @@ export function useAdminDashboard() {
         attendanceRate: 0,
         outstandingInvoices: 0,
         unreadMessages: 0,
+      };
+    },
+  });
+}
+
+export function usePlatformStats() {
+  return useQuery({
+    queryKey: ['admin', 'platform-stats'],
+    queryFn: async () => {
+      const res = await apiClient.get<PlatformStats>('/admin/platform-stats');
+      return res.data ?? {
+        totalSchools: 0,
+        activeSchools: 0,
+        inactiveSchools: 0,
+        totalUsers: 0,
+        totalChildren: 0,
       };
     },
   });

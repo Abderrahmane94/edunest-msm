@@ -24,7 +24,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 export interface SchoolItem {
   id: string;
   name: string;
-  schoolType: string;
   address: string;
   wilaya: string;
   contactEmail: string;
@@ -54,7 +53,7 @@ export function useCreateSchool() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: {
-      name: string; schoolType: string; address: string; wilaya: string; contactEmail: string; contactPhone: string;
+      name: string; address: string; wilaya: string; contactEmail: string; contactPhone: string;
       director: { firstName: string; lastName: string; email: string; preferredLanguage: string };
     }) => {
       const res = await apiClient.post('/schools', data);
@@ -118,15 +117,6 @@ export function SchoolsPage() {
             <p className="text-caption text-text-secondary">{school.wilaya}</p>
           </div>
         </div>
-      ),
-    },
-    {
-      key: 'schoolType',
-      header: t('schools.columns.type'),
-      render: (school) => (
-        <StatusBadge variant="sent">
-          {t(`schoolSettings.types.${school.schoolType}`)}
-        </StatusBadge>
       ),
     },
     {
@@ -240,7 +230,7 @@ export function SchoolsPage() {
 function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { t } = useTranslation();
   const createSchool = useCreateSchool();
-  const emptySchool = { name: '', schoolType: 'kindergarten', address: '', wilaya: '', contactEmail: '', contactPhone: '' };
+  const emptySchool = { name: '', address: '', wilaya: '', contactEmail: '', contactPhone: '' };
   const emptyDirector = { firstName: '', lastName: '', email: '', preferredLanguage: 'fr' };
   const [formData, setFormData] = React.useState(emptySchool);
   const [director, setDirector] = React.useState(emptyDirector);
@@ -264,10 +254,6 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
     const { name, value } = e.target;
     setDirector((prev) => ({ ...prev, [name]: value }));
     if (errors[`d_${name}`]) setErrors((prev) => ({ ...prev, [`d_${name}`]: '' }));
-  }
-
-  function handleSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
   function handleDirectorSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -301,12 +287,6 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
     }
   }
 
-  const typeOptions = [
-    { value: 'kindergarten', label: t('schoolSettings.types.kindergarten') },
-    { value: 'primary', label: t('schoolSettings.types.primary') },
-    { value: 'secondary', label: t('schoolSettings.types.secondary') },
-  ];
-
   const langOptions = [
     { value: 'fr', label: 'Français' },
     { value: 'ar', label: 'العربية' },
@@ -325,7 +305,6 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
           <FormField label={t('schools.form.name')} htmlFor="s-name" error={errors.name} required>
             <Input id="s-name" name="name" value={formData.name} onChange={handleChange} placeholder={t('schools.form.namePlaceholder')} />
           </FormField>
-          <FormSelect label={t('schoolSettings.type')} name="schoolType" value={formData.schoolType} onChange={handleSelectChange} options={typeOptions} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormField label={t('schoolSettings.address')} htmlFor="s-address" error={errors.address} required>
               <Input id="s-address" name="address" value={formData.address} onChange={handleChange} placeholder={t('schoolSettings.addressPlaceholder')} />

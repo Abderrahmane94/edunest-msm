@@ -28,7 +28,7 @@ function useSchoolDetail(id: string) {
 function useUpdateSchoolAdmin() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name?: string; schoolType?: string; address?: string; wilaya?: string; contactEmail?: string; contactPhone?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; name?: string; address?: string; wilaya?: string; contactEmail?: string; contactPhone?: string }) => {
       const res = await apiClient.put(`/schools/${id}`, data);
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to update school');
       return res.data;
@@ -90,7 +90,7 @@ export function SchoolDetailPage() {
 
   const [activeTab, setActiveTab] = React.useState<Tab>('info');
   const [formData, setFormData] = React.useState({
-    name: '', schoolType: 'kindergarten', address: '', wilaya: '', contactEmail: '', contactPhone: '',
+    name: '', address: '', wilaya: '', contactEmail: '', contactPhone: '',
   });
   const [saveSuccess, setSaveSuccess] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
@@ -99,17 +99,13 @@ export function SchoolDetailPage() {
   React.useEffect(() => {
     if (school) {
       setFormData({
-        name: school.name, schoolType: school.schoolType, address: school.address,
+        name: school.name, address: school.address,
         wilaya: school.wilaya, contactEmail: school.contactEmail, contactPhone: school.contactPhone,
       });
     }
   }, [school]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  }
-
-  function handleSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
@@ -134,12 +130,6 @@ export function SchoolDetailPage() {
       { onError: (err) => setToggleError(err instanceof Error ? err.message : t('common.error')) }
     );
   }
-
-  const typeOptions = [
-    { value: 'kindergarten', label: t('schoolSettings.types.kindergarten') },
-    { value: 'primary', label: t('schoolSettings.types.primary') },
-    { value: 'secondary', label: t('schoolSettings.types.secondary') },
-  ];
 
   if (isLoading) {
     return (
@@ -172,7 +162,7 @@ export function SchoolDetailPage() {
         </Button>
         <div className="flex-1">
           <h1 className="text-page-title font-semibold text-text-heading">{school.name}</h1>
-          <p className="text-body text-text-secondary">{school.wilaya} · {t(`schoolSettings.types.${school.schoolType}`)}</p>
+          <p className="text-body text-text-secondary">{school.wilaya}</p>
         </div>
         <StatusBadge variant={school.isActive ? 'present' : 'cancelled'}>
           {school.isActive ? t('schools.active') : t('schools.inactive')}
@@ -229,7 +219,6 @@ export function SchoolDetailPage() {
               <FormField label={t('schoolSettings.name')} htmlFor="sd-name" required>
                 <Input id="sd-name" name="name" value={formData.name} onChange={handleChange} placeholder={t('schools.form.namePlaceholder')} />
               </FormField>
-              <FormSelect label={t('schoolSettings.type')} name="schoolType" value={formData.schoolType} onChange={handleSelectChange} options={typeOptions} />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
                 <FormField label={t('schoolSettings.address')} htmlFor="sd-address" required>
                   <Input id="sd-address" name="address" value={formData.address} onChange={handleChange} placeholder={t('schoolSettings.addressPlaceholder')} />

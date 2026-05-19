@@ -41,7 +41,7 @@ class SchoolsService {
       const newSchool = await tx.school.create({
         data: {
           name: input.name,
-          schoolType: input.schoolType,
+          schoolType: 'kindergarten',
           address: input.address,
           wilaya: input.wilaya,
           contactEmail: input.contactEmail,
@@ -117,7 +117,6 @@ class SchoolsService {
       where: { id },
       data: {
         ...(input.name !== undefined && { name: input.name }),
-        ...(input.schoolType !== undefined && { schoolType: input.schoolType }),
         ...(input.address !== undefined && { address: input.address }),
         ...(input.wilaya !== undefined && { wilaya: input.wilaya }),
         ...(input.contactEmail !== undefined && { contactEmail: input.contactEmail }),

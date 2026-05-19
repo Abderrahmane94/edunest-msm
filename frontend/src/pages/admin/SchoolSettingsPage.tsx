@@ -4,7 +4,6 @@ import { Building2, Upload, Camera } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { Input } from '@/components/ui';
 import { FormField } from '@/components/forms';
-import { FormSelect } from '@/components/forms';
 import { useSchool, useUpdateSchool, useUploadSchoolLogo } from '@/hooks/useSchool';
 
 export function SchoolSettingsPage() {
@@ -16,7 +15,6 @@ export function SchoolSettingsPage() {
   const [selectedLogoFile, setSelectedLogoFile] = React.useState<File | null>(null);
   const [formData, setFormData] = React.useState({
     name: '',
-    school_type: 'kindergarten',
     address: '',
     wilaya: '',
     contact_email: '',
@@ -31,7 +29,6 @@ export function SchoolSettingsPage() {
     if (school) {
       setFormData({
         name: school.name || '',
-        school_type: school.school_type || 'kindergarten',
         address: school.address || '',
         wilaya: school.wilaya || '',
         contact_email: school.contact_email || '',
@@ -42,11 +39,6 @@ export function SchoolSettingsPage() {
   }, [school]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  }
-
-  function handleSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   }
@@ -103,12 +95,6 @@ export function SchoolSettingsPage() {
       </div>
     );
   }
-
-  const schoolTypeOptions = [
-    { value: 'kindergarten', label: t('schoolSettings.types.kindergarten') },
-    { value: 'primary', label: t('schoolSettings.types.primary') },
-    { value: 'secondary', label: t('schoolSettings.types.secondary') },
-  ];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -188,14 +174,6 @@ export function SchoolSettingsPage() {
                 placeholder={t('schoolSettings.namePlaceholder')}
               />
             </FormField>
-
-            <FormSelect
-              label={t('schoolSettings.type')}
-              name="school_type"
-              value={formData.school_type}
-              onChange={handleSelectChange}
-              options={schoolTypeOptions}
-            />
 
             <FormField label={t('schoolSettings.address')} htmlFor="address" required>
               <Input

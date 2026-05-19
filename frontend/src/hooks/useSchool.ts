@@ -5,7 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 export interface School {
   id: string;
   name: string;
-  school_type: string;
   address: string;
   wilaya: string;
   contact_email: string;
@@ -18,7 +17,6 @@ function mapSchool(raw: Record<string, unknown>): School {
   return {
     id: raw.id as string,
     name: raw.name as string,
-    school_type: (raw.schoolType ?? raw.school_type) as string,
     address: raw.address as string,
     wilaya: raw.wilaya as string,
     contact_email: (raw.contactEmail ?? raw.contact_email) as string,
@@ -79,7 +77,6 @@ export function useUpdateSchool() {
       // Map to camelCase for the backend
       const body: Record<string, unknown> = {};
       if (data.name !== undefined) body.name = data.name;
-      if (data.school_type !== undefined) body.schoolType = data.school_type;
       if (data.address !== undefined) body.address = data.address;
       if (data.wilaya !== undefined) body.wilaya = data.wilaya;
       if (data.contact_email !== undefined) body.contactEmail = data.contact_email;

@@ -2,7 +2,6 @@ import { SchoolType } from '@prisma/client';
 
 export interface CreateSchoolInput {
   name: string;
-  schoolType: SchoolType;
   address: string;
   wilaya: string;
   contactEmail: string;
@@ -11,7 +10,6 @@ export interface CreateSchoolInput {
 
 export interface UpdateSchoolInput {
   name?: string;
-  schoolType?: SchoolType;
   address?: string;
   wilaya?: string;
   contactEmail?: string;

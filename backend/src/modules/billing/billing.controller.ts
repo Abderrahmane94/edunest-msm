@@ -79,6 +79,22 @@ export const billingController = {
     } catch (e) { handleError(e, res, next); }
   },
 
+  async getPaymentsBySchool(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { schoolId, from, to, status } = req.query;
+      if (!schoolId || typeof schoolId !== 'string') {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', 'schoolId query parameter is required'));
+        return;
+      }
+      const payments = await billingService.getPaymentsBySchool(schoolId, {
+        from: typeof from === 'string' ? from : undefined,
+        to: typeof to === 'string' ? to : undefined,
+        status: typeof status === 'string' ? status as any : undefined,
+      });
+      res.json(successResponse(payments));
+    } catch (e) { handleError(e, res, next); }
+  },
+
   // Stats
   async getStats(_req: Request, res: Response, next: NextFunction) {
     try {

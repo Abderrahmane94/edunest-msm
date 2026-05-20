@@ -59,7 +59,6 @@ class SchoolsService {
           role: 'admin',
           preferredLanguage: (input.director.preferredLanguage ?? 'fr') as any,
           isActive: true,
-          mustChangePassword: true,
         },
         select: { id: true, email: true, firstName: true, lastName: true },
       });

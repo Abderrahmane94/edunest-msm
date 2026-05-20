@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   TrendingUp, CreditCard, Building2, CheckCircle, AlertCircle,
-  Plus, Pencil, Trash2, X, Save, Banknote, Clock, XCircle,
+  Plus, Pencil, Trash2, X, Save, Banknote, Clock, XCircle, Search, Calendar,
 } from 'lucide-react';
 import {
   Button, DataTable, StatusBadge, Dialog, DialogContent,
@@ -12,13 +12,13 @@ import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import {
   usePlans, useCreatePlan, useUpdatePlan, useDeletePlan,
-  useSubscriptions, useAssignPlan, useUpdateSubscriptionStatus,
-  useRecordPayment, useBillingStats,
-  type SubscriptionPlan, type SchoolSubscription,
+  useSubscriptions, useAssignPlan,
+  useRecordPayment, useBillingStats, useSchoolPayments,
+  type SubscriptionPlan, type SchoolSubscription, type SchoolPaymentRecord,
 } from '@/hooks/useBilling';
 import { useSchoolsList } from '@/hooks/useSchools';
 
-type Tab = 'dashboard' | 'plans' | 'subscriptions';
+type Tab = 'dashboard' | 'plans' | 'subscriptions' | 'payments';
 
 function formatDZD(n: number) {
   return new Intl.NumberFormat('fr-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n);
@@ -340,11 +340,8 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
 function SubscriptionsTab() {
   const { t } = useTranslation();
   const { data: subs, isLoading } = useSubscriptions();
-  const updateStatus = useUpdateSubscriptionStatus();
   const [assignOpen, setAssignOpen] = React.useState(false);
   const [payingSub, setPayingSub] = React.useState<SchoolSubscription | null>(null);
-
-  const statusOptions = ['active', 'overdue', 'suspended', 'cancelled'].map((s) => ({ value: s, label: t(`billing.status.${s}`) }));
 
   const columns: Column<SchoolSubscription>[] = [
     {
@@ -374,25 +371,16 @@ function SubscriptionsTab() {
     },
     {
       key: 'actions', header: '', render: (s) => {
-        // Disable payment button only when subscription is active AND period hasn't expired
-        // Overdue always allows payment (that's how the school pays their debt)
-        const periodActive = s.status === 'active' && new Date(s.currentPeriodEnd) > new Date();
-        const cannotPay = periodActive || s.status === 'cancelled' || s.status === 'suspended';
+        const cannotPay = s.status === 'cancelled' || s.status === 'suspended';
         return (
         <div className="flex items-center gap-1">
           <Button
             variant="ghost" size="sm"
             disabled={cannotPay}
-            title={periodActive ? t('billing.payments.alreadyPaid') : undefined}
             onClick={(e) => { e.stopPropagation(); setPayingSub(s); }}
           >
             <Banknote className="w-3.5 h-3.5 text-success" />{t('billing.payments.record')}
           </Button>
-          {(s.status === 'active' || s.status === 'overdue') && !periodActive && (
-            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: s.id, status: s.status === 'active' ? 'overdue' : 'active' }); }}>
-              {s.status === 'active' ? <AlertCircle className="w-3.5 h-3.5 text-warning" /> : <CheckCircle className="w-3.5 h-3.5 text-success" />}
-            </Button>
-          )}
         </div>
         );
       }, className: 'w-40',
@@ -415,6 +403,166 @@ function SubscriptionsTab() {
   );
 }
 
+/* ─── Payments tab ─── */
+function PaymentsTab() {
+  const { t } = useTranslation();
+  const { data: schools } = useSchoolsList();
+
+  const [selectedSchoolId, setSelectedSchoolId] = React.useState('');
+  const [dateFrom, setDateFrom] = React.useState('');
+  const [dateTo, setDateTo] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('');
+
+  const filters = React.useMemo(() => ({
+    from: dateFrom || undefined,
+    to: dateTo || undefined,
+    status: statusFilter || undefined,
+  }), [dateFrom, dateTo, statusFilter]);
+
+  const { data: payments, isLoading: paymentsLoading } = useSchoolPayments(
+    selectedSchoolId || null,
+    filters,
+  );
+
+  const schoolOptions = React.useMemo(() =>
+    (schools ?? []).map((s) => ({ value: s.id, label: s.name })),
+    [schools],
+  );
+
+  const statusOptions = [
+    { value: '', label: t('billingPayments.allStatuses') },
+    { value: 'active', label: t('billing.status.active') },
+    { value: 'overdue', label: t('billing.status.overdue') },
+    { value: 'trial', label: t('billing.status.trial') },
+    { value: 'cancelled', label: t('billing.status.cancelled') },
+    { value: 'suspended', label: t('billing.status.suspended') },
+  ];
+
+  const columns: Column<SchoolPaymentRecord>[] = [
+    {
+      key: 'paidAt', header: t('billingPayments.columns.date'), render: (p) => (
+        <span className="text-body text-text-primary">{new Date(p.paidAt).toLocaleDateString()}</span>
+      ),
+    },
+    {
+      key: 'amount', header: t('billingPayments.columns.amount'), render: (p) => (
+        <span className="font-mono font-medium text-text-heading">{formatDZD(p.amount)}</span>
+      ),
+    },
+    {
+      key: 'period', header: t('billingPayments.columns.period'), render: (p) => (
+        <span className="text-caption text-text-secondary" dir="ltr">
+          {new Date(p.periodStart).toLocaleDateString()} – {new Date(p.periodEnd).toLocaleDateString()}
+        </span>
+      ),
+    },
+    {
+      key: 'plan', header: t('billingPayments.columns.plan'), render: (p) => (
+        <span className="text-body text-text-primary">{p.subscription.plan.name}</span>
+      ),
+    },
+    {
+      key: 'status', header: t('billingPayments.columns.subscriptionStatus'), render: (p) => (
+        <StatusBadge variant={STATUS_VARIANT[p.subscription.status] as any}>
+          {t(`billing.status.${p.subscription.status}`)}
+        </StatusBadge>
+      ),
+    },
+    {
+      key: 'note', header: t('billingPayments.columns.note'), render: (p) => (
+        <span className="text-caption text-text-secondary">{p.note || '—'}</span>
+      ),
+    },
+  ];
+
+  const totalAmount = React.useMemo(() =>
+    (payments ?? []).reduce((sum, p) => sum + p.amount, 0),
+    [payments],
+  );
+
+  return (
+    <div className="space-y-4">
+      {/* Filters */}
+      <div className="bg-card border border-border rounded-xl p-5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-2">
+            <FormSelect
+              label={t('billingPayments.selectSchool')}
+              name="schoolId"
+              value={selectedSchoolId}
+              onChange={(e) => setSelectedSchoolId(e.target.value)}
+              options={schoolOptions}
+              placeholder={t('billingPayments.schoolPlaceholder')}
+            />
+          </div>
+          <div>
+            <label className="text-label font-medium text-text-primary block mb-1">{t('billingPayments.from')}</label>
+            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-label font-medium text-text-primary block mb-1">{t('billingPayments.to')}</label>
+            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+          </div>
+        </div>
+        <div className="mt-4 flex items-center gap-4">
+          <div className="w-48">
+            <FormSelect
+              label={t('billingPayments.status')}
+              name="status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              options={statusOptions}
+            />
+          </div>
+          {(dateFrom || dateTo || statusFilter) && (
+            <Button variant="ghost" size="sm" className="mt-5" onClick={() => { setDateFrom(''); setDateTo(''); setStatusFilter(''); }}>
+              {t('billingPayments.clearFilters')}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Results */}
+      {!selectedSchoolId ? (
+        <div className="bg-card border border-border rounded-xl p-12 text-center">
+          <Search className="w-12 h-12 text-text-disabled mx-auto mb-4" />
+          <p className="text-body text-text-secondary">{t('billingPayments.selectSchoolPrompt')}</p>
+        </div>
+      ) : paymentsLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => <div key={i} className="bg-hover rounded-xl h-14 animate-pulse" />)}
+        </div>
+      ) : (
+        <>
+          {payments && payments.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-success-muted">
+                  <Banknote className="w-5 h-5 text-success" />
+                </div>
+                <div>
+                  <p className="text-caption text-text-secondary">{t('billingPayments.totalPayments')}</p>
+                  <p className="text-section font-bold text-text-heading">{payments.length}</p>
+                </div>
+              </div>
+              <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-accent-muted">
+                  <Calendar className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-caption text-text-secondary">{t('billingPayments.totalAmount')}</p>
+                  <p className="text-section font-bold text-text-heading">{formatDZD(totalAmount)}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DataTable columns={columns} data={payments ?? []} keyExtractor={(p) => p.id} emptyMessage={t('billingPayments.empty')} />
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ─── Page ─── */
 export function BillingPage() {
   const { t } = useTranslation();
@@ -424,6 +572,7 @@ export function BillingPage() {
     { key: 'dashboard', label: t('billing.tabs.dashboard'), icon: <TrendingUp className="w-4 h-4" /> },
     { key: 'plans', label: t('billing.tabs.plans'), icon: <CreditCard className="w-4 h-4" /> },
     { key: 'subscriptions', label: t('billing.tabs.subscriptions'), icon: <Building2 className="w-4 h-4" /> },
+    { key: 'payments', label: t('billing.tabs.payments'), icon: <Banknote className="w-4 h-4" /> },
   ];
 
   return (
@@ -442,6 +591,7 @@ export function BillingPage() {
       {activeTab === 'dashboard' && <BillingDashboard />}
       {activeTab === 'plans' && <PlansTab />}
       {activeTab === 'subscriptions' && <SubscriptionsTab />}
+      {activeTab === 'payments' && <PaymentsTab />}
     </div>
   );
 }

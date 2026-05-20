@@ -464,7 +464,8 @@
     "tabs": {
       "dashboard": "لوحة التحكم",
       "plans": "الخطط",
-      "subscriptions": "الاشتراكات"
+      "subscriptions": "الاشتراكات",
+      "payments": "المدفوعات"
     },
     "dashboard": {
       "mrr": "الإيرادات الشهرية المتكررة",
@@ -518,6 +519,28 @@
       "paidAt": "تاريخ الدفع",
       "note": "ملاحظة",
       "notePlaceholder": "مرجع الدفع، إلخ."
+    }
+  },
+  "billingPayments": {
+    "title": "المدفوعات",
+    "selectSchool": "المدرسة",
+    "schoolPlaceholder": "اختر مدرسة",
+    "selectSchoolPrompt": "اختر مدرسة لعرض سجل المدفوعات.",
+    "from": "من",
+    "to": "إلى",
+    "status": "حالة الاشتراك",
+    "allStatuses": "جميع الحالات",
+    "clearFilters": "مسح الفلاتر",
+    "totalPayments": "عدد المدفوعات",
+    "totalAmount": "المبلغ الإجمالي",
+    "empty": "لا توجد مدفوعات لهذه المدرسة.",
+    "columns": {
+      "date": "التاريخ",
+      "amount": "المبلغ",
+      "period": "الفترة",
+      "plan": "الخطة",
+      "subscriptionStatus": "الحالة",
+      "note": "ملاحظة"
     }
   },
   "finance": {

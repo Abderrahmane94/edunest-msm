@@ -147,16 +147,6 @@ export const billingService = {
     const sub = await prisma.schoolSubscription.findUnique({ where: { id: subscriptionId } });
     if (!sub) throw new BillingError('Subscription not found', 404);
 
-    // Block payment only if the subscription is active AND current period hasn't expired yet
-    // (overdue subscriptions always allow payment — that's how they become active)
-    if (sub.status === 'active' && sub.currentPeriodEnd > new Date()) {
-      throw new BillingError(
-        `This subscription is already paid until ${sub.currentPeriodEnd.toLocaleDateString()}. ` +
-        `You can record the next payment after the current period ends.`,
-        400,
-      );
-    }
-
     if (sub.status === 'cancelled' || sub.status === 'suspended') {
       throw new BillingError('Cannot record a payment for a cancelled or suspended subscription.', 400);
     }
@@ -174,15 +164,24 @@ export const billingService = {
       },
     });
 
-    // Auto-advance period and set active
-    await prisma.schoolSubscription.update({
-      where: { id: subscriptionId },
-      data: {
-        status: 'active',
-        currentPeriodStart: new Date(input.periodStart),
-        currentPeriodEnd: new Date(input.periodEnd),
-      },
-    });
+    // Advance period and set active based on the latest payment
+    const periodEnd = new Date(input.periodEnd);
+    if (periodEnd >= sub.currentPeriodEnd) {
+      await prisma.schoolSubscription.update({
+        where: { id: subscriptionId },
+        data: {
+          status: 'active',
+          currentPeriodStart: new Date(input.periodStart),
+          currentPeriodEnd: periodEnd,
+        },
+      });
+    } else if (sub.status !== 'active') {
+      // If paying for an earlier period, still mark as active
+      await prisma.schoolSubscription.update({
+        where: { id: subscriptionId },
+        data: { status: 'active' },
+      });
+    }
 
     return payment;
   },
@@ -192,6 +191,58 @@ export const billingService = {
       where: { subscriptionId },
       orderBy: { paidAt: 'desc' },
     });
+  },
+
+  async getPaymentsBySchool(schoolId: string, filters?: {
+    from?: string;
+    to?: string;
+    status?: 'active' | 'overdue' | 'trial' | 'cancelled' | 'suspended';
+  }) {
+    const sub = await prisma.schoolSubscription.findUnique({
+      where: { schoolId },
+      select: { id: true, status: true },
+    });
+    if (!sub) throw new BillingError('No subscription found for this school', 404);
+
+    if (filters?.status && sub.status !== filters.status) {
+      return [];
+    }
+
+    const where: Prisma.SubscriptionPaymentWhereInput = {
+      subscriptionId: sub.id,
+    };
+
+    if (filters?.from || filters?.to) {
+      where.paidAt = {};
+      if (filters.from) where.paidAt.gte = new Date(filters.from);
+      if (filters.to) where.paidAt.lte = new Date(filters.to + 'T23:59:59.999Z');
+    }
+
+    const payments = await prisma.subscriptionPayment.findMany({
+      where,
+      orderBy: { paidAt: 'desc' },
+      include: {
+        subscription: {
+          select: {
+            status: true,
+            school: { select: { id: true, name: true } },
+            plan: { select: { name: true, priceMonthly: true } },
+          },
+        },
+      },
+    });
+
+    return payments.map((p) => ({
+      ...p,
+      amount: Number(p.amount),
+      subscription: {
+        ...p.subscription,
+        plan: {
+          ...p.subscription.plan,
+          priceMonthly: Number(p.subscription.plan.priceMonthly),
+        },
+      },
+    }));
   },
 
   // ─── Stats ──────────────────────────────────────────────────────────────────

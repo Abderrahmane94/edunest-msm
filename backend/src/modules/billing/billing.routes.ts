@@ -22,6 +22,9 @@ router.patch('/subscriptions/:id/status', validateParams(idParamSchema), billing
 router.post('/subscriptions/:id/payments', validateParams(idParamSchema), billingController.recordPayment);
 router.get('/subscriptions/:id/payments', validateParams(idParamSchema), billingController.getPayments);
 
+// Payments
+router.get('/payments', billingController.getPaymentsBySchool);
+
 // Stats
 router.get('/stats', billingController.getStats);
 

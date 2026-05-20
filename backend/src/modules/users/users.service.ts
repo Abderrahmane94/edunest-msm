@@ -246,10 +246,11 @@ export const usersService = {
 
   /**
    * Activate a user.
+   * schoolId = null → super_admin: no school filter.
    */
-  async activate(id: string, schoolId: string) {
+  async activate(id: string, schoolId: string | null) {
     const user = await prisma.user.findFirst({
-      where: { id, schoolId },
+      where: schoolId ? { id, schoolId } : { id },
     });
 
     if (!user) {
@@ -282,10 +283,11 @@ export const usersService = {
 
   /**
    * Deactivate a user and revoke access by deleting all refresh tokens.
+   * schoolId = null → super_admin: no school filter.
    */
-  async deactivate(id: string, schoolId: string) {
+  async deactivate(id: string, schoolId: string | null) {
     const user = await prisma.user.findFirst({
-      where: { id, schoolId },
+      where: schoolId ? { id, schoolId } : { id },
     });
 
     if (!user) {

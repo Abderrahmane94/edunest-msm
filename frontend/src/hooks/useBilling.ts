@@ -160,6 +160,43 @@ export function useRecordPayment() {
   });
 }
 
+// ─── School Payments ──────────────────────────────────────────────────────────
+
+export interface SchoolPaymentRecord {
+  id: string;
+  subscriptionId: string;
+  amount: number;
+  currency: string;
+  periodStart: string;
+  periodEnd: string;
+  paidAt: string;
+  recordedBy: string;
+  note?: string;
+  createdAt: string;
+  subscription: {
+    status: string;
+    school: { id: string; name: string };
+    plan: { name: string; priceMonthly: number };
+  };
+}
+
+export function useSchoolPayments(schoolId: string | null, filters?: { from?: string; to?: string; status?: string }) {
+  return useQuery({
+    queryKey: ['billing-school-payments', schoolId, filters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (schoolId) params.set('schoolId', schoolId);
+      if (filters?.from) params.set('from', filters.from);
+      if (filters?.to) params.set('to', filters.to);
+      if (filters?.status) params.set('status', filters.status);
+      const res = await apiClient.get<unknown[]>(`/billing/payments?${params.toString()}`);
+      const raw = Array.isArray(res.data) ? res.data : [];
+      return raw as SchoolPaymentRecord[];
+    },
+    enabled: !!schoolId,
+  });
+}
+
 // ─── Stats ───────────────────────────────────────────────────────────────────
 
 export function useBillingStats() {

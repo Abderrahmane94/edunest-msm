@@ -463,7 +463,8 @@
     "tabs": {
       "dashboard": "Tableau de bord",
       "plans": "Plans",
-      "subscriptions": "Abonnements"
+      "subscriptions": "Abonnements",
+      "payments": "Paiements"
     },
     "dashboard": {
       "mrr": "Revenus récurrents mensuels",
@@ -518,6 +519,28 @@
       "note": "Note",
       "notePlaceholder": "Référence de paiement, etc.",
       "alreadyPaid": "Période déjà payée — prochain paiement disponible après expiration"
+    }
+  },
+  "billingPayments": {
+    "title": "Paiements",
+    "selectSchool": "École",
+    "schoolPlaceholder": "Sélectionner une école",
+    "selectSchoolPrompt": "Sélectionnez une école pour voir l'historique des paiements.",
+    "from": "Du",
+    "to": "Au",
+    "status": "Statut abonnement",
+    "allStatuses": "Tous les statuts",
+    "clearFilters": "Effacer les filtres",
+    "totalPayments": "Nombre de paiements",
+    "totalAmount": "Montant total",
+    "empty": "Aucun paiement trouvé pour cette école.",
+    "columns": {
+      "date": "Date",
+      "amount": "Montant",
+      "period": "Période",
+      "plan": "Plan",
+      "subscriptionStatus": "Statut",
+      "note": "Note"
     }
   },
   "finance": {

@@ -135,7 +135,7 @@ export const usersController = {
   async activate(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const schoolId = req.user!.schoolId!;
+      const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId!;
       const user = await usersService.activate(id, schoolId);
       res.status(200).json(successResponse(user));
     } catch (error) {
@@ -153,7 +153,7 @@ export const usersController = {
   async deactivate(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const schoolId = req.user!.schoolId!;
+      const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId!;
       const user = await usersService.deactivate(id, schoolId);
       res.status(200).json(successResponse(user));
     } catch (error) {

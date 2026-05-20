@@ -41,8 +41,24 @@ function useNotifications() {
   return useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const res = await apiClient.get<{ notifications: Notification[] }>('/notifications');
-      return res.data?.notifications ?? [];
+      const res = await apiClient.get<unknown>('/notifications');
+      const raw = res.data;
+      if (Array.isArray(raw)) {
+        return raw.map((n: Record<string, unknown>) => ({
+          id: n.id as string,
+          type: n.type as NotificationType,
+          title: n.title as string,
+          body: n.body as string,
+          is_read: (n.isRead ?? n.is_read ?? false) as boolean,
+          reference_id: (n.referenceId ?? n.reference_id) as string | undefined,
+          reference_type: (n.referenceType ?? n.reference_type) as string | undefined,
+          created_at: (n.createdAt ?? n.created_at ?? '') as string,
+        })) as Notification[];
+      }
+      if (raw && typeof raw === 'object' && 'notifications' in (raw as object)) {
+        return (raw as { notifications: Notification[] }).notifications;
+      }
+      return [];
     },
   });
 }
@@ -51,7 +67,7 @@ function useMarkNotificationRead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      const res = await apiClient.put(`/notifications/${notificationId}/read`);
+      const res = await apiClient.patch(`/notifications/${notificationId}/read`);
       if (!res.success) {
         throw new Error(res.error?.message || 'Failed to mark notification as read');
       }
@@ -67,7 +83,7 @@ function useMarkAllNotificationsRead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await apiClient.put('/notifications/read-all');
+      const res = await apiClient.patch('/notifications/read-all');
       if (!res.success) {
         throw new Error(res.error?.message || 'Failed to mark all notifications as read');
       }

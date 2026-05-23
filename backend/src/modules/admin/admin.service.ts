@@ -73,13 +73,32 @@ class AdminService {
       },
     });
 
-    // 4. Unread messages: messages in conversations for this school that are unread
-    const unreadMessages = await prisma.message.count({
-      where: {
-        isRead: false,
-        conversation: { schoolId },
+    // 4. Unread messages: conversations where parent is waiting 3+ hours for teacher reply
+    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    const conversations = await prisma.conversation.findMany({
+      where: { schoolId },
+      select: {
+        parentUserId: true,
+        teacherUserId: true,
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          select: { senderUserId: true, createdAt: true },
+        },
       },
     });
+
+    let unreadMessages = 0;
+    for (const conv of conversations) {
+      if (conv.messages.length === 0) continue;
+      const lastParentMsg = conv.messages.find((m) => m.senderUserId === conv.parentUserId);
+      if (!lastParentMsg) continue;
+      const lastTeacherMsg = conv.messages.find((m) => m.senderUserId === conv.teacherUserId);
+      if (lastTeacherMsg && lastTeacherMsg.createdAt > lastParentMsg.createdAt) continue;
+      if (lastParentMsg.createdAt <= threeHoursAgo) {
+        unreadMessages++;
+      }
+    }
 
     return {
       enrollmentCount,

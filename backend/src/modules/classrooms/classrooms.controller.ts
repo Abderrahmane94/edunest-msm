@@ -27,11 +27,15 @@ export const classroomsController = {
   /**
    * GET /api/classrooms — List classrooms for the school
    */
+  /**
+   * GET /api/classrooms — List classrooms for the school
+   */
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const schoolId = req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
-      const { classrooms, total } = await classroomsService.list(schoolId, page, pageSize);
+      const teacherId = req.query.teacher_id as string | undefined;
+      const { classrooms, total } = await classroomsService.list(schoolId, page, pageSize, teacherId);
       res.status(200).json(paginatedResponse(classrooms, page, pageSize, total));
     } catch (error) {
       if (error instanceof ClassroomServiceError) {

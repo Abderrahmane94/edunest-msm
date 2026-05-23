@@ -33,6 +33,9 @@ export interface ClassroomMonthlyReport {
   month: number;
   year: number;
   totalSchoolDays: number;
+  expectedWorkingDays: number;
+  markedDays: number;
+  unmarkedDays: number;
   children: ChildAttendanceReportItem[];
 }
 
@@ -139,5 +142,38 @@ export function useBulkMarkAttendance() {
       });
       queryClient.invalidateQueries({ queryKey: ['attendance', 'report'] });
     },
+  });
+}
+
+// ─── Attendance Tracking (Admin) ─────────────────────────────────────────────
+
+export interface ClassroomMarkingStatus {
+  id: string;
+  name: string;
+  teacherName: string | null;
+  marked: boolean;
+  childrenCount: number;
+  markedCount: number;
+}
+
+export interface DayMarkingStatus {
+  date: string;
+  classrooms: ClassroomMarkingStatus[];
+}
+
+/**
+ * GET /api/attendance/tracking?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+ */
+export function useAttendanceTracking(startDate: string | undefined, endDate: string | undefined) {
+  return useQuery({
+    queryKey: ['attendance', 'tracking', startDate, endDate],
+    queryFn: async () => {
+      const res = await apiClient.get<DayMarkingStatus[]>(
+        `/attendance/tracking?start_date=${startDate}&end_date=${endDate}`
+      );
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load tracking data');
+      return res.data ?? [];
+    },
+    enabled: !!startDate && !!endDate,
   });
 }

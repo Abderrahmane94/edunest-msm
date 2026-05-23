@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ClipboardCheck, Calendar, BarChart2, Users } from 'lucide-react';
+import { ClipboardCheck, Calendar, BarChart2, Users, Eye } from 'lucide-react';
 import { Button, DataTable, StatusBadge, KPICard } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
@@ -9,11 +9,12 @@ import { useAcademicYears } from '@/hooks/useAcademicYears';
 import {
   useClassroomAttendance,
   useClassroomMonthlyReport,
+  useAttendanceTracking,
   type AttendanceRecord,
   type ChildAttendanceReportItem,
 } from '@/hooks/useAttendance';
 
-type ViewMode = 'daily' | 'monthly';
+type ViewMode = 'daily' | 'monthly' | 'tracking';
 
 function getTodayString(): string {
   const today = new Date();
@@ -52,6 +53,8 @@ export function AttendancePage() {
   const [selectedDate, setSelectedDate] = React.useState<string>(getTodayString());
   const [selectedMonth, setSelectedMonth] = React.useState<number>(getCurrentMonth());
   const [selectedYear, setSelectedYear] = React.useState<number>(getCurrentYear());
+  const [trackingStartDate, setTrackingStartDate] = React.useState<string>(getTodayString());
+  const [trackingEndDate, setTrackingEndDate] = React.useState<string>(getTodayString());
 
   // Fetch classrooms for the active academic year
   const { data: academicYears } = useAcademicYears();
@@ -84,6 +87,15 @@ export function AttendancePage() {
     viewMode === 'monthly' ? selectedYear : undefined
   );
 
+  // Fetch tracking data
+  const {
+    data: trackingData,
+    isLoading: trackingLoading,
+  } = useAttendanceTracking(
+    viewMode === 'tracking' ? trackingStartDate : undefined,
+    viewMode === 'tracking' ? trackingEndDate : undefined,
+  );
+
   const classroomOptions = (classrooms ?? []).map((c: Classroom) => ({
     value: c.id,
     label: `${c.name} (${c.level})`,
@@ -105,10 +117,13 @@ export function AttendancePage() {
   // Monthly KPI stats
   const monthlyStats = React.useMemo(() => {
     if (!monthlyReport || monthlyReport.children.length === 0) {
-      return { totalChildren: 0, totalDays: 0, avgRate: 0 };
+      return { totalChildren: 0, totalDays: 0, markedDays: 0, unmarkedDays: 0, expectedDays: 0, avgRate: 0 };
     }
     const totalChildren = monthlyReport.children.length;
     const totalDays = monthlyReport.totalSchoolDays;
+    const markedDays = monthlyReport.markedDays ?? totalDays;
+    const expectedDays = monthlyReport.expectedWorkingDays ?? totalDays;
+    const unmarkedDays = monthlyReport.unmarkedDays ?? 0;
     const avgRate =
       totalChildren > 0
         ? Math.round(
@@ -116,7 +131,7 @@ export function AttendancePage() {
               totalChildren
           )
         : 0;
-    return { totalChildren, totalDays, avgRate };
+    return { totalChildren, totalDays, markedDays, unmarkedDays, expectedDays, avgRate };
   }, [monthlyReport]);
 
   // Daily attendance table columns
@@ -269,6 +284,14 @@ export function AttendancePage() {
           <BarChart2 className="w-4 h-4" />
           {t('attendance.monthlyView')}
         </Button>
+        <Button
+          variant={viewMode === 'tracking' ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={() => setViewMode('tracking')}
+        >
+          <Eye className="w-4 h-4" />
+          {t('attendance.trackingView')}
+        </Button>
       </div>
 
       {/* Filters */}
@@ -336,27 +359,39 @@ export function AttendancePage() {
       {/* Daily view */}
       {viewMode === 'daily' && selectedClassroomId && (
         <>
-          {/* KPI cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <KPICard
-              label={t('attendance.kpi.total')}
-              value={dailyStats.total}
-              icon={<Users className="w-4 h-4" />}
-            />
-            <KPICard
-              label={t('attendance.kpi.present')}
-              value={dailyStats.present}
-              icon={<ClipboardCheck className="w-4 h-4" />}
-            />
-            <KPICard
-              label={t('attendance.kpi.absent')}
-              value={dailyStats.absent}
-            />
-            <KPICard
-              label={t('attendance.kpi.rate')}
-              value={`${dailyStats.rate}%`}
-            />
-          </div>
+          {/* Not marked warning */}
+          {!dailyLoading && (dailyRecords ?? []).length === 0 && (
+            <div className="bg-warning-muted border border-[var(--color-warning)] rounded-lg px-4 py-3 flex items-center gap-3">
+              <ClipboardCheck className="w-5 h-5 text-warning shrink-0" />
+              <p className="text-body font-medium text-text-primary">
+                {t('attendance.notMarkedYet')}
+              </p>
+            </div>
+          )}
+
+          {/* KPI cards (only show if there are records) */}
+          {(dailyRecords ?? []).length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <KPICard
+                label={t('attendance.kpi.total')}
+                value={dailyStats.total}
+                icon={<Users className="w-4 h-4" />}
+              />
+              <KPICard
+                label={t('attendance.kpi.present')}
+                value={dailyStats.present}
+                icon={<ClipboardCheck className="w-4 h-4" />}
+              />
+              <KPICard
+                label={t('attendance.kpi.absent')}
+                value={dailyStats.absent}
+              />
+              <KPICard
+                label={t('attendance.kpi.rate')}
+                value={`${dailyStats.rate}%`}
+              />
+            </div>
+          )}
 
           {/* Daily records table */}
           {dailyLoading ? (
@@ -367,14 +402,14 @@ export function AttendancePage() {
                 ))}
               </div>
             </div>
-          ) : (
+          ) : (dailyRecords ?? []).length > 0 ? (
             <DataTable<AttendanceRecord>
               columns={dailyColumns}
               data={dailyRecords ?? []}
               keyExtractor={(r) => r.id}
               emptyMessage={t('attendance.noRecords')}
             />
-          )}
+          ) : null}
         </>
       )}
 
@@ -382,7 +417,7 @@ export function AttendancePage() {
       {viewMode === 'monthly' && selectedClassroomId && (
         <>
           {/* KPI cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <KPICard
               label={t('attendance.kpi.totalChildren')}
               value={monthlyStats.totalChildren}
@@ -390,7 +425,7 @@ export function AttendancePage() {
             />
             <KPICard
               label={t('attendance.kpi.schoolDays')}
-              value={monthlyStats.totalDays}
+              value={`${monthlyStats.markedDays}/${monthlyStats.expectedDays}`}
               icon={<Calendar className="w-4 h-4" />}
             />
             <KPICard
@@ -398,7 +433,27 @@ export function AttendancePage() {
               value={`${monthlyStats.avgRate}%`}
               icon={<BarChart2 className="w-4 h-4" />}
             />
+            <KPICard
+              label={t('attendance.kpi.unmarkedDays')}
+              value={monthlyStats.unmarkedDays}
+              icon={<ClipboardCheck className="w-4 h-4" />}
+            />
           </div>
+
+          {/* Warning if days are unmarked */}
+          {monthlyStats.unmarkedDays > 0 && (
+            <div className="bg-warning-muted border border-[var(--color-warning)] rounded-lg px-4 py-3 flex items-start gap-3">
+              <Eye className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+              <div>
+                <p className="text-body font-medium text-text-primary">
+                  {t('attendance.kpi.unmarkedWarning', { count: monthlyStats.unmarkedDays })}
+                </p>
+                <p className="text-caption text-text-secondary mt-0.5">
+                  {t('attendance.kpi.unmarkedHint')}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Monthly report table */}
           {monthlyLoading ? (
@@ -416,6 +471,94 @@ export function AttendancePage() {
               keyExtractor={(item) => item.childId}
               emptyMessage={t('attendance.noReportData')}
             />
+          )}
+        </>
+      )}
+
+      {/* Tracking view */}
+      {viewMode === 'tracking' && (
+        <>
+          {/* Date range filters */}
+          <div className="bg-card border border-border rounded-lg p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="tracking-start" className="text-label font-medium text-foreground">
+                  {t('attendance.tracking.startDate')}
+                </label>
+                <input
+                  id="tracking-start"
+                  type="date"
+                  value={trackingStartDate}
+                  onChange={(e) => setTrackingStartDate(e.target.value)}
+                  className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground focus:outline-none focus:border-primary focus:shadow-focus-ring transition-all duration-150"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor="tracking-end" className="text-label font-medium text-foreground">
+                  {t('attendance.tracking.endDate')}
+                </label>
+                <input
+                  id="tracking-end"
+                  type="date"
+                  value={trackingEndDate}
+                  onChange={(e) => setTrackingEndDate(e.target.value)}
+                  className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground focus:outline-none focus:border-primary focus:shadow-focus-ring transition-all duration-150"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Tracking results */}
+          {trackingLoading ? (
+            <div className="bg-card border border-border rounded-lg p-6">
+              <div className="animate-pulse space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-16 bg-hover rounded-md" />
+                ))}
+              </div>
+            </div>
+          ) : (trackingData ?? []).length === 0 ? (
+            <div className="bg-card border border-border rounded-lg p-8 text-center">
+              <p className="text-body text-text-secondary">{t('attendance.tracking.noData')}</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {(trackingData ?? []).map((day) => (
+                <div key={day.date} className="bg-card border border-border rounded-lg overflow-hidden">
+                  <div className="px-4 py-2 bg-subtle border-b border-border">
+                    <h3 className="text-label font-semibold text-text-heading">
+                      {new Date(day.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </h3>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {day.classrooms.map((cr) => (
+                      <div key={cr.id} className="px-4 py-3 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full shrink-0 ${cr.marked ? 'bg-[var(--color-success)]' : 'bg-[var(--color-danger)]'}`} />
+                          <div>
+                            <p className="text-body font-medium text-text-primary">{cr.name}</p>
+                            <p className="text-caption text-text-secondary">
+                              {cr.teacherName || t('classrooms.noTeacher')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-end">
+                          {cr.marked ? (
+                            <span className="text-caption text-success font-medium">
+                              {t('attendance.tracking.done')} ({cr.markedCount}/{cr.childrenCount})
+                            </span>
+                          ) : (
+                            <span className="text-caption text-danger font-medium">
+                              {t('attendance.tracking.notDone')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </>
       )}

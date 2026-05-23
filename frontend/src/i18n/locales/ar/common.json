@@ -8,7 +8,7 @@
     "enrollment": "الأطفال المسجلون",
     "attendanceRate": "نسبة الحضور",
     "outstandingInvoices": "الفواتير المستحقة",
-    "unreadMessages": "الرسائل غير المقروءة",
+    "unreadMessages": "رسائل في الانتظار",
     "admin": {
       "overview": "نظرة عامة",
       "welcome": "مرحباً، {{name}} 👋",
@@ -86,7 +86,8 @@
     "messages": "الرسائل",
     "invoices": "الفواتير",
     "notifications": "الإشعارات",
-    "trash": "سلة المحذوفات"
+    "trash": "سلة المحذوفات",
+    "timetable": "أيام الحضور"
   },
   "schools": {
     "title": "إدارة المدارس",
@@ -459,7 +460,16 @@
     "month": "الشهر",
     "year": "السنة",
     "noRecords": "لا توجد سجلات حضور لهذا التاريخ.",
+    "notMarkedYet": "لم يتم تسجيل حضور هذا الفصل لهذا التاريخ بعد.",
     "noReportData": "لا توجد بيانات تقرير لهذه الفترة.",
+    "trackingView": "المتابعة",
+    "tracking": {
+      "startDate": "تاريخ البداية",
+      "endDate": "تاريخ النهاية",
+      "done": "تم",
+      "notDone": "لم يتم",
+      "noData": "لا توجد بيانات لهذه الفترة."
+    },
     "columns": {
       "childName": "اسم الطفل",
       "status": "الحالة",
@@ -480,8 +490,11 @@
       "absent": "الغائبون",
       "rate": "نسبة الحضور",
       "totalChildren": "الأطفال",
-      "schoolDays": "أيام الدراسة",
-      "avgRate": "المعدل"
+      "schoolDays": "أيام مسجلة",
+      "avgRate": "المعدل",
+      "unmarkedDays": "أيام غير مسجلة",
+      "unmarkedWarning": "{{count}} يوم/أيام عمل بدون تسجيل حضور",
+      "unmarkedHint": "يتم حساب النسبة فقط على الأيام التي تم فيها تسجيل الحضور. راجع تبويب المتابعة لتحديد الأيام المفقودة."
     },
     "months": {
       "january": "يناير",
@@ -836,6 +849,16 @@
         "pending": "قيد الانتظار",
         "declined": "مرفوض"
       }
+    },
+    "messages": {
+      "tab": "الرسائل",
+      "noPending": "لا توجد رسائل في انتظار الرد.",
+      "pendingHint": "محادثات ينتظر فيها ولي الأمر رداً من المعلم منذ أكثر من 3 ساعات.",
+      "aboutChild": "بخصوص: {{name}}",
+      "pending": "في الانتظار",
+      "minutesAgo": "منذ {{count}} دقيقة",
+      "hoursAgo": "منذ {{count}} ساعة",
+      "daysAgo": "منذ {{count}} يوم"
     }
   },
   "teacherAttendance": {
@@ -1006,6 +1029,24 @@
       "title": "حذف نهائي",
       "description": "هل أنت متأكد من حذف « {{name}} » نهائياً؟",
       "warning": "هذا الإجراء لا يمكن التراجع عنه. سيتم حذف السجل نهائياً من قاعدة البيانات."
+    }
+  },
+  "timetable": {
+    "title": "أيام الحضور",
+    "description": "حدد أيام الحضور لكل فصل. لن يتمكن المعلم من تسجيل الحضور إلا في الأيام المحددة.",
+    "selectClassroom": "الفصل",
+    "selectClassroomPrompt": "اختر فصلاً لتحديد أيام حضوره.",
+    "workingDays": "أيام الحضور",
+    "workingDaysHint": "حدد الأيام التي يجب أن يكون فيها الأطفال حاضرين.",
+    "daysPerWeek": "{{count}} يوم/أيام في الأسبوع",
+    "days": {
+      "sunday": "الأحد",
+      "monday": "الاثنين",
+      "tuesday": "الثلاثاء",
+      "wednesday": "الأربعاء",
+      "thursday": "الخميس",
+      "friday": "الجمعة",
+      "saturday": "السبت"
     }
   }
 }

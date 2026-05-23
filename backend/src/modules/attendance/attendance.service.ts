@@ -318,6 +318,23 @@ class AttendanceService {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0); // Last day of the month
 
+    // Calculate expected working days from the classroom's workingDays field
+    const workingDays = (classroom.workingDays as string[]) || ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday'];
+    const dayNameToIndex: Record<string, number> = {
+      sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6,
+    };
+    const workingDayIndices = new Set(workingDays.map((d) => dayNameToIndex[d]));
+
+    // Count expected working days in the month (up to today if current month)
+    const today = new Date();
+    const effectiveEnd = endDate > today ? today : endDate;
+    let expectedWorkingDays = 0;
+    for (let d = new Date(startDate); d <= effectiveEnd; d.setDate(d.getDate() + 1)) {
+      if (workingDayIndices.has(d.getDay())) {
+        expectedWorkingDays++;
+      }
+    }
+
     // Get all attendance records for this classroom in the month
     const records = await prisma.attendanceRecord.findMany({
       where: {
@@ -333,9 +350,13 @@ class AttendanceService {
       },
     });
 
-    // Calculate total school days: distinct dates with at least one record
-    const distinctDates = new Set(records.map((r) => r.date.toISOString()));
-    const totalSchoolDays = distinctDates.size;
+    // Calculate marked days: distinct dates with at least one record
+    const distinctDates = new Set(records.map((r) => r.date.toISOString().split('T')[0]));
+    const markedDays = distinctDates.size;
+    const unmarkedDays = Math.max(0, expectedWorkingDays - markedDays);
+
+    // Use markedDays as the denominator for attendance percentage (fair to children)
+    const totalSchoolDays = markedDays;
 
     // Group records by child
     const childMap = new Map<string, {
@@ -382,6 +403,9 @@ class AttendanceService {
       month,
       year,
       totalSchoolDays,
+      expectedWorkingDays,
+      markedDays,
+      unmarkedDays,
       children,
     };
   }
@@ -611,6 +635,97 @@ class AttendanceService {
     );
 
     return { month, children };
+  }
+
+  /**
+   * Get attendance marking status for all classrooms in a date range.
+   * Shows which classrooms have been marked and which haven't for each day.
+   */
+  async getMarkingStatus(
+    schoolId: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<Array<{
+    date: string;
+    classrooms: Array<{
+      id: string;
+      name: string;
+      teacherName: string | null;
+      marked: boolean;
+      childrenCount: number;
+      markedCount: number;
+    }>;
+  }>> {
+    // Get all classrooms for the school with their teachers and enrollment counts
+    const classrooms = await prisma.classroom.findMany({
+      where: { schoolId, deletedAt: null, teacherUserId: { not: null } },
+      select: {
+        id: true,
+        name: true,
+        teacher: { select: { firstName: true, lastName: true } },
+        _count: { select: { enrollments: true } },
+      },
+    });
+
+    // Get all attendance records in the date range
+    const records = await prisma.attendanceRecord.findMany({
+      where: {
+        schoolId,
+        date: { gte: new Date(startDate), lte: new Date(endDate) },
+      },
+      select: { classroomId: true, date: true },
+    });
+
+    // Group records by date and classroom
+    const recordMap = new Map<string, Set<string>>();
+    for (const r of records) {
+      const dateKey = r.date.toISOString().split('T')[0];
+      if (!recordMap.has(dateKey)) recordMap.set(dateKey, new Set());
+      recordMap.get(dateKey)!.add(r.classroomId);
+    }
+
+    // Build result for each day in the range
+    const result: Array<{
+      date: string;
+      classrooms: Array<{
+        id: string;
+        name: string;
+        teacherName: string | null;
+        marked: boolean;
+        childrenCount: number;
+        markedCount: number;
+      }>;
+    }> = [];
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dateKey = d.toISOString().split('T')[0];
+      const markedClassrooms = recordMap.get(dateKey) || new Set();
+
+      // Count records per classroom for this date
+      const classroomRecordCounts = new Map<string, number>();
+      for (const r of records) {
+        const rDate = r.date.toISOString().split('T')[0];
+        if (rDate === dateKey) {
+          classroomRecordCounts.set(r.classroomId, (classroomRecordCounts.get(r.classroomId) || 0) + 1);
+        }
+      }
+
+      result.push({
+        date: dateKey,
+        classrooms: classrooms.map((cr) => ({
+          id: cr.id,
+          name: cr.name,
+          teacherName: cr.teacher ? `${cr.teacher.firstName} ${cr.teacher.lastName}` : null,
+          marked: markedClassrooms.has(cr.id),
+          childrenCount: cr._count.enrollments,
+          markedCount: classroomRecordCounts.get(cr.id) || 0,
+        })),
+      });
+    }
+
+    return result;
   }
 }
 

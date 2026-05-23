@@ -208,3 +208,39 @@ export function useEventConsent(eventId?: string) {
     enabled: !!eventId,
   });
 }
+
+// ─── Pending Conversations (Admin supervision) ───────────────────────────────
+
+export interface PendingConversation {
+  id: string;
+  teacherName: string;
+  parentName: string;
+  childName: string;
+  unreadCount: number;
+  lastMessageAt: string;
+}
+
+export function usePendingConversations() {
+  return useQuery({
+    queryKey: ['pending-conversations'],
+    queryFn: async () => {
+      const res = await apiClient.get<Record<string, unknown>[]>('/communication/conversations/pending');
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load pending conversations');
+      const raw = res.data;
+      const list = Array.isArray(raw) ? raw : [];
+      return list.map((item): PendingConversation => {
+        const teacher = item.teacher as Record<string, string> | undefined;
+        const parent = item.parent as Record<string, string> | undefined;
+        const child = item.child as Record<string, string> | undefined;
+        return {
+          id: item.id as string,
+          teacherName: teacher ? `${teacher.firstName} ${teacher.lastName}` : '',
+          parentName: parent ? `${parent.firstName} ${parent.lastName}` : '',
+          childName: child ? `${child.firstName} ${child.lastName}` : '',
+          unreadCount: (item.unreadCount ?? (item._count as Record<string, number> | undefined)?.messages ?? 0) as number,
+          lastMessageAt: (item.lastMessageAt ?? item.waitingSince ?? item.last_message_at ?? '') as string,
+        };
+      });
+    },
+  });
+}

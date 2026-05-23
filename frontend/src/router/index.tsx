@@ -33,6 +33,7 @@ import {
   InvoiceDetailPage,
   ExpenseDetailPage,
   TrashPage,
+  TimetablePage,
 } from '@/pages/admin';
 import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage } from '@/pages/teacher';
 import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentInvoicesPage } from '@/pages/parent';
@@ -57,6 +58,7 @@ import {
   Building2,
   Languages,
   Trash2,
+  Clock,
 } from 'lucide-react';
 
 /**
@@ -138,6 +140,7 @@ function getAdminNavItems(role: string): NavItem[] {
     { label: 'nav.staff',         href: '/admin/staff', icon: UserCog },
     { label: 'nav.academicYears', href: '/admin/academic-years', icon: GraduationCap },
     { label: 'nav.classrooms',    href: '/admin/classrooms', icon: School },
+    { label: 'nav.timetable',     href: '/admin/timetable', icon: Clock },
     { label: 'nav.children',      href: '/admin/children', icon: Baby },
     { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck },
     { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle },
@@ -307,6 +310,7 @@ export const routes: RouteObject[] = [
               { path: 'academic-years/:yearId', element: <AcademicYearDetailPage /> },
               { path: 'classrooms', element: <ClassroomsPage /> },
               { path: 'classrooms/:classroomId', element: <ClassroomDetailPage /> },
+              { path: 'timetable', element: <TimetablePage /> },
               { path: 'children', element: <ChildrenPage /> },
               { path: 'children/:childId', element: <ChildDetailPage /> },
               { path: 'attendance', element: <AttendancePage /> },

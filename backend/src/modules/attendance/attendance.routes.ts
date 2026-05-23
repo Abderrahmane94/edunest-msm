@@ -24,6 +24,13 @@ router.post(
   attendanceController.bulkMark,
 );
 
+// GET /api/attendance/tracking — Get marking status for all classrooms (admin only)
+router.get(
+  '/tracking',
+  requireAdmin,
+  attendanceController.getMarkingStatus,
+);
+
 // GET /api/attendance/my-children?month=YYYY-MM — Parent's children monthly attendance summary
 router.get(
   '/my-children',

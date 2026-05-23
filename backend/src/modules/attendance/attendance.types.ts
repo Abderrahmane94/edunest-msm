@@ -63,6 +63,9 @@ export interface ClassroomMonthlyReport {
   month: number;
   year: number;
   totalSchoolDays: number;
+  expectedWorkingDays: number;
+  markedDays: number;
+  unmarkedDays: number;
   children: ChildAttendanceReportItem[];
 }
 

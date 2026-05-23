@@ -176,4 +176,29 @@ export const attendanceController = {
       next(error);
     }
   },
+
+  /**
+   * GET /api/attendance/tracking — Get marking status for all classrooms in a date range (admin only)
+   */
+  async getMarkingStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const startDate = req.query.start_date as string;
+      const endDate = req.query.end_date as string;
+
+      if (!startDate || !endDate) {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', 'start_date and end_date are required'));
+        return;
+      }
+
+      const result = await attendanceService.getMarkingStatus(schoolId, startDate, endDate);
+      res.status(200).json(successResponse(result));
+    } catch (error) {
+      if (error instanceof AttendanceServiceError) {
+        res.status(error.statusCode).json(errorResponse('ATTENDANCE_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
 };

@@ -35,6 +35,13 @@ router.post(
   communicationController.createConversation,
 );
 
+// GET /api/communication/conversations/pending — List pending conversations (admin only)
+router.get(
+  '/conversations/pending',
+  requireAdmin,
+  communicationController.listPendingConversations,
+);
+
 // GET /api/communication/conversations — List user's conversations (teacher, parent, admin)
 router.get(
   '/conversations',

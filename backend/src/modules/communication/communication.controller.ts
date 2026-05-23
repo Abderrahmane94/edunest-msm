@@ -58,6 +58,23 @@ export const communicationController = {
   },
 
   /**
+   * GET /api/communication/conversations/pending — List conversations with unread messages (admin only)
+   */
+  async listPendingConversations(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const { conversations } = await communicationService.listPendingConversations(schoolId);
+      res.status(200).json(successResponse(conversations));
+    } catch (error) {
+      if (error instanceof CommunicationServiceError) {
+        res.status(error.statusCode).json(errorResponse('COMMUNICATION_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
    * GET /api/communication/conversations/:id/messages — Get messages in a conversation
    */
   async getMessages(req: Request, res: Response, next: NextFunction): Promise<void> {

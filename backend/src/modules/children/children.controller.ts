@@ -31,7 +31,8 @@ export const childrenController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
-      const { children, total } = await childrenService.list(schoolId, page, pageSize);
+      const classroomId = req.query.classroom_id as string | undefined;
+      const { children, total } = await childrenService.list(schoolId, page, pageSize, classroomId);
       res.status(200).json(paginatedResponse(children, page, pageSize, total));
     } catch (error) {
       if (error instanceof ChildServiceError) {

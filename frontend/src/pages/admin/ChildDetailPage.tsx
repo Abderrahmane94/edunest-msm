@@ -1,14 +1,13 @@
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Save, Trash2, UserPlus, X } from 'lucide-react';
-import { Button, StatusBadge } from '@/components/ui';
+import { ArrowLeft, Save, UserPlus, X } from 'lucide-react';
+import { Button, StatusBadge, EntityDeleteButton } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import {
   useChild,
   useUpdateChild,
-  useDeleteChild,
   useEnrollChild,
   useParentLinks,
   useRemoveParentLink,
@@ -26,7 +25,6 @@ export function ChildDetailPage() {
 
   const { data: child, isLoading } = useChild(childId!);
   const updateChild = useUpdateChild();
-  const deleteChild = useDeleteChild();
   const enrollChild = useEnrollChild();
   const { data: parentLinks } = useParentLinks(childId!);
   const removeParentLink = useRemoveParentLink();
@@ -48,8 +46,6 @@ export function ChildDetailPage() {
   });
   const [saveSuccess, setSaveSuccess] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
-  const [deleteError, setDeleteError] = React.useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [enrollClassroomId, setEnrollClassroomId] = React.useState('');
   const [enrollError, setEnrollError] = React.useState<string | null>(null);
   const [linkParentId, setLinkParentId] = React.useState('');
@@ -86,17 +82,6 @@ export function ChildDetailPage() {
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : t('common.error'));
-    }
-  }
-
-  async function handleDelete() {
-    setDeleteError(null);
-    try {
-      await deleteChild.mutateAsync(childId!);
-      navigate('/admin/children');
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : t('common.error'));
-      setConfirmDelete(false);
     }
   }
 
@@ -325,21 +310,13 @@ export function ChildDetailPage() {
       <div className="bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3">
         <h2 className="text-subsection font-semibold text-danger">{t('children.detail.dangerZone')}</h2>
         <p className="text-body text-text-secondary">{t('children.detail.deleteWarning')}</p>
-        {deleteError && <p className="text-body text-danger">{deleteError}</p>}
-        {!confirmDelete ? (
-          <Button variant="secondary" onClick={() => setConfirmDelete(true)} className="border-danger text-danger hover:bg-danger/10">
-            <Trash2 className="w-4 h-4" />
-            {t('children.detail.delete')}
-          </Button>
-        ) : (
-          <div className="flex items-center gap-3">
-            <p className="text-body text-danger font-medium">{t('children.detail.confirmDelete')}</p>
-            <Button variant="secondary" onClick={handleDelete} disabled={deleteChild.isPending} className="border-danger text-danger hover:bg-danger/10">
-              {deleteChild.isPending ? t('common.loading') : t('common.confirm')}
-            </Button>
-            <Button variant="ghost" onClick={() => setConfirmDelete(false)}>{t('common.cancel')}</Button>
-          </div>
-        )}
+        <EntityDeleteButton
+          entityType="children"
+          entityId={childId!}
+          entityDisplayName={`${child.first_name} ${child.last_name}`}
+          onDeleted={() => navigate('/admin/children')}
+          hidden={!!child.deleted_at}
+        />
       </div>
     </div>
   );

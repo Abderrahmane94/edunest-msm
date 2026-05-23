@@ -135,6 +135,7 @@ model School {
   contactEmail String     @map("contact_email")
   contactPhone String     @map("contact_phone")
   isActive     Boolean    @default(true) @map("is_active")
+  deletedAt    DateTime?  @map("deleted_at")
   createdAt    DateTime   @default(now()) @map("created_at")
 
   users         User[]
@@ -146,6 +147,7 @@ model School {
   expenses      Expense[]
   subscription  SchoolSubscription?
 
+  @@index([deletedAt])
   @@map("schools")
 }
 
@@ -161,6 +163,7 @@ model User {
   mustChangePassword  Boolean  @default(false) @map("must_change_password")
   fcmToken            String?  @map("fcm_token")
   preferredLanguage   Language @default(fr) @map("preferred_language")
+  deletedAt           DateTime? @map("deleted_at")
   createdAt           DateTime @default(now()) @map("created_at")
 
   school              School?             @relation(fields: [schoolId], references: [id])
@@ -178,6 +181,7 @@ model User {
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
 
+  @@index([deletedAt])
   @@map("users")
 }
 
@@ -223,6 +227,7 @@ model Classroom {
   capacity       Int
   roomNumber     String?  @map("room_number")
   level          String?
+  deletedAt      DateTime? @map("deleted_at")
   createdAt      DateTime @default(now()) @map("created_at")
 
   school       School       @relation(fields: [schoolId], references: [id])
@@ -231,6 +236,7 @@ model Classroom {
   enrollments  ClassroomEnrollment[]
   attendanceRecords AttendanceRecord[]
 
+  @@index([deletedAt])
   @@map("classrooms")
 }
 
@@ -259,6 +265,7 @@ model Child {
   enrollmentDate DateTime    @map("enrollment_date") @db.Date
   learnerType    LearnerType @default(child) @map("learner_type")
   isActive       Boolean     @default(true) @map("is_active")
+  deletedAt      DateTime?   @map("deleted_at")
   createdAt      DateTime    @default(now()) @map("created_at")
 
   school            School              @relation(fields: [schoolId], references: [id])
@@ -274,6 +281,7 @@ model Child {
   consentForms      ConsentForm[]
 
   @@index([schoolId, academicYearId, isActive])
+  @@index([deletedAt])
   @@map("children")
 }
 

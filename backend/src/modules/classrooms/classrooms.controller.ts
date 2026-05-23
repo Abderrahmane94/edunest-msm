@@ -3,6 +3,7 @@ import { classroomsService, ClassroomServiceError } from './classrooms.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
 import type { CreateClassroomInput, UpdateClassroomInput, AssignTeacherInput } from './classrooms.schema';
 import { paginationSchema } from '../../utils/validators';
+import { softDeleteService, SoftDeleteError } from '../../services/soft-delete.service';
 
 export const classroomsController = {
   /**
@@ -98,17 +99,18 @@ export const classroomsController = {
   },
 
   /**
-   * DELETE /api/classrooms/:id — Delete classroom (only if no enrollments)
+   * DELETE /api/classrooms/:id — Soft delete classroom (admin only)
    */
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
-      await classroomsService.delete(id, schoolId);
+      await softDeleteService.softDelete('classroom', id, schoolId);
       res.status(200).json(successResponse({ message: 'Classroom deleted successfully' }));
     } catch (error) {
-      if (error instanceof ClassroomServiceError) {
-        res.status(error.statusCode).json(errorResponse('CLASSROOM_ERROR', error.message));
+      if (error instanceof SoftDeleteError) {
+        const code = error.statusCode === 409 ? 'ALREADY_DELETED' : 'NOT_FOUND';
+        res.status(error.statusCode).json(errorResponse(code, error.message));
         return;
       }
       next(error);

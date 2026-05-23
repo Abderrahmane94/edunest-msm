@@ -5,6 +5,7 @@ import type { CreateSchoolInput, UpdateSchoolInput } from './schools.schema';
 import { paginationSchema } from '../../utils/validators';
 import { usersService, UserServiceError } from '../users/users.service';
 import { createUserDirectlySchema } from '../users/users.schema';
+import { softDeleteService, SoftDeleteError } from '../../services/soft-delete.service';
 
 export const schoolsController = {
   /**
@@ -153,6 +154,24 @@ export const schoolsController = {
     } catch (error) {
       if (error instanceof SchoolServiceError) {
         res.status(error.statusCode).json(errorResponse('SCHOOL_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * DELETE /api/schools/:id — Soft delete school (super_admin only)
+   */
+  async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      await softDeleteService.softDelete('school', id);
+      res.status(200).json(successResponse({ message: 'School deleted successfully' }));
+    } catch (error) {
+      if (error instanceof SoftDeleteError) {
+        const code = error.statusCode === 409 ? 'ALREADY_DELETED' : 'NOT_FOUND';
+        res.status(error.statusCode).json(errorResponse(code, error.message));
         return;
       }
       next(error);

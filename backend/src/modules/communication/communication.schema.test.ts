@@ -39,12 +39,12 @@ describe('Communication Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject missing parentUserId', () => {
+    it('should accept missing parentUserId (optional field)', () => {
       const input = {
         childId: '550e8400-e29b-41d4-a716-446655440000',
       };
       const result = createConversationSchema.safeParse(input);
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
     });
   });
 

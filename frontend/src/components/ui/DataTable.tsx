@@ -50,12 +50,29 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const totalPages = total ? Math.ceil(total / pageSize) : 1;
+  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
     setSearchQuery(value);
-    onSearch?.(value);
+
+    // Debounce the onSearch callback to avoid firing on every keystroke
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => {
+      onSearch?.(value);
+    }, 350);
   }
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   function handleSort(columnKey: string) {
     if (!onSort) return;

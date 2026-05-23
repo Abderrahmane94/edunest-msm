@@ -172,18 +172,37 @@ export const usersService = {
   },
 
   /**
-   * List users with pagination.
+   * List users with pagination, search, and sorting.
    * schoolId = null → super_admin: return all users across all schools.
    * schoolId = string → admin: return users for that school only.
    * Always excludes super_admin role users.
    */
-  async list(schoolId: string | null, page: number, pageSize: number) {
+  async list(
+    schoolId: string | null,
+    page: number,
+    pageSize: number,
+    search?: string,
+    sortBy: string = 'createdAt',
+    sortDir: 'asc' | 'desc' = 'desc',
+  ) {
     const skip = (page - 1) * pageSize;
 
     // Exclude super_admin users — they are platform-level and not school-scoped
-    const where = schoolId
+    const baseWhere = schoolId
       ? { schoolId, role: { not: 'super_admin' as const } }
       : { role: { not: 'super_admin' as const } };
+
+    // Add search filter across name and email
+    const where = search
+      ? {
+          ...baseWhere,
+          OR: [
+            { firstName: { contains: search, mode: 'insensitive' as const } },
+            { lastName: { contains: search, mode: 'insensitive' as const } },
+            { email: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
+      : baseWhere;
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
@@ -201,7 +220,7 @@ export const usersService = {
           createdAt: true,
           school: { select: { id: true, name: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { [sortBy]: sortDir },
         skip,
         take: pageSize,
       }),

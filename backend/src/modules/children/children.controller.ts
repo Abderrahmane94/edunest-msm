@@ -3,6 +3,7 @@ import { childrenService, ChildServiceError } from './children.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
 import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput } from './children.schema';
 import { paginationSchema } from '../../utils/validators';
+import { softDeleteService, SoftDeleteError } from '../../services/soft-delete.service';
 
 export const childrenController = {
   /**
@@ -79,17 +80,18 @@ export const childrenController = {
   },
 
   /**
-   * DELETE /api/children/:id — Soft delete child (set is_active = false)
+   * DELETE /api/children/:id — Soft delete child (admin only)
    */
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
-      await childrenService.softDelete(id, schoolId);
-      res.status(200).json(successResponse({ message: 'Child deactivated successfully' }));
+      await softDeleteService.softDelete('child', id, schoolId);
+      res.status(200).json(successResponse({ message: 'Child deleted successfully' }));
     } catch (error) {
-      if (error instanceof ChildServiceError) {
-        res.status(error.statusCode).json(errorResponse('CHILD_ERROR', error.message));
+      if (error instanceof SoftDeleteError) {
+        const code = error.statusCode === 409 ? 'ALREADY_DELETED' : 'NOT_FOUND';
+        res.status(error.statusCode).json(errorResponse(code, error.message));
         return;
       }
       next(error);

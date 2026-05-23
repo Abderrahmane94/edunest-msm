@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { usersService, UserServiceError } from './users.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
-import { paginationSchema } from '../../utils/validators';
+import { userListQuerySchema, userSortColumnMap } from '../../utils/validators';
 import type { InviteUserInput, RegisterUserInput, UpdateFcmTokenInput, UpdateLanguageInput, UpdateUserInput, CreateUserDirectlyInput } from './users.schema';
+import { softDeleteService, SoftDeleteError } from '../../services/soft-delete.service';
 
 export const usersController = {
   /**
@@ -52,8 +53,9 @@ export const usersController = {
     try {
       // super_admin sees all users across all schools; admin sees only their school
       const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId!;
-      const { page, pageSize } = paginationSchema.parse(req.query);
-      const { users, total } = await usersService.list(schoolId, page, pageSize);
+      const { page, pageSize, search, sortBy, sortDir } = userListQuerySchema.parse(req.query);
+      const prismaSort = userSortColumnMap[sortBy] || 'createdAt';
+      const { users, total } = await usersService.list(schoolId, page, pageSize, search, prismaSort, sortDir);
       res.status(200).json(paginatedResponse(users, page, pageSize, total));
     } catch (error) {
       if (error instanceof UserServiceError) {
@@ -211,6 +213,25 @@ export const usersController = {
     } catch (error) {
       if (error instanceof UserServiceError) {
         res.status(error.statusCode).json(errorResponse('USER_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * DELETE /api/users/:id — Soft delete user (admin only)
+   */
+  async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const schoolId = req.user!.role === 'super_admin' ? undefined : req.user!.schoolId!;
+      await softDeleteService.softDelete('user', id, schoolId);
+      res.status(200).json(successResponse({ message: 'User deleted successfully' }));
+    } catch (error) {
+      if (error instanceof SoftDeleteError) {
+        const code = error.statusCode === 409 ? 'ALREADY_DELETED' : 'NOT_FOUND';
+        res.status(error.statusCode).json(errorResponse(code, error.message));
         return;
       }
       next(error);

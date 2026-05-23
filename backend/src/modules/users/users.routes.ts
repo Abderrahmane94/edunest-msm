@@ -61,4 +61,7 @@ router.patch(
   usersController.updateLanguage,
 );
 
+// DELETE /api/users/:id — Soft delete user (admin only)
+router.delete('/:id', requireAdmin, validateParams(idParamSchema), usersController.delete);
+
 export default router;

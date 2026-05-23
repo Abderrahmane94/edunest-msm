@@ -69,7 +69,8 @@
     "reports": "Rapports",
     "messages": "Messages",
     "invoices": "Factures",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "trash": "Corbeille"
   },
   "schools": {
     "title": "Gestion des écoles",
@@ -142,7 +143,24 @@
     "noData": "Aucune donnée",
     "back": "Retour",
     "error": "Une erreur est survenue",
-    "confirm": "Confirmer"
+    "confirm": "Confirmer",
+    "softDelete": {
+      "button": "Supprimer",
+      "dialogTitle": "Confirmer la suppression",
+      "dialogWarning": "Vous êtes sur le point de supprimer ce/cette {{entityType}} ({{entityName}}). Il/Elle sera masqué(e) des vues normales mais pourra être restauré(e) ultérieurement depuis la Corbeille.",
+      "dialogConfirm": "Supprimer",
+      "dialogCancel": "Annuler",
+      "success": "{{entityType}} supprimé(e) avec succès",
+      "errorAlreadyDeleted": "Ce/Cette {{entityType}} a déjà été supprimé(e)",
+      "errorNotFound": "Ce/Cette {{entityType}} n'a pas été trouvé(e)",
+      "errorGeneric": "Échec de la suppression. Veuillez réessayer."
+    },
+    "entityTypes": {
+      "schools": "école",
+      "users": "utilisateur",
+      "children": "enfant",
+      "classrooms": "classe"
+    }
   },
   "schoolSettings": {
     "title": "Paramètres de l'école",
@@ -933,6 +951,39 @@
     "paymentMethod": {
       "online": "En ligne",
       "cash": "Espèces"
+    }
+  },
+  "trash": {
+    "title": "Corbeille",
+    "tabs": {
+      "schools": "Écoles",
+      "users": "Utilisateurs",
+      "children": "Enfants",
+      "classrooms": "Classes"
+    },
+    "columns": {
+      "name": "Nom",
+      "deletedAt": "Supprimé le"
+    },
+    "fields": {
+      "name": "Nom",
+      "email": "E-mail",
+      "wilaya": "Wilaya",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "role": "Rôle",
+      "dateOfBirth": "Date de naissance",
+      "learnerType": "Type d'apprenant",
+      "level": "Niveau",
+      "roomNumber": "Salle"
+    },
+    "restore": "Restaurer",
+    "permanentDelete": "Supprimer",
+    "empty": "Aucun élément dans la corbeille",
+    "confirmDelete": {
+      "title": "Suppression définitive",
+      "description": "Êtes-vous sûr de vouloir supprimer définitivement « {{name}} » ?",
+      "warning": "Cette action est irréversible. L'enregistrement sera définitivement supprimé de la base de données."
     }
   }
 }

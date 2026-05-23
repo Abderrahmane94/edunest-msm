@@ -69,7 +69,8 @@
     "reports": "التقارير",
     "messages": "الرسائل",
     "invoices": "الفواتير",
-    "notifications": "الإشعارات"
+    "notifications": "الإشعارات",
+    "trash": "سلة المحذوفات"
   },
   "schools": {
     "title": "إدارة المدارس",
@@ -142,7 +143,24 @@
     "noData": "لا توجد بيانات",
     "back": "رجوع",
     "error": "حدث خطأ ما",
-    "confirm": "تأكيد"
+    "confirm": "تأكيد",
+    "softDelete": {
+      "button": "حذف",
+      "dialogTitle": "تأكيد الحذف",
+      "dialogWarning": "أنت على وشك حذف {{entityType}} ({{entityName}}). سيتم إخفاؤه من العروض العادية ولكن يمكن استعادته لاحقاً من سلة المحذوفات.",
+      "dialogConfirm": "حذف",
+      "dialogCancel": "إلغاء",
+      "success": "تم حذف {{entityType}} بنجاح",
+      "errorAlreadyDeleted": "تم حذف {{entityType}} بالفعل",
+      "errorNotFound": "لم يتم العثور على {{entityType}}",
+      "errorGeneric": "فشل الحذف. يرجى المحاولة مرة أخرى."
+    },
+    "entityTypes": {
+      "schools": "المدرسة",
+      "users": "المستخدم",
+      "children": "الطفل",
+      "classrooms": "الفصل"
+    }
   },
   "schoolSettings": {
     "title": "إعدادات المدرسة",
@@ -933,6 +951,39 @@
     "paymentMethod": {
       "online": "عبر الإنترنت",
       "cash": "نقدي"
+    }
+  },
+  "trash": {
+    "title": "سلة المحذوفات",
+    "tabs": {
+      "schools": "المدارس",
+      "users": "المستخدمون",
+      "children": "الأطفال",
+      "classrooms": "الفصول"
+    },
+    "columns": {
+      "name": "الاسم",
+      "deletedAt": "تاريخ الحذف"
+    },
+    "fields": {
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "wilaya": "الولاية",
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "role": "الدور",
+      "dateOfBirth": "تاريخ الميلاد",
+      "learnerType": "نوع المتعلم",
+      "level": "المستوى",
+      "roomNumber": "رقم القاعة"
+    },
+    "restore": "استعادة",
+    "permanentDelete": "حذف نهائي",
+    "empty": "لا توجد عناصر في سلة المحذوفات",
+    "confirmDelete": {
+      "title": "حذف نهائي",
+      "description": "هل أنت متأكد من حذف « {{name}} » نهائياً؟",
+      "warning": "هذا الإجراء لا يمكن التراجع عنه. سيتم حذف السجل نهائياً من قاعدة البيانات."
     }
   }
 }

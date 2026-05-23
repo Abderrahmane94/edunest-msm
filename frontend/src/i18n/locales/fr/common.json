@@ -34,6 +34,22 @@
   "auth": {
     "login": "Se connecter",
     "logout": "Se déconnecter",
+    "email": "Adresse e-mail",
+    "emailPlaceholder": "vous@exemple.com",
+    "password": "Mot de passe",
+    "loginError": "Identifiants incorrects. Veuillez réessayer.",
+    "welcome": "Bienvenue 👋",
+    "welcomeSub": "Connectez-vous à votre espace",
+    "hero": {
+      "title": "Gérez votre maternelle\nsimplement",
+      "subtitle": "Tout ce dont vous avez besoin pour administrer votre établissement, en un seul endroit."
+    },
+    "features": {
+      "students": "Gestion des élèves & classes",
+      "people": "Suivi des parents & enseignants",
+      "attendance": "Présence & rapports en temps réel",
+      "finance": "Tableau de bord financier"
+    },
     "changePassword": {
       "title": "Changez votre mot de passe",
       "subtitle": "Bonjour {{name}}, votre compte utilise un mot de passe temporaire. Veuillez en définir un nouveau.",
@@ -161,6 +177,11 @@
       "children": "enfant",
       "classrooms": "classe"
     }
+  },
+  "table": {
+    "pagination": "Page {{page}} sur {{totalPages}} ({{total}} éléments)",
+    "prevPage": "Page précédente",
+    "nextPage": "Page suivante"
   },
   "schoolSettings": {
     "title": "Paramètres de l'école",

@@ -195,10 +195,6 @@ export function SchoolDetailPage() {
           {/* Stats row */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="bg-card border border-border rounded-lg p-4">
-              <p className="text-caption text-text-secondary">{t('schools.detail.schoolId')}</p>
-              <p className="text-caption font-mono text-foreground mt-1 truncate">{school.id}</p>
-            </div>
-            <div className="bg-card border border-border rounded-lg p-4">
               <p className="text-caption text-text-secondary">{t('schools.columns.createdAt')}</p>
               <p className="text-body font-medium text-foreground mt-1">{new Date(school.createdAt).toLocaleDateString()}</p>
             </div>

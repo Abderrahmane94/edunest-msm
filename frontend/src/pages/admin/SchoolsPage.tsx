@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Building2, Power, PowerOff, ChevronRight } from 'lucide-react';
+import { Building2, Power, PowerOff } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -174,7 +174,6 @@ export function SchoolsPage() {
               <Power className="w-4 h-4 text-success" />
             )}
           </Button>
-          <ChevronRight className="w-4 h-4 text-text-disabled" />
         </div>
       ),
       className: 'w-20',

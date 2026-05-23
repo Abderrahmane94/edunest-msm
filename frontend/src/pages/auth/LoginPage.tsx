@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Mail, Lock, LogIn, GraduationCap, Users, ClipboardCheck, BarChart3, Languages } from 'lucide-react';
+import { Mail, Lock, LogIn, GraduationCap, Users, ClipboardCheck, BarChart3, Languages, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 function getDefaultRoute(role?: string): string {
@@ -22,6 +22,7 @@ export function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -159,15 +160,23 @@ export function LoginPage() {
               <div className="relative">
                 <Lock className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-disabled pointer-events-none" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
-                  className="w-full h-11 ps-10 pe-4 rounded-xl border border-border bg-card text-foreground text-body placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition"
+                  className="w-full h-11 ps-10 pe-10 rounded-xl border border-border bg-card text-foreground text-body placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute end-3 top-1/2 -translate-y-1/2 text-text-disabled hover:text-text-secondary transition"
+                  aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 

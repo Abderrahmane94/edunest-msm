@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Megaphone, Calendar, MapPin, Users, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Megaphone, Calendar, MapPin, Users, CheckCircle, XCircle, Clock, MessageCircle } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -26,12 +26,13 @@ import {
   useEvents,
   useCreateEvent,
   useEventConsent,
+  usePendingConversations,
   type Announcement,
   type SchoolEvent,
   type ConsentEntry,
 } from '@/hooks/useCommunication';
 
-type TabMode = 'announcements' | 'events';
+type TabMode = 'announcements' | 'events' | 'messages';
 
 export function CommunicationPage() {
   const { t } = useTranslation();
@@ -75,6 +76,14 @@ export function CommunicationPage() {
           <Calendar className="w-4 h-4" />
           {t('communication.events.tab')}
         </Button>
+        <Button
+          variant={activeTab === 'messages' ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={() => setActiveTab('messages')}
+        >
+          <MessageCircle className="w-4 h-4" />
+          {t('communication.messages.tab')}
+        </Button>
       </div>
 
       {/* Tab content */}
@@ -85,6 +94,7 @@ export function CommunicationPage() {
           onSelectEvent={setSelectedEventId}
         />
       )}
+      {activeTab === 'messages' && <PendingMessagesTab />}
 
       {/* Create Announcement Dialog */}
       <CreateAnnouncementDialog
@@ -395,6 +405,88 @@ function ConsentDashboard({ eventId }: { eventId: string }) {
       />
     </div>
   );
+}
+
+/* ─── Pending Messages Tab (Admin supervision) ─── */
+
+function PendingMessagesTab() {
+  const { t } = useTranslation();
+  const { data: conversations, isLoading } = usePendingConversations();
+
+  if (isLoading) {
+    return (
+      <div className="bg-card border border-border rounded-lg p-6">
+        <div className="animate-pulse space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-16 bg-hover rounded-md" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!conversations || conversations.length === 0) {
+    return (
+      <div className="bg-card border border-border rounded-lg p-8 text-center">
+        <MessageCircle className="w-10 h-10 text-text-disabled mx-auto mb-3" />
+        <p className="text-body text-text-secondary">
+          {t('communication.messages.noPending')}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-caption text-text-secondary">
+        {t('communication.messages.pendingHint')}
+      </p>
+      {conversations.map((conv) => (
+        <div
+          key={conv.id}
+          className="bg-card border border-border rounded-lg p-4 flex items-center justify-between gap-4"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-warning-muted flex items-center justify-center shrink-0">
+              <MessageCircle className="w-5 h-5 text-warning" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-body font-medium text-text-primary truncate">
+                {conv.teacherName} ↔ {conv.parentName}
+              </p>
+              <p className="text-caption text-text-secondary truncate">
+                {t('communication.messages.aboutChild', { name: conv.childName })}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="text-end">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning-muted text-warning text-micro font-medium">
+                {conv.unreadCount} {t('communication.messages.pending')}
+              </span>
+              <p className="text-micro text-text-disabled mt-0.5">
+                {formatTimeAgo(conv.lastMessageAt, t)}
+              </p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function formatTimeAgo(dateStr: string, t: (key: string, opts?: Record<string, unknown>) => string): string {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 60) return t('communication.messages.minutesAgo', { count: Math.max(1, diffMins) });
+  if (diffHours < 24) return t('communication.messages.hoursAgo', { count: diffHours });
+  return t('communication.messages.daysAgo', { count: diffDays });
 }
 
 /* ─── Create Announcement Dialog ─── */

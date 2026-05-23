@@ -8,7 +8,7 @@
     "enrollment": "Enfants inscrits",
     "attendanceRate": "Taux de présence",
     "outstandingInvoices": "Factures impayées",
-    "unreadMessages": "Messages non lus",
+    "unreadMessages": "Messages en attente",
     "admin": {
       "overview": "Vue d'ensemble",
       "welcome": "Bonjour, {{name}} 👋",
@@ -88,7 +88,8 @@
     "messages": "Messages",
     "invoices": "Factures",
     "notifications": "Notifications",
-    "trash": "Corbeille"
+    "trash": "Corbeille",
+    "timetable": "Jours de présence"
   },
   "schools": {
     "title": "Gestion des écoles",
@@ -460,7 +461,16 @@
     "month": "Mois",
     "year": "Année",
     "noRecords": "Aucun enregistrement de présence pour cette date.",
+    "notMarkedYet": "La présence de cette classe n'a pas encore été enregistrée pour cette date.",
     "noReportData": "Aucune donnée de rapport pour cette période.",
+    "trackingView": "Suivi",
+    "tracking": {
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "done": "Fait",
+      "notDone": "Non fait",
+      "noData": "Aucune donnée pour cette période."
+    },
     "columns": {
       "childName": "Nom de l'enfant",
       "status": "Statut",
@@ -481,8 +491,11 @@
       "absent": "Absents",
       "rate": "Taux de présence",
       "totalChildren": "Enfants",
-      "schoolDays": "Jours d'école",
-      "avgRate": "Taux moyen"
+      "schoolDays": "Jours marqués",
+      "avgRate": "Taux moyen",
+      "unmarkedDays": "Jours non marqués",
+      "unmarkedWarning": "{{count}} jour(s) ouvré(s) sans appel de présence",
+      "unmarkedHint": "Le taux est calculé uniquement sur les jours où l'appel a été fait. Consultez l'onglet Suivi pour identifier les jours manquants."
     },
     "months": {
       "january": "Janvier",
@@ -837,6 +850,16 @@
         "pending": "En attente",
         "declined": "Refusé"
       }
+    },
+    "messages": {
+      "tab": "Messages",
+      "noPending": "Aucun message en attente de réponse.",
+      "pendingHint": "Conversations où le parent attend une réponse de l'enseignant depuis plus de 3 heures.",
+      "aboutChild": "Concernant : {{name}}",
+      "pending": "en attente",
+      "minutesAgo": "il y a {{count}} min",
+      "hoursAgo": "il y a {{count}} h",
+      "daysAgo": "il y a {{count}} j"
     }
   },
   "teacherAttendance": {
@@ -1007,6 +1030,24 @@
       "title": "Suppression définitive",
       "description": "Êtes-vous sûr de vouloir supprimer définitivement « {{name}} » ?",
       "warning": "Cette action est irréversible. L'enregistrement sera définitivement supprimé de la base de données."
+    }
+  },
+  "timetable": {
+    "title": "Jours de présence",
+    "description": "Définissez les jours de présence pour chaque classe. L'appel ne pourra être fait que les jours définis.",
+    "selectClassroom": "Classe",
+    "selectClassroomPrompt": "Sélectionnez une classe pour configurer ses jours de présence.",
+    "workingDays": "Jours de présence",
+    "workingDaysHint": "Cochez les jours où les enfants doivent être présents.",
+    "daysPerWeek": "{{count}} jour(s) par semaine",
+    "days": {
+      "sunday": "Dimanche",
+      "monday": "Lundi",
+      "tuesday": "Mardi",
+      "wednesday": "Mercredi",
+      "thursday": "Jeudi",
+      "friday": "Vendredi",
+      "saturday": "Samedi"
     }
   }
 }

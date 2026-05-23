@@ -38,6 +38,8 @@
     "email": "البريد الإلكتروني",
     "emailPlaceholder": "أنت@مثال.com",
     "password": "كلمة المرور",
+    "showPassword": "إظهار كلمة المرور",
+    "hidePassword": "إخفاء كلمة المرور",
     "forgotPassword": "نسيت كلمة المرور؟",
     "resetPassword": "إعادة تعيين كلمة المرور",
     "loginError": "بيانات الاعتماد غير صحيحة. يرجى المحاولة مرة أخرى.",

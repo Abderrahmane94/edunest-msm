@@ -37,6 +37,8 @@
     "email": "Adresse e-mail",
     "emailPlaceholder": "vous@exemple.com",
     "password": "Mot de passe",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
     "loginError": "Identifiants incorrects. Veuillez réessayer.",
     "welcome": "Bienvenue 👋",
     "welcomeSub": "Connectez-vous à votre espace",

@@ -76,11 +76,13 @@ export function useUsers(params: UsersParams = {}) {
 
       return { users, total } as UsersResult;
     },
+    placeholderData: (prev) => prev,
   });
 }
 
 export interface UserWithSchool extends User {
   school?: { id: string; name: string; schoolType: string } | null;
+  deletedAt?: string | null;
 }
 
 export function useUser(id: string) {
@@ -92,7 +94,8 @@ export function useUser(id: string) {
       const raw = res.data as Record<string, unknown>;
       const base = mapUser(raw);
       const school = raw.school as { id: string; name: string; schoolType: string } | null | undefined;
-      return { ...base, school: school ?? null } as UserWithSchool;
+      const deletedAt = (raw.deletedAt ?? raw.deleted_at ?? null) as string | null;
+      return { ...base, school: school ?? null, deletedAt } as UserWithSchool;
     },
     enabled: !!id,
     staleTime: 0, // always fetch fresh — school info may not be in older cache entries

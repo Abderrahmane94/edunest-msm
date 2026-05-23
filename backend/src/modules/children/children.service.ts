@@ -1,5 +1,6 @@
 import prisma from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
+import { softDeleteService } from '../../services/soft-delete.service';
 import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput } from './children.schema';
 import type { ChildWithEnrollments, ClassroomEnrollmentResponse, PhotoUrlResponse, ParentChildLinkResponse, EmergencyContactResponse } from './children.types';
 
@@ -62,7 +63,8 @@ class ChildrenService {
   }
 
   /**
-   * List all active children for a school with pagination.
+   * List all children for a school with pagination.
+   * Soft-deleted records are automatically excluded by the Prisma extension.
    */
   async list(
     schoolId: string,
@@ -71,13 +73,13 @@ class ChildrenService {
   ): Promise<{ children: ChildWithEnrollments[]; total: number }> {
     const [children, total] = await Promise.all([
       prisma.child.findMany({
-        where: { schoolId, isActive: true },
+        where: { schoolId },
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
         include: enrollmentInclude,
       }),
-      prisma.child.count({ where: { schoolId, isActive: true } }),
+      prisma.child.count({ where: { schoolId } }),
     ]);
 
     return { children, total };
@@ -140,21 +142,11 @@ class ChildrenService {
   }
 
   /**
-   * Soft delete a child by setting is_active to false.
+   * Soft delete a child by setting deletedAt timestamp.
+   * Delegates to the shared SoftDeleteService.
    */
   async softDelete(id: string, schoolId: string): Promise<void> {
-    const child = await prisma.child.findFirst({
-      where: { id, schoolId },
-    });
-
-    if (!child) {
-      throw new ChildServiceError('Child not found', 404);
-    }
-
-    await prisma.child.update({
-      where: { id },
-      data: { isActive: false },
-    });
+    await softDeleteService.softDelete('child', id, schoolId);
   }
 
   /**
@@ -169,8 +161,9 @@ class ChildrenService {
     input: EnrollChildInput,
   ): Promise<ClassroomEnrollmentResponse> {
     // Verify child exists and belongs to the school
+    // Soft-deleted records are automatically excluded by the Prisma extension
     const child = await prisma.child.findFirst({
-      where: { id: childId, schoolId, isActive: true },
+      where: { id: childId, schoolId },
     });
 
     if (!child) {
@@ -236,7 +229,7 @@ class ChildrenService {
    */
   async uploadPhoto(childId: string, schoolId: string, file: Buffer): Promise<ChildWithEnrollments> {
     const child = await prisma.child.findFirst({
-      where: { id: childId, schoolId, isActive: true },
+      where: { id: childId, schoolId },
     });
 
     if (!child) {

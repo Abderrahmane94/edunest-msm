@@ -13,6 +13,7 @@ export interface Child {
   classroom_name?: string;
   parent_names?: string[];
   created_at: string;
+  deleted_at?: string | null;
 }
 
 export interface EmergencyContact {
@@ -76,6 +77,7 @@ function mapChild(raw: Record<string, unknown>): Child {
     classroom_name: classroomName,
     parent_names: (raw.parent_names ?? []) as string[],
     created_at: (raw.createdAt ?? raw.created_at) as string,
+    deleted_at: (raw.deletedAt ?? raw.deleted_at ?? null) as string | null,
   };
 }
 

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Shield, ShieldOff, Save } from 'lucide-react';
-import { Button, StatusBadge } from '@/components/ui';
+import { Button, StatusBadge, EntityDeleteButton } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import { useUser, useUpdateUser, useToggleUserActive } from '@/hooks/useUsers';
@@ -231,6 +231,14 @@ export function UserDetailPage() {
               <><Shield className="w-4 h-4 text-success" /> {t('users.activate')}</>
             )}
           </Button>
+
+          <EntityDeleteButton
+            entityType="users"
+            entityId={user.id}
+            entityDisplayName={`${user.first_name} ${user.last_name}`}
+            onDeleted={() => navigate('/admin/users')}
+            hidden={!!user.deletedAt}
+          />
 
           {saveSuccess && (
             <span className="text-body text-success animate-fade-in">{t('common.saved')}</span>

@@ -32,6 +32,7 @@ import {
   FeeStructureDetailPage,
   InvoiceDetailPage,
   ExpenseDetailPage,
+  TrashPage,
 } from '@/pages/admin';
 import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage } from '@/pages/teacher';
 import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentInvoicesPage } from '@/pages/parent';
@@ -55,6 +56,7 @@ import {
   LogOut,
   Building2,
   Languages,
+  Trash2,
 } from 'lucide-react';
 
 /**
@@ -125,6 +127,7 @@ function getAdminNavItems(role: string): NavItem[] {
       { label: 'nav.schools',   href: '/admin/schools', icon: Building2 },
       { label: 'nav.users',     href: '/admin/users', icon: Users },
       { label: 'nav.billing',   href: '/admin/billing', icon: Wallet },
+      { label: 'nav.trash',     href: '/admin/trash', icon: Trash2 },
     ];
   }
 
@@ -139,6 +142,7 @@ function getAdminNavItems(role: string): NavItem[] {
     { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck },
     { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle },
     { label: 'nav.finance',       href: '/admin/finance', icon: Wallet },
+    { label: 'nav.trash',         href: '/admin/trash', icon: Trash2 },
     { label: 'nav.settings',      href: '/admin/settings', icon: Settings },
   ];
 }
@@ -314,6 +318,7 @@ export const routes: RouteObject[] = [
               { path: 'finance/fees/:feeId', element: <FeeStructureDetailPage /> },
               { path: 'finance/invoices/:invoiceId', element: <InvoiceDetailPage /> },
               { path: 'finance/expenses/:expenseId', element: <ExpenseDetailPage /> },
+              { path: 'trash', element: <TrashPage /> },
               { path: 'settings', element: <SchoolSettingsPage /> },
             ],
           },

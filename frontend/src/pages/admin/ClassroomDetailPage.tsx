@@ -1,14 +1,13 @@
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Save, Trash2, UserCog } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { ArrowLeft, Save, UserCog } from 'lucide-react';
+import { Button, EntityDeleteButton } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import {
   useClassroom,
   useUpdateClassroom,
-  useDeleteClassroom,
   useAssignTeacher,
 } from '@/hooks/useClassrooms';
 import { useUsers } from '@/hooks/useUsers';
@@ -20,7 +19,6 @@ export function ClassroomDetailPage() {
 
   const { data: classroom, isLoading } = useClassroom(classroomId!);
   const updateClassroom = useUpdateClassroom();
-  const deleteClassroom = useDeleteClassroom();
   const assignTeacher = useAssignTeacher();
 
   const { data: usersData } = useUsers({ pageSize: 100 });
@@ -36,8 +34,6 @@ export function ClassroomDetailPage() {
   const [saveSuccess, setSaveSuccess] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
   const [teacherError, setTeacherError] = React.useState<string | null>(null);
-  const [deleteError, setDeleteError] = React.useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = React.useState(false);
 
   React.useEffect(() => {
     if (classroom) {
@@ -80,17 +76,6 @@ export function ClassroomDetailPage() {
       await assignTeacher.mutateAsync({ classroomId: classroomId!, teacherId: teacherId || null });
     } catch (err) {
       setTeacherError(err instanceof Error ? err.message : t('common.error'));
-    }
-  }
-
-  async function handleDelete() {
-    setDeleteError(null);
-    try {
-      await deleteClassroom.mutateAsync(classroomId!);
-      navigate('/admin/classrooms');
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : t('common.error'));
-      setConfirmDelete(false);
     }
   }
 
@@ -195,21 +180,13 @@ export function ClassroomDetailPage() {
       <div className="bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3">
         <h2 className="text-subsection font-semibold text-danger">{t('classrooms.detail.dangerZone')}</h2>
         <p className="text-body text-text-secondary">{t('classrooms.detail.deleteWarning')}</p>
-        {deleteError && <p className="text-body text-danger">{deleteError}</p>}
-        {!confirmDelete ? (
-          <Button variant="secondary" onClick={() => setConfirmDelete(true)} className="border-danger text-danger hover:bg-danger/10">
-            <Trash2 className="w-4 h-4" />
-            {t('classrooms.detail.delete')}
-          </Button>
-        ) : (
-          <div className="flex items-center gap-3">
-            <p className="text-body text-danger font-medium">{t('classrooms.detail.confirmDelete')}</p>
-            <Button variant="secondary" onClick={handleDelete} disabled={deleteClassroom.isPending} className="border-danger text-danger hover:bg-danger/10">
-              {deleteClassroom.isPending ? t('common.loading') : t('common.confirm')}
-            </Button>
-            <Button variant="ghost" onClick={() => setConfirmDelete(false)}>{t('common.cancel')}</Button>
-          </div>
-        )}
+        <EntityDeleteButton
+          entityType="classrooms"
+          entityId={classroomId!}
+          entityDisplayName={classroom.name}
+          onDeleted={() => navigate('/admin/classrooms')}
+          hidden={!!classroom.deletedAt}
+        />
       </div>
     </div>
   );

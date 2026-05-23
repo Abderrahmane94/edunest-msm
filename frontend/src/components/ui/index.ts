@@ -14,3 +14,7 @@ export {
   DialogFooter,
   type DialogProps,
 } from './Dialog';
+export {
+  EntityDeleteButton,
+  type EntityDeleteButtonProps,
+} from './EntityDeleteButton';

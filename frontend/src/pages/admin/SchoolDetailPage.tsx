@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Save, Power, PowerOff, Users, UserPlus, Settings } from 'lucide-react';
-import { Button, StatusBadge, DataTable, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Input } from '@/components/ui';
+import { Button, StatusBadge, DataTable, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Input, EntityDeleteButton } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { apiClient } from '@/lib/api-client';
@@ -256,6 +256,13 @@ export function SchoolDetailPage() {
                 ? <><PowerOff className="w-4 h-4" />{t('schools.deactivate')}</>
                 : <><Power className="w-4 h-4 text-success" />{t('schools.activate')}</>}
             </Button>
+            <EntityDeleteButton
+              entityType="schools"
+              entityId={schoolId!}
+              entityDisplayName={school.name}
+              onDeleted={() => navigate('/admin/schools')}
+              hidden={!!school.deletedAt}
+            />
           </div>
         </>
       )}

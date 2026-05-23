@@ -350,7 +350,7 @@ describe('recordCashPaymentSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('should reject invalid UUID for received_by', () => {
+  it('should ignore unknown fields like received_by (not in schema)', () => {
     const input = {
       amount_received: 5000,
       received_by: 'not-a-uuid',
@@ -358,7 +358,8 @@ describe('recordCashPaymentSchema', () => {
     };
 
     const result = recordCashPaymentSchema.safeParse(input);
-    expect(result.success).toBe(false);
+    // received_by is not part of the schema, so it's stripped and parse succeeds
+    expect(result.success).toBe(true);
   });
 
   it('should reject invalid datetime for received_at', () => {

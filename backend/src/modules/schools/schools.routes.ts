@@ -47,4 +47,7 @@ router.post('/:id/users', requireSuperAdmin, validateParams(idParamSchema), scho
 // POST /api/schools/:id/logo — Upload school logo (admin, super_admin)
 router.post('/:id/logo', requireAdmin, validateParams(idParamSchema), upload.single('logo'), schoolsController.uploadLogo);
 
+// DELETE /api/schools/:id — Soft delete school (super_admin only)
+router.delete('/:id', requireSuperAdmin, validateParams(idParamSchema), schoolsController.delete);
+
 export default router;

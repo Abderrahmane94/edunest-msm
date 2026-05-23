@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { childrenService, ChildServiceError } from './children.service';
+import { childrenService } from './children.service';
 
 // Mock Prisma
 vi.mock('../../lib/prisma', () => ({
@@ -43,6 +43,17 @@ vi.mock('../../lib/prisma', () => ({
     },
     $transaction: vi.fn(),
   },
+  softDeleteStorage: {
+    run: vi.fn((_ctx: unknown, fn: () => unknown) => fn()),
+    getStore: vi.fn(),
+  },
+}));
+
+// Mock SoftDeleteService
+vi.mock('../../services/soft-delete.service', () => ({
+  softDeleteService: {
+    softDelete: vi.fn(),
+  },
 }));
 
 // Mock Cloudinary service
@@ -56,6 +67,7 @@ vi.mock('../../services/cloudinary.service', () => ({
 
 import prisma from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
+import { softDeleteService } from '../../services/soft-delete.service';
 
 const mockPrisma = prisma as unknown as {
   child: {
@@ -102,6 +114,10 @@ const mockCloudinary = cloudinaryService as unknown as {
   uploadFile: ReturnType<typeof vi.fn>;
   generateSignedUrl: ReturnType<typeof vi.fn>;
   deleteFile: ReturnType<typeof vi.fn>;
+};
+
+const mockSoftDelete = softDeleteService as unknown as {
+  softDelete: ReturnType<typeof vi.fn>;
 };
 
 describe('ChildrenService', () => {
@@ -185,7 +201,7 @@ describe('ChildrenService', () => {
   });
 
   describe('list', () => {
-    it('should return paginated active children for a school', async () => {
+    it('should return paginated children for a school', async () => {
       const children = [
         { id: 'child-1', schoolId, firstName: 'Ahmed', isActive: true, enrollments: [] },
         { id: 'child-2', schoolId, firstName: 'Fatima', isActive: true, enrollments: [] },
@@ -199,7 +215,7 @@ describe('ChildrenService', () => {
       expect(result.children).toEqual(children);
       expect(result.total).toBe(2);
       expect(mockPrisma.child.findMany).toHaveBeenCalledWith({
-        where: { schoolId, isActive: true },
+        where: { schoolId },
         skip: 0,
         take: 20,
         orderBy: { createdAt: 'desc' },
@@ -234,25 +250,21 @@ describe('ChildrenService', () => {
   });
 
   describe('softDelete', () => {
-    it('should set is_active to false', async () => {
-      const child = { id: 'child-1', schoolId, isActive: true };
-
-      mockPrisma.child.findFirst.mockResolvedValue(child);
-      mockPrisma.child.update.mockResolvedValue({ ...child, isActive: false });
+    it('should delegate to softDeleteService', async () => {
+      mockSoftDelete.softDelete.mockResolvedValue(undefined);
 
       await childrenService.softDelete('child-1', schoolId);
 
-      expect(mockPrisma.child.update).toHaveBeenCalledWith({
-        where: { id: 'child-1' },
-        data: { isActive: false },
-      });
+      expect(mockSoftDelete.softDelete).toHaveBeenCalledWith('child', 'child-1', schoolId);
     });
 
-    it('should throw 404 when child not found', async () => {
-      mockPrisma.child.findFirst.mockResolvedValue(null);
+    it('should propagate errors from softDeleteService', async () => {
+      mockSoftDelete.softDelete.mockRejectedValue(
+        Object.assign(new Error('child not found'), { statusCode: 404, name: 'SoftDeleteError' }),
+      );
 
       await expect(childrenService.softDelete('nonexistent', schoolId)).rejects.toMatchObject({
-        message: 'Child not found',
+        message: 'child not found',
         statusCode: 404,
       });
     });

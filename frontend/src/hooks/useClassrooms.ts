@@ -12,6 +12,7 @@ export interface Classroom {
   teacher_name?: string;
   enrolled_count: number;
   created_at: string;
+  deletedAt?: string | null;
 }
 
 function mapClassroom(raw: Record<string, unknown>): Classroom {
@@ -29,6 +30,7 @@ function mapClassroom(raw: Record<string, unknown>): Classroom {
       : undefined,
     enrolled_count: (raw.enrolled_count ?? raw.enrolledCount ?? 0) as number,
     created_at: (raw.createdAt ?? raw.created_at) as string,
+    deletedAt: (raw.deletedAt ?? raw.deleted_at ?? null) as string | null,
   };
 }
 

@@ -22,3 +22,4 @@ export { BillingPage } from './BillingPage';
 export { FeeStructureDetailPage } from './FeeStructureDetailPage';
 export { InvoiceDetailPage } from './InvoiceDetailPage';
 export { ExpenseDetailPage } from './ExpenseDetailPage';
+export { TrashPage } from './TrashPage';

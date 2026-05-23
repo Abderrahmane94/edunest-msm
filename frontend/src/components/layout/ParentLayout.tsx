@@ -84,7 +84,7 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
               type="button"
               onClick={handleLogout}
               className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-subtle text-text-secondary hover:text-danger transition-colors duration-150"
-              aria-label="Déconnexion"
+              aria-label={t('auth.logout')}
             >
               <LogOut className="w-4 h-4" />
             </button>

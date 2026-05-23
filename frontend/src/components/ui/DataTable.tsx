@@ -2,6 +2,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Button } from './Button';
+import { useTranslation } from 'react-i18next';
 
 export interface Column<T> {
   key: string;
@@ -48,6 +49,7 @@ export function DataTable<T>({
   className,
   emptyMessage = 'No data available',
 }: DataTableProps<T>) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = React.useState('');
   const totalPages = total ? Math.ceil(total / pageSize) : 1;
 
@@ -161,7 +163,7 @@ export function DataTable<T>({
         {total != null && totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-border">
             <span className="text-caption text-text-secondary">
-              Page {page} of {totalPages} ({total} items)
+              {t('table.pagination', { page, totalPages, total })}
             </span>
             <div className="flex items-center gap-1">
               <Button
@@ -169,7 +171,7 @@ export function DataTable<T>({
                 size="icon"
                 onClick={() => onPageChange?.(page - 1)}
                 disabled={page <= 1}
-                aria-label="Previous page"
+                aria-label={t('table.prevPage')}
               >
                 <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
               </Button>
@@ -178,7 +180,7 @@ export function DataTable<T>({
                 size="icon"
                 onClick={() => onPageChange?.(page + 1)}
                 disabled={page >= totalPages}
-                aria-label="Next page"
+                aria-label={t('table.nextPage')}
               >
                 <ChevronRight className="w-4 h-4 rtl:rotate-180" />
               </Button>

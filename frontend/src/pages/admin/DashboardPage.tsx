@@ -1,8 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import {
   Users, ClipboardCheck, FileText, MessageCircle,
-  Building2, Baby, PowerOff, TrendingUp, School,
-  CheckCircle, GraduationCap,
+  Building2, Baby, PowerOff, School, CheckCircle,
 } from 'lucide-react';
 import { usePlatformStats, useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,42 +37,20 @@ function StatCard({
 /* ─── Admin (school director) dashboard ─── */
 function AdminDashboard() {
   const { t } = useTranslation();
-  const { user } = useAuth();
   const { data: stats, isLoading } = useAdminDashboard();
 
   if (isLoading) {
     return (
-      <div className="space-y-8">
-        <div className="bg-hover rounded-2xl h-28 animate-pulse" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-hover rounded-xl h-[88px] animate-pulse" />
-          ))}
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-hover rounded-xl h-[88px] animate-pulse" />
+        ))}
       </div>
     );
   }
 
-  const schoolName = (user as any)?.schoolName;
-
   return (
     <div className="space-y-8">
-      {/* Welcome banner */}
-      <div className="bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent-light)] rounded-2xl p-6 text-white">
-        <div className="flex items-center gap-3 mb-1">
-          <GraduationCap className="w-5 h-5 opacity-80" />
-          <span className="text-caption opacity-80 font-medium uppercase tracking-wider">
-            {t('dashboard.admin.overview')}
-          </span>
-        </div>
-        <h2 className="text-section font-bold mb-0.5">
-          {t('dashboard.admin.welcome', { name: user?.firstName })}
-        </h2>
-        {schoolName && (
-          <p className="text-body opacity-80">{schoolName}</p>
-        )}
-      </div>
-
       {/* KPI grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
@@ -112,13 +89,11 @@ function AdminDashboard() {
 /* ─── Super admin platform dashboard ─── */
 function SuperAdminDashboard() {
   const { t } = useTranslation();
-  const { user } = useAuth();
   const { data: stats, isLoading } = usePlatformStats();
 
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <div className="bg-hover rounded-2xl h-28 animate-pulse" />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="bg-hover rounded-xl h-[88px] animate-pulse" />
@@ -139,22 +114,6 @@ function SuperAdminDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Welcome banner */}
-      <div className="bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent-light)] rounded-2xl p-6 text-white">
-        <div className="flex items-center gap-3 mb-1">
-          <TrendingUp className="w-5 h-5 opacity-80" />
-          <span className="text-caption opacity-80 font-medium uppercase tracking-wider">
-            {t('dashboard.platform.overview')}
-          </span>
-        </div>
-        <h2 className="text-section font-bold mb-1">
-          {t('dashboard.platform.welcome', { name: user?.firstName })}
-        </h2>
-        <p className="text-body opacity-80">
-          {t('dashboard.platform.subtitle', { count: stats?.totalSchools ?? 0 })}
-        </p>
-      </div>
-
       {/* Schools */}
       <div>
         <div className="flex items-center gap-2 mb-4">

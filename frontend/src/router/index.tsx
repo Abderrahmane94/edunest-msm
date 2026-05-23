@@ -184,6 +184,7 @@ function LanguageSwitcher() {
 
 function SidebarFooterContent() {
   const { logout, user } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   async function handleLogout() {
@@ -213,7 +214,7 @@ function SidebarFooterContent() {
         className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-body font-medium text-text-secondary hover:bg-subtle hover:text-danger transition-all duration-150"
       >
         <LogOut className="w-5 h-5 shrink-0" />
-        <span>Déconnexion</span>
+        <span>{t('auth.logout')}</span>
       </button>
     </div>
   );

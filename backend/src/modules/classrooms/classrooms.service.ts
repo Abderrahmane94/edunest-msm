@@ -53,15 +53,22 @@ class ClassroomsService {
 
   /**
    * List all classrooms for a school with pagination.
+   * Optionally filter by teacher assignment.
    */
   async list(
     schoolId: string,
     page: number,
     pageSize: number,
+    teacherId?: string,
   ): Promise<{ classrooms: ClassroomWithTeacher[]; total: number }> {
+    const where: Record<string, unknown> = { schoolId };
+    if (teacherId) {
+      where.teacherUserId = teacherId;
+    }
+
     const [classrooms, total] = await Promise.all([
       prisma.classroom.findMany({
-        where: { schoolId },
+        where,
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
@@ -69,7 +76,7 @@ class ClassroomsService {
           teacher: { select: teacherSelect },
         },
       }),
-      prisma.classroom.count({ where: { schoolId } }),
+      prisma.classroom.count({ where }),
     ]);
 
     return { classrooms, total };

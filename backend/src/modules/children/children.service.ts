@@ -70,16 +70,24 @@ class ChildrenService {
     schoolId: string,
     page: number,
     pageSize: number,
+    classroomId?: string,
   ): Promise<{ children: ChildWithEnrollments[]; total: number }> {
+    const where: Record<string, unknown> = { schoolId };
+
+    // Filter by classroom enrollment if classroom_id is provided
+    if (classroomId) {
+      where.enrollments = { some: { classroomId } };
+    }
+
     const [children, total] = await Promise.all([
       prisma.child.findMany({
-        where: { schoolId },
+        where,
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
         include: enrollmentInclude,
       }),
-      prisma.child.count({ where: { schoolId } }),
+      prisma.child.count({ where }),
     ]);
 
     return { children, total };

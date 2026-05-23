@@ -19,6 +19,7 @@ import financeRoutes from './modules/finance/finance.routes';
 import adminRoutes from './modules/admin/admin.routes';
 import billingRoutes from './modules/billing/billing.routes';
 import trashRoutes from './modules/trash/trash.routes';
+import timetableRoutes from './modules/timetable/timetable.routes';
 
 const app = express();
 
@@ -71,6 +72,7 @@ app.use('/api/finance', financeRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/trash', trashRoutes);
+app.use('/api/timetable', timetableRoutes);
 
 // 404 handler for unmatched routes
 app.use((_req: Request, res: Response) => {

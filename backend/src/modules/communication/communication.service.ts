@@ -222,6 +222,74 @@ class CommunicationService {
   }
 
   /**
+   * List conversations where the teacher hasn't responded to a parent message
+   * in more than 3 hours. Returns metadata without message content for privacy.
+   */
+  async listPendingConversations(
+    schoolId: string,
+  ): Promise<{ conversations: Array<ConversationWithParticipants & { unreadCount: number; lastMessageAt: Date; waitingSince: Date }> }> {
+    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
+
+    // Find conversations in this school
+    const allConversations = await prisma.conversation.findMany({
+      where: { schoolId },
+      include: {
+        teacher: { select: participantSelect },
+        parent: { select: participantSelect },
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 10, // Get recent messages to check who sent last
+          select: { id: true, senderUserId: true, isRead: true, createdAt: true },
+        },
+      },
+    });
+
+    // Filter: only conversations where the last message is from the parent,
+    // sent more than 3 hours ago, and the teacher hasn't replied since
+    const pendingConversations = allConversations.filter((conv) => {
+      if (conv.messages.length === 0) return false;
+
+      // Find the last message from the parent
+      const lastParentMsg = conv.messages.find((m) => m.senderUserId === conv.parentUserId);
+      if (!lastParentMsg) return false;
+
+      // Check if the teacher has replied after the parent's last message
+      const lastTeacherMsg = conv.messages.find((m) => m.senderUserId === conv.teacherUserId);
+      if (lastTeacherMsg && lastTeacherMsg.createdAt > lastParentMsg.createdAt) {
+        return false; // Teacher already replied
+      }
+
+      // Check if the parent's message is older than 3 hours
+      return lastParentMsg.createdAt <= threeHoursAgo;
+    });
+
+    // Fetch child info
+    const childIds = pendingConversations.map((c) => c.childId);
+    const children = childIds.length > 0
+      ? await prisma.child.findMany({
+          where: { id: { in: childIds } },
+          select: { id: true, firstName: true, lastName: true },
+        })
+      : [];
+    const childMap = new Map(children.map((c) => [c.id, c]));
+
+    const conversations = pendingConversations.map((conv) => {
+      const lastParentMsg = conv.messages.find((m) => m.senderUserId === conv.parentUserId)!;
+      const unreadCount = conv.messages.filter((m) => !m.isRead && m.senderUserId === conv.parentUserId).length;
+
+      return {
+        ...conv,
+        messages: undefined as never,
+        child: childMap.get(conv.childId) || { id: conv.childId, firstName: '', lastName: '' },
+        unreadCount,
+        waitingSince: lastParentMsg.createdAt,
+      };
+    });
+
+    return { conversations };
+  }
+
+  /**
    * Get messages in a conversation with pagination.
    * Only participants (teacher or parent in the conversation) can access messages.
    * Admins can also access messages.

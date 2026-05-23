@@ -70,7 +70,7 @@ export const trashController = {
    */
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId!;
+      const schoolId = req.user!.role === 'super_admin' ? '' : req.user!.schoolId!;
       const model = ENTITY_TYPE_TO_MODEL[req.params.entityType];
       const { page, pageSize } = trashQuerySchema.parse(req.query);
 
@@ -95,7 +95,7 @@ export const trashController = {
    */
   async restore(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId!;
+      const schoolId = req.user!.role === 'super_admin' ? undefined : req.user!.schoolId!;
       const model = ENTITY_TYPE_TO_MODEL[req.params.entityType];
       const { id } = req.params;
 
@@ -116,7 +116,7 @@ export const trashController = {
    */
   async hardDelete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.schoolId!;
+      const schoolId = req.user!.role === 'super_admin' ? undefined : req.user!.schoolId!;
       const model = ENTITY_TYPE_TO_MODEL[req.params.entityType];
       const { id } = req.params;
 

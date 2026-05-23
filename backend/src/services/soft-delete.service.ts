@@ -90,6 +90,7 @@ class SoftDeleteService {
 
   /**
    * List all soft-deleted records for a model within a school scope.
+   * If schoolId is empty, lists across all schools (super_admin).
    */
   async listDeleted(
     model: SoftDeletableModel,
@@ -99,7 +100,7 @@ class SoftDeleteService {
   ): Promise<{ data: unknown[]; total: number }> {
     return softDeleteStorage.run({ includeDeleted: true }, async () => {
       const where =
-        model === 'school'
+        model === 'school' || !schoolId
           ? { deletedAt: { not: null } }
           : { schoolId, deletedAt: { not: null } };
 

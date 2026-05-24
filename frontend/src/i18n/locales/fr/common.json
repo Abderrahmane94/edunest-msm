@@ -40,7 +40,10 @@
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe",
     "loginError": "Identifiants incorrects. Veuillez réessayer.",
-    "schoolInactive": "Ce compte école est désactivé. Contactez l'administrateur.",
+    "userDeactivated": "Votre compte a été désactivé.",
+    "userDeactivatedHint": "Contactez l'administrateur de votre établissement pour le réactiver.",
+    "schoolInactive": "Ce compte école est désactivé.",
+    "schoolInactiveHint": "Veuillez contacter l'équipe EduNest pour plus d'informations.",
     "welcome": "Bienvenue 👋",
     "welcomeSub": "Connectez-vous à votre espace",
     "hero": {

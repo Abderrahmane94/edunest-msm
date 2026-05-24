@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Mail, Lock, LogIn, GraduationCap, Users, ClipboardCheck, BarChart3, Languages, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, LogIn, GraduationCap, Users, ClipboardCheck, BarChart3, Languages, Eye, EyeOff, AlertCircle, ShieldOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 function getDefaultRoute(role?: string): string {
@@ -23,7 +23,7 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<{ type: 'credentials' | 'user' | 'school'; title: string; hint?: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function toggleLanguage() {
@@ -38,16 +38,18 @@ export function LoginPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setError('');
+    setError(null);
     setIsSubmitting(true);
     try {
       await login(email, password);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '';
-      if (msg.toLowerCase().includes('inactive')) {
-        setError(t('auth.schoolInactive'));
+      const msg = (err instanceof Error ? err.message : '').toLowerCase();
+      if (msg.includes('deactivated')) {
+        setError({ type: 'user', title: t('auth.userDeactivated'), hint: t('auth.userDeactivatedHint') });
+      } else if (msg.includes('inactive')) {
+        setError({ type: 'school', title: t('auth.schoolInactive'), hint: t('auth.schoolInactiveHint') });
       } else {
-        setError(t('auth.loginError'));
+        setError({ type: 'credentials', title: t('auth.loginError') });
       }
       setIsSubmitting(false);
     }
@@ -132,9 +134,15 @@ export function LoginPage() {
           </div>
 
           {error && (
-            <div className="mb-5 p-4 rounded-xl bg-[var(--color-danger-muted)] border border-danger/20 flex items-start gap-2">
-              <span className="text-danger mt-0.5">⚠</span>
-              <p className="text-body text-danger">{error}</p>
+            <div className="mb-5 p-4 rounded-xl bg-[var(--color-danger-muted)] border border-danger/20 flex items-start gap-3">
+              {error.type === 'credentials'
+                ? <AlertCircle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
+                : <ShieldOff className="w-5 h-5 text-danger shrink-0 mt-0.5" />
+              }
+              <div>
+                <p className="text-body font-medium text-danger">{error.title}</p>
+                {error.hint && <p className="text-caption text-danger/80 mt-0.5">{error.hint}</p>}
+              </div>
             </div>
           )}
 

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Building2, Power, PowerOff } from 'lucide-react';
+import { Building2, Shield, ShieldOff } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -169,9 +169,9 @@ export function SchoolsPage() {
             title={school.isActive ? t('schools.deactivate') : t('schools.activate')}
           >
             {school.isActive ? (
-              <PowerOff className="w-4 h-4 text-danger" />
+              <ShieldOff className="w-4 h-4 text-danger" />
             ) : (
-              <Power className="w-4 h-4 text-success" />
+              <Shield className="w-4 h-4 text-success" />
             )}
           </Button>
         </div>

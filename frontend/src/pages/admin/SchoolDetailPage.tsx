@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Save, Power, PowerOff, Users, UserPlus, Settings } from 'lucide-react';
+import { ArrowLeft, Save, Shield, ShieldOff, Users, UserPlus, Settings } from 'lucide-react';
 import { Button, StatusBadge, DataTable, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Input, EntityDeleteButton } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
@@ -234,36 +234,31 @@ export function SchoolDetailPage() {
               <Button type="submit" disabled={updateSchool.isPending}>
                 <Save className="w-4 h-4" />{updateSchool.isPending ? t('common.loading') : t('common.save')}
               </Button>
+
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleToggle}
+                disabled={toggleSchool.isPending}
+              >
+                {school.isActive
+                  ? <><ShieldOff className="w-4 h-4 text-danger" />{t('schools.deactivate')}</>
+                  : <><Shield className="w-4 h-4 text-success" />{t('schools.activate')}</>}
+              </Button>
+
+              <EntityDeleteButton
+                entityType="schools"
+                entityId={schoolId!}
+                entityDisplayName={school.name}
+                onDeleted={() => navigate('/admin/schools')}
+                hidden={!!school.deletedAt}
+              />
+
               {saveSuccess && <span className="text-body text-success animate-fade-in">{t('common.saved')}</span>}
               {saveError && <span className="text-body text-danger animate-fade-in">{saveError}</span>}
+              {toggleError && <span className="text-body text-danger animate-fade-in">{toggleError}</span>}
             </div>
           </form>
-
-          {/* Activate / Deactivate */}
-          <div className="bg-card border border-border rounded-lg p-6 space-y-3">
-            <h2 className="text-subsection font-semibold text-text-heading">{t('schools.detail.accessControl')}</h2>
-            <p className="text-body text-text-secondary">
-              {school.isActive ? t('schools.detail.deactivateWarning') : t('schools.detail.activateHint')}
-            </p>
-            {toggleError && <p className="text-body text-danger">{toggleError}</p>}
-            <Button
-              variant="secondary"
-              onClick={handleToggle}
-              disabled={toggleSchool.isPending}
-              className={school.isActive ? 'border-danger text-danger hover:bg-danger/10' : ''}
-            >
-              {school.isActive
-                ? <><PowerOff className="w-4 h-4" />{t('schools.deactivate')}</>
-                : <><Power className="w-4 h-4 text-success" />{t('schools.activate')}</>}
-            </Button>
-            <EntityDeleteButton
-              entityType="schools"
-              entityId={schoolId!}
-              entityDisplayName={school.name}
-              onDeleted={() => navigate('/admin/schools')}
-              hidden={!!school.deletedAt}
-            />
-          </div>
         </>
       )}
 

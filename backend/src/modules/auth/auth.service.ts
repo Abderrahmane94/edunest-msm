@@ -69,6 +69,14 @@ export const authService = {
       throw new AuthError('Account is deactivated', 403);
     }
 
+    // Block login if the user's school is inactive
+    if (user.schoolId) {
+      const school = await prisma.school.findUnique({ where: { id: user.schoolId } });
+      if (school && !school.isActive) {
+        throw new AuthError('School account is inactive', 403);
+      }
+    }
+
     const isPasswordValid = await bcrypt.compare(input.password, user.passwordHash);
     if (!isPasswordValid) {
       throw new AuthError('Invalid email or password', 401);

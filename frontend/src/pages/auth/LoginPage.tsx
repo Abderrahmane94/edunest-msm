@@ -43,7 +43,12 @@ export function LoginPage() {
     try {
       await login(email, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('auth.loginError'));
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.toLowerCase().includes('inactive')) {
+        setError(t('auth.schoolInactive'));
+      } else {
+        setError(t('auth.loginError'));
+      }
       setIsSubmitting(false);
     }
   }

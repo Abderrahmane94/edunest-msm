@@ -39,6 +39,7 @@ import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage } fr
 import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentInvoicesPage } from '@/pages/parent';
 import { AdminLayout, ParentLayout } from '@/components/layout';
 import type { NavItem } from '@/components/layout';
+import { useSchool } from '@/hooks/useSchool';
 import {
   LayoutDashboard,
   Users,
@@ -227,20 +228,44 @@ function SidebarFooterContent() {
   );
 }
 
+function SchoolSidebarHeader() {
+  const { data: school } = useSchool();
+
+  return (
+    <div className="flex items-center gap-2 px-1">
+      <div className="w-8 h-8 rounded-lg bg-[var(--color-accent)] flex items-center justify-center overflow-hidden shrink-0">
+        {school?.logo_url ? (
+          <img src={school.logo_url} alt={school.name} className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-[var(--color-text-inverse)] text-label font-semibold">E</span>
+        )}
+      </div>
+      <span className="text-body font-semibold text-text-heading truncate">
+        {school?.name || 'EduNest'}
+      </span>
+    </div>
+  );
+}
+
 function AdminLayoutWrapper() {
   const { user } = useAuth();
   const navItems = getAdminNavItems(user?.role || 'admin');
+  const isAdmin = user?.role === 'admin';
 
   return (
     <AdminLayout
       navItems={navItems}
       sidebarHeader={
-        <div className="flex items-center gap-2 px-1">
-          <div className="w-8 h-8 rounded-lg bg-[var(--color-accent)] flex items-center justify-center">
-            <span className="text-[var(--color-text-inverse)] text-label font-semibold">E</span>
+        isAdmin ? (
+          <SchoolSidebarHeader />
+        ) : (
+          <div className="flex items-center gap-2 px-1">
+            <div className="w-8 h-8 rounded-lg bg-[var(--color-accent)] flex items-center justify-center">
+              <span className="text-[var(--color-text-inverse)] text-label font-semibold">E</span>
+            </div>
+            <span className="text-body font-semibold text-text-heading">EduNest</span>
           </div>
-          <span className="text-body font-semibold text-text-heading">EduNest</span>
-        </div>
+        )
       }
       sidebarFooter={<SidebarFooterContent />}
     />

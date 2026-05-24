@@ -40,6 +40,7 @@
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe",
     "loginError": "Identifiants incorrects. Veuillez réessayer.",
+    "schoolInactive": "Ce compte école est désactivé. Contactez l'administrateur.",
     "welcome": "Bienvenue 👋",
     "welcomeSub": "Connectez-vous à votre espace",
     "hero": {

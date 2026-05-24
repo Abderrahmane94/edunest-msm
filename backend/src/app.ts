@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -37,6 +38,9 @@ app.use(
 // Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files publicly (logos, etc.)
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Health check (no auth required)
 app.get('/health', (_req, res) => {

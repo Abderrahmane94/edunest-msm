@@ -480,11 +480,10 @@ function SubscriptionsTab() {
     },
     {
       key: 'actions', header: '', render: (s) => {
-        const periodPaid = s.status === 'active' && new Date(s.currentPeriodEnd) > new Date();
         const blocked = s.status === 'cancelled' || s.status === 'suspended';
         return (
           <div className="flex items-center gap-1 justify-end">
-            {!periodPaid && !blocked && (
+            {!blocked && (
               <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setPayingSub(s); }}>
                 <Banknote className="w-3.5 h-3.5 text-success" />{t('billing.payments.record')}
               </Button>

@@ -15,7 +15,7 @@ import { FormField, FormSelect } from '@/components/forms';
 import {
   usePlans, useCreatePlan, useUpdatePlan, useDeletePlan,
   useSubscriptions, useAssignPlan, useUpdateSubscriptionStatus,
-  useRecordPayment, useBillingStats, useSchoolPayments,
+  useRecordPayment, useUpdatePayment, useDeletePayment, useBillingStats, useSchoolPayments,
   type SubscriptionPlan, type SchoolSubscription, type BillingStats, type SchoolPaymentRecord,
 } from '@/hooks/useBilling';
 import { useSchoolsList } from '@/hooks/useSchools';
@@ -584,15 +584,81 @@ function SubscriptionsTab() {
   );
 }
 
+function EditPaymentDialog({ payment, onClose }: { payment: SchoolPaymentRecord; onClose: () => void }) {
+  const { t } = useTranslation();
+  const updatePayment = useUpdatePayment();
+  const [form, setForm] = React.useState({
+    amount: String(payment.amount),
+    periodStart: payment.periodStart.split('T')[0],
+    periodEnd: payment.periodEnd.split('T')[0],
+    paidAt: payment.paidAt.split('T')[0],
+    note: payment.note ?? '',
+  });
+  const [error, setError] = React.useState<string | null>(null);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    updatePayment.mutate(
+      { id: payment.id, amount: Number(form.amount), periodStart: form.periodStart, periodEnd: form.periodEnd, paidAt: form.paidAt, note: form.note || null },
+      {
+        onSuccess: () => onClose(),
+        onError: (err) => setError(err instanceof Error ? err.message : 'BILLING_ERROR'),
+      },
+    );
+  }
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('billingPayments.editTitle')}</DialogTitle>
+          <DialogDescription>{payment.subscription.school.name} — {payment.subscription.plan.name}</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <FormField label={t('billing.payments.amount')} htmlFor="ep-amount" required>
+            <Input id="ep-amount" type="number" min="0" value={form.amount} onChange={(e) => setForm(p => ({ ...p, amount: e.target.value }))} />
+          </FormField>
+          <div className="grid grid-cols-2 gap-x-4">
+            <FormField label={t('billing.payments.periodStart')} htmlFor="ep-start" required>
+              <Input id="ep-start" type="date" value={form.periodStart} onChange={(e) => setForm(p => ({ ...p, periodStart: e.target.value }))} />
+            </FormField>
+            <FormField label={t('billing.payments.periodEnd')} htmlFor="ep-end" required>
+              <Input id="ep-end" type="date" value={form.periodEnd} onChange={(e) => setForm(p => ({ ...p, periodEnd: e.target.value }))} />
+            </FormField>
+          </div>
+          <FormField label={t('billing.payments.paidAt')} htmlFor="ep-date" required>
+            <Input id="ep-date" type="date" value={form.paidAt} onChange={(e) => setForm(p => ({ ...p, paidAt: e.target.value }))} />
+          </FormField>
+          <FormField label={t('billing.payments.note')} htmlFor="ep-note">
+            <Input id="ep-note" value={form.note} onChange={(e) => setForm(p => ({ ...p, note: e.target.value }))} placeholder={t('billing.payments.notePlaceholder')} />
+          </FormField>
+          {error && <p className="text-body text-danger mb-3">{t(`billing.errors.${error}`, { defaultValue: error })}</p>}
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
+            <Button type="submit" disabled={updatePayment.isPending}>
+              <Save className="w-4 h-4" />{updatePayment.isPending ? t('common.loading') : t('common.save')}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ─── Payments tab ─── */
 function PaymentsTab() {
   const { t } = useTranslation();
   const { data: schools } = useSchoolsList();
+  const deletePayment = useDeletePayment();
 
   const [selectedSchoolId, setSelectedSchoolId] = React.useState('');
   const [dateFrom, setDateFrom] = React.useState('');
   const [dateTo, setDateTo] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
+  const [editingPayment, setEditingPayment] = React.useState<SchoolPaymentRecord | null>(null);
+  const [deletingPayment, setDeletingPayment] = React.useState<SchoolPaymentRecord | null>(null);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
   const filters = React.useMemo(() => ({
     from: dateFrom || undefined,
@@ -655,12 +721,22 @@ function PaymentsTab() {
       ),
     },
     {
-      key: 'download', header: '', render: (p) => (
-        <Button variant="ghost" size="icon" title={t('billingPayments.downloadReceipt')}
-          onClick={(e) => { e.stopPropagation(); downloadSinglePaymentPDF(p); }}>
-          <Download className="w-4 h-4 text-text-secondary" />
-        </Button>
-      ), className: 'w-12',
+      key: 'actions', header: '', render: (p) => (
+        <div className="flex items-center gap-1 justify-end">
+          <Button variant="ghost" size="icon" title={t('billingPayments.downloadReceipt')}
+            onClick={(e) => { e.stopPropagation(); downloadSinglePaymentPDF(p); }}>
+            <Download className="w-4 h-4 text-text-secondary" />
+          </Button>
+          <Button variant="ghost" size="icon" title={t('common.edit')}
+            onClick={(e) => { e.stopPropagation(); setEditingPayment(p); }}>
+            <Pencil className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="icon" title={t('common.delete')}
+            onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeletingPayment(p); }}>
+            <Trash2 className="w-4 h-4 text-danger" />
+          </Button>
+        </div>
+      ), className: 'w-28',
     },
   ];
 
@@ -1034,6 +1110,31 @@ function PaymentsTab() {
           <DataTable columns={columns} data={payments ?? []} keyExtractor={(p) => p.id} emptyMessage={t('billingPayments.empty')} />
         </>
       )}
+
+      {editingPayment && <EditPaymentDialog payment={editingPayment} onClose={() => setEditingPayment(null)} />}
+
+      <Dialog open={!!deletingPayment} onOpenChange={(v) => { if (!v) { setDeletingPayment(null); setDeleteError(null); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('billingPayments.deleteTitle')}</DialogTitle>
+            <DialogDescription>{t('billingPayments.deleteConfirm')}</DialogDescription>
+          </DialogHeader>
+          {deleteError && <p className="text-body text-danger mt-2">{t(`billing.errors.${deleteError}`, { defaultValue: deleteError })}</p>}
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => { setDeletingPayment(null); setDeleteError(null); }}>{t('common.cancel')}</Button>
+            <Button variant="danger" disabled={deletePayment.isPending} onClick={() => {
+              if (!deletingPayment) return;
+              setDeleteError(null);
+              deletePayment.mutate(deletingPayment.id, {
+                onSuccess: () => { setDeletingPayment(null); },
+                onError: (err) => setDeleteError(err instanceof Error ? err.message : 'BILLING_ERROR'),
+              });
+            }}>
+              <Trash2 className="w-4 h-4" />{deletePayment.isPending ? t('common.loading') : t('common.delete')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

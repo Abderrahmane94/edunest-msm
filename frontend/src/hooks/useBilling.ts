@@ -201,6 +201,35 @@ export function useSchoolPayments(schoolId: string | null, filters?: { from?: st
   });
 }
 
+export function useUpdatePayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; amount?: number; periodStart?: string; periodEnd?: string; paidAt?: string; note?: string | null }) => {
+      const res = await apiClient.put(`/billing/payments/${id}`, data);
+      if (!res.success) throw new Error(res.error?.code ?? res.error?.message ?? 'BILLING_ERROR');
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['billing-school-payments'] });
+      qc.invalidateQueries({ queryKey: ['billing-stats'] });
+    },
+  });
+}
+
+export function useDeletePayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.delete(`/billing/payments/${id}`);
+      if (!res.success) throw new Error(res.error?.code ?? res.error?.message ?? 'BILLING_ERROR');
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['billing-school-payments'] });
+      qc.invalidateQueries({ queryKey: ['billing-stats'] });
+    },
+  });
+}
+
 // ─── Stats ───────────────────────────────────────────────────────────────────
 
 export function useBillingStats() {

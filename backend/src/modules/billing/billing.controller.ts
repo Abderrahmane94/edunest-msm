@@ -95,6 +95,20 @@ export const billingController = {
     } catch (e) { handleError(e, res, next); }
   },
 
+  async updatePayment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const payment = await billingService.updatePayment(req.params.id, req.body);
+      res.json(successResponse(payment));
+    } catch (e) { handleError(e, res, next); }
+  },
+
+  async deletePayment(req: Request, res: Response, next: NextFunction) {
+    try {
+      await billingService.deletePayment(req.params.id);
+      res.json(successResponse({ message: 'Payment deleted' }));
+    } catch (e) { handleError(e, res, next); }
+  },
+
   // Stats
   async getStats(_req: Request, res: Response, next: NextFunction) {
     try {

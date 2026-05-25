@@ -91,7 +91,7 @@ export const billingService = {
       include: {
         school: { select: { id: true, name: true, wilaya: true, isActive: true } },
         plan: true,
-        payments: { orderBy: { paidAt: 'desc' }, take: 1 },
+        payments: { where: { deletedAt: null }, orderBy: { paidAt: 'desc' }, take: 1 },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -183,6 +183,7 @@ export const billingService = {
     const overlap = await prisma.subscriptionPayment.findFirst({
       where: {
         subscriptionId,
+        deletedAt: null,
         periodStart: { lt: new Date(input.periodEnd) },
         periodEnd: { gt: new Date(input.periodStart) },
       },
@@ -224,9 +225,53 @@ export const billingService = {
     return payment;
   },
 
+  async updatePayment(id: string, input: {
+    amount?: number;
+    periodStart?: string;
+    periodEnd?: string;
+    paidAt?: string;
+    note?: string | null;
+  }) {
+    const payment = await prisma.subscriptionPayment.findFirst({ where: { id, deletedAt: null } });
+    if (!payment) throw new BillingError('PAYMENT_NOT_FOUND', 404);
+
+    const start = input.periodStart ?? payment.periodStart.toISOString().split('T')[0];
+    const end   = input.periodEnd   ?? payment.periodEnd.toISOString().split('T')[0];
+
+    if (input.periodStart || input.periodEnd) {
+      const overlap = await prisma.subscriptionPayment.findFirst({
+        where: {
+          subscriptionId: payment.subscriptionId,
+          id: { not: id },
+          deletedAt: null,
+          periodStart: { lt: new Date(end) },
+          periodEnd:   { gt: new Date(start) },
+        },
+      });
+      if (overlap) throw new BillingError('PERIOD_ALREADY_PAID', 409);
+    }
+
+    return prisma.subscriptionPayment.update({
+      where: { id },
+      data: {
+        ...(input.amount      !== undefined && { amount: input.amount }),
+        ...(input.periodStart !== undefined && { periodStart: new Date(input.periodStart) }),
+        ...(input.periodEnd   !== undefined && { periodEnd:   new Date(input.periodEnd) }),
+        ...(input.paidAt      !== undefined && { paidAt:      new Date(input.paidAt) }),
+        ...('note' in input                 && { note: input.note ?? null }),
+      },
+    });
+  },
+
+  async deletePayment(id: string) {
+    const payment = await prisma.subscriptionPayment.findFirst({ where: { id, deletedAt: null } });
+    if (!payment) throw new BillingError('PAYMENT_NOT_FOUND', 404);
+    return prisma.subscriptionPayment.update({ where: { id }, data: { deletedAt: new Date() } });
+  },
+
   async getPayments(subscriptionId: string) {
     return prisma.subscriptionPayment.findMany({
-      where: { subscriptionId },
+      where: { subscriptionId, deletedAt: null },
       orderBy: { paidAt: 'desc' },
     });
   },
@@ -248,6 +293,7 @@ export const billingService = {
 
     const where: Prisma.SubscriptionPaymentWhereInput = {
       subscriptionId: sub.id,
+      deletedAt: null,
     };
 
     if (filters?.from || filters?.to) {
@@ -297,10 +343,11 @@ export const billingService = {
       }),
       prisma.subscriptionPayment.aggregate({
         _sum: { amount: true },
-        where: { paidAt: { gte: startOfMonth, lte: endOfMonth } },
+        where: { deletedAt: null, paidAt: { gte: startOfMonth, lte: endOfMonth } },
       }),
       prisma.subscriptionPayment.aggregate({
         _sum: { amount: true },
+        where: { deletedAt: null },
       }),
     ]);
 

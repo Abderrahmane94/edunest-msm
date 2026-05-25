@@ -3,7 +3,7 @@ import { billingController } from './billing.controller';
 import { requireSuperAdmin } from '../../middleware/rbac.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
 import { idParamSchema } from '../../utils/validators';
-import { createPlanSchema, updatePlanSchema, assignPlanSchema, recordPaymentSchema, updateStatusSchema } from './billing.schema';
+import { createPlanSchema, updatePlanSchema, assignPlanSchema, recordPaymentSchema, updateStatusSchema, updatePaymentSchema } from './billing.schema';
 
 const router = Router();
 
@@ -25,6 +25,8 @@ router.get('/subscriptions/:id/payments', validateParams(idParamSchema), billing
 
 // Payments
 router.get('/payments', billingController.getPaymentsBySchool);
+router.put('/payments/:id', validateParams(idParamSchema), validate(updatePaymentSchema), billingController.updatePayment);
+router.delete('/payments/:id', validateParams(idParamSchema), billingController.deletePayment);
 
 // Stats
 router.get('/stats', billingController.getStats);

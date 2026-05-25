@@ -36,3 +36,14 @@ export const recordPaymentSchema = z.object({
 export const updateStatusSchema = z.object({
   status: z.enum(['active', 'overdue', 'cancelled', 'suspended']),
 });
+
+export const updatePaymentSchema = z.object({
+  amount: z.number().positive().optional(),
+  periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD').optional(),
+  periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD').optional(),
+  paidAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD').optional(),
+  note: z.string().nullable().optional(),
+}).refine(
+  (d) => !d.periodStart || !d.periodEnd || new Date(d.periodEnd) > new Date(d.periodStart),
+  { message: 'Period end must be after period start', path: ['periodEnd'] },
+);

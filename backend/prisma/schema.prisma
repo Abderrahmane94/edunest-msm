@@ -180,6 +180,8 @@ model User {
   auditLogs           PaymentAuditLog[]
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
+  employeeSalary      EmployeeSalary?
+  salaryPayments      SalaryPayment[]
 
   @@index([deletedAt])
   @@map("users")
@@ -687,6 +689,48 @@ model SubscriptionPayment {
   subscription SchoolSubscription @relation(fields: [subscriptionId], references: [id])
 
   @@map("subscription_payments")
+}
+
+// ─── Payroll ─────────────────────────────────────────────────────────────────
+
+model EmployeeSalary {
+  id            String   @id @default(uuid())
+  userId        String   @unique @map("user_id")
+  schoolId      String   @map("school_id")
+  baseSalary    Decimal  @db.Decimal(10, 2) @map("base_salary")
+  currency      String   @default("DZD")
+  effectiveFrom DateTime @map("effective_from") @db.Date
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([schoolId])
+  @@map("employee_salaries")
+}
+
+model SalaryPayment {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  schoolId    String    @map("school_id")
+  month       Int
+  year        Int
+  baseSalary  Decimal   @db.Decimal(10, 2) @map("base_salary")
+  bonuses     Decimal   @default(0) @db.Decimal(10, 2)
+  deductions  Decimal   @default(0) @db.Decimal(10, 2)
+  netSalary   Decimal   @db.Decimal(10, 2) @map("net_salary")
+  paidAt      DateTime  @map("paid_at") @db.Date
+  note        String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, month, year])
+  @@index([schoolId, year, month])
+  @@index([deletedAt])
+  @@map("salary_payments")
 }
 
 model InvitationToken {

@@ -93,7 +93,8 @@
     "invoices": "Factures",
     "notifications": "Notifications",
     "trash": "Corbeille",
-    "timetable": "Jours de présence"
+    "timetable": "Jours de présence",
+    "payroll": "Paie"
   },
   "schools": {
     "title": "Gestion des écoles",
@@ -1093,6 +1094,77 @@
       "thursday": "Jeudi",
       "friday": "Vendredi",
       "saturday": "Samedi"
+    }
+  },
+  "payroll": {
+    "title": "Gestion de la paie",
+    "tabs": {
+      "employees": "Employés",
+      "payments": "Paiements"
+    },
+    "employees": {
+      "noSalary": "Pas de salaire configuré",
+      "lastPayment": "Dernier paiement",
+      "setSalary": "Configurer le salaire",
+      "editSalary": "Modifier le salaire",
+      "salary": "Salaire de base",
+      "effectiveFrom": "Applicable depuis",
+      "notes": "Notes"
+    },
+    "setSalaryDialog": {
+      "title": "Configurer le salaire",
+      "description": "Définissez le salaire de base pour cet employé.",
+      "baseSalary": "Salaire de base (DZD)",
+      "effectiveFrom": "Applicable depuis",
+      "notes": "Notes (optionnel)",
+      "notesPlaceholder": "Informations complémentaires…"
+    },
+    "payments": {
+      "record": "Enregistrer un paiement",
+      "empty": "Aucun paiement enregistré",
+      "filterEmployee": "Employé",
+      "allEmployees": "Tous les employés",
+      "filterYear": "Année",
+      "filterMonth": "Mois",
+      "allMonths": "Tous les mois"
+    },
+    "recordDialog": {
+      "title": "Enregistrer un paiement",
+      "description": "Saisissez les détails du paiement de salaire.",
+      "employee": "Employé",
+      "employeePlaceholder": "Sélectionner un employé",
+      "month": "Mois",
+      "year": "Année",
+      "baseSalary": "Salaire de base (DZD)",
+      "bonuses": "Primes (DZD)",
+      "deductions": "Retenues (DZD)",
+      "netSalary": "Net à payer (DZD)",
+      "paidAt": "Date de paiement",
+      "note": "Note (optionnel)",
+      "notePlaceholder": "Référence, remarque…"
+    },
+    "columns": {
+      "employee": "Employé",
+      "role": "Rôle",
+      "period": "Période",
+      "baseSalary": "Salaire de base",
+      "bonuses": "Primes",
+      "deductions": "Retenues",
+      "netSalary": "Net payé",
+      "paidAt": "Date",
+      "note": "Note",
+      "actions": ""
+    },
+    "months": {
+      "1": "Janvier", "2": "Février", "3": "Mars", "4": "Avril",
+      "5": "Mai", "6": "Juin", "7": "Juillet", "8": "Août",
+      "9": "Septembre", "10": "Octobre", "11": "Novembre", "12": "Décembre"
+    },
+    "deletePayment": "Supprimer",
+    "deleteConfirm": "Supprimer ce paiement de salaire ?",
+    "errors": {
+      "duplicatePayment": "Un paiement existe déjà pour cet employé ce mois-ci.",
+      "employeeNotFound": "Employé introuvable."
     }
   }
 }

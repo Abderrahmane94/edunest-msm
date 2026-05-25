@@ -24,3 +24,4 @@ export { InvoiceDetailPage } from './InvoiceDetailPage';
 export { ExpenseDetailPage } from './ExpenseDetailPage';
 export { TrashPage } from './TrashPage';
 export { TimetablePage } from './TimetablePage';
+export { PayrollPage } from './PayrollPage';

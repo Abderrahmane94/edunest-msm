@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ClipboardCheck, Calendar, BarChart2, Users, Eye } from 'lucide-react';
-import { formatDate } from '@/lib/formatters';
 import { Button, DataTable, StatusBadge, KPICard } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';

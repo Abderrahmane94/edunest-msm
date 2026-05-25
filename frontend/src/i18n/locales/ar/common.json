@@ -91,7 +91,8 @@
     "invoices": "الفواتير",
     "notifications": "الإشعارات",
     "trash": "سلة المحذوفات",
-    "timetable": "أيام الحضور"
+    "timetable": "أيام الحضور",
+    "payroll": "الرواتب"
   },
   "schools": {
     "title": "إدارة المدارس",
@@ -1092,6 +1093,77 @@
       "thursday": "الخميس",
       "friday": "الجمعة",
       "saturday": "السبت"
+    }
+  },
+  "payroll": {
+    "title": "إدارة الرواتب",
+    "tabs": {
+      "employees": "الموظفون",
+      "payments": "المدفوعات"
+    },
+    "employees": {
+      "noSalary": "لم يتم تحديد الراتب",
+      "lastPayment": "آخر دفعة",
+      "setSalary": "تحديد الراتب",
+      "editSalary": "تعديل الراتب",
+      "salary": "الراتب الأساسي",
+      "effectiveFrom": "ساري منذ",
+      "notes": "ملاحظات"
+    },
+    "setSalaryDialog": {
+      "title": "تحديد الراتب",
+      "description": "حدد الراتب الأساسي لهذا الموظف.",
+      "baseSalary": "الراتب الأساسي (دج)",
+      "effectiveFrom": "ساري منذ",
+      "notes": "ملاحظات (اختياري)",
+      "notesPlaceholder": "معلومات إضافية…"
+    },
+    "payments": {
+      "record": "تسجيل دفعة",
+      "empty": "لا توجد مدفوعات مسجلة",
+      "filterEmployee": "الموظف",
+      "allEmployees": "جميع الموظفين",
+      "filterYear": "السنة",
+      "filterMonth": "الشهر",
+      "allMonths": "جميع الأشهر"
+    },
+    "recordDialog": {
+      "title": "تسجيل دفعة راتب",
+      "description": "أدخل تفاصيل دفعة الراتب.",
+      "employee": "الموظف",
+      "employeePlaceholder": "اختر موظفاً",
+      "month": "الشهر",
+      "year": "السنة",
+      "baseSalary": "الراتب الأساسي (دج)",
+      "bonuses": "المكافآت (دج)",
+      "deductions": "الخصومات (دج)",
+      "netSalary": "صافي الراتب (دج)",
+      "paidAt": "تاريخ الدفع",
+      "note": "ملاحظة (اختياري)",
+      "notePlaceholder": "مرجع أو ملاحظة…"
+    },
+    "columns": {
+      "employee": "الموظف",
+      "role": "الدور",
+      "period": "الفترة",
+      "baseSalary": "الراتب الأساسي",
+      "bonuses": "المكافآت",
+      "deductions": "الخصومات",
+      "netSalary": "صافي الراتب",
+      "paidAt": "التاريخ",
+      "note": "ملاحظة",
+      "actions": ""
+    },
+    "months": {
+      "1": "جانفي", "2": "فيفري", "3": "مارس", "4": "أفريل",
+      "5": "ماي", "6": "جوان", "7": "جويلية", "8": "أوت",
+      "9": "سبتمبر", "10": "أكتوبر", "11": "نوفمبر", "12": "ديسمبر"
+    },
+    "deletePayment": "حذف",
+    "deleteConfirm": "حذف هذه الدفعة؟",
+    "errors": {
+      "duplicatePayment": "توجد دفعة مسجلة لهذا الموظف في هذا الشهر.",
+      "employeeNotFound": "الموظف غير موجود."
     }
   }
 }

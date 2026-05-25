@@ -34,6 +34,7 @@ import {
   ExpenseDetailPage,
   TrashPage,
   TimetablePage,
+  PayrollPage,
 } from '@/pages/admin';
 import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage } from '@/pages/teacher';
 import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentInvoicesPage } from '@/pages/parent';
@@ -60,6 +61,7 @@ import {
   Languages,
   Trash2,
   Clock,
+  Banknote,
 } from 'lucide-react';
 
 /**
@@ -146,6 +148,7 @@ function getAdminNavItems(role: string): NavItem[] {
     { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck },
     { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle },
     { label: 'nav.finance',       href: '/admin/finance', icon: Wallet },
+    { label: 'nav.payroll',       href: '/admin/payroll', icon: Banknote },
     { label: 'nav.trash',         href: '/admin/trash', icon: Trash2 },
     { label: 'nav.settings',      href: '/admin/settings', icon: Settings },
   ];
@@ -347,6 +350,7 @@ export const routes: RouteObject[] = [
               { path: 'finance/fees/:feeId', element: <FeeStructureDetailPage /> },
               { path: 'finance/invoices/:invoiceId', element: <InvoiceDetailPage /> },
               { path: 'finance/expenses/:expenseId', element: <ExpenseDetailPage /> },
+              { path: 'payroll', element: <PayrollPage /> },
               { path: 'trash', element: <TrashPage /> },
               { path: 'settings', element: <SchoolSettingsPage /> },
             ],

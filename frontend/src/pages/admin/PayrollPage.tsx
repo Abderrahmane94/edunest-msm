@@ -519,6 +519,8 @@ async function renderPDF(html: string, filename: string) {
 
 type TFn = (key: string) => string;
 
+const AR_MONTHS = ['جانفي','فيفري','مارس','أفريل','ماي','جوان','جويلية','أوت','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
 function fmtPdfDate(value: string | Date, locale: string): string {
   let date: Date;
   if (typeof value === 'string') {
@@ -526,6 +528,9 @@ function fmtPdfDate(value: string | Date, locale: string): string {
     date = m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(value);
   } else {
     date = value;
+  }
+  if (locale === 'ar-DZ') {
+    return `${date.getDate()} ${AR_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
   }
   return date.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
 }

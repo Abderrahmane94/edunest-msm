@@ -79,7 +79,10 @@ export const billingService = {
   async deletePlan(id: string) {
     const plan = await prisma.subscriptionPlan.findUnique({ where: { id } });
     if (!plan) throw new BillingError('PLAN_NOT_FOUND', 404);
-    const count = await prisma.schoolSubscription.count({ where: { planId: id } });
+    // Block only if live subscriptions exist (cancelled subscriptions are historical records)
+    const count = await prisma.schoolSubscription.count({
+      where: { planId: id, status: { in: ['active', 'trial', 'overdue', 'suspended'] } },
+    });
     if (count > 0) throw new BillingError('PLAN_HAS_SUBSCRIPTIONS', 400);
     return prisma.subscriptionPlan.delete({ where: { id } });
   },
@@ -109,6 +112,7 @@ export const billingService = {
 
     const plan = await prisma.subscriptionPlan.findUnique({ where: { id: input.planId } });
     if (!plan) throw new BillingError('PLAN_NOT_FOUND', 404);
+    if (!plan.isActive) throw new BillingError('PLAN_INACTIVE', 400);
 
     const start = new Date(input.startDate);
     const end = new Date(start);
@@ -235,8 +239,10 @@ export const billingService = {
     const payment = await prisma.subscriptionPayment.findFirst({ where: { id, deletedAt: null } });
     if (!payment) throw new BillingError('PAYMENT_NOT_FOUND', 404);
 
-    const start = input.periodStart ?? payment.periodStart.toISOString().split('T')[0];
-    const end   = input.periodEnd   ?? payment.periodEnd.toISOString().split('T')[0];
+    const start = input.periodStart ? new Date(input.periodStart) : payment.periodStart;
+    const end   = input.periodEnd   ? new Date(input.periodEnd)   : payment.periodEnd;
+
+    if (start >= end) throw new BillingError('INVALID_PERIOD', 400);
 
     if (input.periodStart || input.periodEnd) {
       const overlap = await prisma.subscriptionPayment.findFirst({
@@ -244,8 +250,8 @@ export const billingService = {
           subscriptionId: payment.subscriptionId,
           id: { not: id },
           deletedAt: null,
-          periodStart: { lt: new Date(end) },
-          periodEnd:   { gt: new Date(start) },
+          periodStart: { lt: end },
+          periodEnd:   { gt: start },
         },
       });
       if (overlap) throw new BillingError('PERIOD_ALREADY_PAID', 409);
@@ -255,8 +261,8 @@ export const billingService = {
       where: { id },
       data: {
         ...(input.amount      !== undefined && { amount: input.amount }),
-        ...(input.periodStart !== undefined && { periodStart: new Date(input.periodStart) }),
-        ...(input.periodEnd   !== undefined && { periodEnd:   new Date(input.periodEnd) }),
+        ...(input.periodStart !== undefined && { periodStart: start }),
+        ...(input.periodEnd   !== undefined && { periodEnd:   end }),
         ...(input.paidAt      !== undefined && { paidAt:      new Date(input.paidAt) }),
         ...('note' in input                 && { note: input.note ?? null }),
       },

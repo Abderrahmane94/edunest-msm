@@ -194,15 +194,13 @@ function PlansTab() {
   const [deletingPlan, setDeletingPlan] = React.useState<SubscriptionPlan | null>(null);
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
-  async function handleConfirmDelete() {
+  function handleConfirmDelete() {
     if (!deletingPlan) return;
     setDeleteError(null);
-    try {
-      await deletePlan.mutateAsync(deletingPlan.id);
-      setDeletingPlan(null);
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'BILLING_ERROR');
-    }
+    deletePlan.mutate(deletingPlan.id, {
+      onSuccess: () => setDeletingPlan(null),
+      onError: (err) => setDeleteError(err instanceof Error ? err.message : 'BILLING_ERROR'),
+    });
   }
 
   const columns: Column<SubscriptionPlan>[] = [
@@ -659,6 +657,8 @@ function PaymentsTab() {
   const [editingPayment, setEditingPayment] = React.useState<SchoolPaymentRecord | null>(null);
   const [deletingPayment, setDeletingPayment] = React.useState<SchoolPaymentRecord | null>(null);
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
+  const [pdfBulkLoading, setPdfBulkLoading] = React.useState(false);
+  const [pdfRowLoadingId, setPdfRowLoadingId] = React.useState<string | null>(null);
 
   const filters = React.useMemo(() => ({
     from: dateFrom || undefined,
@@ -724,8 +724,9 @@ function PaymentsTab() {
       key: 'actions', header: '', render: (p) => (
         <div className="flex items-center gap-1 justify-end">
           <Button variant="ghost" size="icon" title={t('billingPayments.downloadReceipt')}
+            disabled={pdfRowLoadingId === p.id}
             onClick={(e) => { e.stopPropagation(); downloadSinglePaymentPDF(p); }}>
-            <Download className="w-4 h-4 text-text-secondary" />
+            <Download className={`w-4 h-4 ${pdfRowLoadingId === p.id ? 'animate-pulse text-primary' : 'text-text-secondary'}`} />
           </Button>
           <Button variant="ghost" size="icon" title={t('common.edit')}
             onClick={(e) => { e.stopPropagation(); setEditingPayment(p); }}>
@@ -746,6 +747,11 @@ function PaymentsTab() {
   );
 
   async function downloadSinglePaymentPDF(p: SchoolPaymentRecord) {
+    setPdfRowLoadingId(p.id);
+    try { await _doDownloadSinglePaymentPDF(p); } finally { setPdfRowLoadingId(null); }
+  }
+
+  async function _doDownloadSinglePaymentPDF(p: SchoolPaymentRecord) {
     const isRTL = document.documentElement.dir === 'rtl';
     const dir = isRTL ? 'rtl' : 'ltr';
     const font = isRTL ? "'Noto Sans Arabic', Arial, sans-serif" : "'Plus Jakarta Sans', Arial, sans-serif";
@@ -844,6 +850,12 @@ function PaymentsTab() {
   }
 
   async function downloadPDF() {
+    if (!payments || payments.length === 0 || pdfBulkLoading) return;
+    setPdfBulkLoading(true);
+    try { await _doDownloadPDF(); } finally { setPdfBulkLoading(false); }
+  }
+
+  async function _doDownloadPDF() {
     if (!payments || payments.length === 0) return;
 
     const schoolName = schools?.find((s) => s.id === selectedSchoolId)?.name ?? selectedSchoolId;
@@ -1080,8 +1092,8 @@ function PaymentsTab() {
         <>
           {payments && payments.length > 0 && (
             <div className="flex justify-end">
-              <Button variant="secondary" size="sm" onClick={downloadPDF}>
-                <Download className="w-4 h-4" />{t('billingPayments.downloadPdf')}
+              <Button variant="secondary" size="sm" onClick={downloadPDF} disabled={pdfBulkLoading}>
+                <Download className="w-4 h-4" />{pdfBulkLoading ? t('common.loading') : t('billingPayments.downloadPdf')}
               </Button>
             </div>
           )}

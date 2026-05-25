@@ -132,7 +132,10 @@ export function useAssignPlan() {
       if (!res.success) throw new Error(res.error?.code ?? res.error?.message ?? 'BILLING_ERROR');
       return res.data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['billing-subscriptions'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['billing-subscriptions'] });
+      qc.invalidateQueries({ queryKey: ['billing-stats'] });
+    },
   });
 }
 
@@ -144,7 +147,10 @@ export function useUpdateSubscriptionStatus() {
       if (!res.success) throw new Error(res.error?.code ?? res.error?.message ?? 'BILLING_ERROR');
       return res.data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['billing-subscriptions'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['billing-subscriptions'] });
+      qc.invalidateQueries({ queryKey: ['billing-stats'] });
+    },
   });
 }
 
@@ -177,6 +183,7 @@ export interface SchoolPaymentRecord {
   recordedBy: string;
   note?: string;
   createdAt: string;
+  deletedAt?: string | null;
   subscription: {
     status: string;
     school: { id: string; name: string };

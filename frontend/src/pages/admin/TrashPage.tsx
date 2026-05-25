@@ -163,7 +163,7 @@ function DeletedPaymentsTab() {
       key: 'deletedAt', header: t('trash.columns.deletedAt'),
       render: (p) => (
         <span className="text-caption text-text-secondary">
-          {formatDeletedAt((p as SchoolPaymentRecord & { deletedAt?: string }).deletedAt ?? '', i18n.language)}
+          {formatDeletedAt(p.deletedAt ?? '', i18n.language)}
         </span>
       ),
     },

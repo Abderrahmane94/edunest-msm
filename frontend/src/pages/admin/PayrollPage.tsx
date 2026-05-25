@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Banknote, Pencil, Trash2 } from 'lucide-react';
+import { Banknote, Pencil, Trash2, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { formatDate } from '@/lib/formatters';
 import {
   Button,
@@ -470,6 +472,208 @@ function EmployeesTab() {
   );
 }
 
+// ─── PDF helpers ──────────────────────────────────────────────────────────────
+
+async function renderPDF(html: string, filename: string) {
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText =
+    'position:fixed; top:-20000px; left:0; width:794px; z-index:-9999; opacity:0; pointer-events:none;';
+  wrapper.innerHTML = html;
+  document.body.appendChild(wrapper);
+
+  await document.fonts.ready;
+  await new Promise<void>((r) => setTimeout(r, 250));
+
+  const canvas = await html2canvas(wrapper.firstElementChild as HTMLElement, {
+    scale: 2,
+    useCORS: true,
+    logging: false,
+    backgroundColor: '#ffffff',
+    windowWidth: 794,
+  });
+  document.body.removeChild(wrapper);
+
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pdfW = pdf.internal.pageSize.getWidth();
+  const pdfH = pdf.internal.pageSize.getHeight();
+  const ratio = canvas.width / pdfW;
+  const pageHeightPx = Math.floor(pdfH * ratio);
+  let srcY = 0;
+  let firstPage = true;
+  while (srcY < canvas.height) {
+    if (!firstPage) pdf.addPage();
+    firstPage = false;
+    const sliceH = Math.min(pageHeightPx, canvas.height - srcY);
+    const slice = document.createElement('canvas');
+    slice.width = canvas.width;
+    slice.height = sliceH;
+    const ctx = slice.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, slice.width, slice.height);
+    ctx.drawImage(canvas, 0, srcY, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+    pdf.addImage(slice.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pdfW, sliceH / ratio);
+    srcY += pageHeightPx;
+  }
+  pdf.save(filename);
+}
+
+function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean): string {
+  const dir = isRTL ? 'rtl' : 'ltr';
+  const font = isRTL
+    ? "'Noto Sans Arabic', Arial, sans-serif"
+    : "'Plus Jakarta Sans', Arial, sans-serif";
+  const startAlign = isRTL ? 'right' : 'left';
+  const endAlign = isRTL ? 'left' : 'right';
+
+  const row = (label: string, value: string, valueColor = '#111827', ltrValue = true) =>
+    `<tr>
+      <td dir="${dir}" style="padding:10px 0;font-size:11px;color:#6b7280;width:50%;text-align:${startAlign};border-bottom:1px solid #f3f4f6;">${label}</td>
+      <td dir="${ltrValue ? 'ltr' : dir}" style="padding:10px 0;font-size:11px;font-weight:600;color:${valueColor};text-align:${endAlign};border-bottom:1px solid #f3f4f6;unicode-bidi:embed;">${value}</td>
+    </tr>`;
+
+  const hasBonuses = parseFloat(p.bonuses) > 0;
+  const hasDeductions = parseFloat(p.deductions) > 0;
+
+  return `
+<div dir="${dir}" style="font-family:${font};direction:${dir};background:#fff;width:794px;box-sizing:border-box;color:#111827;">
+  <table style="width:100%;border-collapse:collapse;background:#6366f1;">
+    <tr>
+      <td style="padding:22px 32px;vertical-align:middle;">
+        <div style="color:#fff;font-size:22px;font-weight:700;margin-bottom:4px;">EduNest</div>
+        <div style="color:#c7d2fe;font-size:11px;">Bulletin de paie</div>
+      </td>
+      <td dir="ltr" style="padding:22px 32px;vertical-align:middle;text-align:${endAlign};color:#e0e7ff;font-size:10px;unicode-bidi:embed;">
+        ${new Date().toLocaleDateString('fr-FR')}
+      </td>
+    </tr>
+  </table>
+
+  <div style="padding:28px 32px;">
+    <div dir="${dir}" style="font-size:20px;font-weight:700;color:#111827;margin-bottom:2px;text-align:${startAlign};">${p.employeeName}</div>
+    <div dir="${dir}" style="font-size:11px;color:#6b7280;margin-bottom:24px;text-align:${startAlign};">${p.role} — ${monthLabel}</div>
+
+    <div style="background:#f9fafb;border-radius:12px;padding:20px 24px;margin-bottom:20px;">
+      <table style="width:100%;border-collapse:collapse;">
+        <tbody>
+          ${row('Salaire de base', `${Number(p.baseSalary).toLocaleString('fr-FR')} DZD`, '#111827')}
+          ${hasBonuses ? row('Primes', `+${Number(p.bonuses).toLocaleString('fr-FR')} DZD`, '#16a34a') : ''}
+          ${hasDeductions ? row('Retenues', `-${Number(p.deductions).toLocaleString('fr-FR')} DZD`, '#dc2626') : ''}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="background:#eef2ff;border-radius:12px;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <span dir="${dir}" style="font-size:13px;font-weight:600;color:#4338ca;">Net à payer</span>
+      <span dir="ltr" style="font-size:22px;font-weight:700;color:#4338ca;unicode-bidi:embed;">${Number(p.netSalary).toLocaleString('fr-FR')} DZD</span>
+    </div>
+
+    <div style="background:#f9fafb;border-radius:12px;padding:20px 24px;">
+      <table style="width:100%;border-collapse:collapse;">
+        <tbody>
+          ${row('Date de paiement', new Date(p.paidAt).toLocaleDateString('fr-FR'), '#111827')}
+          ${p.note ? row('Note', p.note, '#6b7280', false) : ''}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <table style="width:100%;border-collapse:collapse;background:#6366f1;margin-top:28px;">
+    <tr>
+      <td style="padding:8px 32px;color:#fff;font-size:9px;font-weight:600;text-align:${startAlign};">EduNest</td>
+      <td dir="ltr" style="padding:8px 32px;color:#c7d2fe;font-size:9px;text-align:${endAlign};unicode-bidi:embed;">Généré le ${new Date().toLocaleDateString('fr-FR')}</td>
+    </tr>
+  </table>
+</div>`;
+}
+
+function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName: (m: number, y: number) => string): string {
+  const dir = isRTL ? 'rtl' : 'ltr';
+  const font = isRTL
+    ? "'Noto Sans Arabic', Arial, sans-serif"
+    : "'Plus Jakarta Sans', Arial, sans-serif";
+  const startAlign = isRTL ? 'right' : 'left';
+  const endAlign = isRTL ? 'left' : 'right';
+  const thStyle = `padding:10px 12px;font-weight:600;font-size:11px;color:#fff;text-align:${startAlign};`;
+
+  const totalNet = items.reduce((s, p) => s + parseFloat(p.netSalary), 0);
+
+  const rows = items
+    .map((p, i) => {
+      const bg = i % 2 === 1 ? '#f9fafb' : '#ffffff';
+      return `<tr style="background:${bg};">
+        <td dir="${dir}" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${startAlign};font-weight:500;">${p.employeeName}</td>
+        <td dir="${dir}" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${startAlign};color:#6b7280;">${monthName(p.month, p.year)}</td>
+        <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${endAlign};unicode-bidi:embed;">${Number(p.baseSalary).toLocaleString('fr-FR')} DZD</td>
+        <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${endAlign};color:#16a34a;unicode-bidi:embed;">${parseFloat(p.bonuses) > 0 ? `+${Number(p.bonuses).toLocaleString('fr-FR')} DZD` : '—'}</td>
+        <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${endAlign};color:#dc2626;unicode-bidi:embed;">${parseFloat(p.deductions) > 0 ? `-${Number(p.deductions).toLocaleString('fr-FR')} DZD` : '—'}</td>
+        <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:700;text-align:${endAlign};unicode-bidi:embed;">${Number(p.netSalary).toLocaleString('fr-FR')} DZD</td>
+        <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${startAlign};color:#6b7280;unicode-bidi:embed;">${new Date(p.paidAt).toLocaleDateString('fr-FR')}</td>
+      </tr>`;
+    })
+    .join('');
+
+  return `
+<div dir="${dir}" style="font-family:${font};direction:${dir};background:#fff;width:794px;box-sizing:border-box;color:#111827;">
+  <table style="width:100%;border-collapse:collapse;background:#6366f1;">
+    <tr>
+      <td style="padding:22px 32px;vertical-align:middle;">
+        <div style="color:#fff;font-size:22px;font-weight:700;margin-bottom:4px;">EduNest</div>
+        <div style="color:#c7d2fe;font-size:11px;">Rapport de paie</div>
+      </td>
+      <td dir="ltr" style="padding:22px 32px;vertical-align:middle;text-align:${endAlign};color:#e0e7ff;font-size:10px;unicode-bidi:embed;">${new Date().toLocaleDateString('fr-FR')}</td>
+    </tr>
+  </table>
+
+  <div style="padding:24px 32px 0;">
+    <table style="width:100%;border-collapse:separate;border-spacing:12px 0;margin-bottom:20px;table-layout:fixed;">
+      <tr>
+        <td style="background:#eef2ff;border-radius:10px;padding:14px 18px;width:50%;vertical-align:top;">
+          <div dir="ltr" style="font-size:26px;font-weight:700;color:#6366f1;line-height:1;text-align:${startAlign};unicode-bidi:embed;">${items.length}</div>
+          <div dir="${dir}" style="font-size:10px;color:#6b7280;margin-top:6px;text-align:${startAlign};">Nombre de paiements</div>
+        </td>
+        <td style="background:#f0fdf4;border-radius:10px;padding:14px 18px;width:50%;vertical-align:top;">
+          <div dir="ltr" style="font-size:20px;font-weight:700;color:#16a34a;line-height:1;text-align:${startAlign};unicode-bidi:embed;">${totalNet.toLocaleString('fr-FR')} DZD</div>
+          <div dir="${dir}" style="font-size:10px;color:#6b7280;margin-top:6px;text-align:${startAlign};">Total net versé</div>
+        </td>
+      </tr>
+    </table>
+
+    <table dir="${dir}" style="width:100%;border-collapse:collapse;table-layout:fixed;">
+      <colgroup>
+        <col style="width:20%"><col style="width:14%"><col style="width:17%">
+        <col style="width:13%"><col style="width:13%"><col style="width:15%"><col style="width:12%">
+      </colgroup>
+      <thead>
+        <tr style="background:#6366f1;">
+          <th dir="${dir}" style="${thStyle}">Employé</th>
+          <th dir="${dir}" style="${thStyle}">Période</th>
+          <th dir="ltr"    style="${thStyle};text-align:${endAlign};">Salaire de base</th>
+          <th dir="ltr"    style="${thStyle};text-align:${endAlign};">Primes</th>
+          <th dir="ltr"    style="${thStyle};text-align:${endAlign};">Retenues</th>
+          <th dir="ltr"    style="${thStyle};text-align:${endAlign};">Net</th>
+          <th dir="ltr"    style="${thStyle}">Date</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr style="background:#f3f4f6;border-top:2px solid #d1d5db;">
+          <td colspan="5" style="padding:10px 12px;"></td>
+          <td dir="ltr" style="padding:10px 12px;font-weight:700;font-size:11px;text-align:${endAlign};color:#16a34a;unicode-bidi:embed;">${totalNet.toLocaleString('fr-FR')} DZD</td>
+          <td style="padding:10px 12px;"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <table style="width:100%;border-collapse:collapse;background:#6366f1;margin-top:28px;">
+    <tr>
+      <td style="padding:8px 32px;color:#fff;font-size:9px;font-weight:600;text-align:${startAlign};">EduNest</td>
+      <td dir="ltr" style="padding:8px 32px;color:#c7d2fe;font-size:9px;text-align:${endAlign};unicode-bidi:embed;">Généré le ${new Date().toLocaleDateString('fr-FR')}</td>
+    </tr>
+  </table>
+</div>`;
+}
+
 // ─── Payments Tab ─────────────────────────────────────────────────────────────
 
 function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
@@ -480,6 +684,8 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
   const [filterMonth, setFilterMonth] = React.useState<number | undefined>();
   const [page, setPage] = React.useState(1);
   const [deleteConfirm, setDeleteConfirm] = React.useState<string | null>(null);
+  const [pdfRowId, setPdfRowId] = React.useState<string | null>(null);
+  const [pdfBulkLoading, setPdfBulkLoading] = React.useState(false);
   const pageSize = 20;
 
   const deletePayment = useDeletePayment();
@@ -494,6 +700,35 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
   const now = new Date();
   const yearOptions = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
   const monthOptions = Array.from({ length: 12 }, (_, i) => i + 1);
+
+  function monthName(m: number, y: number) {
+    return `${t(`payroll.months.${m}`)} ${y}`;
+  }
+
+  async function downloadPayslip(p: SalaryPayment) {
+    setPdfRowId(p.id);
+    try {
+      const isRTL = document.documentElement.dir === 'rtl';
+      const html = buildPayslipHTML(p, monthName(p.month, p.year), isRTL);
+      const safeName = p.employeeName.replace(/\s+/g, '-');
+      await renderPDF(html, `fiche-paie-${safeName}-${p.year}-${String(p.month).padStart(2, '0')}.pdf`);
+    } finally {
+      setPdfRowId(null);
+    }
+  }
+
+  async function downloadBulkPDF() {
+    const items = data?.items;
+    if (!items || items.length === 0) return;
+    setPdfBulkLoading(true);
+    try {
+      const isRTL = document.documentElement.dir === 'rtl';
+      const html = buildPayrollListHTML(items, isRTL, monthName);
+      await renderPDF(html, `rapport-paie-${new Date().toISOString().split('T')[0]}.pdf`);
+    } finally {
+      setPdfBulkLoading(false);
+    }
+  }
 
   const columns: Column<SalaryPayment>[] = [
     {
@@ -576,20 +811,33 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
             </Button>
           </div>
         ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDeleteConfirm(p.id);
-            }}
-          >
-            <Trash2 className="w-3.5 h-3.5 text-danger" />
-          </Button>
+          <div className="flex items-center gap-1 justify-end">
+            <Button
+              variant="ghost"
+              size="icon"
+              title={t('payroll.pdf.downloadPayslip')}
+              disabled={pdfRowId === p.id}
+              onClick={(e) => { e.stopPropagation(); downloadPayslip(p); }}
+            >
+              <Download className={`w-4 h-4 ${pdfRowId === p.id ? 'animate-pulse text-primary' : 'text-text-secondary'}`} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteConfirm(p.id);
+              }}
+            >
+              <Trash2 className="w-3.5 h-3.5 text-danger" />
+            </Button>
+          </div>
         ),
       className: 'w-40',
     },
   ];
+
+  const hasItems = (data?.items?.length ?? 0) > 0;
 
   return (
     <div className="space-y-4">
@@ -631,6 +879,13 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
         </select>
 
         <div className="flex-1" />
+
+        {hasItems && (
+          <Button variant="secondary" size="sm" onClick={downloadBulkPDF} disabled={pdfBulkLoading}>
+            <Download className="w-4 h-4" />
+            {pdfBulkLoading ? t('common.loading') : t('payroll.pdf.exportList')}
+          </Button>
+        )}
         <CreateButton label={t('payroll.payments.record')} onClick={() => setRecordOpen(true)} />
       </div>
 

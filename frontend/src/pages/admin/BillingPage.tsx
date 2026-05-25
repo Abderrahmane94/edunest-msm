@@ -120,7 +120,7 @@ function PlanFormDialog({
     }
   }, [plan, open]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     const payload = {
@@ -132,13 +132,12 @@ function PlanFormDialog({
       maxUsers: form.maxUsers ? Number(form.maxUsers) : undefined,
       currency: 'DZD',
     };
-    try {
-      if (plan) await updatePlan.mutateAsync({ id: plan.id, ...payload });
-      else await createPlan.mutateAsync(payload);
-      onOpenChange(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
-    }
+    const callbacks = {
+      onSuccess: () => onOpenChange(false),
+      onError: (err: unknown) => setError(err instanceof Error ? err.message : t('common.error')),
+    };
+    if (plan) updatePlan.mutate({ id: plan.id, ...payload }, callbacks);
+    else createPlan.mutate(payload, callbacks);
   }
 
   const isPending = createPlan.isPending || updatePlan.isPending;
@@ -271,13 +270,16 @@ function AssignPlanDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
   const planOptions = (plans ?? []).filter((p) => p.isActive).map((p) => ({ value: p.id, label: `${p.name} — ${formatDZD(p.priceMonthly)}/mois` }));
   const cycleOptions = [{ value: 'monthly', label: t('billing.subscriptions.monthly') }, { value: 'annual', label: t('billing.subscriptions.annual') }];
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    try {
-      await assignPlan.mutateAsync({ ...form, trialDays: form.trialDays ? Number(form.trialDays) : undefined });
-      onOpenChange(false);
-    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
+    assignPlan.mutate(
+      { ...form, trialDays: form.trialDays ? Number(form.trialDays) : undefined },
+      {
+        onSuccess: () => onOpenChange(false),
+        onError: (err) => setError(err instanceof Error ? err.message : t('common.error')),
+      },
+    );
   }
 
   return (
@@ -331,13 +333,16 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
   const [form, setForm] = React.useState({ amount: defaultAmount, periodStart: nextStart, periodEnd: nextEnd, paidAt: today, note: '' });
   const [error, setError] = React.useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    try {
-      await recordPayment.mutateAsync({ subscriptionId: sub.id, amount: Number(form.amount), periodStart: form.periodStart, periodEnd: form.periodEnd, paidAt: form.paidAt, note: form.note || undefined });
-      onClose();
-    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
+    recordPayment.mutate(
+      { subscriptionId: sub.id, amount: Number(form.amount), periodStart: form.periodStart, periodEnd: form.periodEnd, paidAt: form.paidAt, note: form.note || undefined },
+      {
+        onSuccess: () => onClose(),
+        onError: (err) => setError(err instanceof Error ? err.message : t('common.error')),
+      },
+    );
   }
 
   return (

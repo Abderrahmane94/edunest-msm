@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, ChevronRight } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -241,7 +241,6 @@ export function AcademicYearsPage() {
                     {t('academicYears.activate')}
                   </Button>
                 )}
-                <ChevronRight className="w-4 h-4 text-text-disabled" />
               </div>
             </div>
           ))}

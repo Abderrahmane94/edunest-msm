@@ -519,6 +519,17 @@ async function renderPDF(html: string, filename: string) {
 
 type TFn = (key: string) => string;
 
+function fmtPdfDate(value: string | Date, locale: string): string {
+  let date: Date;
+  if (typeof value === 'string') {
+    const m = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    date = m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(value);
+  } else {
+    date = value;
+  }
+  return date.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean, t: TFn): string {
   const dir = isRTL ? 'rtl' : 'ltr';
   const font = isRTL
@@ -527,7 +538,7 @@ function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean, 
   const startAlign = isRTL ? 'right' : 'left';
   const endAlign = isRTL ? 'left' : 'right';
   const locale = isRTL ? 'ar-DZ' : 'fr-FR';
-  const today = new Date().toLocaleDateString(locale);
+  const today = fmtPdfDate(new Date(), locale);
 
   const row = (label: string, value: string, valueColor = '#111827', ltrValue = true) =>
     `<tr>
@@ -574,7 +585,7 @@ function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean, 
     <div style="background:#f9fafb;border-radius:12px;padding:20px 24px;">
       <table style="width:100%;border-collapse:collapse;">
         <tbody>
-          ${row(t('payroll.pdf.paymentDate'), new Date(p.paidAt).toLocaleDateString(locale), '#111827')}
+          ${row(t('payroll.pdf.paymentDate'), fmtPdfDate(p.paidAt, locale), '#111827')}
           ${p.note ? row(t('payroll.columns.note'), p.note, '#6b7280', false) : ''}
         </tbody>
       </table>
@@ -598,7 +609,7 @@ function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName:
   const startAlign = isRTL ? 'right' : 'left';
   const endAlign = isRTL ? 'left' : 'right';
   const locale = isRTL ? 'ar-DZ' : 'fr-FR';
-  const today = new Date().toLocaleDateString(locale);
+  const today = fmtPdfDate(new Date(), locale);
   const thStyle = `padding:10px 12px;font-weight:600;font-size:11px;color:#fff;text-align:${startAlign};`;
 
   const totalNet = items.reduce((s, p) => s + parseFloat(p.netSalary), 0);
@@ -613,7 +624,7 @@ function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName:
         <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${endAlign};color:#16a34a;unicode-bidi:embed;">${parseFloat(p.bonuses) > 0 ? `+${Number(p.bonuses).toLocaleString('fr-FR')} DZD` : '—'}</td>
         <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${endAlign};color:#dc2626;unicode-bidi:embed;">${parseFloat(p.deductions) > 0 ? `-${Number(p.deductions).toLocaleString('fr-FR')} DZD` : '—'}</td>
         <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:700;text-align:${endAlign};unicode-bidi:embed;">${Number(p.netSalary).toLocaleString('fr-FR')} DZD</td>
-        <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${startAlign};color:#6b7280;unicode-bidi:embed;">${new Date(p.paidAt).toLocaleDateString(locale)}</td>
+        <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${startAlign};color:#6b7280;unicode-bidi:embed;">${fmtPdfDate(p.paidAt, locale)}</td>
       </tr>`;
     })
     .join('');

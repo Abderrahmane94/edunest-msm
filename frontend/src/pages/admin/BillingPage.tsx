@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   TrendingUp, CreditCard, Building2, CheckCircle, AlertCircle,
-  Plus, Pencil, Trash2, X, Save, Banknote, Clock, XCircle, Search, Calendar, Download,
+  Plus, Pencil, Trash2, X, Save, Banknote, Clock, XCircle, Search, Calendar, Download, RotateCcw,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -15,7 +15,7 @@ import { FormField, FormSelect } from '@/components/forms';
 import {
   usePlans, useCreatePlan, useUpdatePlan, useDeletePlan,
   useSubscriptions, useAssignPlan, useUpdateSubscriptionStatus,
-  useRecordPayment, useUpdatePayment, useDeletePayment, useBillingStats, useSchoolPayments,
+  useRecordPayment, useUpdatePayment, useDeletePayment, useDeletedPayments, useRestorePayment, useBillingStats, useSchoolPayments,
   type SubscriptionPlan, type SchoolSubscription, type BillingStats, type SchoolPaymentRecord,
 } from '@/hooks/useBilling';
 import { useSchoolsList } from '@/hooks/useSchools';
@@ -651,14 +651,19 @@ function PaymentsTab() {
   const { t } = useTranslation();
   const { data: schools } = useSchoolsList();
   const deletePayment = useDeletePayment();
+  const restorePayment = useRestorePayment();
 
   const [selectedSchoolId, setSelectedSchoolId] = React.useState('');
   const [dateFrom, setDateFrom] = React.useState('');
   const [dateTo, setDateTo] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
+  const [showDeleted, setShowDeleted] = React.useState(false);
   const [editingPayment, setEditingPayment] = React.useState<SchoolPaymentRecord | null>(null);
   const [deletingPayment, setDeletingPayment] = React.useState<SchoolPaymentRecord | null>(null);
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
+  const [restoreError, setRestoreError] = React.useState<string | null>(null);
+
+  const { data: deletedPayments, isLoading: deletedLoading } = useDeletedPayments(selectedSchoolId || undefined);
 
   const filters = React.useMemo(() => ({
     from: dateFrom || undefined,
@@ -1067,10 +1072,76 @@ function PaymentsTab() {
       </div>
 
       {/* Results */}
+      {selectedSchoolId && (
+        <div className="flex items-center justify-between">
+          <div />
+          <Button
+            variant={showDeleted ? 'danger' : 'secondary'}
+            size="sm"
+            onClick={() => setShowDeleted((v) => !v)}
+          >
+            <Trash2 className="w-4 h-4" />
+            {t('billingPayments.trashBin')}
+            {(deletedPayments?.length ?? 0) > 0 && (
+              <span className="ms-1 bg-danger text-white text-xs font-bold rounded-full px-1.5 py-0.5">
+                {deletedPayments!.length}
+              </span>
+            )}
+          </Button>
+        </div>
+      )}
+
       {!selectedSchoolId ? (
         <div className="bg-card border border-border rounded-xl p-12 text-center">
           <Search className="w-12 h-12 text-text-disabled mx-auto mb-4" />
           <p className="text-body text-text-secondary">{t('billingPayments.selectSchoolPrompt')}</p>
+        </div>
+      ) : showDeleted ? (
+        <div className="space-y-4">
+          <div className="bg-warning/10 border border-warning/30 rounded-lg px-4 py-3 text-body text-warning">
+            {t('billingPayments.trashBinDescription')}
+          </div>
+          {restoreError && (
+            <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
+              <span>{t(`billing.errors.${restoreError}`, { defaultValue: restoreError })}</span>
+              <button onClick={() => setRestoreError(null)} className="text-danger hover:opacity-70 text-lg leading-none">&times;</button>
+            </div>
+          )}
+          {deletedLoading ? (
+            <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="bg-hover rounded-xl h-14 animate-pulse" />)}</div>
+          ) : (deletedPayments ?? []).length === 0 ? (
+            <div className="bg-card border border-border rounded-xl p-12 text-center">
+              <Trash2 className="w-12 h-12 text-text-disabled mx-auto mb-4" />
+              <p className="text-body text-text-secondary">{t('billingPayments.trashEmpty')}</p>
+            </div>
+          ) : (
+            <DataTable
+              columns={[
+                { key: 'paidAt', header: t('billingPayments.columns.date'), render: (p) => <span className="text-body text-text-primary">{new Date(p.paidAt).toLocaleDateString()}</span> },
+                { key: 'amount', header: t('billingPayments.columns.amount'), render: (p) => <span className="font-mono font-medium text-text-heading">{formatDZD(p.amount)}</span> },
+                { key: 'period', header: t('billingPayments.columns.period'), render: (p) => <span className="text-caption text-text-secondary" dir="ltr">{new Date(p.periodStart).toLocaleDateString()} – {new Date(p.periodEnd).toLocaleDateString()}</span> },
+                { key: 'plan', header: t('billingPayments.columns.plan'), render: (p) => <span className="text-body text-text-primary">{p.subscription.plan.name}</span> },
+                { key: 'note', header: t('billingPayments.columns.note'), render: (p) => <span className="text-caption text-text-secondary">{p.note || '—'}</span> },
+                {
+                  key: 'restore', header: '', render: (p) => (
+                    <Button variant="ghost" size="sm" title={t('billingPayments.restore')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRestoreError(null);
+                        restorePayment.mutate(p.id, {
+                          onError: (err) => setRestoreError(err instanceof Error ? err.message : 'BILLING_ERROR'),
+                        });
+                      }}>
+                      <RotateCcw className="w-4 h-4 text-success" />{t('billingPayments.restore')}
+                    </Button>
+                  ), className: 'w-32',
+                },
+              ]}
+              data={deletedPayments ?? []}
+              keyExtractor={(p) => p.id}
+              emptyMessage={t('billingPayments.trashEmpty')}
+            />
+          )}
         </div>
       ) : paymentsLoading ? (
         <div className="space-y-2">

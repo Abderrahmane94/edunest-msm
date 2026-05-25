@@ -95,6 +95,23 @@ export const billingController = {
     } catch (e) { handleError(e, res, next); }
   },
 
+  async getDeletedPayments(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { schoolId } = req.query;
+      const payments = await billingService.getDeletedPayments(
+        typeof schoolId === 'string' ? schoolId : undefined,
+      );
+      res.json(successResponse(payments));
+    } catch (e) { handleError(e, res, next); }
+  },
+
+  async restorePayment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const payment = await billingService.restorePayment(req.params.id);
+      res.json(successResponse(payment));
+    } catch (e) { handleError(e, res, next); }
+  },
+
   async updatePayment(req: Request, res: Response, next: NextFunction) {
     try {
       const payment = await billingService.updatePayment(req.params.id, req.body);

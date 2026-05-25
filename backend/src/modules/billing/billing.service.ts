@@ -269,6 +269,65 @@ export const billingService = {
     return prisma.subscriptionPayment.update({ where: { id }, data: { deletedAt: new Date() } });
   },
 
+  async getDeletedPayments(schoolId?: string) {
+    let subscriptionId: string | undefined;
+    if (schoolId) {
+      const sub = await prisma.schoolSubscription.findUnique({
+        where: { schoolId },
+        select: { id: true },
+      });
+      if (!sub) return [];
+      subscriptionId = sub.id;
+    }
+
+    const payments = await prisma.subscriptionPayment.findMany({
+      where: {
+        deletedAt: { not: null },
+        ...(subscriptionId && { subscriptionId }),
+      },
+      orderBy: { deletedAt: 'desc' },
+      include: {
+        subscription: {
+          select: {
+            status: true,
+            school: { select: { id: true, name: true } },
+            plan: { select: { name: true, priceMonthly: true } },
+          },
+        },
+      },
+    });
+
+    return payments.map((p) => ({
+      ...p,
+      amount: Number(p.amount),
+      subscription: {
+        ...p.subscription,
+        plan: {
+          ...p.subscription.plan,
+          priceMonthly: Number(p.subscription.plan.priceMonthly),
+        },
+      },
+    }));
+  },
+
+  async restorePayment(id: string) {
+    const payment = await prisma.subscriptionPayment.findFirst({ where: { id, deletedAt: { not: null } } });
+    if (!payment) throw new BillingError('PAYMENT_NOT_FOUND', 404);
+
+    const overlap = await prisma.subscriptionPayment.findFirst({
+      where: {
+        subscriptionId: payment.subscriptionId,
+        id: { not: id },
+        deletedAt: null,
+        periodStart: { lt: payment.periodEnd },
+        periodEnd:   { gt: payment.periodStart },
+      },
+    });
+    if (overlap) throw new BillingError('PERIOD_ALREADY_PAID', 409);
+
+    return prisma.subscriptionPayment.update({ where: { id }, data: { deletedAt: null } });
+  },
+
   async getPayments(subscriptionId: string) {
     return prisma.subscriptionPayment.findMany({
       where: { subscriptionId, deletedAt: null },

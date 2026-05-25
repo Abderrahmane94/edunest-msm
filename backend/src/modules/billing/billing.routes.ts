@@ -25,7 +25,9 @@ router.get('/subscriptions/:id/payments', validateParams(idParamSchema), billing
 
 // Payments
 router.get('/payments', billingController.getPaymentsBySchool);
+router.get('/payments/deleted', billingController.getDeletedPayments);
 router.put('/payments/:id', validateParams(idParamSchema), validate(updatePaymentSchema), billingController.updatePayment);
+router.put('/payments/:id/restore', validateParams(idParamSchema), billingController.restorePayment);
 router.delete('/payments/:id', validateParams(idParamSchema), billingController.deletePayment);
 
 // Stats

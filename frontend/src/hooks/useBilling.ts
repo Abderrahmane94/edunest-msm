@@ -201,6 +201,35 @@ export function useSchoolPayments(schoolId: string | null, filters?: { from?: st
   });
 }
 
+export function useDeletedPayments(schoolId?: string) {
+  return useQuery({
+    queryKey: ['billing-deleted-payments', schoolId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (schoolId) params.set('schoolId', schoolId);
+      const res = await apiClient.get<unknown[]>(`/billing/payments/deleted?${params.toString()}`);
+      const raw = Array.isArray(res.data) ? res.data : [];
+      return raw as SchoolPaymentRecord[];
+    },
+  });
+}
+
+export function useRestorePayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.put(`/billing/payments/${id}/restore`, {});
+      if (!res.success) throw new Error(res.error?.code ?? res.error?.message ?? 'BILLING_ERROR');
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['billing-school-payments'] });
+      qc.invalidateQueries({ queryKey: ['billing-deleted-payments'] });
+      qc.invalidateQueries({ queryKey: ['billing-stats'] });
+    },
+  });
+}
+
 export function useUpdatePayment() {
   const qc = useQueryClient();
   return useMutation({

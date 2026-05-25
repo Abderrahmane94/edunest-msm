@@ -271,7 +271,7 @@ export function TrashPage() {
     );
   }
 
-  const entityFields = getEntityFields(activeTab);
+  const entityFields = isPaymentsTab ? [] : getEntityFields(activeTab as TrashEntityType);
 
   const columns: Column<TrashItem>[] = [
     {

@@ -111,8 +111,10 @@ export function AcademicYearDetailPage() {
         </Button>
         <div className="flex-1">
           <h1 className="text-page-title font-semibold text-text-heading">{year.name}</h1>
-          <p className="text-body text-text-secondary" dir="ltr" style={{ direction: 'ltr' }}>
-            {formatDate(year.start_date)} – {formatDate(year.end_date)}
+          <p className="text-body text-text-secondary flex items-center gap-1">
+            <span dir="ltr">{formatDate(year.start_date)}</span>
+            <span>–</span>
+            <span dir="ltr">{formatDate(year.end_date)}</span>
           </p>
         </div>
         <StatusBadge variant={year.is_active ? 'present' : 'draft'}>

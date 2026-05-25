@@ -451,8 +451,10 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
           {/* Computed period preview */}
           <div className="mb-4 bg-subtle rounded-lg px-4 py-3 flex items-center justify-between">
             <span className="text-caption text-text-secondary">{t('billing.payments.period')}</span>
-            <span className="text-body font-medium text-text-heading" dir="ltr" style={{ direction: 'ltr' }}>
-              {formatDate(periodStart)} → {formatDate(periodEnd)}
+            <span className="text-body font-medium text-text-heading inline-flex items-center gap-1">
+              <span dir="ltr">{formatDate(periodStart)}</span>
+              <span>→</span>
+              <span dir="ltr">{formatDate(periodEnd)}</span>
             </span>
           </div>
 
@@ -834,8 +836,10 @@ function PaymentsTab() {
     },
     {
       key: 'period', header: t('billingPayments.columns.period'), render: (p) => (
-        <span className="text-caption text-text-secondary" dir="ltr" style={{ direction: 'ltr' }}>
-          {formatDate(p.periodStart)} – {formatDate(p.periodEnd)}
+        <span className="text-caption text-text-secondary inline-flex items-center gap-1">
+          <span dir="ltr">{formatDate(p.periodStart)}</span>
+          <span>–</span>
+          <span dir="ltr">{formatDate(p.periodEnd)}</span>
         </span>
       ),
     },

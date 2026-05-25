@@ -223,8 +223,10 @@ export function AcademicYearsPage() {
                 )}
                 <div>
                   <p className="text-body font-medium text-foreground">{year.name}</p>
-                  <p className="text-caption text-text-secondary" dir="ltr" style={{ direction: 'ltr' }}>
-                    {formatDate(year.start_date)} – {formatDate(year.end_date)}
+                  <p className="text-caption text-text-secondary flex items-center gap-1">
+                    <span dir="ltr">{formatDate(year.start_date)}</span>
+                    <span>–</span>
+                    <span dir="ltr">{formatDate(year.end_date)}</span>
                   </p>
                 </div>
               </div>

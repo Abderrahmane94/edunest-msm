@@ -664,23 +664,96 @@ function PaymentsTab() {
 
   function downloadPDF() {
     if (!payments || payments.length === 0) return;
+
     const schoolName = schools?.find((s) => s.id === selectedSchoolId)?.name ?? selectedSchoolId;
-    const doc = new jsPDF();
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const M = 14; // margin
 
+    // ── Header band ───────────────────────────────────────────────────────────
+    doc.setFillColor(99, 102, 241);
+    doc.rect(0, 0, pageW, 28, 'F');
+
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
-    doc.text(`${t('billingPayments.title')} — ${schoolName}`, 14, 20);
+    doc.setTextColor(255, 255, 255);
+    doc.text('EduNest', M, 12);
 
-    doc.setFontSize(10);
-    doc.setTextColor(120);
-    const parts: string[] = [];
-    if (dateFrom) parts.push(`${t('billingPayments.from')}: ${dateFrom}`);
-    if (dateTo) parts.push(`${t('billingPayments.to')}: ${dateTo}`);
-    if (parts.length) doc.text(parts.join('   '), 14, 28);
-    doc.text(`${t('billingPayments.generatedOn')}: ${new Date().toLocaleDateString()}`, 14, parts.length ? 34 : 28);
-    doc.setTextColor(0);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(t('billingPayments.pdfTitle'), M, 20);
+
+    doc.setFontSize(8);
+    doc.text(new Date().toLocaleDateString(), pageW - M, 20, { align: 'right' });
+
+    // ── School name + separator ───────────────────────────────────────────────
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(17, 24, 39);
+    doc.text(schoolName, M, 38);
+
+    doc.setDrawColor(229, 231, 235);
+    doc.setLineWidth(0.4);
+    doc.line(M, 42, pageW - M, 42);
+
+    // ── Active filters line ───────────────────────────────────────────────────
+    let cursorY = 49;
+    const filterParts: string[] = [];
+    if (dateFrom) filterParts.push(`${t('billingPayments.from')}: ${dateFrom}`);
+    if (dateTo) filterParts.push(`${t('billingPayments.to')}: ${dateTo}`);
+    if (statusFilter) filterParts.push(`${t('billingPayments.status')}: ${t(`billing.status.${statusFilter}`)}`);
+    if (filterParts.length) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(107, 114, 128);
+      doc.text(filterParts.join('   ·   '), M, cursorY);
+      cursorY += 8;
+    }
+
+    // ── Summary boxes ─────────────────────────────────────────────────────────
+    const boxH = 22;
+    const boxW = (pageW - 2 * M - 4) / 2;
+
+    // Payments count
+    doc.setFillColor(238, 242, 255);
+    doc.roundedRect(M, cursorY, boxW, boxH, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(99, 102, 241);
+    doc.text(String(payments.length), M + 5, cursorY + 13);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(107, 114, 128);
+    doc.text(t('billingPayments.totalPayments'), M + 5, cursorY + 19);
+
+    // Total amount
+    const box2X = M + boxW + 4;
+    doc.setFillColor(240, 253, 244);
+    doc.roundedRect(box2X, cursorY, boxW, boxH, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(22, 163, 74);
+    doc.text(`${totalAmount.toLocaleString('fr-FR')} DZD`, box2X + 5, cursorY + 13);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(107, 114, 128);
+    doc.text(t('billingPayments.totalAmount'), box2X + 5, cursorY + 19);
+
+    cursorY += boxH + 7;
+
+    // ── Payments table ────────────────────────────────────────────────────────
+    const statusColors: Record<string, [number, number, number]> = {
+      active:    [22, 163, 74],
+      trial:     [202, 138, 4],
+      overdue:   [220, 38, 38],
+      cancelled: [156, 163, 175],
+      suspended: [156, 163, 175],
+    };
 
     autoTable(doc, {
-      startY: parts.length ? 40 : 35,
+      startY: cursorY,
+      margin: { left: M, right: M, bottom: 16 },
       head: [[
         t('billingPayments.columns.date'),
         t('billingPayments.columns.amount'),
@@ -691,17 +764,52 @@ function PaymentsTab() {
       ]],
       body: payments.map((p) => [
         new Date(p.paidAt).toLocaleDateString(),
-        formatDZD(p.amount),
+        `${p.amount.toLocaleString('fr-FR')} DZD`,
         `${new Date(p.periodStart).toLocaleDateString()} – ${new Date(p.periodEnd).toLocaleDateString()}`,
         p.subscription.plan.name,
         t(`billing.status.${p.subscription.status}`),
         p.note ?? '—',
       ]),
-      foot: [[t('billingPayments.total'), formatDZD(totalAmount), '', '', '', '']],
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [99, 102, 241] },
-      footStyles: { fontStyle: 'bold', fillColor: [243, 244, 246] },
+      foot: [[
+        { content: t('billingPayments.total'), styles: { fontStyle: 'bold', textColor: [17, 24, 39] as [number, number, number] } },
+        { content: `${totalAmount.toLocaleString('fr-FR')} DZD`, styles: { fontStyle: 'bold', textColor: [22, 163, 74] as [number, number, number] } },
+        '', '', '', '',
+      ]],
+      styles: { fontSize: 8.5, cellPadding: 3.5, overflow: 'linebreak' },
+      headStyles: {
+        fillColor: [99, 102, 241] as [number, number, number],
+        textColor: [255, 255, 255] as [number, number, number],
+        fontStyle: 'bold',
+        fontSize: 8.5,
+      },
+      alternateRowStyles: { fillColor: [249, 250, 251] as [number, number, number] },
+      footStyles: { fillColor: [243, 244, 246] as [number, number, number] },
+      columnStyles: {
+        1: { halign: 'right' },
+      },
+      didParseCell: (data) => {
+        if (data.section === 'body' && data.column.index === 4) {
+          const status = payments[data.row.index]?.subscription?.status;
+          if (status && statusColors[status]) {
+            data.cell.styles.textColor = statusColors[status];
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      },
     });
+
+    // ── Page footer on every page ─────────────────────────────────────────────
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFillColor(99, 102, 241);
+      doc.rect(0, pageH - 10, pageW, 10, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text('EduNest', M, pageH - 3.5);
+      doc.text(`${i} / ${pageCount}`, pageW - M, pageH - 3.5, { align: 'right' });
+    }
 
     doc.save(`paiements-${schoolName}-${new Date().toISOString().split('T')[0]}.pdf`);
   }

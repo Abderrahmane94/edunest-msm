@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Circle, ChevronRight } from 'lucide-react';
+import { CheckCircle, ChevronRight } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -215,10 +215,8 @@ export function AcademicYearsPage() {
               onClick={() => navigate(`/admin/academic-years/${year.id}`)}
             >
               <div className="flex items-center gap-3">
-                {year.is_active ? (
+                {year.is_active && (
                   <CheckCircle className="w-5 h-5 text-success" />
-                ) : (
-                  <Circle className="w-5 h-5 text-text-disabled" />
                 )}
                 <div>
                   <p className="text-body font-medium text-foreground">{year.name}</p>

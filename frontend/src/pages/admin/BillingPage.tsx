@@ -667,16 +667,16 @@ function PaymentsTab() {
 
     const schoolName = schools?.find((s) => s.id === selectedSchoolId)?.name ?? selectedSchoolId;
     const isRTL = document.documentElement.dir === 'rtl';
-    const dir = isRTL ? 'rtl' : 'ltr';
-    const font = isRTL
-      ? "'Noto Sans Arabic', Arial, sans-serif"
-      : "'Plus Jakarta Sans', Arial, sans-serif";
-    const amountAlign = isRTL ? 'left' : 'right';
-    const rowDir = isRTL ? 'row-reverse' : 'row';
+    const dir  = isRTL ? 'rtl' : 'ltr';
+    const font = isRTL ? "'Noto Sans Arabic', Arial, sans-serif" : "'Plus Jakarta Sans', Arial, sans-serif";
+
+    // In RTL: visual start = right, visual end = left
+    const startAlign = isRTL ? 'right' : 'left';
+    const endAlign   = isRTL ? 'left'  : 'right';
 
     const filterParts: string[] = [];
-    if (dateFrom) filterParts.push(`${t('billingPayments.from')}: ${dateFrom}`);
-    if (dateTo) filterParts.push(`${t('billingPayments.to')}: ${dateTo}`);
+    if (dateFrom)    filterParts.push(`${t('billingPayments.from')}: ${dateFrom}`);
+    if (dateTo)      filterParts.push(`${t('billingPayments.to')}: ${dateTo}`);
     if (statusFilter) filterParts.push(`${t('billingPayments.status')}: ${t(`billing.status.${statusFilter}`)}`);
 
     const STATUS_COLOR: Record<string, string> = {
@@ -684,74 +684,115 @@ function PaymentsTab() {
       cancelled: '#9ca3af', suspended: '#9ca3af',
     };
 
-    const cellBase = `padding:9px 12px; border-bottom:1px solid #e5e7eb; font-size:11px; color:#374151;`;
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    // Cells containing numbers/dates must always be LTR so digits aren't mirrored
+    const numCell  = (content: string, extra = '') =>
+      `<td dir="ltr" style="padding:9px 12px; border-bottom:1px solid #e5e7eb; font-size:11px; text-align:${endAlign}; unicode-bidi:embed; ${extra}">${content}</td>`;
+    const textCell = (content: string, extra = '') =>
+      `<td dir="${dir}" style="padding:9px 12px; border-bottom:1px solid #e5e7eb; font-size:11px; color:#374151; text-align:${startAlign}; ${extra}">${content}</td>`;
+
     const rows = payments.map((p, i) => {
-      const bg = i % 2 === 1 ? 'background:#f9fafb;' : '';
+      const bg = i % 2 === 1 ? '#f9fafb' : '#ffffff';
       const statusColor = STATUS_COLOR[p.subscription.status] ?? '#374151';
-      return `<tr style="${bg}">
-        <td style="${cellBase}">${new Date(p.paidAt).toLocaleDateString()}</td>
-        <td style="${cellBase} text-align:${amountAlign}; font-weight:600; color:#111827;">${p.amount.toLocaleString('fr-FR')} DZD</td>
-        <td style="${cellBase}" dir="ltr">${new Date(p.periodStart).toLocaleDateString()} – ${new Date(p.periodEnd).toLocaleDateString()}</td>
-        <td style="${cellBase}">${p.subscription.plan.name}</td>
-        <td style="${cellBase} color:${statusColor}; font-weight:600;">${t(`billing.status.${p.subscription.status}`)}</td>
-        <td style="${cellBase} color:#9ca3af;">${p.note ?? '—'}</td>
+      const dateStr    = new Date(p.paidAt).toLocaleDateString('fr-FR');
+      const periodStr  = `${new Date(p.periodStart).toLocaleDateString('fr-FR')} – ${new Date(p.periodEnd).toLocaleDateString('fr-FR')}`;
+      const amountStr  = `${p.amount.toLocaleString('fr-FR')} DZD`;
+      const statusStr  = t(`billing.status.${p.subscription.status}`);
+      return `<tr style="background:${bg};">
+        ${textCell(dateStr)}
+        ${numCell(amountStr, 'font-weight:600; color:#111827;')}
+        ${numCell(periodStr)}
+        ${textCell(p.subscription.plan.name)}
+        ${textCell(statusStr, `color:${statusColor}; font-weight:600;`)}
+        ${textCell(p.note ?? '—', 'color:#9ca3af;')}
       </tr>`;
     }).join('');
 
-    const thBase = `padding:10px 12px; font-weight:600; font-size:11px; color:#fff;`;
-    const html = `<div style="font-family:${font}; direction:${dir}; background:#fff; width:794px; box-sizing:border-box; color:#111827;">
+    // Tfoot: in RTL the "Total" label is the first cell → appears on the RIGHT (visual start). Correct.
+    const tfoot = isRTL
+      ? `<tr style="background:#f3f4f6; border-top:2px solid #d1d5db;">
+          <td dir="${dir}" style="padding:10px 12px; font-weight:700; font-size:11px; text-align:${startAlign};">${t('billingPayments.total')}</td>
+          <td dir="ltr"    style="padding:10px 12px; font-weight:700; font-size:11px; text-align:${endAlign}; color:#16a34a; unicode-bidi:embed;">${totalAmount.toLocaleString('fr-FR')} DZD</td>
+          <td colspan="4"  style="padding:10px 12px;"></td>
+        </tr>`
+      : `<tr style="background:#f3f4f6; border-top:2px solid #d1d5db;">
+          <td colspan="4"  style="padding:10px 12px;"></td>
+          <td dir="ltr"    style="padding:10px 12px; font-weight:700; font-size:11px; text-align:right; color:#16a34a; unicode-bidi:embed;">${totalAmount.toLocaleString('fr-FR')} DZD</td>
+          <td dir="${dir}" style="padding:10px 12px; font-weight:700; font-size:11px; text-align:right;">${t('billingPayments.total')}</td>
+        </tr>`;
 
-      <div style="background:#6366f1; padding:22px 32px; display:flex; flex-direction:${rowDir}; justify-content:space-between; align-items:center;">
-        <div>
-          <div style="color:#fff; font-size:22px; font-weight:700; letter-spacing:-0.5px; margin-bottom:4px;">EduNest</div>
-          <div style="color:#c7d2fe; font-size:11px;">${t('billingPayments.pdfTitle')}</div>
-        </div>
-        <div style="color:#e0e7ff; font-size:10px;">${new Date().toLocaleDateString()}</div>
-      </div>
+    const thStyle = (align: string) =>
+      `padding:10px 12px; font-weight:600; font-size:11px; color:#fff; text-align:${align};`;
 
-      <div style="padding:24px 32px 0;">
+    const html = `
+<div dir="${dir}" style="font-family:${font}; direction:${dir}; background:#fff; width:794px; box-sizing:border-box; color:#111827;">
 
-        <div style="font-size:16px; font-weight:700; color:#111827; margin-bottom:${filterParts.length ? '4px' : '16px'};">${schoolName}</div>
-        ${filterParts.length ? `<div style="font-size:10px; color:#6b7280; margin-bottom:16px;">${filterParts.join('   ·   ')}</div>` : ''}
+  <!-- Header -->
+  <table dir="${dir}" style="width:100%; border-collapse:collapse; background:#6366f1; padding:0;">
+    <tr>
+      <td style="padding:22px 32px; vertical-align:middle;">
+        <div style="color:#fff; font-size:22px; font-weight:700; letter-spacing:-0.5px; margin-bottom:4px;">EduNest</div>
+        <div style="color:#c7d2fe; font-size:11px;">${t('billingPayments.pdfTitle')}</div>
+      </td>
+      <td dir="ltr" style="padding:22px 32px; vertical-align:middle; text-align:${endAlign}; color:#e0e7ff; font-size:10px; unicode-bidi:embed;">
+        ${new Date().toLocaleDateString('fr-FR')}
+      </td>
+    </tr>
+  </table>
 
-        <div style="display:flex; flex-direction:${rowDir}; gap:12px; margin-bottom:24px;">
-          <div style="flex:1; background:#eef2ff; border-radius:10px; padding:14px 18px;">
-            <div style="font-size:26px; font-weight:700; color:#6366f1; line-height:1;">${payments.length}</div>
-            <div style="font-size:10px; color:#6b7280; margin-top:6px;">${t('billingPayments.totalPayments')}</div>
-          </div>
-          <div style="flex:1; background:#f0fdf4; border-radius:10px; padding:14px 18px;">
-            <div style="font-size:20px; font-weight:700; color:#16a34a; line-height:1;">${totalAmount.toLocaleString('fr-FR')} DZD</div>
-            <div style="font-size:10px; color:#6b7280; margin-top:6px;">${t('billingPayments.totalAmount')}</div>
-          </div>
-        </div>
+  <!-- Body -->
+  <div style="padding:24px 32px 0; direction:${dir};">
 
-        <table style="width:100%; border-collapse:collapse; border-radius:8px; overflow:hidden;">
-          <thead>
-            <tr style="background:#6366f1;">
-              <th style="${thBase} text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.date')}</th>
-              <th style="${thBase} text-align:${amountAlign};">${t('billingPayments.columns.amount')}</th>
-              <th style="${thBase} text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.period')}</th>
-              <th style="${thBase} text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.plan')}</th>
-              <th style="${thBase} text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.subscriptionStatus')}</th>
-              <th style="${thBase} text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.note')}</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-          <tfoot>
-            <tr style="background:#f3f4f6; border-top:2px solid #d1d5db;">
-              <td style="padding:10px 12px; font-weight:700; font-size:11px;">${t('billingPayments.total')}</td>
-              <td style="padding:10px 12px; font-weight:700; font-size:11px; text-align:${amountAlign}; color:#16a34a;">${totalAmount.toLocaleString('fr-FR')} DZD</td>
-              <td colspan="4" style="padding:10px 12px;"></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+    <div dir="${dir}" style="font-size:16px; font-weight:700; color:#111827; margin-bottom:${filterParts.length ? '4px' : '16px'}; text-align:${startAlign};">${schoolName}</div>
+    ${filterParts.length ? `<div dir="${dir}" style="font-size:10px; color:#6b7280; margin-bottom:16px; text-align:${startAlign};">${filterParts.join('   ·   ')}</div>` : ''}
 
-      <div style="background:#6366f1; margin-top:28px; padding:8px 32px; display:flex; flex-direction:${rowDir}; justify-content:space-between; align-items:center;">
-        <span style="color:#fff; font-size:9px; font-weight:600;">EduNest</span>
-        <span style="color:#c7d2fe; font-size:9px;">${t('billingPayments.generatedOn')}: ${new Date().toLocaleDateString()}</span>
-      </div>
-    </div>`;
+    <!-- Summary cards -->
+    <table dir="${dir}" style="width:100%; border-collapse:separate; border-spacing:12px 0; margin-bottom:16px; table-layout:fixed;">
+      <tr>
+        <td style="background:#eef2ff; border-radius:10px; padding:14px 18px; vertical-align:top; width:50%;">
+          <div dir="ltr" style="font-size:26px; font-weight:700; color:#6366f1; line-height:1; text-align:${startAlign};">${payments.length}</div>
+          <div dir="${dir}" style="font-size:10px; color:#6b7280; margin-top:6px; text-align:${startAlign};">${t('billingPayments.totalPayments')}</div>
+        </td>
+        <td style="background:#f0fdf4; border-radius:10px; padding:14px 18px; vertical-align:top; width:50%;">
+          <div dir="ltr" style="font-size:20px; font-weight:700; color:#16a34a; line-height:1; text-align:${startAlign}; unicode-bidi:embed;">${totalAmount.toLocaleString('fr-FR')} DZD</div>
+          <div dir="${dir}" style="font-size:10px; color:#6b7280; margin-top:6px; text-align:${startAlign};">${t('billingPayments.totalAmount')}</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Payments table -->
+    <table dir="${dir}" style="width:100%; border-collapse:collapse; direction:${dir}; table-layout:fixed;">
+      <colgroup>
+        <col style="width:13%">
+        <col style="width:18%">
+        <col style="width:22%">
+        <col style="width:18%">
+        <col style="width:15%">
+        <col style="width:14%">
+      </colgroup>
+      <thead>
+        <tr style="background:#6366f1;">
+          <th dir="${dir}" style="${thStyle(startAlign)}">${t('billingPayments.columns.date')}</th>
+          <th dir="ltr"    style="${thStyle(endAlign)}">${t('billingPayments.columns.amount')}</th>
+          <th dir="ltr"    style="${thStyle(startAlign)}">${t('billingPayments.columns.period')}</th>
+          <th dir="${dir}" style="${thStyle(startAlign)}">${t('billingPayments.columns.plan')}</th>
+          <th dir="${dir}" style="${thStyle(startAlign)}">${t('billingPayments.columns.subscriptionStatus')}</th>
+          <th dir="${dir}" style="${thStyle(startAlign)}">${t('billingPayments.columns.note')}</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>${tfoot}</tfoot>
+    </table>
+  </div>
+
+  <!-- Footer -->
+  <table dir="${dir}" style="width:100%; border-collapse:collapse; background:#6366f1; margin-top:28px;">
+    <tr>
+      <td style="padding:8px 32px; color:#fff; font-size:9px; font-weight:600; text-align:${startAlign};">EduNest</td>
+      <td dir="ltr" style="padding:8px 32px; color:#c7d2fe; font-size:9px; text-align:${endAlign}; unicode-bidi:embed;">${t('billingPayments.generatedOn')}: ${new Date().toLocaleDateString('fr-FR')}</td>
+    </tr>
+  </table>
+</div>`;
 
     // Fixed position above viewport — avoids RTL left:-9999px clipping
     const wrapper = document.createElement('div');

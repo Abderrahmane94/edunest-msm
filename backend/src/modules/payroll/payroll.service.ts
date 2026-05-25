@@ -1,7 +1,6 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import prisma from '../../lib/prisma';
 import type { SetSalaryInput, RecordPaymentInput } from './payroll.schema';
-
-const prisma = new PrismaClient();
 
 export class PayrollError extends Error {
   constructor(

@@ -57,7 +57,9 @@ function SetSalaryDialog({
   const { t } = useTranslation();
   const setSalary = useSetSalary();
   const [form, setForm] = React.useState({
+    salaryType: 'fixed' as 'fixed' | 'per_student',
     baseSalary: '',
+    ratePerStudent: '',
     effectiveFrom: new Date().toISOString().split('T')[0],
     notes: '',
   });
@@ -66,12 +68,20 @@ function SetSalaryDialog({
   React.useEffect(() => {
     if (employee?.salary) {
       setForm({
-        baseSalary: employee.salary.baseSalary,
+        salaryType: employee.salary.salaryType,
+        baseSalary: employee.salary.baseSalary ?? '',
+        ratePerStudent: employee.salary.ratePerStudent ?? '',
         effectiveFrom: employee.salary.effectiveFrom.split('T')[0],
         notes: employee.salary.notes ?? '',
       });
     } else {
-      setForm({ baseSalary: '', effectiveFrom: new Date().toISOString().split('T')[0], notes: '' });
+      setForm({
+        salaryType: 'fixed',
+        baseSalary: '',
+        ratePerStudent: '',
+        effectiveFrom: new Date().toISOString().split('T')[0],
+        notes: '',
+      });
     }
     setError(null);
   }, [employee, open]);
@@ -84,7 +94,10 @@ function SetSalaryDialog({
       await setSalary.mutateAsync({
         userId: employee.id,
         data: {
-          baseSalary: parseFloat(form.baseSalary),
+          salaryType: form.salaryType,
+          baseSalary: form.salaryType === 'fixed' ? parseFloat(form.baseSalary) : undefined,
+          ratePerStudent:
+            form.salaryType === 'per_student' ? parseFloat(form.ratePerStudent) : undefined,
           effectiveFrom: form.effectiveFrom,
           notes: form.notes || undefined,
         },
@@ -107,17 +120,56 @@ function SetSalaryDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <FormField label={t('payroll.setSalaryDialog.baseSalary')} htmlFor="ps-base" required>
-            <Input
-              id="ps-base"
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.baseSalary}
-              onChange={(e) => setForm((p) => ({ ...p, baseSalary: e.target.value }))}
-              placeholder="50000"
-            />
+          {/* Salary type toggle */}
+          <FormField label={t('payroll.setSalaryDialog.salaryType')} htmlFor="ps-type">
+            <div className="flex gap-2">
+              {(['fixed', 'per_student'] as const).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, salaryType: type }))}
+                  className={`flex-1 h-9 rounded-md border text-body transition-colors ${
+                    form.salaryType === type
+                      ? 'border-accent bg-accent/10 text-accent font-medium'
+                      : 'border-border bg-card text-text-secondary'
+                  }`}
+                >
+                  {t(`payroll.setSalaryDialog.${type}`)}
+                </button>
+              ))}
+            </div>
           </FormField>
+
+          {form.salaryType === 'fixed' ? (
+            <FormField label={t('payroll.setSalaryDialog.baseSalary')} htmlFor="ps-base" required>
+              <Input
+                id="ps-base"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.baseSalary}
+                onChange={(e) => setForm((p) => ({ ...p, baseSalary: e.target.value }))}
+                placeholder="50000"
+              />
+            </FormField>
+          ) : (
+            <FormField
+              label={t('payroll.setSalaryDialog.ratePerStudent')}
+              htmlFor="ps-rate"
+              required
+            >
+              <Input
+                id="ps-rate"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.ratePerStudent}
+                onChange={(e) => setForm((p) => ({ ...p, ratePerStudent: e.target.value }))}
+                placeholder="500"
+              />
+            </FormField>
+          )}
+
           <FormField label={t('payroll.setSalaryDialog.effectiveFrom')} htmlFor="ps-eff" required>
             <Input
               id="ps-eff"
@@ -168,6 +220,7 @@ function RecordPaymentDialog({
     month: now.getMonth() + 1,
     year: now.getFullYear(),
     baseSalary: '',
+    studentCount: '',
     bonuses: '0',
     deductions: '0',
     paidAt: now.toISOString().split('T')[0],
@@ -183,6 +236,7 @@ function RecordPaymentDialog({
         month: d.getMonth() + 1,
         year: d.getFullYear(),
         baseSalary: '',
+        studentCount: '',
         bonuses: '0',
         deductions: '0',
         paidAt: d.toISOString().split('T')[0],
@@ -192,19 +246,25 @@ function RecordPaymentDialog({
     }
   }, [open]);
 
+  const selectedEmployee = employees.find((e) => e.id === form.userId);
+  const isPerStudent = selectedEmployee?.salary?.salaryType === 'per_student';
+  const ratePerStudent = parseFloat(selectedEmployee?.salary?.ratePerStudent ?? '0') || 0;
+
   function handleEmployeeChange(userId: string) {
     const emp = employees.find((e) => e.id === userId);
     setForm((p) => ({
       ...p,
       userId,
-      baseSalary: emp?.salary?.baseSalary ?? '',
+      baseSalary: emp?.salary?.salaryType === 'fixed' ? (emp.salary.baseSalary ?? '') : '',
+      studentCount: '',
     }));
   }
 
-  const net =
-    (parseFloat(form.baseSalary) || 0) +
-    (parseFloat(form.bonuses) || 0) -
-    (parseFloat(form.deductions) || 0);
+  const computedBase = isPerStudent
+    ? ratePerStudent * (parseInt(form.studentCount) || 0)
+    : parseFloat(form.baseSalary) || 0;
+
+  const net = computedBase + (parseFloat(form.bonuses) || 0) - (parseFloat(form.deductions) || 0);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -214,9 +274,10 @@ function RecordPaymentDialog({
         userId: form.userId,
         month: form.month,
         year: form.year,
-        baseSalary: parseFloat(form.baseSalary),
+        baseSalary: computedBase,
         bonuses: parseFloat(form.bonuses) || 0,
         deductions: parseFloat(form.deductions) || 0,
+        studentCount: isPerStudent ? parseInt(form.studentCount) || 0 : undefined,
         paidAt: form.paidAt,
         note: form.note || undefined,
       });
@@ -285,16 +346,47 @@ function RecordPaymentDialog({
             </FormField>
           </div>
 
-          <FormField label={t('payroll.recordDialog.baseSalary')} htmlFor="rp-base" required>
-            <Input
-              id="rp-base"
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.baseSalary}
-              onChange={(e) => setForm((p) => ({ ...p, baseSalary: e.target.value }))}
-            />
-          </FormField>
+          {isPerStudent ? (
+            <>
+              <FormField
+                label={t('payroll.recordDialog.studentCount')}
+                htmlFor="rp-students"
+                required
+              >
+                <Input
+                  id="rp-students"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.studentCount}
+                  onChange={(e) => setForm((p) => ({ ...p, studentCount: e.target.value }))}
+                  placeholder="0"
+                />
+              </FormField>
+              <div className="rounded-md bg-subtle border border-border px-4 py-3 flex items-center justify-between mb-3">
+                <span className="text-body text-text-secondary">
+                  {t('payroll.recordDialog.baseSalary')}
+                  <span className="text-caption text-text-secondary ms-2">
+                    ({fmtDZD(ratePerStudent)} × {parseInt(form.studentCount) || 0})
+                  </span>
+                </span>
+                <span className="text-body font-semibold font-mono text-foreground">
+                  {fmtDZD(computedBase)}
+                </span>
+              </div>
+            </>
+          ) : (
+            <FormField label={t('payroll.recordDialog.baseSalary')} htmlFor="rp-base" required>
+              <Input
+                id="rp-base"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.baseSalary}
+                onChange={(e) => setForm((p) => ({ ...p, baseSalary: e.target.value }))}
+              />
+            </FormField>
+          )}
 
           <div className="grid grid-cols-2 gap-x-4">
             <FormField label={t('payroll.recordDialog.bonuses')} htmlFor="rp-bonuses">
@@ -348,7 +440,14 @@ function RecordPaymentDialog({
             <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
               {t('common.cancel')}
             </Button>
-            <Button type="submit" disabled={recordPayment.isPending || !form.userId || !form.baseSalary}>
+            <Button
+              type="submit"
+              disabled={
+                recordPayment.isPending ||
+                !form.userId ||
+                (isPerStudent ? !form.studentCount : !form.baseSalary)
+              }
+            >
               {recordPayment.isPending ? t('common.loading') : t('common.save')}
             </Button>
           </DialogFooter>
@@ -398,7 +497,9 @@ function EmployeesTab() {
         emp.salary ? (
           <div>
             <p className="text-body font-mono font-medium text-foreground">
-              {fmtDZD(emp.salary.baseSalary)}
+              {emp.salary.salaryType === 'per_student'
+                ? `${fmtDZD(emp.salary.ratePerStudent!)} / ${t('payroll.employees.perStudent')}`
+                : fmtDZD(emp.salary.baseSalary!)}
             </p>
             <p className="text-caption text-text-secondary" dir="ltr">
               {t('payroll.employees.effectiveFrom')}: {formatDate(emp.salary.effectiveFrom)}
@@ -588,6 +689,7 @@ function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean, 
     <div style="background:#f9fafb;border-radius:12px;padding:20px 24px;">
       <table style="width:100%;border-collapse:collapse;">
         <tbody>
+          ${p.studentCount != null ? row(t('payroll.pdf.studentCount'), String(p.studentCount), '#111827') : ''}
           ${row(t('payroll.pdf.paymentDate'), fmtPdfDate(p.paidAt), '#111827')}
           ${p.note ? row(t('payroll.columns.note'), p.note, '#6b7280', false) : ''}
         </tbody>

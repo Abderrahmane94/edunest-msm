@@ -2,7 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
 export interface EmployeeSalary {
-  baseSalary: string;
+  salaryType: 'fixed' | 'per_student';
+  baseSalary: string | null;
+  ratePerStudent: string | null;
   currency: string;
   effectiveFrom: string;
   notes?: string | null;
@@ -34,13 +36,16 @@ export interface SalaryPayment {
   bonuses: string;
   deductions: string;
   netSalary: string;
+  studentCount?: number | null;
   paidAt: string;
   note?: string | null;
   createdAt: string;
 }
 
 export interface SetSalaryInput {
-  baseSalary: number;
+  salaryType: 'fixed' | 'per_student';
+  baseSalary?: number;
+  ratePerStudent?: number;
   currency?: string;
   effectiveFrom: string;
   notes?: string;
@@ -53,6 +58,7 @@ export interface RecordPaymentInput {
   baseSalary: number;
   bonuses?: number;
   deductions?: number;
+  studentCount?: number;
   paidAt: string;
   note?: string;
 }

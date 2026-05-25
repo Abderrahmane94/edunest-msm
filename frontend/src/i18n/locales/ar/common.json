@@ -1108,12 +1108,17 @@
       "editSalary": "تعديل الراتب",
       "salary": "الراتب الأساسي",
       "effectiveFrom": "ساري منذ",
-      "notes": "ملاحظات"
+      "notes": "ملاحظات",
+      "perStudent": "تلميذ"
     },
     "setSalaryDialog": {
       "title": "تحديد الراتب",
       "description": "حدد الراتب الأساسي لهذا الموظف.",
+      "salaryType": "نوع الراتب",
+      "fixed": "راتب ثابت",
+      "per_student": "بالتلميذ",
       "baseSalary": "الراتب الأساسي (دج)",
+      "ratePerStudent": "معدل التلميذ (دج)",
       "effectiveFrom": "ساري منذ",
       "notes": "ملاحظات (اختياري)",
       "notesPlaceholder": "معلومات إضافية…"
@@ -1135,6 +1140,7 @@
       "month": "الشهر",
       "year": "السنة",
       "baseSalary": "الراتب الأساسي (دج)",
+      "studentCount": "عدد التلاميذ",
       "bonuses": "المكافآت (دج)",
       "deductions": "الخصومات (دج)",
       "netSalary": "صافي الراتب (دج)",
@@ -1162,6 +1168,7 @@
     "pdf": {
       "downloadPayslip": "تحميل قسيمة الراتب",
       "exportList": "تصدير PDF",
+      "studentCount": "عدد التلاميذ",
       "payslipTitle": "قسيمة الراتب",
       "reportTitle": "تقرير الرواتب",
       "netToPay": "صافي الراتب",

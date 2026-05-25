@@ -1109,12 +1109,17 @@
       "editSalary": "Modifier le salaire",
       "salary": "Salaire de base",
       "effectiveFrom": "Applicable depuis",
-      "notes": "Notes"
+      "notes": "Notes",
+      "perStudent": "élève"
     },
     "setSalaryDialog": {
       "title": "Configurer le salaire",
       "description": "Définissez le salaire de base pour cet employé.",
+      "salaryType": "Type de salaire",
+      "fixed": "Salaire fixe",
+      "per_student": "Par élève",
       "baseSalary": "Salaire de base (DZD)",
+      "ratePerStudent": "Taux par élève (DZD)",
       "effectiveFrom": "Applicable depuis",
       "notes": "Notes (optionnel)",
       "notesPlaceholder": "Informations complémentaires…"
@@ -1136,6 +1141,7 @@
       "month": "Mois",
       "year": "Année",
       "baseSalary": "Salaire de base (DZD)",
+      "studentCount": "Nombre d'élèves",
       "bonuses": "Primes (DZD)",
       "deductions": "Retenues (DZD)",
       "netSalary": "Net à payer (DZD)",
@@ -1163,6 +1169,7 @@
     "pdf": {
       "downloadPayslip": "Télécharger le bulletin de paie",
       "exportList": "Exporter PDF",
+      "studentCount": "Nombre d'élèves",
       "payslipTitle": "Bulletin de paie",
       "reportTitle": "Rapport de paie",
       "netToPay": "Net à payer",

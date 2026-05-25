@@ -694,15 +694,17 @@ model SubscriptionPayment {
 // ─── Payroll ─────────────────────────────────────────────────────────────────
 
 model EmployeeSalary {
-  id            String   @id @default(uuid())
-  userId        String   @unique @map("user_id")
-  schoolId      String   @map("school_id")
-  baseSalary    Decimal  @db.Decimal(10, 2) @map("base_salary")
-  currency      String   @default("DZD")
-  effectiveFrom DateTime @map("effective_from") @db.Date
-  notes         String?
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  userId         String   @unique @map("user_id")
+  schoolId       String   @map("school_id")
+  salaryType     String   @default("fixed") @map("salary_type")
+  baseSalary     Decimal? @db.Decimal(10, 2) @map("base_salary")
+  ratePerStudent Decimal? @db.Decimal(10, 2) @map("rate_per_student")
+  currency       String   @default("DZD")
+  effectiveFrom  DateTime @map("effective_from") @db.Date
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id])
 
@@ -720,10 +722,11 @@ model SalaryPayment {
   bonuses     Decimal   @default(0) @db.Decimal(10, 2)
   deductions  Decimal   @default(0) @db.Decimal(10, 2)
   netSalary   Decimal   @db.Decimal(10, 2) @map("net_salary")
-  paidAt      DateTime  @map("paid_at") @db.Date
-  note        String?
-  createdAt   DateTime  @default(now()) @map("created_at")
-  deletedAt   DateTime? @map("deleted_at")
+  studentCount Int?      @map("student_count")
+  paidAt       DateTime  @map("paid_at") @db.Date
+  note         String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  deletedAt    DateTime? @map("deleted_at")
 
   user User @relation(fields: [userId], references: [id])
 

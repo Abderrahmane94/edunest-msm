@@ -40,7 +40,9 @@ export const payrollService = {
       role: u.role,
       salary: u.employeeSalary
         ? {
-            baseSalary: u.employeeSalary.baseSalary.toFixed(2),
+            salaryType: u.employeeSalary.salaryType as 'fixed' | 'per_student',
+            baseSalary: u.employeeSalary.baseSalary?.toFixed(2) ?? null,
+            ratePerStudent: u.employeeSalary.ratePerStudent?.toFixed(2) ?? null,
             currency: u.employeeSalary.currency,
             effectiveFrom: u.employeeSalary.effectiveFrom,
             notes: u.employeeSalary.notes,
@@ -66,26 +68,26 @@ export const payrollService = {
       throw new PayrollError('User is not a staff member');
     }
 
+    const salaryFields = {
+      salaryType: data.salaryType,
+      baseSalary: data.salaryType === 'fixed' ? new Prisma.Decimal(data.baseSalary!) : null,
+      ratePerStudent:
+        data.salaryType === 'per_student' ? new Prisma.Decimal(data.ratePerStudent!) : null,
+      currency: data.currency,
+      effectiveFrom: new Date(data.effectiveFrom),
+      notes: data.notes,
+    };
+
     const salary = await prisma.employeeSalary.upsert({
       where: { userId },
-      create: {
-        userId,
-        schoolId,
-        baseSalary: new Prisma.Decimal(data.baseSalary),
-        currency: data.currency,
-        effectiveFrom: new Date(data.effectiveFrom),
-        notes: data.notes,
-      },
-      update: {
-        baseSalary: new Prisma.Decimal(data.baseSalary),
-        currency: data.currency,
-        effectiveFrom: new Date(data.effectiveFrom),
-        notes: data.notes,
-      },
+      create: { userId, schoolId, ...salaryFields },
+      update: salaryFields,
     });
 
     return {
-      baseSalary: salary.baseSalary.toFixed(2),
+      salaryType: salary.salaryType as 'fixed' | 'per_student',
+      baseSalary: salary.baseSalary?.toFixed(2) ?? null,
+      ratePerStudent: salary.ratePerStudent?.toFixed(2) ?? null,
       currency: salary.currency,
       effectiveFrom: salary.effectiveFrom,
       notes: salary.notes,
@@ -127,6 +129,7 @@ export const payrollService = {
         bonuses: p.bonuses.toFixed(2),
         deductions: p.deductions.toFixed(2),
         netSalary: p.netSalary.toFixed(2),
+        studentCount: p.studentCount,
         paidAt: p.paidAt,
         note: p.note,
         createdAt: p.createdAt,
@@ -161,6 +164,7 @@ export const payrollService = {
         bonuses: new Prisma.Decimal(data.bonuses),
         deductions: new Prisma.Decimal(data.deductions),
         netSalary: new Prisma.Decimal(net),
+        studentCount: data.studentCount ?? null,
         paidAt: new Date(data.paidAt),
         note: data.note,
       },
@@ -178,6 +182,7 @@ export const payrollService = {
       bonuses: payment.bonuses.toFixed(2),
       deductions: payment.deductions.toFixed(2),
       netSalary: payment.netSalary.toFixed(2),
+      studentCount: payment.studentCount,
       paidAt: payment.paidAt,
       note: payment.note,
       createdAt: payment.createdAt,

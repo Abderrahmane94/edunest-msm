@@ -74,6 +74,8 @@ function getEntityFields(entityType: EntityTab): { key: string; label: string }[
         { key: 'level', label: 'trash.fields.level' },
         { key: 'roomNumber', label: 'trash.fields.roomNumber' },
       ];
+    default:
+      return [];
   }
 }
 

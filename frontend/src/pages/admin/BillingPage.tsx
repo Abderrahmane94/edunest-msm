@@ -669,8 +669,10 @@ function PaymentsTab() {
     const isRTL = document.documentElement.dir === 'rtl';
     const dir = isRTL ? 'rtl' : 'ltr';
     const font = isRTL
-      ? "'Noto Sans Arabic', 'Arial', sans-serif"
-      : "'Plus Jakarta Sans', 'Arial', sans-serif";
+      ? "'Noto Sans Arabic', Arial, sans-serif"
+      : "'Plus Jakarta Sans', Arial, sans-serif";
+    const amountAlign = isRTL ? 'left' : 'right';
+    const rowDir = isRTL ? 'row-reverse' : 'row';
 
     const filterParts: string[] = [];
     if (dateFrom) filterParts.push(`${t('billingPayments.from')}: ${dateFrom}`);
@@ -682,126 +684,119 @@ function PaymentsTab() {
       cancelled: '#9ca3af', suspended: '#9ca3af',
     };
 
-    const rows = payments.map((p) => `
-      <tr>
-        <td>${new Date(p.paidAt).toLocaleDateString()}</td>
-        <td style="text-align:${isRTL ? 'left' : 'right'}; font-weight:600">${p.amount.toLocaleString('fr-FR')} DZD</td>
-        <td dir="ltr">${new Date(p.periodStart).toLocaleDateString()} – ${new Date(p.periodEnd).toLocaleDateString()}</td>
-        <td>${p.subscription.plan.name}</td>
-        <td style="color:${STATUS_COLOR[p.subscription.status] ?? '#374151'}; font-weight:600">${t(`billing.status.${p.subscription.status}`)}</td>
-        <td style="color:#6b7280">${p.note ?? '—'}</td>
-      </tr>
-    `).join('');
+    const cellBase = `padding:9px 12px; border-bottom:1px solid #e5e7eb; font-size:11px; color:#374151;`;
+    const rows = payments.map((p, i) => {
+      const bg = i % 2 === 1 ? 'background:#f9fafb;' : '';
+      const statusColor = STATUS_COLOR[p.subscription.status] ?? '#374151';
+      return `<tr style="${bg}">
+        <td style="${cellBase}">${new Date(p.paidAt).toLocaleDateString()}</td>
+        <td style="${cellBase} text-align:${amountAlign}; font-weight:600; color:#111827;">${p.amount.toLocaleString('fr-FR')} DZD</td>
+        <td style="${cellBase}" dir="ltr">${new Date(p.periodStart).toLocaleDateString()} – ${new Date(p.periodEnd).toLocaleDateString()}</td>
+        <td style="${cellBase}">${p.subscription.plan.name}</td>
+        <td style="${cellBase} color:${statusColor}; font-weight:600;">${t(`billing.status.${p.subscription.status}`)}</td>
+        <td style="${cellBase} color:#9ca3af;">${p.note ?? '—'}</td>
+      </tr>`;
+    }).join('');
 
-    const html = `
-      <div style="
-        font-family: ${font};
-        direction: ${dir};
-        background: #fff;
-        width: 794px;
-        padding: 0;
-        box-sizing: border-box;
-        color: #111827;
-      ">
-        <!-- Header band -->
-        <div style="background:#6366f1; padding:18px 28px 14px; display:flex; justify-content:space-between; align-items:flex-end;">
-          <div>
-            <div style="color:#fff; font-size:20px; font-weight:700; margin-bottom:4px;">EduNest</div>
-            <div style="color:#c7d2fe; font-size:11px;">${t('billingPayments.pdfTitle')}</div>
-          </div>
-          <div style="color:#c7d2fe; font-size:10px;">${new Date().toLocaleDateString()}</div>
+    const thBase = `padding:10px 12px; font-weight:600; font-size:11px; color:#fff;`;
+    const html = `<div style="font-family:${font}; direction:${dir}; background:#fff; width:794px; box-sizing:border-box; color:#111827;">
+
+      <div style="background:#6366f1; padding:22px 32px; display:flex; flex-direction:${rowDir}; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="color:#fff; font-size:22px; font-weight:700; letter-spacing:-0.5px; margin-bottom:4px;">EduNest</div>
+          <div style="color:#c7d2fe; font-size:11px;">${t('billingPayments.pdfTitle')}</div>
         </div>
-
-        <!-- School + filters -->
-        <div style="padding:20px 28px 0;">
-          <div style="font-size:15px; font-weight:700; margin-bottom:8px;">${schoolName}</div>
-          ${filterParts.length ? `<div style="font-size:10px; color:#6b7280; margin-bottom:12px;">${filterParts.join('   ·   ')}</div>` : ''}
-
-          <!-- Summary cards -->
-          <div style="display:flex; gap:12px; margin-bottom:20px;">
-            <div style="flex:1; background:#eef2ff; border-radius:8px; padding:12px 16px;">
-              <div style="font-size:22px; font-weight:700; color:#6366f1;">${payments.length}</div>
-              <div style="font-size:10px; color:#6b7280; margin-top:2px;">${t('billingPayments.totalPayments')}</div>
-            </div>
-            <div style="flex:1; background:#f0fdf4; border-radius:8px; padding:12px 16px;">
-              <div style="font-size:18px; font-weight:700; color:#16a34a;">${totalAmount.toLocaleString('fr-FR')} DZD</div>
-              <div style="font-size:10px; color:#6b7280; margin-top:2px;">${t('billingPayments.totalAmount')}</div>
-            </div>
-          </div>
-
-          <!-- Table -->
-          <table style="width:100%; border-collapse:collapse; font-size:10px;">
-            <thead>
-              <tr style="background:#6366f1; color:#fff;">
-                <th style="padding:8px 10px; text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.date')}</th>
-                <th style="padding:8px 10px; text-align:${isRTL ? 'left' : 'right'};">${t('billingPayments.columns.amount')}</th>
-                <th style="padding:8px 10px; text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.period')}</th>
-                <th style="padding:8px 10px; text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.plan')}</th>
-                <th style="padding:8px 10px; text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.subscriptionStatus')}</th>
-                <th style="padding:8px 10px; text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.note')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows}
-            </tbody>
-            <tfoot>
-              <tr style="background:#f3f4f6; font-weight:700;">
-                <td style="padding:8px 10px;">${t('billingPayments.total')}</td>
-                <td style="padding:8px 10px; text-align:${isRTL ? 'left' : 'right'}; color:#16a34a;">${totalAmount.toLocaleString('fr-FR')} DZD</td>
-                <td colspan="4"></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-
-        <!-- Footer band -->
-        <div style="background:#6366f1; margin-top:24px; padding:6px 28px; display:flex; justify-content:space-between;">
-          <span style="color:#fff; font-size:9px;">EduNest</span>
-          <span style="color:#c7d2fe; font-size:9px;">${new Date().toLocaleDateString()}</span>
-        </div>
+        <div style="color:#e0e7ff; font-size:10px;">${new Date().toLocaleDateString()}</div>
       </div>
-    `;
 
-    // Render off-screen and capture
-    const container = document.createElement('div');
-    container.style.cssText = 'position:absolute; left:-9999px; top:0;';
-    container.innerHTML = html;
-    document.body.appendChild(container);
+      <div style="padding:24px 32px 0;">
 
-    // Give browser a tick to apply fonts
-    await new Promise<void>((r) => setTimeout(r, 200));
+        <div style="font-size:16px; font-weight:700; color:#111827; margin-bottom:${filterParts.length ? '4px' : '16px'};">${schoolName}</div>
+        ${filterParts.length ? `<div style="font-size:10px; color:#6b7280; margin-bottom:16px;">${filterParts.join('   ·   ')}</div>` : ''}
 
-    const canvas = await html2canvas(container.firstElementChild as HTMLElement, {
+        <div style="display:flex; flex-direction:${rowDir}; gap:12px; margin-bottom:24px;">
+          <div style="flex:1; background:#eef2ff; border-radius:10px; padding:14px 18px;">
+            <div style="font-size:26px; font-weight:700; color:#6366f1; line-height:1;">${payments.length}</div>
+            <div style="font-size:10px; color:#6b7280; margin-top:6px;">${t('billingPayments.totalPayments')}</div>
+          </div>
+          <div style="flex:1; background:#f0fdf4; border-radius:10px; padding:14px 18px;">
+            <div style="font-size:20px; font-weight:700; color:#16a34a; line-height:1;">${totalAmount.toLocaleString('fr-FR')} DZD</div>
+            <div style="font-size:10px; color:#6b7280; margin-top:6px;">${t('billingPayments.totalAmount')}</div>
+          </div>
+        </div>
+
+        <table style="width:100%; border-collapse:collapse; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:#6366f1;">
+              <th style="${thBase} text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.date')}</th>
+              <th style="${thBase} text-align:${amountAlign};">${t('billingPayments.columns.amount')}</th>
+              <th style="${thBase} text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.period')}</th>
+              <th style="${thBase} text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.plan')}</th>
+              <th style="${thBase} text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.subscriptionStatus')}</th>
+              <th style="${thBase} text-align:${isRTL ? 'right' : 'left'};">${t('billingPayments.columns.note')}</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+          <tfoot>
+            <tr style="background:#f3f4f6; border-top:2px solid #d1d5db;">
+              <td style="padding:10px 12px; font-weight:700; font-size:11px;">${t('billingPayments.total')}</td>
+              <td style="padding:10px 12px; font-weight:700; font-size:11px; text-align:${amountAlign}; color:#16a34a;">${totalAmount.toLocaleString('fr-FR')} DZD</td>
+              <td colspan="4" style="padding:10px 12px;"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div style="background:#6366f1; margin-top:28px; padding:8px 32px; display:flex; flex-direction:${rowDir}; justify-content:space-between; align-items:center;">
+        <span style="color:#fff; font-size:9px; font-weight:600;">EduNest</span>
+        <span style="color:#c7d2fe; font-size:9px;">${t('billingPayments.generatedOn')}: ${new Date().toLocaleDateString()}</span>
+      </div>
+    </div>`;
+
+    // Fixed position above viewport — avoids RTL left:-9999px clipping
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:fixed; top:-20000px; left:0; width:794px; z-index:-9999; opacity:0; pointer-events:none;';
+    wrapper.innerHTML = html;
+    document.body.appendChild(wrapper);
+
+    // Wait for fonts (Noto Sans Arabic loads async)
+    await document.fonts.ready;
+    await new Promise<void>((r) => setTimeout(r, 250));
+
+    const canvas = await html2canvas(wrapper.firstElementChild as HTMLElement, {
       scale: 2,
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
+      windowWidth: 794,
     });
 
-    document.body.removeChild(container);
+    document.body.removeChild(wrapper);
 
     // Paginate into A4
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pdfW = pdf.internal.pageSize.getWidth();
     const pdfH = pdf.internal.pageSize.getHeight();
-    const imgW = pdfW;
-    const imgH = (canvas.height * pdfW) / canvas.width;
-    const imgData = canvas.toDataURL('image/png');
+    const ratio = canvas.width / pdfW;
+    const pageHeightPx = Math.floor(pdfH * ratio);
 
-    let remaining = imgH;
     let srcY = 0;
+    let firstPage = true;
+    while (srcY < canvas.height) {
+      if (!firstPage) pdf.addPage();
+      firstPage = false;
 
-    while (remaining > 0) {
-      const sliceH = Math.min(remaining, pdfH);
-      const sliceCanvas = document.createElement('canvas');
-      sliceCanvas.width = canvas.width;
-      sliceCanvas.height = (sliceH / pdfH) * canvas.height;
-      const ctx = sliceCanvas.getContext('2d')!;
-      ctx.drawImage(canvas, 0, srcY * (canvas.height / imgH), canvas.width, sliceCanvas.height, 0, 0, canvas.width, sliceCanvas.height);
-      if (srcY > 0) pdf.addPage();
-      pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', 0, 0, imgW, sliceH);
-      srcY += sliceH;
-      remaining -= sliceH;
+      const sliceH = Math.min(pageHeightPx, canvas.height - srcY);
+      const slice = document.createElement('canvas');
+      slice.width = canvas.width;
+      slice.height = sliceH;
+      const ctx = slice.getContext('2d')!;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, slice.width, slice.height);
+      ctx.drawImage(canvas, 0, srcY, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+
+      pdf.addImage(slice.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pdfW, sliceH / ratio);
+      srcY += pageHeightPx;
     }
 
     pdf.save(`paiements-${schoolName}-${new Date().toISOString().split('T')[0]}.pdf`);

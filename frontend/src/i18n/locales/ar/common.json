@@ -579,6 +579,7 @@
     },
     "errors": {
       "BILLING_ERROR": "حدث خطأ في الفوترة.",
+      "PLAN_NAME_TAKEN": "يوجد خطة بهذا الاسم بالفعل.",
       "PLAN_NOT_FOUND": "الخطة غير موجودة.",
       "PLAN_HAS_SUBSCRIPTIONS": "لا يمكن حذف خطة لها اشتراكات.",
       "SCHOOL_NOT_FOUND": "المدرسة غير موجودة.",

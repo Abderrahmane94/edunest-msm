@@ -580,6 +580,7 @@
     },
     "errors": {
       "BILLING_ERROR": "Une erreur de facturation est survenue.",
+      "PLAN_NAME_TAKEN": "Un plan avec ce nom existe déjà.",
       "PLAN_NOT_FOUND": "Plan introuvable.",
       "PLAN_HAS_SUBSCRIPTIONS": "Impossible de supprimer un plan ayant des abonnements.",
       "SCHOOL_NOT_FOUND": "École introuvable.",

@@ -38,6 +38,9 @@ export const billingService = {
     maxChildren?: number;
     maxUsers?: number;
   }) {
+    const duplicate = await prisma.subscriptionPlan.findFirst({ where: { name: input.name } });
+    if (duplicate) throw new BillingError('PLAN_NAME_TAKEN', 409);
+
     const plan = await prisma.subscriptionPlan.create({
       data: {
         name: input.name,
@@ -63,6 +66,12 @@ export const billingService = {
   }) {
     const plan = await prisma.subscriptionPlan.findUnique({ where: { id } });
     if (!plan) throw new BillingError('PLAN_NOT_FOUND', 404);
+
+    if (input.name) {
+      const duplicate = await prisma.subscriptionPlan.findFirst({ where: { name: input.name, NOT: { id } } });
+      if (duplicate) throw new BillingError('PLAN_NAME_TAKEN', 409);
+    }
+
     const updated = await prisma.subscriptionPlan.update({ where: { id }, data: input as Prisma.SubscriptionPlanUpdateInput });
     return normalizePlan(updated);
   },

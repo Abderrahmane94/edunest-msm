@@ -266,6 +266,13 @@ function AssignPlanDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [form, setForm] = React.useState({ schoolId: '', planId: '', billingCycle: 'monthly', startDate: today, trialDays: '' });
   const [error, setError] = React.useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (open) {
+      setForm({ schoolId: '', planId: '', billingCycle: 'monthly', startDate: today, trialDays: '' });
+      setError(null);
+    }
+  }, [open]);
+
   const schoolOptions = (schools ?? []).map((s) => ({ value: s.id, label: s.name }));
   const planOptions = (plans ?? []).filter((p) => p.isActive).map((p) => ({ value: p.id, label: `${p.name} — ${formatDZD(p.priceMonthly)}/mois` }));
   const cycleOptions = [{ value: 'monthly', label: t('billing.subscriptions.monthly') }, { value: 'annual', label: t('billing.subscriptions.annual') }];

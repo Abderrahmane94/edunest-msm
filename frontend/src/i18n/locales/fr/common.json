@@ -604,7 +604,10 @@
       "paidAt": "Date de paiement",
       "note": "Note",
       "notePlaceholder": "Référence de paiement, etc.",
-      "alreadyPaid": "Période déjà payée — prochain paiement disponible après expiration"
+      "alreadyPaid": "Période déjà payée — prochain paiement disponible après expiration",
+      "baseAmount": "Montant de base",
+      "discount": "Réduction",
+      "finalAmount": "Net à payer"
     }
   },
   "billingPayments": {

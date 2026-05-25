@@ -340,27 +340,42 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
     : sub.currentPeriodStart.split('T')[0];
   const defaultMonths = sub.billingCycle === 'annual' ? 12 : 1;
 
-  function calcAmount(m: number): string {
-    if (sub.billingCycle === 'annual' && m === 12 && sub.plan.priceAnnual) {
-      return String(sub.plan.priceAnnual);
-    }
-    return String(Math.round(sub.plan.priceMonthly * m));
+  function calcBase(m: number): number {
+    if (sub.billingCycle === 'annual' && m === 12 && sub.plan.priceAnnual) return sub.plan.priceAnnual;
+    return Math.round(sub.plan.priceMonthly * m);
+  }
+
+  function applyDiscount(base: number, discVal: string, type: '%' | 'DZD'): number {
+    const d = parseFloat(discVal) || 0;
+    if (type === '%') return Math.max(0, Math.round(base * (1 - d / 100)));
+    return Math.max(0, Math.round(base - d));
   }
 
   const [periodStart, setPeriodStart] = React.useState(defaultStart);
   const [months, setMonths] = React.useState(defaultMonths);
   const [customMonths, setCustomMonths] = React.useState('');
-  const [amount, setAmount] = React.useState(calcAmount(defaultMonths));
+  const [baseAmount, setBaseAmount] = React.useState(calcBase(defaultMonths));
+  const [discount, setDiscount] = React.useState('0');
+  const [discountType, setDiscountType] = React.useState<'%' | 'DZD'>('%');
+  const [amount, setAmount] = React.useState(String(calcBase(defaultMonths)));
   const [paidAt, setPaidAt] = React.useState(today);
   const [note, setNote] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
 
   const periodEnd = React.useMemo(() => addMonthsUTC(periodStart, months), [periodStart, months]);
 
+  const discountAmount = React.useMemo(() => {
+    const base = baseAmount;
+    const final = applyDiscount(base, discount, discountType);
+    return base - final;
+  }, [baseAmount, discount, discountType]);
+
   function handleMonthsSelect(m: number) {
     setMonths(m);
     setCustomMonths('');
-    setAmount(calcAmount(m));
+    const newBase = calcBase(m);
+    setBaseAmount(newBase);
+    setAmount(String(applyDiscount(newBase, discount, discountType)));
   }
 
   function handleCustomMonths(val: string) {
@@ -368,12 +383,20 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
     const m = parseInt(val, 10);
     if (m > 0) {
       setMonths(m);
-      setAmount(calcAmount(m));
+      const newBase = calcBase(m);
+      setBaseAmount(newBase);
+      setAmount(String(applyDiscount(newBase, discount, discountType)));
     }
   }
 
-  function handleStartChange(val: string) {
-    setPeriodStart(val);
+  function handleDiscountChange(val: string) {
+    setDiscount(val);
+    setAmount(String(applyDiscount(baseAmount, val, discountType)));
+  }
+
+  function handleDiscountTypeChange(type: '%' | 'DZD') {
+    setDiscountType(type);
+    setAmount(String(applyDiscount(baseAmount, discount, type)));
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -389,6 +412,7 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
   }
 
   const isPreset = MONTH_PRESETS.includes(months) && !customMonths;
+  const hasDiscount = discountAmount > 0;
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -400,7 +424,7 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
         <form onSubmit={handleSubmit}>
           {/* Start date */}
           <FormField label={t('billing.payments.periodStart')} htmlFor="pay-start" required>
-            <Input id="pay-start" type="date" value={periodStart} onChange={(e) => handleStartChange(e.target.value)} />
+            <Input id="pay-start" type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
           </FormField>
 
           {/* Months selector */}
@@ -408,28 +432,18 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
             <label className="text-label font-medium text-text-primary block mb-2">{t('billing.payments.months')}</label>
             <div className="flex items-center gap-2 flex-wrap">
               {MONTH_PRESETS.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => handleMonthsSelect(m)}
+                <button key={m} type="button" onClick={() => handleMonthsSelect(m)}
                   className={`px-3 py-1.5 rounded-lg text-body font-medium border transition-colors ${
                     isPreset && months === m
                       ? 'bg-primary text-white border-primary'
                       : 'bg-card border-border text-text-primary hover:border-primary'
-                  }`}
-                >
+                  }`}>
                   {m}
                 </button>
               ))}
-              <Input
-                type="number"
-                min="1"
-                max="120"
-                value={customMonths}
+              <Input type="number" min="1" max="120" value={customMonths}
                 onChange={(e) => handleCustomMonths(e.target.value)}
-                placeholder={t('billing.payments.customMonths')}
-                className="w-24"
-              />
+                placeholder={t('billing.payments.customMonths')} className="w-24" />
             </div>
           </div>
 
@@ -441,10 +455,52 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
             </span>
           </div>
 
-          {/* Amount (auto-filled, editable) */}
-          <FormField label={t('billing.payments.amount')} htmlFor="pay-amount" required>
-            <Input id="pay-amount" type="number" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} />
-          </FormField>
+          {/* Amount card */}
+          <div className="mb-4 border border-border rounded-xl overflow-hidden">
+            {/* Base amount row */}
+            <div className="flex items-center justify-between px-4 py-3 bg-subtle">
+              <span className="text-caption text-text-secondary">{t('billing.payments.baseAmount')}</span>
+              <span className="text-body font-medium text-text-heading" dir="ltr">{baseAmount.toLocaleString('fr-FR')} DZD</span>
+            </div>
+
+            {/* Discount row */}
+            <div className="flex items-center gap-3 px-4 py-3 border-t border-border">
+              <span className="text-caption text-text-secondary shrink-0">{t('billing.payments.discount')}</span>
+              <Input type="number" min="0" value={discount}
+                onChange={(e) => handleDiscountChange(e.target.value)}
+                className="w-24 text-center" />
+              {/* Type toggle */}
+              <div className="flex rounded-lg border border-border overflow-hidden shrink-0">
+                {(['%', 'DZD'] as const).map((type) => (
+                  <button key={type} type="button" onClick={() => handleDiscountTypeChange(type)}
+                    className={`px-3 py-1 text-caption font-medium transition-colors ${
+                      discountType === type ? 'bg-primary text-white' : 'bg-card text-text-secondary hover:bg-hover'
+                    }`}>
+                    {type}
+                  </button>
+                ))}
+              </div>
+              {hasDiscount && (
+                <span className="text-caption text-danger ms-auto" dir="ltr">
+                  − {discountAmount.toLocaleString('fr-FR')} DZD
+                </span>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="border-t-2 border-border" />
+
+            {/* Final amount row */}
+            <div className="flex items-center gap-3 px-4 py-3">
+              <span className="text-label font-semibold text-text-primary shrink-0">{t('billing.payments.finalAmount')}</span>
+              <div className="ms-auto flex items-center gap-2">
+                <Input id="pay-amount" type="number" min="0" value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-32 text-end font-semibold" required />
+                <span className="text-caption text-text-secondary shrink-0">DZD</span>
+              </div>
+            </div>
+          </div>
 
           {/* Payment date */}
           <FormField label={t('billing.payments.paidAt')} htmlFor="pay-date" required>

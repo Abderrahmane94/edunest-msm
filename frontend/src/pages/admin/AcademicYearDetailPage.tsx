@@ -111,7 +111,7 @@ export function AcademicYearDetailPage() {
         </Button>
         <div className="flex-1">
           <h1 className="text-page-title font-semibold text-text-heading">{year.name}</h1>
-          <p className="text-body text-text-secondary" dir="ltr">
+          <p className="text-body text-text-secondary" dir="ltr" style={{ direction: 'ltr' }}>
             {formatDate(year.start_date)} – {formatDate(year.end_date)}
           </p>
         </div>

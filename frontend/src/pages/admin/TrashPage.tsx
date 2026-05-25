@@ -149,7 +149,7 @@ function DeletedPaymentsTab() {
     {
       key: 'period', header: t('billingPayments.columns.period'),
       render: (p) => (
-        <span className="text-caption text-text-secondary" dir="ltr">
+        <span className="text-caption text-text-secondary" dir="ltr" style={{ direction: 'ltr' }}>
           {formatDate(p.periodStart)} – {formatDate(p.periodEnd)}
         </span>
       ),

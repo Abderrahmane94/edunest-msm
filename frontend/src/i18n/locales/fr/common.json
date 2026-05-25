@@ -612,6 +612,9 @@
     "clearFilters": "Effacer les filtres",
     "totalPayments": "Nombre de paiements",
     "totalAmount": "Montant total",
+    "total": "Total",
+    "downloadPdf": "Télécharger PDF",
+    "generatedOn": "Généré le",
     "empty": "Aucun paiement trouvé pour cette école.",
     "columns": {
       "date": "Date",

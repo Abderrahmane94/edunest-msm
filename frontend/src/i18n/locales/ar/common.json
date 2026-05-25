@@ -611,6 +611,9 @@
     "clearFilters": "مسح الفلاتر",
     "totalPayments": "عدد المدفوعات",
     "totalAmount": "المبلغ الإجمالي",
+    "total": "المجموع",
+    "downloadPdf": "تحميل PDF",
+    "generatedOn": "تاريخ الإنشاء",
     "empty": "لا توجد مدفوعات لهذه المدرسة.",
     "columns": {
       "date": "التاريخ",

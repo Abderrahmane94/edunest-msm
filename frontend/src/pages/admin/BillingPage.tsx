@@ -2,8 +2,10 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   TrendingUp, CreditCard, Building2, CheckCircle, AlertCircle,
-  Plus, Pencil, Trash2, X, Save, Banknote, Clock, XCircle, Search, Calendar,
+  Plus, Pencil, Trash2, X, Save, Banknote, Clock, XCircle, Search, Calendar, Download,
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   Button, DataTable, StatusBadge, Dialog, DialogContent,
   DialogHeader, DialogTitle, DialogDescription, DialogFooter, Input,
@@ -660,6 +662,50 @@ function PaymentsTab() {
     [payments],
   );
 
+  function downloadPDF() {
+    if (!payments || payments.length === 0) return;
+    const schoolName = schools?.find((s) => s.id === selectedSchoolId)?.name ?? selectedSchoolId;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text(`${t('billingPayments.title')} — ${schoolName}`, 14, 20);
+
+    doc.setFontSize(10);
+    doc.setTextColor(120);
+    const parts: string[] = [];
+    if (dateFrom) parts.push(`${t('billingPayments.from')}: ${dateFrom}`);
+    if (dateTo) parts.push(`${t('billingPayments.to')}: ${dateTo}`);
+    if (parts.length) doc.text(parts.join('   '), 14, 28);
+    doc.text(`${t('billingPayments.generatedOn')}: ${new Date().toLocaleDateString()}`, 14, parts.length ? 34 : 28);
+    doc.setTextColor(0);
+
+    autoTable(doc, {
+      startY: parts.length ? 40 : 35,
+      head: [[
+        t('billingPayments.columns.date'),
+        t('billingPayments.columns.amount'),
+        t('billingPayments.columns.period'),
+        t('billingPayments.columns.plan'),
+        t('billingPayments.columns.subscriptionStatus'),
+        t('billingPayments.columns.note'),
+      ]],
+      body: payments.map((p) => [
+        new Date(p.paidAt).toLocaleDateString(),
+        formatDZD(p.amount),
+        `${new Date(p.periodStart).toLocaleDateString()} – ${new Date(p.periodEnd).toLocaleDateString()}`,
+        p.subscription.plan.name,
+        t(`billing.status.${p.subscription.status}`),
+        p.note ?? '—',
+      ]),
+      foot: [[t('billingPayments.total'), formatDZD(totalAmount), '', '', '', '']],
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [99, 102, 241] },
+      footStyles: { fontStyle: 'bold', fillColor: [243, 244, 246] },
+    });
+
+    doc.save(`paiements-${schoolName}-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -714,6 +760,13 @@ function PaymentsTab() {
         </div>
       ) : (
         <>
+          {payments && payments.length > 0 && (
+            <div className="flex justify-end">
+              <Button variant="secondary" size="sm" onClick={downloadPDF}>
+                <Download className="w-4 h-4" />{t('billingPayments.downloadPdf')}
+              </Button>
+            </div>
+          )}
           {payments && payments.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">

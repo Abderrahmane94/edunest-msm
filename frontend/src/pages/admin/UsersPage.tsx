@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { formatDate } from '@/lib/formatters';
 import { Shield, ShieldOff } from 'lucide-react';
 import { Button, CreateButton, DataTable, StatusBadge } from '@/components/ui';
 import type { Column } from '@/components/ui';
@@ -113,8 +114,8 @@ export function UsersPage() {
       header: t('users.columns.joined'),
       sortable: true,
       render: (user) => (
-        <span className="text-caption text-text-secondary">
-          {new Date(user.created_at).toLocaleDateString()}
+        <span className="text-caption text-text-secondary" dir="ltr">
+          {formatDate(user.created_at)}
         </span>
       ),
     },

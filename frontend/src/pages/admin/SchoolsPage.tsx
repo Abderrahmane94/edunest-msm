@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/lib/formatters';
 import { Building2, Shield, ShieldOff } from 'lucide-react';
 import {
   Button,
@@ -144,8 +145,8 @@ export function SchoolsPage() {
       header: t('schools.columns.createdAt'),
       sortable: true,
       render: (school) => (
-        <span className="text-caption text-text-secondary">
-          {new Date(school.createdAt).toLocaleDateString()}
+        <span className="text-caption text-text-secondary" dir="ltr">
+          {formatDate(school.createdAt)}
         </span>
       ),
     },

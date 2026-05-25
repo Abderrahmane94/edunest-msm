@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { formatDate } from '@/lib/formatters';
 import {
   Receipt,
   FileText,
@@ -366,8 +367,8 @@ function InvoicesTab() {
       header: t('finance.invoices.columns.dueDate'),
       sortable: true,
       render: (row) => (
-        <span className="text-caption text-text-secondary">
-          {new Date(row.due_date).toLocaleDateString()}
+        <span className="text-caption text-text-secondary" dir="ltr">
+          {formatDate(row.due_date)}
         </span>
       ),
     },
@@ -740,8 +741,8 @@ function ExpensesTab() {
       header: t('finance.expenses.columns.date'),
       sortable: true,
       render: (row) => (
-        <span className="text-caption text-text-secondary">
-          {new Date(row.date).toLocaleDateString()}
+        <span className="text-caption text-text-secondary" dir="ltr">
+          {formatDate(row.date)}
         </span>
       ),
     },

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/lib/formatters';
 import { ArrowLeft, Megaphone, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useAnnouncement, useDeleteAnnouncement } from '@/hooks/useCommunication';
@@ -70,7 +71,7 @@ export function AnnouncementDetailPage() {
         <div className="flex items-center gap-4 text-caption text-text-secondary">
           <span>{t('communication.announcements.columns.createdBy')}: <span className="text-foreground font-medium">{announcement.created_by_name}</span></span>
           <span>·</span>
-          <span>{t('communication.announcements.columns.publishedAt')}: <span className="text-foreground">{new Date(announcement.published_at).toLocaleDateString()}</span></span>
+          <span>{t('communication.announcements.columns.publishedAt')}: <span className="text-foreground" dir="ltr">{formatDate(announcement.published_at)}</span></span>
           {announcement.classroom_name && (
             <>
               <span>·</span>

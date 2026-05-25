@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Save, Trash2, CheckCircle, Circle } from 'lucide-react';
+import { formatDate } from '@/lib/formatters';
 import { Button, StatusBadge } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { Input } from '@/components/ui';
@@ -111,7 +112,7 @@ export function AcademicYearDetailPage() {
         <div className="flex-1">
           <h1 className="text-page-title font-semibold text-text-heading">{year.name}</h1>
           <p className="text-body text-text-secondary" dir="ltr">
-            {new Date(year.start_date).toLocaleDateString()} – {new Date(year.end_date).toLocaleDateString()}
+            {formatDate(year.start_date)} – {formatDate(year.end_date)}
           </p>
         </div>
         <StatusBadge variant={year.is_active ? 'present' : 'draft'}>

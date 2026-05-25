@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Megaphone, Calendar, MapPin, Users, CheckCircle, XCircle, Clock, MessageCircle } from 'lucide-react';
+import { formatDate } from '@/lib/formatters';
 import {
   Button,
   CreateButton,
@@ -148,8 +149,8 @@ function AnnouncementsTab() {
       header: t('communication.announcements.columns.publishedAt'),
       sortable: true,
       render: (row) => (
-        <span className="text-caption text-text-secondary">
-          {new Date(row.published_at).toLocaleDateString()}
+        <span className="text-caption text-text-secondary" dir="ltr">
+          {formatDate(row.published_at)}
         </span>
       ),
     },
@@ -205,8 +206,8 @@ function EventsTab({
       header: t('communication.events.columns.date'),
       sortable: true,
       render: (row) => (
-        <span className="text-caption text-text-secondary">
-          {new Date(row.start_datetime).toLocaleDateString()}
+        <span className="text-caption text-text-secondary" dir="ltr">
+          {formatDate(row.start_datetime)}
         </span>
       ),
     },
@@ -339,8 +340,8 @@ function ConsentDashboard({ eventId }: { eventId: string }) {
       key: 'responded_at',
       header: t('communication.consent.columns.respondedAt'),
       render: (row) => (
-        <span className="text-caption text-text-secondary">
-          {row.responded_at ? new Date(row.responded_at).toLocaleDateString() : '—'}
+        <span className="text-caption text-text-secondary" dir="ltr">
+          {row.responded_at ? formatDate(row.responded_at) : '—'}
         </span>
       ),
     },

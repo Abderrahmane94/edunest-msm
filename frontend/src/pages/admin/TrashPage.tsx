@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, RotateCcw, Building2, Users, Baby, DoorOpen, Banknote } from 'lucide-react';
+import { formatDate } from '@/lib/formatters';
 import {
   Button,
   DataTable,
@@ -149,13 +150,13 @@ function DeletedPaymentsTab() {
       key: 'period', header: t('billingPayments.columns.period'),
       render: (p) => (
         <span className="text-caption text-text-secondary" dir="ltr">
-          {new Date(p.periodStart).toLocaleDateString()} – {new Date(p.periodEnd).toLocaleDateString()}
+          {formatDate(p.periodStart)} – {formatDate(p.periodEnd)}
         </span>
       ),
     },
     {
       key: 'paidAt', header: t('billingPayments.columns.date'),
-      render: (p) => <span className="text-body text-text-secondary">{new Date(p.paidAt).toLocaleDateString()}</span>,
+      render: (p) => <span className="text-body text-text-secondary" dir="ltr">{formatDate(p.paidAt)}</span>,
     },
     {
       key: 'note', header: t('billingPayments.columns.note'),

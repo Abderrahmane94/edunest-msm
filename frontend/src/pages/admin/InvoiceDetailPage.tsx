@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Send, Banknote, X } from 'lucide-react';
+import { formatDate } from '@/lib/formatters';
 import { Button, StatusBadge } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { Input } from '@/components/ui';
@@ -140,8 +141,8 @@ export function InvoiceDetailPage() {
           {invoice.discount_amount > 0 && <div><p className="text-caption text-text-secondary">{t('finance.invoices.detail.discount')}</p><p className="font-mono text-success">-{formatDZD(invoice.discount_amount)}</p></div>}
           <div><p className="text-caption text-text-secondary">{t('finance.invoices.detail.finalAmount')}</p><p className="font-mono font-medium text-foreground text-lg">{formatDZD(invoice.final_amount)}</p></div>
           {invoice.remaining_amount != null && <div><p className="text-caption text-text-secondary">{t('finance.invoices.detail.remaining')}</p><p className="font-mono font-medium text-warning">{formatDZD(invoice.remaining_amount)}</p></div>}
-          <div><p className="text-caption text-text-secondary">{t('finance.invoices.columns.dueDate')}</p><p className="text-foreground">{new Date(invoice.due_date).toLocaleDateString()}</p></div>
-          {invoice.paid_at && <div><p className="text-caption text-text-secondary">{t('finance.invoices.detail.paidAt')}</p><p className="text-foreground">{new Date(invoice.paid_at).toLocaleDateString()}</p></div>}
+          <div><p className="text-caption text-text-secondary">{t('finance.invoices.columns.dueDate')}</p><p className="text-foreground" dir="ltr">{formatDate(invoice.due_date)}</p></div>
+          {invoice.paid_at && <div><p className="text-caption text-text-secondary">{t('finance.invoices.detail.paidAt')}</p><p className="text-foreground" dir="ltr">{formatDate(invoice.paid_at)}</p></div>}
         </div>
 
         {/* Actions */}
@@ -201,7 +202,7 @@ export function InvoiceDetailPage() {
                   <span className="font-mono text-body font-medium text-foreground">{formatDZD(p.amount)}</span>
                   {p.note && <span className="text-caption text-text-secondary ms-2">{p.note}</span>}
                 </div>
-                <span className="text-caption text-text-secondary">{new Date(p.received_at).toLocaleDateString()}</span>
+                <span className="text-caption text-text-secondary" dir="ltr">{formatDate(p.received_at)}</span>
               </div>
             ))}
           </div>

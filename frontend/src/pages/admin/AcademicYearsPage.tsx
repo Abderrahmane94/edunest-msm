@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Circle } from 'lucide-react';
+import { formatDate } from '@/lib/formatters';
 import {
   Button,
   CreateButton,
@@ -223,8 +224,7 @@ export function AcademicYearsPage() {
                 <div>
                   <p className="text-body font-medium text-foreground">{year.name}</p>
                   <p className="text-caption text-text-secondary" dir="ltr">
-                    {new Date(year.start_date).toLocaleDateString()} –{' '}
-                    {new Date(year.end_date).toLocaleDateString()}
+                    {formatDate(year.start_date)} – {formatDate(year.end_date)}
                   </p>
                 </div>
               </div>

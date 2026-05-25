@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Save, Shield, ShieldOff, Users, UserPlus, Settings } from 'lucide-react';
+import { formatDate } from '@/lib/formatters';
 import { Button, StatusBadge, DataTable, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Input, EntityDeleteButton } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
@@ -196,7 +197,7 @@ export function SchoolDetailPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="bg-card border border-border rounded-lg p-4">
               <p className="text-caption text-text-secondary">{t('schools.columns.createdAt')}</p>
-              <p className="text-body font-medium text-foreground mt-1">{new Date(school.createdAt).toLocaleDateString()}</p>
+              <p className="text-body font-medium text-foreground mt-1" dir="ltr">{formatDate(school.createdAt)}</p>
             </div>
             <div className="bg-card border border-border rounded-lg p-4">
               <p className="text-caption text-text-secondary">{t('schools.columns.status')}</p>
@@ -329,7 +330,7 @@ function UsersTab({ schoolId }: { schoolId: string }) {
       key: 'createdAt',
       header: t('users.columns.joined'),
       render: (u) => (
-        <span className="text-caption text-text-secondary">{new Date(u.createdAt).toLocaleDateString()}</span>
+        <span className="text-caption text-text-secondary" dir="ltr">{formatDate(u.createdAt)}</span>
       ),
     },
   ];

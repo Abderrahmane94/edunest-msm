@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Shield, ShieldOff, Save } from 'lucide-react';
+import { formatDate } from '@/lib/formatters';
 import { Button, StatusBadge, EntityDeleteButton } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
@@ -178,7 +179,7 @@ export function UserDetailPage() {
           </FormField>
 
           <p className="text-caption text-text-secondary">
-            {t('users.detail.joined')}: {new Date(user.created_at).toLocaleDateString()}
+            {t('users.detail.joined')}: <span dir="ltr" className="inline">{formatDate(user.created_at)}</span>
           </p>
         </div>
 

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { UserCog } from 'lucide-react';
+import { formatDate } from '@/lib/formatters';
 import { DataTable, StatusBadge } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { useUsers, type User } from '@/hooks/useUsers';
@@ -89,8 +90,8 @@ export function StaffListPage() {
       header: t('staff.columns.joined'),
       sortable: true,
       render: (user) => (
-        <span className="text-caption text-text-secondary">
-          {new Date(user.created_at).toLocaleDateString()}
+        <span className="text-caption text-text-secondary" dir="ltr">
+          {formatDate(user.created_at)}
         </span>
       ),
     },

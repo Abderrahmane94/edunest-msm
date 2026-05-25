@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Link2, Phone } from 'lucide-react';
+import { formatDate } from '@/lib/formatters';
 import {
   Button,
   CreateButton,
@@ -532,8 +533,8 @@ export function ChildrenPage() {
             <p className="text-body font-medium text-foreground">
               {child.first_name} {child.last_name}
             </p>
-            <p className="text-caption text-text-secondary">
-              {new Date(child.date_of_birth).toLocaleDateString()}
+            <p className="text-caption text-text-secondary" dir="ltr">
+              {formatDate(child.date_of_birth)}
             </p>
           </div>
         </div>

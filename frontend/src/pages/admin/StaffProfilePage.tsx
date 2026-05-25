@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { Upload, FileText, Download, Trash2, UserCog } from 'lucide-react';
+import { formatDate } from '@/lib/formatters';
 import { Button } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { FormSelect } from '@/components/forms';
@@ -238,7 +239,7 @@ export function StaffProfilePage() {
                       {doc.name}
                     </p>
                     <p className="text-caption text-text-secondary">
-                      {t('staff.uploadedOn', { date: new Date(doc.uploaded_at).toLocaleDateString() })}
+                      {t('staff.uploadedOn', { date: formatDate(doc.uploaded_at) })}
                     </p>
                   </div>
                 </div>

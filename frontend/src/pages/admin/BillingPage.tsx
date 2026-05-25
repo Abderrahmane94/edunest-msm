@@ -4,6 +4,7 @@ import {
   TrendingUp, CreditCard, Building2, CheckCircle, AlertCircle,
   Plus, Pencil, Trash2, X, Save, Banknote, Clock, XCircle, Search, Calendar, Download,
 } from 'lucide-react';
+import { formatDate } from '@/lib/formatters';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import {
@@ -823,7 +824,7 @@ function PaymentsTab() {
   const columns: Column<SchoolPaymentRecord>[] = [
     {
       key: 'paidAt', header: t('billingPayments.columns.date'), render: (p) => (
-        <span className="text-body text-text-primary">{new Date(p.paidAt).toLocaleDateString()}</span>
+        <span className="text-body text-text-primary" dir="ltr">{formatDate(p.paidAt)}</span>
       ),
     },
     {
@@ -834,7 +835,7 @@ function PaymentsTab() {
     {
       key: 'period', header: t('billingPayments.columns.period'), render: (p) => (
         <span className="text-caption text-text-secondary" dir="ltr">
-          {new Date(p.periodStart).toLocaleDateString()} – {new Date(p.periodEnd).toLocaleDateString()}
+          {formatDate(p.periodStart)} – {formatDate(p.periodEnd)}
         </span>
       ),
     },

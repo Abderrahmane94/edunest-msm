@@ -614,7 +614,9 @@
     "totalAmount": "Montant total",
     "total": "Total",
     "downloadPdf": "Télécharger PDF",
+    "downloadReceipt": "Télécharger le reçu",
     "pdfTitle": "Rapport de paiements",
+    "receiptTitle": "Reçu de paiement",
     "generatedOn": "Généré le",
     "empty": "Aucun paiement trouvé pour cette école.",
     "columns": {

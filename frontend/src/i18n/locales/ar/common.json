@@ -613,7 +613,9 @@
     "totalAmount": "المبلغ الإجمالي",
     "total": "المجموع",
     "downloadPdf": "تحميل PDF",
+    "downloadReceipt": "تحميل الإيصال",
     "pdfTitle": "تقرير المدفوعات",
+    "receiptTitle": "إيصال دفع",
     "generatedOn": "تاريخ الإنشاء",
     "empty": "لا توجد مدفوعات لهذه المدرسة.",
     "columns": {

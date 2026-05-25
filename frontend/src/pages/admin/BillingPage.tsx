@@ -655,12 +655,118 @@ function PaymentsTab() {
         <span className="text-caption text-text-secondary">{p.note || '—'}</span>
       ),
     },
+    {
+      key: 'download', header: '', render: (p) => (
+        <Button variant="ghost" size="icon" title={t('billingPayments.downloadReceipt')}
+          onClick={(e) => { e.stopPropagation(); downloadSinglePaymentPDF(p); }}>
+          <Download className="w-4 h-4 text-text-secondary" />
+        </Button>
+      ), className: 'w-12',
+    },
   ];
 
   const totalAmount = React.useMemo(() =>
     (payments ?? []).reduce((sum, p) => sum + p.amount, 0),
     [payments],
   );
+
+  async function downloadSinglePaymentPDF(p: SchoolPaymentRecord) {
+    const isRTL = document.documentElement.dir === 'rtl';
+    const dir = isRTL ? 'rtl' : 'ltr';
+    const font = isRTL ? "'Noto Sans Arabic', Arial, sans-serif" : "'Plus Jakarta Sans', Arial, sans-serif";
+    const startAlign = isRTL ? 'right' : 'left';
+    const endAlign = isRTL ? 'left' : 'right';
+    const schoolName = p.subscription.school.name;
+
+    const STATUS_COLOR: Record<string, string> = {
+      active: '#16a34a', trial: '#ca8a04', overdue: '#dc2626',
+      cancelled: '#9ca3af', suspended: '#9ca3af',
+    };
+    const statusColor = STATUS_COLOR[p.subscription.status] ?? '#374151';
+    const dateStr = new Date(p.paidAt).toLocaleDateString('fr-FR');
+    const periodStr = `${new Date(p.periodStart).toLocaleDateString('fr-FR')} – ${new Date(p.periodEnd).toLocaleDateString('fr-FR')}`;
+    const amountStr = `${p.amount.toLocaleString('fr-FR')} DZD`;
+    const statusStr = t(`billing.status.${p.subscription.status}`);
+
+    const detailRow = (label: string, value: string, valueDir = dir, valueColor = '#111827') =>
+      `<tr>
+        <td dir="${dir}" style="padding:10px 0; font-size:11px; color:#6b7280; width:45%; text-align:${startAlign}; border-bottom:1px solid #f3f4f6;">${label}</td>
+        <td dir="${valueDir}" style="padding:10px 0; font-size:11px; font-weight:600; color:${valueColor}; text-align:${endAlign}; border-bottom:1px solid #f3f4f6; unicode-bidi:embed;">${value}</td>
+      </tr>`;
+
+    const html = `
+<div dir="${dir}" style="font-family:${font}; direction:${dir}; background:#fff; width:794px; box-sizing:border-box; color:#111827;">
+  <table dir="${dir}" style="width:100%; border-collapse:collapse; background:#6366f1;">
+    <tr>
+      <td style="padding:22px 32px; vertical-align:middle;">
+        <div style="color:#fff; font-size:22px; font-weight:700; margin-bottom:4px;">EduNest</div>
+        <div style="color:#c7d2fe; font-size:11px;">${t('billingPayments.receiptTitle')}</div>
+      </td>
+      <td dir="ltr" style="padding:22px 32px; vertical-align:middle; text-align:${endAlign}; color:#e0e7ff; font-size:10px; unicode-bidi:embed;">
+        ${new Date().toLocaleDateString('fr-FR')}
+      </td>
+    </tr>
+  </table>
+  <div style="padding:28px 32px; direction:${dir};">
+    <div dir="${dir}" style="font-size:18px; font-weight:700; color:#111827; margin-bottom:4px; text-align:${startAlign};">${schoolName}</div>
+    <div dir="${dir}" style="font-size:11px; color:#6b7280; margin-bottom:24px; text-align:${startAlign};">${t('billing.subscriptions.plan')}: ${p.subscription.plan.name}</div>
+    <div style="background:#f9fafb; border-radius:12px; padding:20px 24px;">
+      <table dir="${dir}" style="width:100%; border-collapse:collapse;">
+        <tbody>
+          ${detailRow(t('billingPayments.columns.date'), dateStr, 'ltr')}
+          ${detailRow(t('billingPayments.columns.amount'), amountStr, 'ltr', '#16a34a')}
+          ${detailRow(t('billingPayments.columns.period'), periodStr, 'ltr')}
+          ${detailRow(t('billingPayments.columns.subscriptionStatus'), statusStr, dir, statusColor)}
+          ${p.note ? detailRow(t('billingPayments.columns.note'), p.note) : ''}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <table dir="${dir}" style="width:100%; border-collapse:collapse; background:#6366f1; margin-top:28px;">
+    <tr>
+      <td style="padding:8px 32px; color:#fff; font-size:9px; font-weight:600; text-align:${startAlign};">EduNest</td>
+      <td dir="ltr" style="padding:8px 32px; color:#c7d2fe; font-size:9px; text-align:${endAlign}; unicode-bidi:embed;">${t('billingPayments.generatedOn')}: ${new Date().toLocaleDateString('fr-FR')}</td>
+    </tr>
+  </table>
+</div>`;
+
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:fixed; top:-20000px; left:0; width:794px; z-index:-9999; opacity:0; pointer-events:none;';
+    wrapper.innerHTML = html;
+    document.body.appendChild(wrapper);
+
+    await document.fonts.ready;
+    await new Promise<void>((r) => setTimeout(r, 250));
+
+    const canvas = await html2canvas(wrapper.firstElementChild as HTMLElement, {
+      scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', windowWidth: 794,
+    });
+    document.body.removeChild(wrapper);
+
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const ratio = canvas.width / pdfW;
+    const pageHeightPx = Math.floor(pdfH * ratio);
+    let srcY = 0;
+    let firstPage = true;
+    while (srcY < canvas.height) {
+      if (!firstPage) pdf.addPage();
+      firstPage = false;
+      const sliceH = Math.min(pageHeightPx, canvas.height - srcY);
+      const slice = document.createElement('canvas');
+      slice.width = canvas.width;
+      slice.height = sliceH;
+      const ctx = slice.getContext('2d')!;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, slice.width, slice.height);
+      ctx.drawImage(canvas, 0, srcY, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+      pdf.addImage(slice.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pdfW, sliceH / ratio);
+      srcY += pageHeightPx;
+    }
+
+    pdf.save(`recu-${schoolName}-${dateStr.replace(/\//g, '-')}.pdf`);
+  }
 
   async function downloadPDF() {
     if (!payments || payments.length === 0) return;

@@ -1161,7 +1161,15 @@
     },
     "pdf": {
       "downloadPayslip": "تحميل قسيمة الراتب",
-      "exportList": "تصدير PDF"
+      "exportList": "تصدير PDF",
+      "payslipTitle": "قسيمة الراتب",
+      "reportTitle": "تقرير الرواتب",
+      "netToPay": "صافي الراتب",
+      "paymentDate": "تاريخ الدفع",
+      "totalPayments": "عدد المدفوعات",
+      "totalNet": "إجمالي صافي الرواتب",
+      "generatedOn": "تم الإنشاء بتاريخ",
+      "netColumn": "الصافي"
     },
     "deletePayment": "حذف",
     "deleteConfirm": "حذف هذه الدفعة؟",

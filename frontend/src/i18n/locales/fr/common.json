@@ -1162,7 +1162,15 @@
     },
     "pdf": {
       "downloadPayslip": "Télécharger le bulletin de paie",
-      "exportList": "Exporter PDF"
+      "exportList": "Exporter PDF",
+      "payslipTitle": "Bulletin de paie",
+      "reportTitle": "Rapport de paie",
+      "netToPay": "Net à payer",
+      "paymentDate": "Date de paiement",
+      "totalPayments": "Nombre de paiements",
+      "totalNet": "Total net versé",
+      "generatedOn": "Généré le",
+      "netColumn": "Net"
     },
     "deletePayment": "Supprimer",
     "deleteConfirm": "Supprimer ce paiement de salaire ?",

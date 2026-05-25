@@ -517,13 +517,17 @@ async function renderPDF(html: string, filename: string) {
   pdf.save(filename);
 }
 
-function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean): string {
+type TFn = (key: string) => string;
+
+function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean, t: TFn): string {
   const dir = isRTL ? 'rtl' : 'ltr';
   const font = isRTL
     ? "'Noto Sans Arabic', Arial, sans-serif"
     : "'Plus Jakarta Sans', Arial, sans-serif";
   const startAlign = isRTL ? 'right' : 'left';
   const endAlign = isRTL ? 'left' : 'right';
+  const locale = isRTL ? 'ar-DZ' : 'fr-FR';
+  const today = new Date().toLocaleDateString(locale);
 
   const row = (label: string, value: string, valueColor = '#111827', ltrValue = true) =>
     `<tr>
@@ -540,10 +544,10 @@ function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean):
     <tr>
       <td style="padding:22px 32px;vertical-align:middle;">
         <div style="color:#fff;font-size:22px;font-weight:700;margin-bottom:4px;">EduNest</div>
-        <div style="color:#c7d2fe;font-size:11px;">Bulletin de paie</div>
+        <div style="color:#c7d2fe;font-size:11px;">${t('payroll.pdf.payslipTitle')}</div>
       </td>
       <td dir="ltr" style="padding:22px 32px;vertical-align:middle;text-align:${endAlign};color:#e0e7ff;font-size:10px;unicode-bidi:embed;">
-        ${new Date().toLocaleDateString('fr-FR')}
+        ${today}
       </td>
     </tr>
   </table>
@@ -555,23 +559,23 @@ function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean):
     <div style="background:#f9fafb;border-radius:12px;padding:20px 24px;margin-bottom:20px;">
       <table style="width:100%;border-collapse:collapse;">
         <tbody>
-          ${row('Salaire de base', `${Number(p.baseSalary).toLocaleString('fr-FR')} DZD`, '#111827')}
-          ${hasBonuses ? row('Primes', `+${Number(p.bonuses).toLocaleString('fr-FR')} DZD`, '#16a34a') : ''}
-          ${hasDeductions ? row('Retenues', `-${Number(p.deductions).toLocaleString('fr-FR')} DZD`, '#dc2626') : ''}
+          ${row(t('payroll.columns.baseSalary'), `${Number(p.baseSalary).toLocaleString('fr-FR')} DZD`, '#111827')}
+          ${hasBonuses ? row(t('payroll.columns.bonuses'), `+${Number(p.bonuses).toLocaleString('fr-FR')} DZD`, '#16a34a') : ''}
+          ${hasDeductions ? row(t('payroll.columns.deductions'), `-${Number(p.deductions).toLocaleString('fr-FR')} DZD`, '#dc2626') : ''}
         </tbody>
       </table>
     </div>
 
     <div style="background:#eef2ff;border-radius:12px;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <span dir="${dir}" style="font-size:13px;font-weight:600;color:#4338ca;">Net à payer</span>
+      <span dir="${dir}" style="font-size:13px;font-weight:600;color:#4338ca;">${t('payroll.pdf.netToPay')}</span>
       <span dir="ltr" style="font-size:22px;font-weight:700;color:#4338ca;unicode-bidi:embed;">${Number(p.netSalary).toLocaleString('fr-FR')} DZD</span>
     </div>
 
     <div style="background:#f9fafb;border-radius:12px;padding:20px 24px;">
       <table style="width:100%;border-collapse:collapse;">
         <tbody>
-          ${row('Date de paiement', new Date(p.paidAt).toLocaleDateString('fr-FR'), '#111827')}
-          ${p.note ? row('Note', p.note, '#6b7280', false) : ''}
+          ${row(t('payroll.pdf.paymentDate'), new Date(p.paidAt).toLocaleDateString(locale), '#111827')}
+          ${p.note ? row(t('payroll.columns.note'), p.note, '#6b7280', false) : ''}
         </tbody>
       </table>
     </div>
@@ -580,19 +584,21 @@ function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean):
   <table style="width:100%;border-collapse:collapse;background:#6366f1;margin-top:28px;">
     <tr>
       <td style="padding:8px 32px;color:#fff;font-size:9px;font-weight:600;text-align:${startAlign};">EduNest</td>
-      <td dir="ltr" style="padding:8px 32px;color:#c7d2fe;font-size:9px;text-align:${endAlign};unicode-bidi:embed;">Généré le ${new Date().toLocaleDateString('fr-FR')}</td>
+      <td dir="ltr" style="padding:8px 32px;color:#c7d2fe;font-size:9px;text-align:${endAlign};unicode-bidi:embed;">${t('payroll.pdf.generatedOn')}: ${today}</td>
     </tr>
   </table>
 </div>`;
 }
 
-function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName: (m: number, y: number) => string): string {
+function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName: (m: number, y: number) => string, t: TFn): string {
   const dir = isRTL ? 'rtl' : 'ltr';
   const font = isRTL
     ? "'Noto Sans Arabic', Arial, sans-serif"
     : "'Plus Jakarta Sans', Arial, sans-serif";
   const startAlign = isRTL ? 'right' : 'left';
   const endAlign = isRTL ? 'left' : 'right';
+  const locale = isRTL ? 'ar-DZ' : 'fr-FR';
+  const today = new Date().toLocaleDateString(locale);
   const thStyle = `padding:10px 12px;font-weight:600;font-size:11px;color:#fff;text-align:${startAlign};`;
 
   const totalNet = items.reduce((s, p) => s + parseFloat(p.netSalary), 0);
@@ -607,7 +613,7 @@ function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName:
         <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${endAlign};color:#16a34a;unicode-bidi:embed;">${parseFloat(p.bonuses) > 0 ? `+${Number(p.bonuses).toLocaleString('fr-FR')} DZD` : '—'}</td>
         <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${endAlign};color:#dc2626;unicode-bidi:embed;">${parseFloat(p.deductions) > 0 ? `-${Number(p.deductions).toLocaleString('fr-FR')} DZD` : '—'}</td>
         <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:700;text-align:${endAlign};unicode-bidi:embed;">${Number(p.netSalary).toLocaleString('fr-FR')} DZD</td>
-        <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${startAlign};color:#6b7280;unicode-bidi:embed;">${new Date(p.paidAt).toLocaleDateString('fr-FR')}</td>
+        <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${startAlign};color:#6b7280;unicode-bidi:embed;">${new Date(p.paidAt).toLocaleDateString(locale)}</td>
       </tr>`;
     })
     .join('');
@@ -618,9 +624,9 @@ function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName:
     <tr>
       <td style="padding:22px 32px;vertical-align:middle;">
         <div style="color:#fff;font-size:22px;font-weight:700;margin-bottom:4px;">EduNest</div>
-        <div style="color:#c7d2fe;font-size:11px;">Rapport de paie</div>
+        <div style="color:#c7d2fe;font-size:11px;">${t('payroll.pdf.reportTitle')}</div>
       </td>
-      <td dir="ltr" style="padding:22px 32px;vertical-align:middle;text-align:${endAlign};color:#e0e7ff;font-size:10px;unicode-bidi:embed;">${new Date().toLocaleDateString('fr-FR')}</td>
+      <td dir="ltr" style="padding:22px 32px;vertical-align:middle;text-align:${endAlign};color:#e0e7ff;font-size:10px;unicode-bidi:embed;">${today}</td>
     </tr>
   </table>
 
@@ -629,11 +635,11 @@ function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName:
       <tr>
         <td style="background:#eef2ff;border-radius:10px;padding:14px 18px;width:50%;vertical-align:top;">
           <div dir="ltr" style="font-size:26px;font-weight:700;color:#6366f1;line-height:1;text-align:${startAlign};unicode-bidi:embed;">${items.length}</div>
-          <div dir="${dir}" style="font-size:10px;color:#6b7280;margin-top:6px;text-align:${startAlign};">Nombre de paiements</div>
+          <div dir="${dir}" style="font-size:10px;color:#6b7280;margin-top:6px;text-align:${startAlign};">${t('payroll.pdf.totalPayments')}</div>
         </td>
         <td style="background:#f0fdf4;border-radius:10px;padding:14px 18px;width:50%;vertical-align:top;">
           <div dir="ltr" style="font-size:20px;font-weight:700;color:#16a34a;line-height:1;text-align:${startAlign};unicode-bidi:embed;">${totalNet.toLocaleString('fr-FR')} DZD</div>
-          <div dir="${dir}" style="font-size:10px;color:#6b7280;margin-top:6px;text-align:${startAlign};">Total net versé</div>
+          <div dir="${dir}" style="font-size:10px;color:#6b7280;margin-top:6px;text-align:${startAlign};">${t('payroll.pdf.totalNet')}</div>
         </td>
       </tr>
     </table>
@@ -645,13 +651,13 @@ function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName:
       </colgroup>
       <thead>
         <tr style="background:#6366f1;">
-          <th dir="${dir}" style="${thStyle}">Employé</th>
-          <th dir="${dir}" style="${thStyle}">Période</th>
-          <th dir="ltr"    style="${thStyle};text-align:${endAlign};">Salaire de base</th>
-          <th dir="ltr"    style="${thStyle};text-align:${endAlign};">Primes</th>
-          <th dir="ltr"    style="${thStyle};text-align:${endAlign};">Retenues</th>
-          <th dir="ltr"    style="${thStyle};text-align:${endAlign};">Net</th>
-          <th dir="ltr"    style="${thStyle}">Date</th>
+          <th dir="${dir}" style="${thStyle}">${t('payroll.columns.employee')}</th>
+          <th dir="${dir}" style="${thStyle}">${t('payroll.columns.period')}</th>
+          <th dir="ltr"    style="${thStyle};text-align:${endAlign};">${t('payroll.columns.baseSalary')}</th>
+          <th dir="ltr"    style="${thStyle};text-align:${endAlign};">${t('payroll.columns.bonuses')}</th>
+          <th dir="ltr"    style="${thStyle};text-align:${endAlign};">${t('payroll.columns.deductions')}</th>
+          <th dir="ltr"    style="${thStyle};text-align:${endAlign};">${t('payroll.pdf.netColumn')}</th>
+          <th dir="ltr"    style="${thStyle}">${t('payroll.columns.paidAt')}</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -668,7 +674,7 @@ function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName:
   <table style="width:100%;border-collapse:collapse;background:#6366f1;margin-top:28px;">
     <tr>
       <td style="padding:8px 32px;color:#fff;font-size:9px;font-weight:600;text-align:${startAlign};">EduNest</td>
-      <td dir="ltr" style="padding:8px 32px;color:#c7d2fe;font-size:9px;text-align:${endAlign};unicode-bidi:embed;">Généré le ${new Date().toLocaleDateString('fr-FR')}</td>
+      <td dir="ltr" style="padding:8px 32px;color:#c7d2fe;font-size:9px;text-align:${endAlign};unicode-bidi:embed;">${t('payroll.pdf.generatedOn')}: ${today}</td>
     </tr>
   </table>
 </div>`;
@@ -709,7 +715,7 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
     setPdfRowId(p.id);
     try {
       const isRTL = document.documentElement.dir === 'rtl';
-      const html = buildPayslipHTML(p, monthName(p.month, p.year), isRTL);
+      const html = buildPayslipHTML(p, monthName(p.month, p.year), isRTL, t);
       const safeName = p.employeeName.replace(/\s+/g, '-');
       await renderPDF(html, `fiche-paie-${safeName}-${p.year}-${String(p.month).padStart(2, '0')}.pdf`);
     } finally {
@@ -723,7 +729,7 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
     setPdfBulkLoading(true);
     try {
       const isRTL = document.documentElement.dir === 'rtl';
-      const html = buildPayrollListHTML(items, isRTL, monthName);
+      const html = buildPayrollListHTML(items, isRTL, monthName, t);
       await renderPDF(html, `rapport-paie-${new Date().toISOString().split('T')[0]}.pdf`);
     } finally {
       setPdfBulkLoading(false);

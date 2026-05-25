@@ -94,7 +94,7 @@ export const billingService = {
       include: {
         school: { select: { id: true, name: true, wilaya: true, isActive: true } },
         plan: true,
-        payments: { where: { deletedAt: null }, orderBy: { paidAt: 'desc' }, take: 1 },
+        payments: { where: { deletedAt: null }, orderBy: { periodEnd: 'desc' }, take: 1 },
       },
       orderBy: { createdAt: 'desc' },
     });

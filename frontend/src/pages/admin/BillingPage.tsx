@@ -326,11 +326,16 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
   const recordPayment = useRecordPayment();
   const today = new Date().toISOString().split('T')[0];
 
-  // Pre-fill the NEXT billing period (current end → one cycle later)
-  const nextStart = sub.currentPeriodEnd.split('T')[0];
-  const nextEndDate = new Date(sub.currentPeriodEnd);
-  if (sub.billingCycle === 'annual') nextEndDate.setFullYear(nextEndDate.getFullYear() + 1);
-  else nextEndDate.setMonth(nextEndDate.getMonth() + 1);
+  // Pre-fill starting from the first day not yet covered by any payment.
+  // If payments exist, use the latest periodEnd (ordered desc by periodEnd from the API).
+  // If no payments yet, the school owes from currentPeriodStart.
+  const latestCoveredEnd = sub.payments[0]?.periodEnd ?? null;
+  const nextStart = latestCoveredEnd
+    ? latestCoveredEnd.split('T')[0]
+    : sub.currentPeriodStart.split('T')[0];
+  const nextEndDate = new Date(nextStart + 'T00:00:00Z');
+  if (sub.billingCycle === 'annual') nextEndDate.setUTCFullYear(nextEndDate.getUTCFullYear() + 1);
+  else nextEndDate.setUTCMonth(nextEndDate.getUTCMonth() + 1);
   const nextEnd = nextEndDate.toISOString().split('T')[0];
 
   const defaultAmount = sub.billingCycle === 'annual' && sub.plan.priceAnnual

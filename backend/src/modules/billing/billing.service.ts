@@ -180,6 +180,15 @@ export const billingService = {
       throw new BillingError('PAYMENT_BLOCKED', 400);
     }
 
+    const overlap = await prisma.subscriptionPayment.findFirst({
+      where: {
+        subscriptionId,
+        periodStart: { lt: new Date(input.periodEnd) },
+        periodEnd: { gt: new Date(input.periodStart) },
+      },
+    });
+    if (overlap) throw new BillingError('PERIOD_ALREADY_PAID', 409);
+
     const payment = await prisma.subscriptionPayment.create({
       data: {
         subscriptionId,

@@ -586,6 +586,7 @@
       "SCHOOL_NOT_FOUND": "École introuvable.",
       "SUBSCRIPTION_NOT_FOUND": "Abonnement introuvable.",
       "SUBSCRIPTION_ALREADY_ACTIVE": "Cet établissement a déjà un abonnement actif. Annulez-le d'abord avant de le réassigner.",
+      "PERIOD_ALREADY_PAID": "Un paiement existe déjà pour cette période.",
       "PAYMENT_BLOCKED": "Impossible d'enregistrer un paiement pour un abonnement annulé ou suspendu.",
       "NO_SUBSCRIPTION_FOR_SCHOOL": "Aucun abonnement trouvé pour cette école."
     },

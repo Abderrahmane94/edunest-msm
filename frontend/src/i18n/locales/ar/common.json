@@ -585,6 +585,7 @@
       "SCHOOL_NOT_FOUND": "المدرسة غير موجودة.",
       "SUBSCRIPTION_NOT_FOUND": "الاشتراك غير موجود.",
       "SUBSCRIPTION_ALREADY_ACTIVE": "هذه المؤسسة لديها اشتراك نشط بالفعل. يرجى إلغاؤه أولاً قبل إعادة التعيين.",
+      "PERIOD_ALREADY_PAID": "يوجد دفع مسجل بالفعل يغطي هذه الفترة.",
       "PAYMENT_BLOCKED": "لا يمكن تسجيل دفعة لاشتراك ملغي أو معلق.",
       "NO_SUBSCRIPTION_FOR_SCHOOL": "لا يوجد اشتراك لهذه المدرسة."
     },

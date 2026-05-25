@@ -54,7 +54,7 @@
       "subtitle": "كل ما تحتاجه لإدارة مؤسستك في مكان واحد."
     },
     "features": {
-      "students": "إدارة الأطفال والفصول",
+      "students": "إدارة الأطفال والأقسام",
       "people": "متابعة الأولياء والمعلمين",
       "attendance": "الحضور والتقارير الفورية",
       "finance": "لوحة تحكم مالية"
@@ -77,7 +77,7 @@
     "dashboard": "لوحة التحكم",
     "schools": "المدارس",
     "children": "الأطفال",
-    "classrooms": "الفصول",
+    "classrooms": "الأقسام",
     "academicYears": "السنوات",
     "attendance": "الحضور",
     "communication": "التواصل",
@@ -180,7 +180,7 @@
       "schools": "المدرسة",
       "users": "المستخدم",
       "children": "الطفل",
-      "classrooms": "الفصل"
+      "classrooms": "القسم"
     }
   },
   "table": {
@@ -305,18 +305,18 @@
     }
   },
   "classrooms": {
-    "title": "الفصول",
-    "create": "فصل جديد",
-    "noClassrooms": "لم يتم العثور على فصول",
+    "title": "الأقسام",
+    "create": "قسم جديد",
+    "noClassrooms": "لم يتم العثور على أقسام",
     "noActiveYear": "يرجى تفعيل سنة دراسية أولاً.",
     "noTeacher": "غير معين",
-    "notFound": "الفصل غير موجود",
+    "notFound": "القسم غير موجود",
     "detail": {
       "info": "المعلومات",
       "assign": "حفظ",
       "dangerZone": "منطقة الخطر",
-      "deleteWarning": "الحذف نهائي. يمكن حذف الفصول التي ليس بها طلاب مسجلون فقط.",
-      "delete": "حذف هذا الفصل",
+      "deleteWarning": "الحذف نهائي. يمكن حذف الأقسام التي ليس بها طلاب مسجلون فقط.",
+      "delete": "حذف هذا القسم",
       "confirmDelete": "تأكيد الحذف؟"
     },
     "columns": {
@@ -327,10 +327,10 @@
       "roomNumber": "الغرفة"
     },
     "form": {
-      "title": "إنشاء فصل",
-      "description": "أضف فصلاً جديداً للسنة الدراسية النشطة.",
-      "name": "اسم الفصل",
-      "namePlaceholder": "مثال: الفصل أ",
+      "title": "إنشاء قسم",
+      "description": "أضف قسماً جديداً للسنة الدراسية النشطة.",
+      "name": "اسم القسم",
+      "namePlaceholder": "مثال: القسم أ",
       "nameRequired": "الاسم مطلوب",
       "capacity": "السعة",
       "capacityRequired": "السعة يجب أن تكون رقماً موجباً",
@@ -344,7 +344,7 @@
     },
     "assignTeacher": {
       "title": "تعيين معلم",
-      "description": "تعيين معلم للفصل {{name}}.",
+      "description": "تعيين معلم للقسم {{name}}.",
       "selectTeacher": "اختر معلماً"
     }
   },
@@ -359,10 +359,10 @@
     "inactive": "غير نشط",
     "detail": {
       "info": "المعلومات",
-      "classroom": "الفصل الحالي",
-      "noClassroom": "لا يوجد فصل مخصص",
+      "classroom": "القسم الحالي",
+      "noClassroom": "لا يوجد قسم مخصص",
       "enrollIn": "التسجيل في",
-      "selectClassroom": "اختر فصلاً",
+      "selectClassroom": "اختر قسماً",
       "enroll": "تسجيل",
       "parents": "أولياء الأمور المرتبطون",
       "link": "ربط",
@@ -376,7 +376,7 @@
     "columns": {
       "name": "الاسم",
       "gender": "الجنس",
-      "classroom": "الفصل",
+      "classroom": "القسم",
       "parents": "أولياء الأمور",
       "status": "الحالة"
     },
@@ -457,14 +457,14 @@
     "title": "الحضور",
     "dailyView": "العرض اليومي",
     "monthlyView": "التقرير الشهري",
-    "classroom": "الفصل",
-    "selectClassroom": "اختر فصلاً",
-    "selectClassroomPrompt": "اختر فصلاً لعرض بيانات الحضور.",
+    "classroom": "القسم",
+    "selectClassroom": "اختر قسماً",
+    "selectClassroomPrompt": "اختر قسماً لعرض بيانات الحضور.",
     "date": "التاريخ",
     "month": "الشهر",
     "year": "السنة",
     "noRecords": "لا توجد سجلات حضور لهذا التاريخ.",
-    "notMarkedYet": "لم يتم تسجيل حضور هذا الفصل لهذا التاريخ بعد.",
+    "notMarkedYet": "لم يتم تسجيل حضور هذا القسم لهذا التاريخ بعد.",
     "noReportData": "لا توجد بيانات تقرير لهذه الفترة.",
     "trackingView": "المتابعة",
     "tracking": {
@@ -733,9 +733,9 @@
       },
       "bulkForm": {
         "title": "إنشاء فواتير جماعية",
-        "description": "أنشئ فواتير لجميع أطفال الفصل.",
-        "classroom": "الفصل",
-        "classroomPlaceholder": "اختر فصلاً",
+        "description": "أنشئ فواتير لجميع أطفال القسم.",
+        "classroom": "القسم",
+        "classroomPlaceholder": "اختر قسماً",
         "feeStructure": "هيكل الرسوم",
         "feePlaceholder": "اختر رسوماً",
         "dueDate": "تاريخ الاستحقاق",
@@ -838,7 +838,7 @@
       },
       "form": {
         "title": "إنشاء إعلان",
-        "description": "انشر إعلاناً للمدرسة أو لفصل محدد.",
+        "description": "انشر إعلاناً للمدرسة أو لقسم محدد.",
         "announcementTitle": "العنوان",
         "titlePlaceholder": "أدخل عنوان الإعلان",
         "body": "المحتوى",
@@ -907,8 +907,8 @@
   },
   "teacherAttendance": {
     "title": "نداء الحضور",
-    "noClassroom": "لم يتم تعيين فصل لك. تواصل مع المسؤول.",
-    "noChildren": "لا يوجد أطفال مسجلون في هذا الفصل.",
+    "noClassroom": "لم يتم تعيين قسم لك. تواصل مع المسؤول.",
+    "noChildren": "لا يوجد أطفال مسجلون في هذا القسم.",
     "selectDate": "اختر التاريخ",
     "marked": "تم تسجيلهم",
     "markAllPresent": "تسجيل الجميع حاضرين",
@@ -936,9 +936,9 @@
   },
   "dailyReport": {
     "title": "التقرير اليومي",
-    "noClassroom": "لم يتم تعيين فصل",
+    "noClassroom": "لم يتم تعيين قسم",
     "selectChild": "اختر طفلاً",
-    "noChildren": "لا يوجد أطفال في الفصل",
+    "noChildren": "لا يوجد أطفال في القسم",
     "mood": "المزاج",
     "mealsEaten": "الوجبات",
     "decreaseMeals": "تقليل الوجبات",
@@ -1048,7 +1048,7 @@
       "schools": "المدارس",
       "users": "المستخدمون",
       "children": "الأطفال",
-      "classrooms": "الفصول",
+      "classrooms": "الأقسام",
       "payments": "المدفوعات"
     },
     "columns": {
@@ -1078,9 +1078,9 @@
   },
   "timetable": {
     "title": "أيام الحضور",
-    "description": "حدد أيام الحضور لكل فصل. لن يتمكن المعلم من تسجيل الحضور إلا في الأيام المحددة.",
-    "selectClassroom": "الفصل",
-    "selectClassroomPrompt": "اختر فصلاً لتحديد أيام حضوره.",
+    "description": "حدد أيام الحضور لكل قسم. لن يتمكن المعلم من تسجيل الحضور إلا في الأيام المحددة.",
+    "selectClassroom": "القسم",
+    "selectClassroomPrompt": "اختر قسماً لتحديد أيام حضوره.",
     "workingDays": "أيام الحضور",
     "workingDaysHint": "حدد الأيام التي يجب أن يكون فيها الأطفال حاضرين.",
     "daysPerWeek": "{{count}} يوم/أيام في الأسبوع",

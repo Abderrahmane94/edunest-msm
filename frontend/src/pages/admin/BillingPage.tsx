@@ -382,26 +382,32 @@ function SubscriptionsTab() {
   const { t } = useTranslation();
   const { data: subs, isLoading } = useSubscriptions();
   const { data: plans } = usePlans();
+  const { data: schools } = useSchoolsList();
   const updateStatus = useUpdateSubscriptionStatus();
   const [assignOpen, setAssignOpen] = React.useState(false);
   const [payingSub, setPayingSub] = React.useState<SchoolSubscription | null>(null);
   const [statusError, setStatusError] = React.useState<string | null>(null);
 
-  const [search, setSearch] = React.useState('');
+  const [schoolFilter, setSchoolFilter] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
   const [planFilter, setPlanFilter] = React.useState('');
   const [cycleFilter, setCycleFilter] = React.useState('');
 
-  const hasFilters = !!(search || statusFilter || planFilter || cycleFilter);
+  const hasFilters = !!(schoolFilter || statusFilter || planFilter || cycleFilter);
 
   const filtered = React.useMemo(() => {
     let data = subs ?? [];
-    if (search) data = data.filter((s) => s.school.name.toLowerCase().includes(search.toLowerCase()));
+    if (schoolFilter) data = data.filter((s) => s.school.id === schoolFilter);
     if (statusFilter) data = data.filter((s) => s.status === statusFilter);
     if (planFilter) data = data.filter((s) => s.plan.id === planFilter);
     if (cycleFilter) data = data.filter((s) => s.billingCycle === cycleFilter);
     return data;
-  }, [subs, search, statusFilter, planFilter, cycleFilter]);
+  }, [subs, schoolFilter, statusFilter, planFilter, cycleFilter]);
+
+  const schoolOptions = React.useMemo(() => [
+    { value: '', label: t('billing.subscriptions.allSchools') },
+    ...(schools ?? []).map((s) => ({ value: s.id, label: s.name })),
+  ], [schools, t]);
 
   const planOptions = React.useMemo(() => [
     { value: '', label: t('billing.subscriptions.allPlans') },
@@ -499,16 +505,13 @@ function SubscriptionsTab() {
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-2">
-            <label className="text-label font-medium text-text-primary block mb-1">{t('billing.subscriptions.school')}</label>
-            <div className="relative">
-              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-disabled pointer-events-none" />
-              <Input
-                className="ps-9"
-                placeholder={t('billing.subscriptions.searchPlaceholder')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+            <FormSelect
+              label={t('billing.subscriptions.school')}
+              name="school"
+              value={schoolFilter}
+              onChange={(e) => setSchoolFilter(e.target.value)}
+              options={schoolOptions}
+            />
           </div>
           <div>
             <FormSelect
@@ -541,7 +544,7 @@ function SubscriptionsTab() {
           </div>
           {hasFilters && (
             <Button variant="ghost" size="sm" className="mt-5"
-              onClick={() => { setSearch(''); setStatusFilter(''); setPlanFilter(''); setCycleFilter(''); }}>
+              onClick={() => { setSchoolFilter(''); setStatusFilter(''); setPlanFilter(''); setCycleFilter(''); }}>
               {t('billing.subscriptions.clearFilters')}
             </Button>
           )}

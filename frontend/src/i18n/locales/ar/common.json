@@ -595,6 +595,9 @@
     "payments": {
       "record": "تسجيل دفعة",
       "amount": "المبلغ (دج)",
+      "months": "المدة (أشهر)",
+      "customMonths": "أخرى",
+      "period": "الفترة المشمولة",
       "periodStart": "بداية الفترة",
       "periodEnd": "نهاية الفترة",
       "paidAt": "تاريخ الدفع",

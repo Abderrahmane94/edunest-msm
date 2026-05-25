@@ -596,6 +596,9 @@
     "payments": {
       "record": "Enregistrer un paiement",
       "amount": "Montant (DZD)",
+      "months": "Durée (mois)",
+      "customMonths": "Autre",
+      "period": "Période couverte",
       "periodStart": "Début de période",
       "periodEnd": "Fin de période",
       "paidAt": "Date de paiement",

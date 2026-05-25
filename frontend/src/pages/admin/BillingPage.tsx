@@ -321,41 +321,74 @@ function AssignPlanDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
   );
 }
 
+const MONTH_PRESETS = [1, 2, 3, 6, 12];
+
+function addMonthsUTC(dateStr: string, months: number): string {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCMonth(d.getUTCMonth() + months);
+  return d.toISOString().split('T')[0];
+}
+
 function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClose: () => void }) {
   const { t } = useTranslation();
   const recordPayment = useRecordPayment();
   const today = new Date().toISOString().split('T')[0];
 
-  // Pre-fill starting from the first day not yet covered by any payment.
-  // If payments exist, use the latest periodEnd (ordered desc by periodEnd from the API).
-  // If no payments yet, the school owes from currentPeriodStart.
   const latestCoveredEnd = sub.payments[0]?.periodEnd ?? null;
-  const nextStart = latestCoveredEnd
+  const defaultStart = latestCoveredEnd
     ? latestCoveredEnd.split('T')[0]
     : sub.currentPeriodStart.split('T')[0];
-  const nextEndDate = new Date(nextStart + 'T00:00:00Z');
-  if (sub.billingCycle === 'annual') nextEndDate.setUTCFullYear(nextEndDate.getUTCFullYear() + 1);
-  else nextEndDate.setUTCMonth(nextEndDate.getUTCMonth() + 1);
-  const nextEnd = nextEndDate.toISOString().split('T')[0];
+  const defaultMonths = sub.billingCycle === 'annual' ? 12 : 1;
 
-  const defaultAmount = sub.billingCycle === 'annual' && sub.plan.priceAnnual
-    ? String(sub.plan.priceAnnual)
-    : String(sub.plan.priceMonthly);
+  function calcAmount(m: number): string {
+    if (sub.billingCycle === 'annual' && m === 12 && sub.plan.priceAnnual) {
+      return String(sub.plan.priceAnnual);
+    }
+    return String(Math.round(sub.plan.priceMonthly * m));
+  }
 
-  const [form, setForm] = React.useState({ amount: defaultAmount, periodStart: nextStart, periodEnd: nextEnd, paidAt: today, note: '' });
+  const [periodStart, setPeriodStart] = React.useState(defaultStart);
+  const [months, setMonths] = React.useState(defaultMonths);
+  const [customMonths, setCustomMonths] = React.useState('');
+  const [amount, setAmount] = React.useState(calcAmount(defaultMonths));
+  const [paidAt, setPaidAt] = React.useState(today);
+  const [note, setNote] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
+
+  const periodEnd = React.useMemo(() => addMonthsUTC(periodStart, months), [periodStart, months]);
+
+  function handleMonthsSelect(m: number) {
+    setMonths(m);
+    setCustomMonths('');
+    setAmount(calcAmount(m));
+  }
+
+  function handleCustomMonths(val: string) {
+    setCustomMonths(val);
+    const m = parseInt(val, 10);
+    if (m > 0) {
+      setMonths(m);
+      setAmount(calcAmount(m));
+    }
+  }
+
+  function handleStartChange(val: string) {
+    setPeriodStart(val);
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     recordPayment.mutate(
-      { subscriptionId: sub.id, amount: Number(form.amount), periodStart: form.periodStart, periodEnd: form.periodEnd, paidAt: form.paidAt, note: form.note || undefined },
+      { subscriptionId: sub.id, amount: Number(amount), periodStart, periodEnd, paidAt, note: note || undefined },
       {
         onSuccess: () => onClose(),
         onError: (err) => setError(err instanceof Error ? err.message : 'BILLING_ERROR'),
       },
     );
   }
+
+  const isPreset = MONTH_PRESETS.includes(months) && !customMonths;
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -365,23 +398,64 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
           <DialogDescription>{sub.school.name} — {sub.plan.name}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <FormField label={t('billing.payments.amount')} htmlFor="pay-amount" required>
-            <Input id="pay-amount" type="number" min="0" value={form.amount} onChange={(e) => setForm(p => ({ ...p, amount: e.target.value }))} />
+          {/* Start date */}
+          <FormField label={t('billing.payments.periodStart')} htmlFor="pay-start" required>
+            <Input id="pay-start" type="date" value={periodStart} onChange={(e) => handleStartChange(e.target.value)} />
           </FormField>
-          <div className="grid grid-cols-2 gap-x-4">
-            <FormField label={t('billing.payments.periodStart')} htmlFor="pay-start" required>
-              <Input id="pay-start" type="date" value={form.periodStart} onChange={(e) => setForm(p => ({ ...p, periodStart: e.target.value }))} />
-            </FormField>
-            <FormField label={t('billing.payments.periodEnd')} htmlFor="pay-end" required>
-              <Input id="pay-end" type="date" value={form.periodEnd} onChange={(e) => setForm(p => ({ ...p, periodEnd: e.target.value }))} />
-            </FormField>
+
+          {/* Months selector */}
+          <div className="mb-4">
+            <label className="text-label font-medium text-text-primary block mb-2">{t('billing.payments.months')}</label>
+            <div className="flex items-center gap-2 flex-wrap">
+              {MONTH_PRESETS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => handleMonthsSelect(m)}
+                  className={`px-3 py-1.5 rounded-lg text-body font-medium border transition-colors ${
+                    isPreset && months === m
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-card border-border text-text-primary hover:border-primary'
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+              <Input
+                type="number"
+                min="1"
+                max="120"
+                value={customMonths}
+                onChange={(e) => handleCustomMonths(e.target.value)}
+                placeholder={t('billing.payments.customMonths')}
+                className="w-24"
+              />
+            </div>
           </div>
+
+          {/* Computed period preview */}
+          <div className="mb-4 bg-subtle rounded-lg px-4 py-3 flex items-center justify-between">
+            <span className="text-caption text-text-secondary">{t('billing.payments.period')}</span>
+            <span className="text-body font-medium text-text-heading" dir="ltr">
+              {new Date(periodStart + 'T00:00:00Z').toLocaleDateString()} → {new Date(periodEnd + 'T00:00:00Z').toLocaleDateString()}
+            </span>
+          </div>
+
+          {/* Amount (auto-filled, editable) */}
+          <FormField label={t('billing.payments.amount')} htmlFor="pay-amount" required>
+            <Input id="pay-amount" type="number" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          </FormField>
+
+          {/* Payment date */}
           <FormField label={t('billing.payments.paidAt')} htmlFor="pay-date" required>
-            <Input id="pay-date" type="date" value={form.paidAt} onChange={(e) => setForm(p => ({ ...p, paidAt: e.target.value }))} />
+            <Input id="pay-date" type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} />
           </FormField>
+
+          {/* Note */}
           <FormField label={t('billing.payments.note')} htmlFor="pay-note">
-            <Input id="pay-note" value={form.note} onChange={(e) => setForm(p => ({ ...p, note: e.target.value }))} placeholder={t('billing.payments.notePlaceholder')} />
+            <Input id="pay-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('billing.payments.notePlaceholder')} />
           </FormField>
+
           {error && <p className="text-body text-danger mb-3">{t(`billing.errors.${error}`, { defaultValue: error })}</p>}
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>

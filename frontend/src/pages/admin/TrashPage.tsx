@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, RotateCcw, Building2, Users, Baby, DoorOpen } from 'lucide-react';
+import { Trash2, RotateCcw, Building2, Users, Baby, DoorOpen, Banknote } from 'lucide-react';
 import {
   Button,
   DataTable,
@@ -19,14 +19,16 @@ import {
   type TrashEntityType,
   type TrashItem,
 } from '@/hooks/useTrash';
+import { useDeletedPayments, useRestorePayment, type SchoolPaymentRecord } from '@/hooks/useBilling';
 
-type EntityTab = TrashEntityType;
+type EntityTab = TrashEntityType | 'payments';
 
 const ENTITY_TABS: { key: EntityTab; icon: React.ReactNode }[] = [
   { key: 'schools', icon: <Building2 className="w-4 h-4" /> },
   { key: 'users', icon: <Users className="w-4 h-4" /> },
   { key: 'children', icon: <Baby className="w-4 h-4" /> },
   { key: 'classrooms', icon: <DoorOpen className="w-4 h-4" /> },
+  { key: 'payments', icon: <Banknote className="w-4 h-4" /> },
 ];
 
 function formatDeletedAt(dateStr: string, locale: string): string {
@@ -126,6 +128,86 @@ function ConfirmDeleteDialog({
   );
 }
 
+function DeletedPaymentsTab() {
+  const { t, i18n } = useTranslation();
+  const { data: payments, isLoading } = useDeletedPayments();
+  const restorePayment = useRestorePayment();
+  const [actionError, setActionError] = React.useState<string | null>(null);
+
+  const columns: Column<SchoolPaymentRecord>[] = [
+    {
+      key: 'school', header: t('billing.subscriptions.school'),
+      render: (p) => <span className="font-medium text-foreground">{p.subscription.school.name}</span>,
+    },
+    {
+      key: 'amount', header: t('billingPayments.columns.amount'),
+      render: (p) => <span className="font-mono font-medium">{p.amount.toLocaleString('fr-FR')} DZD</span>,
+    },
+    {
+      key: 'period', header: t('billingPayments.columns.period'),
+      render: (p) => (
+        <span className="text-caption text-text-secondary" dir="ltr">
+          {new Date(p.periodStart).toLocaleDateString()} – {new Date(p.periodEnd).toLocaleDateString()}
+        </span>
+      ),
+    },
+    {
+      key: 'paidAt', header: t('billingPayments.columns.date'),
+      render: (p) => <span className="text-body text-text-secondary">{new Date(p.paidAt).toLocaleDateString()}</span>,
+    },
+    {
+      key: 'note', header: t('billingPayments.columns.note'),
+      render: (p) => <span className="text-caption text-text-secondary">{p.note || '—'}</span>,
+    },
+    {
+      key: 'deletedAt', header: t('trash.columns.deletedAt'),
+      render: (p) => (
+        <span className="text-caption text-text-secondary">
+          {formatDeletedAt((p as SchoolPaymentRecord & { deletedAt?: string }).deletedAt ?? '', i18n.language)}
+        </span>
+      ),
+    },
+    {
+      key: 'actions', header: '',
+      render: (p) => (
+        <Button variant="ghost" size="sm" disabled={restorePayment.isPending}
+          onClick={(e) => {
+            e.stopPropagation();
+            setActionError(null);
+            restorePayment.mutate(p.id, {
+              onError: (err) => setActionError(err instanceof Error ? err.message : t('common.error')),
+            });
+          }}>
+          <RotateCcw className="w-3.5 h-3.5 text-success" />{t('trash.restore')}
+        </Button>
+      ), className: 'w-32',
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {actionError && (
+        <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
+          <span>{actionError}</span>
+          <button onClick={() => setActionError(null)} className="text-danger hover:opacity-70 text-lg leading-none">&times;</button>
+        </div>
+      )}
+      {isLoading ? (
+        <div className="animate-pulse space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-12 bg-hover rounded-md" />)}
+        </div>
+      ) : (
+        <DataTable<SchoolPaymentRecord>
+          columns={columns}
+          data={payments ?? []}
+          keyExtractor={(p) => p.id}
+          emptyMessage={t('trash.empty')}
+        />
+      )}
+    </div>
+  );
+}
+
 export function TrashPage() {
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = React.useState<EntityTab>('schools');
@@ -135,7 +217,13 @@ export function TrashPage() {
   const [actionError, setActionError] = React.useState<string | null>(null);
 
   const pageSize = 20;
-  const { data, isLoading } = useTrashList(activeTab, page, pageSize);
+  const isPaymentsTab = activeTab === 'payments';
+  const { data, isLoading } = useTrashList(
+    isPaymentsTab ? 'schools' : (activeTab as TrashEntityType),
+    page,
+    pageSize,
+    !isPaymentsTab,
+  );
   const restoreRecord = useRestoreRecord();
   const hardDeleteRecord = useHardDeleteRecord();
 
@@ -276,8 +364,8 @@ export function TrashPage() {
         ))}
       </div>
 
-      {/* Error banner */}
-      {actionError && (
+      {/* Error banner (non-payments tabs) */}
+      {!isPaymentsTab && actionError && (
         <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
           <span>{actionError}</span>
           <button
@@ -289,26 +377,30 @@ export function TrashPage() {
         </div>
       )}
 
-      {/* Loading state */}
-      {isLoading ? (
-        <div className="bg-card border border-border rounded-lg p-6">
-          <div className="animate-pulse space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-12 bg-hover rounded-md" />
-            ))}
-          </div>
-        </div>
-      ) : (
-        <DataTable<TrashItem>
-          columns={columns}
-          data={items}
-          keyExtractor={(item) => item.id}
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          onPageChange={setPage}
-          emptyMessage={t('trash.empty')}
-        />
+      {/* Payments tab */}
+      {isPaymentsTab ? <DeletedPaymentsTab /> : (
+        <>
+          {isLoading ? (
+            <div className="bg-card border border-border rounded-lg p-6">
+              <div className="animate-pulse space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-12 bg-hover rounded-md" />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <DataTable<TrashItem>
+              columns={columns}
+              data={items}
+              keyExtractor={(item) => item.id}
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              emptyMessage={t('trash.empty')}
+            />
+          )}
+        </>
       )}
 
       {/* Confirm permanent delete dialog */}

@@ -18,13 +18,14 @@ interface TrashListResponse {
   pageSize: number;
 }
 
-export function useTrashList(entityType: TrashEntityType, page = 1, pageSize = 20) {
+export function useTrashList(entityType: TrashEntityType, page = 1, pageSize = 20, enabled = true) {
   const queryParams = new URLSearchParams();
   queryParams.set('page', String(page));
   queryParams.set('pageSize', String(pageSize));
 
   return useQuery({
     queryKey: ['trash', entityType, { page, pageSize }],
+    enabled,
     queryFn: async () => {
       const res = await apiClient.get<{ items: Record<string, unknown>[]; total: number; page: number; pageSize: number }>(
         `/trash/${entityType}?${queryParams.toString()}`,

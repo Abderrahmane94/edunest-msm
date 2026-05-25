@@ -1044,7 +1044,8 @@
       "schools": "المدارس",
       "users": "المستخدمون",
       "children": "الأطفال",
-      "classrooms": "الفصول"
+      "classrooms": "الفصول",
+      "payments": "المدفوعات"
     },
     "columns": {
       "name": "الاسم",

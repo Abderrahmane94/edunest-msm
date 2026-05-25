@@ -1045,7 +1045,8 @@
       "schools": "Écoles",
       "users": "Utilisateurs",
       "children": "Enfants",
-      "classrooms": "Classes"
+      "classrooms": "Classes",
+      "payments": "Paiements"
     },
     "columns": {
       "name": "Nom",

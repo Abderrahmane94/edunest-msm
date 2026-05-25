@@ -8,12 +8,25 @@ export class BillingError extends Error {
   }
 }
 
+// Prisma returns Decimal fields as Decimal objects (serialize to strings in JSON).
+// This normalizer converts them to plain JS numbers before returning to the API.
+function normalizePlan(plan: {
+  priceMonthly: unknown; priceAnnual?: unknown | null; [key: string]: unknown;
+}) {
+  return {
+    ...plan,
+    priceMonthly: Number(plan.priceMonthly),
+    priceAnnual: plan.priceAnnual != null ? Number(plan.priceAnnual) : null,
+  };
+}
+
 export const billingService = {
 
   // ─── Plans ──────────────────────────────────────────────────────────────────
 
   async listPlans() {
-    return prisma.subscriptionPlan.findMany({ orderBy: { priceMonthly: 'asc' } });
+    const plans = await prisma.subscriptionPlan.findMany({ orderBy: { priceMonthly: 'asc' } });
+    return plans.map(normalizePlan);
   },
 
   async createPlan(input: {
@@ -25,7 +38,7 @@ export const billingService = {
     maxChildren?: number;
     maxUsers?: number;
   }) {
-    return prisma.subscriptionPlan.create({
+    const plan = await prisma.subscriptionPlan.create({
       data: {
         name: input.name,
         description: input.description ?? null,
@@ -36,6 +49,7 @@ export const billingService = {
         maxUsers: input.maxUsers ?? null,
       },
     });
+    return normalizePlan(plan);
   },
 
   async updatePlan(id: string, input: {
@@ -49,14 +63,15 @@ export const billingService = {
   }) {
     const plan = await prisma.subscriptionPlan.findUnique({ where: { id } });
     if (!plan) throw new BillingError('Plan not found', 404);
-    return prisma.subscriptionPlan.update({ where: { id }, data: input as Prisma.SubscriptionPlanUpdateInput });
+    const updated = await prisma.subscriptionPlan.update({ where: { id }, data: input as Prisma.SubscriptionPlanUpdateInput });
+    return normalizePlan(updated);
   },
 
   async deletePlan(id: string) {
     const plan = await prisma.subscriptionPlan.findUnique({ where: { id } });
     if (!plan) throw new BillingError('Plan not found', 404);
     const count = await prisma.schoolSubscription.count({ where: { planId: id } });
-    if (count > 0) throw new BillingError('Cannot delete a plan that has active subscriptions', 400);
+    if (count > 0) throw new BillingError('Cannot delete a plan that has subscriptions', 400);
     return prisma.subscriptionPlan.delete({ where: { id } });
   },
 
@@ -92,6 +107,14 @@ export const billingService = {
       end.setFullYear(end.getFullYear() + 1);
     } else {
       end.setMonth(end.getMonth() + 1);
+    }
+
+    const existing = await prisma.schoolSubscription.findUnique({ where: { schoolId: input.schoolId } });
+    if (existing && existing.status === 'active' && existing.currentPeriodEnd > new Date()) {
+      throw new BillingError(
+        'This school already has an active subscription for the current period. Cancel it first before reassigning.',
+        409,
+      );
     }
 
     const trialEndsAt = input.trialDays
@@ -250,7 +273,7 @@ export const billingService = {
   async getStats() {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
     const [subscriptions, revenueThisMonth, totalRevenue] = await Promise.all([
       prisma.schoolSubscription.groupBy({
@@ -269,14 +292,14 @@ export const billingService = {
     const statusMap: Record<string, number> = {};
     subscriptions.forEach((s) => { statusMap[s.status] = s._count._all; });
 
-    // MRR: sum of monthly equivalent for all active subscriptions
+    // MRR: monthly revenue equivalent from paying (active) subscriptions only
     const activeSubscriptions = await prisma.schoolSubscription.findMany({
-      where: { status: { in: ['active', 'trial'] } },
+      where: { status: 'active' },
       include: { plan: true },
     });
     const mrr = activeSubscriptions.reduce((sum, sub) => {
       const monthly = sub.billingCycle === 'annual'
-        ? Number(sub.plan.priceMonthly)
+        ? (sub.plan.priceAnnual ? Number(sub.plan.priceAnnual) / 12 : Number(sub.plan.priceMonthly))
         : Number(sub.plan.priceMonthly);
       return sum + monthly;
     }, 0);

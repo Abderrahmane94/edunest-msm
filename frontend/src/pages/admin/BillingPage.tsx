@@ -12,9 +12,9 @@ import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import {
   usePlans, useCreatePlan, useUpdatePlan, useDeletePlan,
-  useSubscriptions, useAssignPlan,
+  useSubscriptions, useAssignPlan, useUpdateSubscriptionStatus,
   useRecordPayment, useBillingStats, useSchoolPayments,
-  type SubscriptionPlan, type SchoolSubscription, type SchoolPaymentRecord,
+  type SubscriptionPlan, type SchoolSubscription, type BillingStats, type SchoolPaymentRecord,
 } from '@/hooks/useBilling';
 import { useSchoolsList } from '@/hooks/useSchools';
 
@@ -39,7 +39,7 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
 /* ─── Dashboard tab ─── */
 function BillingDashboard() {
   const { t } = useTranslation();
-  const { data: stats, isLoading } = useBillingStats();
+  const { data: stats, isLoading } = useBillingStats() as { data: BillingStats | undefined; isLoading: boolean };
 
   if (isLoading) {
     return (
@@ -84,7 +84,7 @@ function BillingDashboard() {
             { key: 'cancelled', label: t('billing.status.cancelled'), color: 'text-text-disabled' },
           ].map((s) => (
             <div key={s.key} className="text-center p-4 bg-subtle rounded-lg">
-              <p className={`text-display font-bold ${s.color}`}>{(stats as any)?.[s.key] ?? 0}</p>
+              <p className={`text-display font-bold ${s.color}`}>{stats?.[s.key as keyof BillingStats] ?? 0}</p>
               <p className="text-caption text-text-secondary mt-1">{s.label}</p>
             </div>
           ))}
@@ -134,7 +134,7 @@ function PlanFormDialog({
     };
     try {
       if (plan) await updatePlan.mutateAsync({ id: plan.id, ...payload });
-      else await createPlan.mutateAsync(payload as any);
+      else await createPlan.mutateAsync(payload);
       onOpenChange(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.error'));
@@ -190,7 +190,19 @@ function PlansTab() {
   const deletePlan = useDeletePlan();
   const [formOpen, setFormOpen] = React.useState(false);
   const [editPlan, setEditPlan] = React.useState<SubscriptionPlan | undefined>();
+  const [deletingPlan, setDeletingPlan] = React.useState<SubscriptionPlan | null>(null);
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
+
+  async function handleConfirmDelete() {
+    if (!deletingPlan) return;
+    setDeleteError(null);
+    try {
+      await deletePlan.mutateAsync(deletingPlan.id);
+      setDeletingPlan(null);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Error');
+    }
+  }
 
   const columns: Column<SubscriptionPlan>[] = [
     { key: 'name', header: t('billing.plans.name'), render: (p) => <span className="font-medium text-foreground">{p.name}</span> },
@@ -202,7 +214,7 @@ function PlansTab() {
       key: 'actions', header: '', render: (p) => (
         <div className="flex gap-1 justify-end">
           <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditPlan(p); setFormOpen(true); }}><Pencil className="w-4 h-4" /></Button>
-          <Button variant="ghost" size="icon" onClick={async (e) => { e.stopPropagation(); setDeleteError(null); try { await deletePlan.mutateAsync(p.id); } catch (err) { setDeleteError(err instanceof Error ? err.message : 'Error'); } }}>
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeletingPlan(p); }}>
             <Trash2 className="w-4 h-4 text-danger" />
           </Button>
         </div>
@@ -224,6 +236,23 @@ function PlansTab() {
         ? <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="bg-hover rounded-xl h-12 animate-pulse" />)}</div>
         : <DataTable columns={columns} data={plans ?? []} keyExtractor={(p) => p.id} emptyMessage={t('billing.plans.empty')} />}
       <PlanFormDialog open={formOpen} onOpenChange={(v) => { setFormOpen(v); if (!v) setEditPlan(undefined); }} plan={editPlan} />
+
+      {/* Delete confirmation */}
+      <Dialog open={!!deletingPlan} onOpenChange={(v) => { if (!v) { setDeletingPlan(null); setDeleteError(null); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('billing.plans.deleteTitle')}</DialogTitle>
+            <DialogDescription>{t('billing.plans.deleteConfirm', { name: deletingPlan?.name })}</DialogDescription>
+          </DialogHeader>
+          {deleteError && <p className="text-body text-danger mt-2">{deleteError}</p>}
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => { setDeletingPlan(null); setDeleteError(null); }}>{t('common.cancel')}</Button>
+            <Button variant="danger" disabled={deletePlan.isPending} onClick={handleConfirmDelete}>
+              <Trash2 className="w-4 h-4" />{deletePlan.isPending ? t('common.loading') : t('common.delete')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -287,7 +316,19 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
   const { t } = useTranslation();
   const recordPayment = useRecordPayment();
   const today = new Date().toISOString().split('T')[0];
-  const [form, setForm] = React.useState({ amount: String(sub.plan.priceMonthly), periodStart: sub.currentPeriodStart.split('T')[0], periodEnd: sub.currentPeriodEnd.split('T')[0], paidAt: today, note: '' });
+
+  // Pre-fill the NEXT billing period (current end → one cycle later)
+  const nextStart = sub.currentPeriodEnd.split('T')[0];
+  const nextEndDate = new Date(sub.currentPeriodEnd);
+  if (sub.billingCycle === 'annual') nextEndDate.setFullYear(nextEndDate.getFullYear() + 1);
+  else nextEndDate.setMonth(nextEndDate.getMonth() + 1);
+  const nextEnd = nextEndDate.toISOString().split('T')[0];
+
+  const defaultAmount = sub.billingCycle === 'annual' && sub.plan.priceAnnual
+    ? String(sub.plan.priceAnnual)
+    : String(sub.plan.priceMonthly);
+
+  const [form, setForm] = React.useState({ amount: defaultAmount, periodStart: nextStart, periodEnd: nextEnd, paidAt: today, note: '' });
   const [error, setError] = React.useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -340,8 +381,19 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
 function SubscriptionsTab() {
   const { t } = useTranslation();
   const { data: subs, isLoading } = useSubscriptions();
+  const updateStatus = useUpdateSubscriptionStatus();
   const [assignOpen, setAssignOpen] = React.useState(false);
   const [payingSub, setPayingSub] = React.useState<SchoolSubscription | null>(null);
+  const [statusError, setStatusError] = React.useState<string | null>(null);
+
+  async function handleStatusChange(sub: SchoolSubscription, status: 'cancelled' | 'suspended' | 'active') {
+    setStatusError(null);
+    try {
+      await updateStatus.mutateAsync({ id: sub.id, status });
+    } catch (err) {
+      setStatusError(err instanceof Error ? err.message : 'Error');
+    }
+  }
 
   const columns: Column<SchoolSubscription>[] = [
     {
@@ -358,7 +410,7 @@ function SubscriptionsTab() {
       key: 'status', header: t('billing.subscriptions.status'), render: (s) => (
         <div className="flex items-center gap-1.5">
           {STATUS_ICON[s.status]}
-          <StatusBadge variant={STATUS_VARIANT[s.status] as any}>{t(`billing.status.${s.status}`)}</StatusBadge>
+          <StatusBadge variant={STATUS_VARIANT[s.status] as 'present' | 'late' | 'absent' | 'cancelled' | 'draft'}>{t(`billing.status.${s.status}`)}</StatusBadge>
         </div>
       ),
     },
@@ -371,19 +423,36 @@ function SubscriptionsTab() {
     },
     {
       key: 'actions', header: '', render: (s) => {
-        const cannotPay = s.status === 'cancelled' || s.status === 'suspended';
+        const periodPaid = s.status === 'active' && new Date(s.currentPeriodEnd) > new Date();
+        const blocked = s.status === 'cancelled' || s.status === 'suspended';
         return (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost" size="sm"
-            disabled={cannotPay}
-            onClick={(e) => { e.stopPropagation(); setPayingSub(s); }}
-          >
-            <Banknote className="w-3.5 h-3.5 text-success" />{t('billing.payments.record')}
-          </Button>
-        </div>
+          <div className="flex items-center gap-1 justify-end">
+            {!periodPaid && !blocked && (
+              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setPayingSub(s); }}>
+                <Banknote className="w-3.5 h-3.5 text-success" />{t('billing.payments.record')}
+              </Button>
+            )}
+            {s.status === 'active' && (
+              <Button variant="ghost" size="icon" title={t('billing.subscriptions.suspend')}
+                onClick={(e) => { e.stopPropagation(); handleStatusChange(s, 'suspended'); }}>
+                <X className="w-4 h-4 text-warning" />
+              </Button>
+            )}
+            {(s.status === 'active' || s.status === 'suspended' || s.status === 'overdue' || s.status === 'trial') && (
+              <Button variant="ghost" size="icon" title={t('billing.subscriptions.cancel')}
+                onClick={(e) => { e.stopPropagation(); handleStatusChange(s, 'cancelled'); }}>
+                <XCircle className="w-4 h-4 text-danger" />
+              </Button>
+            )}
+            {s.status === 'suspended' && (
+              <Button variant="ghost" size="icon" title={t('billing.subscriptions.reactivate')}
+                onClick={(e) => { e.stopPropagation(); handleStatusChange(s, 'active'); }}>
+                <CheckCircle className="w-4 h-4 text-success" />
+              </Button>
+            )}
+          </div>
         );
-      }, className: 'w-40',
+      }, className: 'w-48',
     },
   ];
 
@@ -394,6 +463,12 @@ function SubscriptionsTab() {
           <Plus className="w-4 h-4" />{t('billing.subscriptions.assign')}
         </Button>
       </div>
+      {statusError && (
+        <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
+          <span>{statusError}</span>
+          <button onClick={() => setStatusError(null)} className="text-danger hover:opacity-70 text-lg leading-none">&times;</button>
+        </div>
+      )}
       {isLoading
         ? <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="bg-hover rounded-xl h-14 animate-pulse" />)}</div>
         : <DataTable columns={columns} data={subs ?? []} keyExtractor={(s) => s.id} emptyMessage={t('billing.subscriptions.empty')} />}
@@ -463,7 +538,7 @@ function PaymentsTab() {
     },
     {
       key: 'status', header: t('billingPayments.columns.subscriptionStatus'), render: (p) => (
-        <StatusBadge variant={STATUS_VARIANT[p.subscription.status] as any}>
+        <StatusBadge variant={STATUS_VARIANT[p.subscription.status] as 'present' | 'late' | 'absent' | 'cancelled' | 'draft'}>
           {t(`billing.status.${p.subscription.status}`)}
         </StatusBadge>
       ),

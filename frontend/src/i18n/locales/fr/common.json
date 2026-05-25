@@ -549,7 +549,9 @@
       "maxChildren": "Max enfants",
       "maxUsers": "Max utilisateurs",
       "unlimited": "Illimité",
-      "empty": "Aucun plan défini"
+      "empty": "Aucun plan défini",
+      "deleteTitle": "Supprimer le plan",
+      "deleteConfirm": "Êtes-vous sûr de vouloir supprimer le plan \"{{name}}\" ? Cette action est irréversible."
     },
     "subscriptions": {
       "assign": "Assigner un plan",
@@ -566,7 +568,10 @@
       "status": "Statut",
       "period": "Période",
       "price": "Tarif",
-      "empty": "Aucun abonnement"
+      "empty": "Aucun abonnement",
+      "cancel": "Annuler l'abonnement",
+      "suspend": "Suspendre l'abonnement",
+      "reactivate": "Réactiver l'abonnement"
     },
     "payments": {
       "record": "Enregistrer un paiement",

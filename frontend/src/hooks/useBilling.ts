@@ -156,7 +156,11 @@ export function useRecordPayment() {
       if (!res.success) throw new Error(res.error?.message ?? 'Failed');
       return res.data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['billing-subscriptions'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['billing-subscriptions'] });
+      qc.invalidateQueries({ queryKey: ['billing-school-payments'] });
+      qc.invalidateQueries({ queryKey: ['billing-stats'] });
+    },
   });
 }
 

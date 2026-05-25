@@ -381,10 +381,47 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
 function SubscriptionsTab() {
   const { t } = useTranslation();
   const { data: subs, isLoading } = useSubscriptions();
+  const { data: plans } = usePlans();
   const updateStatus = useUpdateSubscriptionStatus();
   const [assignOpen, setAssignOpen] = React.useState(false);
   const [payingSub, setPayingSub] = React.useState<SchoolSubscription | null>(null);
   const [statusError, setStatusError] = React.useState<string | null>(null);
+
+  const [search, setSearch] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('');
+  const [planFilter, setPlanFilter] = React.useState('');
+  const [cycleFilter, setCycleFilter] = React.useState('');
+
+  const hasFilters = !!(search || statusFilter || planFilter || cycleFilter);
+
+  const filtered = React.useMemo(() => {
+    let data = subs ?? [];
+    if (search) data = data.filter((s) => s.school.name.toLowerCase().includes(search.toLowerCase()));
+    if (statusFilter) data = data.filter((s) => s.status === statusFilter);
+    if (planFilter) data = data.filter((s) => s.plan.id === planFilter);
+    if (cycleFilter) data = data.filter((s) => s.billingCycle === cycleFilter);
+    return data;
+  }, [subs, search, statusFilter, planFilter, cycleFilter]);
+
+  const planOptions = React.useMemo(() => [
+    { value: '', label: t('billing.subscriptions.allPlans') },
+    ...(plans ?? []).map((p) => ({ value: p.id, label: p.name })),
+  ], [plans, t]);
+
+  const statusOptions = [
+    { value: '', label: t('billing.subscriptions.allStatuses') },
+    { value: 'active', label: t('billing.status.active') },
+    { value: 'trial', label: t('billing.status.trial') },
+    { value: 'overdue', label: t('billing.status.overdue') },
+    { value: 'cancelled', label: t('billing.status.cancelled') },
+    { value: 'suspended', label: t('billing.status.suspended') },
+  ];
+
+  const cycleOptions = [
+    { value: '', label: t('billing.subscriptions.allCycles') },
+    { value: 'monthly', label: t('billing.subscriptions.monthly') },
+    { value: 'annual', label: t('billing.subscriptions.annual') },
+  ];
 
   async function handleStatusChange(sub: SchoolSubscription, status: 'cancelled' | 'suspended' | 'active') {
     setStatusError(null);
@@ -458,6 +495,59 @@ function SubscriptionsTab() {
 
   return (
     <div className="space-y-4">
+      {/* Filters */}
+      <div className="bg-card border border-border rounded-xl p-5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-2">
+            <label className="text-label font-medium text-text-primary block mb-1">{t('billing.subscriptions.school')}</label>
+            <div className="relative">
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-disabled pointer-events-none" />
+              <Input
+                className="ps-9"
+                placeholder={t('billing.subscriptions.searchPlaceholder')}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <FormSelect
+              label={t('billing.subscriptions.status')}
+              name="status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              options={statusOptions}
+            />
+          </div>
+          <div>
+            <FormSelect
+              label={t('billing.subscriptions.plan')}
+              name="plan"
+              value={planFilter}
+              onChange={(e) => setPlanFilter(e.target.value)}
+              options={planOptions}
+            />
+          </div>
+        </div>
+        <div className="mt-4 flex items-center gap-4">
+          <div className="w-48">
+            <FormSelect
+              label={t('billing.subscriptions.billingCycle')}
+              name="cycle"
+              value={cycleFilter}
+              onChange={(e) => setCycleFilter(e.target.value)}
+              options={cycleOptions}
+            />
+          </div>
+          {hasFilters && (
+            <Button variant="ghost" size="sm" className="mt-5"
+              onClick={() => { setSearch(''); setStatusFilter(''); setPlanFilter(''); setCycleFilter(''); }}>
+              {t('billing.subscriptions.clearFilters')}
+            </Button>
+          )}
+        </div>
+      </div>
+
       <div className="flex justify-end">
         <Button onClick={() => setAssignOpen(true)}>
           <Plus className="w-4 h-4" />{t('billing.subscriptions.assign')}
@@ -471,7 +561,7 @@ function SubscriptionsTab() {
       )}
       {isLoading
         ? <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="bg-hover rounded-xl h-14 animate-pulse" />)}</div>
-        : <DataTable columns={columns} data={subs ?? []} keyExtractor={(s) => s.id} emptyMessage={t('billing.subscriptions.empty')} />}
+        : <DataTable columns={columns} data={filtered} keyExtractor={(s) => s.id} emptyMessage={t('billing.subscriptions.empty')} />}
       <AssignPlanDialog open={assignOpen} onOpenChange={setAssignOpen} />
       {payingSub && <RecordPaymentDialog sub={payingSub} onClose={() => setPayingSub(null)} />}
     </div>

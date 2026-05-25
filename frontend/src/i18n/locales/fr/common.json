@@ -571,7 +571,12 @@
       "empty": "Aucun abonnement",
       "cancel": "Annuler l'abonnement",
       "suspend": "Suspendre l'abonnement",
-      "reactivate": "Réactiver l'abonnement"
+      "reactivate": "Réactiver l'abonnement",
+      "searchPlaceholder": "Rechercher une école…",
+      "allStatuses": "Tous les statuts",
+      "allPlans": "Tous les plans",
+      "allCycles": "Tous les cycles",
+      "clearFilters": "Effacer les filtres"
     },
     "payments": {
       "record": "Enregistrer un paiement",

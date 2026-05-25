@@ -570,7 +570,12 @@
       "empty": "لا توجد اشتراكات",
       "cancel": "إلغاء الاشتراك",
       "suspend": "تعليق الاشتراك",
-      "reactivate": "إعادة تفعيل الاشتراك"
+      "reactivate": "إعادة تفعيل الاشتراك",
+      "searchPlaceholder": "البحث عن مدرسة…",
+      "allStatuses": "جميع الحالات",
+      "allPlans": "جميع الخطط",
+      "allCycles": "جميع الدورات",
+      "clearFilters": "مسح الفلاتر"
     },
     "payments": {
       "record": "تسجيل دفعة",

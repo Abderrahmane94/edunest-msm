@@ -188,7 +188,7 @@ function DeletedPaymentsTab() {
     <div className="space-y-4">
       {actionError && (
         <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
-          <span>{actionError}</span>
+          <span>{t(`billing.errors.${actionError}`, { defaultValue: actionError })}</span>
           <button onClick={() => setActionError(null)} className="text-danger hover:opacity-70 text-lg leading-none">&times;</button>
         </div>
       )}

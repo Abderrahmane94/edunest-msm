@@ -62,16 +62,16 @@ export const billingService = {
     isActive?: boolean;
   }) {
     const plan = await prisma.subscriptionPlan.findUnique({ where: { id } });
-    if (!plan) throw new BillingError('Plan not found', 404);
+    if (!plan) throw new BillingError('PLAN_NOT_FOUND', 404);
     const updated = await prisma.subscriptionPlan.update({ where: { id }, data: input as Prisma.SubscriptionPlanUpdateInput });
     return normalizePlan(updated);
   },
 
   async deletePlan(id: string) {
     const plan = await prisma.subscriptionPlan.findUnique({ where: { id } });
-    if (!plan) throw new BillingError('Plan not found', 404);
+    if (!plan) throw new BillingError('PLAN_NOT_FOUND', 404);
     const count = await prisma.schoolSubscription.count({ where: { planId: id } });
-    if (count > 0) throw new BillingError('Cannot delete a plan that has subscriptions', 400);
+    if (count > 0) throw new BillingError('PLAN_HAS_SUBSCRIPTIONS', 400);
     return prisma.subscriptionPlan.delete({ where: { id } });
   },
 
@@ -96,10 +96,10 @@ export const billingService = {
     trialDays?: number;
   }) {
     const school = await prisma.school.findUnique({ where: { id: input.schoolId } });
-    if (!school) throw new BillingError('School not found', 404);
+    if (!school) throw new BillingError('SCHOOL_NOT_FOUND', 404);
 
     const plan = await prisma.subscriptionPlan.findUnique({ where: { id: input.planId } });
-    if (!plan) throw new BillingError('Plan not found', 404);
+    if (!plan) throw new BillingError('PLAN_NOT_FOUND', 404);
 
     const start = new Date(input.startDate);
     const end = new Date(start);
@@ -111,10 +111,7 @@ export const billingService = {
 
     const existing = await prisma.schoolSubscription.findUnique({ where: { schoolId: input.schoolId } });
     if (existing && existing.status === 'active' && existing.currentPeriodEnd > new Date()) {
-      throw new BillingError(
-        'This school already has an active subscription for the current period. Cancel it first before reassigning.',
-        409,
-      );
+      throw new BillingError('SUBSCRIPTION_ALREADY_ACTIVE', 409);
     }
 
     const trialEndsAt = input.trialDays
@@ -148,7 +145,7 @@ export const billingService = {
 
   async updateStatus(id: string, status: 'active' | 'overdue' | 'cancelled' | 'suspended') {
     const sub = await prisma.schoolSubscription.findUnique({ where: { id } });
-    if (!sub) throw new BillingError('Subscription not found', 404);
+    if (!sub) throw new BillingError('SUBSCRIPTION_NOT_FOUND', 404);
     return prisma.schoolSubscription.update({
       where: { id },
       data: {
@@ -168,10 +165,10 @@ export const billingService = {
     note?: string;
   }) {
     const sub = await prisma.schoolSubscription.findUnique({ where: { id: subscriptionId } });
-    if (!sub) throw new BillingError('Subscription not found', 404);
+    if (!sub) throw new BillingError('SUBSCRIPTION_NOT_FOUND', 404);
 
     if (sub.status === 'cancelled' || sub.status === 'suspended') {
-      throw new BillingError('Cannot record a payment for a cancelled or suspended subscription.', 400);
+      throw new BillingError('PAYMENT_BLOCKED', 400);
     }
 
     const payment = await prisma.subscriptionPayment.create({
@@ -225,7 +222,7 @@ export const billingService = {
       where: { schoolId },
       select: { id: true, status: true },
     });
-    if (!sub) throw new BillingError('No subscription found for this school', 404);
+    if (!sub) throw new BillingError('NO_SUBSCRIPTION_FOR_SCHOOL', 404);
 
     if (filters?.status && sub.status !== filters.status) {
       return [];

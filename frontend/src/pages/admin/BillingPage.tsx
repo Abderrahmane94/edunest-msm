@@ -134,7 +134,7 @@ function PlanFormDialog({
     };
     const callbacks = {
       onSuccess: () => onOpenChange(false),
-      onError: (err: unknown) => setError(err instanceof Error ? err.message : t('common.error')),
+      onError: (err: unknown) => setError(err instanceof Error ? err.message : 'BILLING_ERROR'),
     };
     if (plan) updatePlan.mutate({ id: plan.id, ...payload }, callbacks);
     else createPlan.mutate(payload, callbacks);
@@ -170,7 +170,7 @@ function PlanFormDialog({
               <Input id="p-users" type="number" min="1" value={form.maxUsers} onChange={(e) => setForm(p => ({ ...p, maxUsers: e.target.value }))} placeholder={t('billing.plans.unlimited')} />
             </FormField>
           </div>
-          {error && <p className="text-body text-danger mb-3">{error}</p>}
+          {error && <p className="text-body text-danger mb-3">{t(`billing.errors.${error}`, { defaultValue: error })}</p>}
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
             <Button type="submit" disabled={isPending}>
@@ -199,7 +199,7 @@ function PlansTab() {
       await deletePlan.mutateAsync(deletingPlan.id);
       setDeletingPlan(null);
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Error');
+      setDeleteError(err instanceof Error ? err.message : 'BILLING_ERROR');
     }
   }
 
@@ -224,7 +224,7 @@ function PlansTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        {deleteError && <p className="text-body text-danger">{deleteError}</p>}
+        {deleteError && <p className="text-body text-danger">{t(`billing.errors.${deleteError}`, { defaultValue: deleteError })}</p>}
         <div className="ms-auto">
           <Button onClick={() => { setEditPlan(undefined); setFormOpen(true); }}>
             <Plus className="w-4 h-4" />{t('billing.plans.create')}
@@ -243,7 +243,7 @@ function PlansTab() {
             <DialogTitle>{t('billing.plans.deleteTitle')}</DialogTitle>
             <DialogDescription>{t('billing.plans.deleteConfirm', { name: deletingPlan?.name })}</DialogDescription>
           </DialogHeader>
-          {deleteError && <p className="text-body text-danger mt-2">{deleteError}</p>}
+          {deleteError && <p className="text-body text-danger mt-2">{t(`billing.errors.${deleteError}`, { defaultValue: deleteError })}</p>}
           <DialogFooter>
             <Button variant="secondary" onClick={() => { setDeletingPlan(null); setDeleteError(null); }}>{t('common.cancel')}</Button>
             <Button variant="danger" disabled={deletePlan.isPending} onClick={handleConfirmDelete}>
@@ -277,7 +277,7 @@ function AssignPlanDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
       { ...form, trialDays: form.trialDays ? Number(form.trialDays) : undefined },
       {
         onSuccess: () => onOpenChange(false),
-        onError: (err) => setError(err instanceof Error ? err.message : t('common.error')),
+        onError: (err) => setError(err instanceof Error ? err.message : 'BILLING_ERROR'),
       },
     );
   }
@@ -301,7 +301,7 @@ function AssignPlanDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
               <Input id="s-trial" type="number" min="0" value={form.trialDays} onChange={(e) => setForm(p => ({ ...p, trialDays: e.target.value }))} placeholder="0" />
             </FormField>
           </div>
-          {error && <p className="text-body text-danger mb-3">{error}</p>}
+          {error && <p className="text-body text-danger mb-3">{t(`billing.errors.${error}`, { defaultValue: error })}</p>}
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
             <Button type="submit" disabled={assignPlan.isPending || !form.schoolId || !form.planId}>
@@ -340,7 +340,7 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
       { subscriptionId: sub.id, amount: Number(form.amount), periodStart: form.periodStart, periodEnd: form.periodEnd, paidAt: form.paidAt, note: form.note || undefined },
       {
         onSuccess: () => onClose(),
-        onError: (err) => setError(err instanceof Error ? err.message : t('common.error')),
+        onError: (err) => setError(err instanceof Error ? err.message : 'BILLING_ERROR'),
       },
     );
   }
@@ -370,7 +370,7 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
           <FormField label={t('billing.payments.note')} htmlFor="pay-note">
             <Input id="pay-note" value={form.note} onChange={(e) => setForm(p => ({ ...p, note: e.target.value }))} placeholder={t('billing.payments.notePlaceholder')} />
           </FormField>
-          {error && <p className="text-body text-danger mb-3">{error}</p>}
+          {error && <p className="text-body text-danger mb-3">{t(`billing.errors.${error}`, { defaultValue: error })}</p>}
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
             <Button type="submit" disabled={recordPayment.isPending}>
@@ -439,7 +439,7 @@ function SubscriptionsTab() {
     try {
       await updateStatus.mutateAsync({ id: sub.id, status });
     } catch (err) {
-      setStatusError(err instanceof Error ? err.message : 'Error');
+      setStatusError(err instanceof Error ? err.message : 'BILLING_ERROR');
     }
   }
 
@@ -563,7 +563,7 @@ function SubscriptionsTab() {
       </div>
       {statusError && (
         <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
-          <span>{statusError}</span>
+          <span>{t(`billing.errors.${statusError}`, { defaultValue: statusError! })}</span>
           <button onClick={() => setStatusError(null)} className="text-danger hover:opacity-70 text-lg leading-none">&times;</button>
         </div>
       )}

@@ -577,6 +577,16 @@
       "allCycles": "جميع الدورات",
       "clearFilters": "مسح الفلاتر"
     },
+    "errors": {
+      "BILLING_ERROR": "حدث خطأ في الفوترة.",
+      "PLAN_NOT_FOUND": "الخطة غير موجودة.",
+      "PLAN_HAS_SUBSCRIPTIONS": "لا يمكن حذف خطة لها اشتراكات.",
+      "SCHOOL_NOT_FOUND": "المدرسة غير موجودة.",
+      "SUBSCRIPTION_NOT_FOUND": "الاشتراك غير موجود.",
+      "SUBSCRIPTION_ALREADY_ACTIVE": "هذه المؤسسة لديها اشتراك نشط بالفعل. يرجى إلغاؤه أولاً قبل إعادة التعيين.",
+      "PAYMENT_BLOCKED": "لا يمكن تسجيل دفعة لاشتراك ملغي أو معلق.",
+      "NO_SUBSCRIPTION_FOR_SCHOOL": "لا يوجد اشتراك لهذه المدرسة."
+    },
     "payments": {
       "record": "تسجيل دفعة",
       "amount": "المبلغ (دج)",

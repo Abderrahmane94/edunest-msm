@@ -4,7 +4,7 @@ import { successResponse, errorResponse } from '../../utils/response';
 
 function handleError(error: unknown, res: Response, next: NextFunction) {
   if (error instanceof BillingError) {
-    res.status(error.statusCode).json(errorResponse('BILLING_ERROR', error.message));
+    res.status(error.statusCode).json(errorResponse(error.message, error.message));
     return;
   }
   next(error);

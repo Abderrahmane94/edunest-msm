@@ -81,7 +81,7 @@ export function useCreatePlan() {
   return useMutation({
     mutationFn: async (data: Omit<SubscriptionPlan, 'id' | 'createdAt' | 'isActive'>) => {
       const res = await apiClient.post('/billing/plans', data);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed');
+      if (!res.success) throw new Error(res.error?.code ?? res.error?.message ?? 'BILLING_ERROR');
       return res.data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['billing-plans'] }),
@@ -93,7 +93,7 @@ export function useUpdatePlan() {
   return useMutation({
     mutationFn: async ({ id, ...data }: Partial<SubscriptionPlan> & { id: string }) => {
       const res = await apiClient.put(`/billing/plans/${id}`, data);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed');
+      if (!res.success) throw new Error(res.error?.code ?? res.error?.message ?? 'BILLING_ERROR');
       return res.data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['billing-plans'] }),
@@ -105,7 +105,7 @@ export function useDeletePlan() {
   return useMutation({
     mutationFn: async (id: string) => {
       const res = await apiClient.delete(`/billing/plans/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed');
+      if (!res.success) throw new Error(res.error?.code ?? res.error?.message ?? 'BILLING_ERROR');
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['billing-plans'] }),
   });
@@ -129,7 +129,7 @@ export function useAssignPlan() {
   return useMutation({
     mutationFn: async (data: { schoolId: string; planId: string; billingCycle: string; startDate: string; trialDays?: number }) => {
       const res = await apiClient.post('/billing/subscriptions', data);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed');
+      if (!res.success) throw new Error(res.error?.code ?? res.error?.message ?? 'BILLING_ERROR');
       return res.data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['billing-subscriptions'] }),
@@ -141,7 +141,7 @@ export function useUpdateSubscriptionStatus() {
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const res = await apiClient.patch(`/billing/subscriptions/${id}/status`, { status });
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed');
+      if (!res.success) throw new Error(res.error?.code ?? res.error?.message ?? 'BILLING_ERROR');
       return res.data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['billing-subscriptions'] }),
@@ -153,7 +153,7 @@ export function useRecordPayment() {
   return useMutation({
     mutationFn: async ({ subscriptionId, ...data }: { subscriptionId: string; amount: number; periodStart: string; periodEnd: string; paidAt: string; note?: string }) => {
       const res = await apiClient.post(`/billing/subscriptions/${subscriptionId}/payments`, data);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed');
+      if (!res.success) throw new Error(res.error?.code ?? res.error?.message ?? 'BILLING_ERROR');
       return res.data;
     },
     onSuccess: () => {

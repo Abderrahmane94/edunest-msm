@@ -177,56 +177,62 @@ export const billingService = {
     recordedBy: string;
     note?: string;
   }) {
-    const sub = await prisma.schoolSubscription.findUnique({ where: { id: subscriptionId } });
-    if (!sub) throw new BillingError('SUBSCRIPTION_NOT_FOUND', 404);
+    return prisma.$transaction(async (tx) => {
+      // Lock the subscription row so two concurrent payment submissions for the
+      // same subscription can't both pass the overlap check before either commits.
+      await tx.$queryRaw`SELECT id FROM school_subscriptions WHERE id = ${subscriptionId} FOR UPDATE`;
 
-    if (sub.status === 'cancelled' || sub.status === 'suspended') {
-      throw new BillingError('PAYMENT_BLOCKED', 400);
-    }
+      const sub = await tx.schoolSubscription.findUnique({ where: { id: subscriptionId } });
+      if (!sub) throw new BillingError('SUBSCRIPTION_NOT_FOUND', 404);
 
-    const overlap = await prisma.subscriptionPayment.findFirst({
-      where: {
-        subscriptionId,
-        deletedAt: null,
-        periodStart: { lt: new Date(input.periodEnd) },
-        periodEnd: { gt: new Date(input.periodStart) },
-      },
-    });
-    if (overlap) throw new BillingError('PERIOD_ALREADY_PAID', 409);
+      if (sub.status === 'cancelled' || sub.status === 'suspended') {
+        throw new BillingError('PAYMENT_BLOCKED', 400);
+      }
 
-    const payment = await prisma.subscriptionPayment.create({
-      data: {
-        subscriptionId,
-        amount: input.amount,
-        currency: 'DZD',
-        periodStart: new Date(input.periodStart),
-        periodEnd: new Date(input.periodEnd),
-        paidAt: new Date(input.paidAt),
-        recordedBy: input.recordedBy,
-        note: input.note ?? null,
-      },
-    });
-
-    // Advance period and set active based on the latest payment
-    const periodEnd = new Date(input.periodEnd);
-    if (periodEnd >= sub.currentPeriodEnd) {
-      await prisma.schoolSubscription.update({
-        where: { id: subscriptionId },
-        data: {
-          status: 'active',
-          currentPeriodStart: new Date(input.periodStart),
-          currentPeriodEnd: periodEnd,
+      const overlap = await tx.subscriptionPayment.findFirst({
+        where: {
+          subscriptionId,
+          deletedAt: null,
+          periodStart: { lt: new Date(input.periodEnd) },
+          periodEnd: { gt: new Date(input.periodStart) },
         },
       });
-    } else if (sub.status !== 'active') {
-      // If paying for an earlier period, still mark as active
-      await prisma.schoolSubscription.update({
-        where: { id: subscriptionId },
-        data: { status: 'active' },
-      });
-    }
+      if (overlap) throw new BillingError('PERIOD_ALREADY_PAID', 409);
 
-    return payment;
+      const payment = await tx.subscriptionPayment.create({
+        data: {
+          subscriptionId,
+          amount: input.amount,
+          currency: 'DZD',
+          periodStart: new Date(input.periodStart),
+          periodEnd: new Date(input.periodEnd),
+          paidAt: new Date(input.paidAt),
+          recordedBy: input.recordedBy,
+          note: input.note ?? null,
+        },
+      });
+
+      // Advance period and set active based on the latest payment
+      const periodEnd = new Date(input.periodEnd);
+      if (periodEnd >= sub.currentPeriodEnd) {
+        await tx.schoolSubscription.update({
+          where: { id: subscriptionId },
+          data: {
+            status: 'active',
+            currentPeriodStart: new Date(input.periodStart),
+            currentPeriodEnd: periodEnd,
+          },
+        });
+      } else if (sub.status !== 'active') {
+        // If paying for an earlier period, still mark as active
+        await tx.schoolSubscription.update({
+          where: { id: subscriptionId },
+          data: { status: 'active' },
+        });
+      }
+
+      return payment;
+    });
   },
 
   async updatePayment(id: string, input: {
@@ -236,36 +242,43 @@ export const billingService = {
     paidAt?: string;
     note?: string | null;
   }) {
-    const payment = await prisma.subscriptionPayment.findFirst({ where: { id, deletedAt: null } });
-    if (!payment) throw new BillingError('PAYMENT_NOT_FOUND', 404);
+    const existing = await prisma.subscriptionPayment.findFirst({ where: { id, deletedAt: null } });
+    if (!existing) throw new BillingError('PAYMENT_NOT_FOUND', 404);
 
-    const start = input.periodStart ? new Date(input.periodStart) : payment.periodStart;
-    const end   = input.periodEnd   ? new Date(input.periodEnd)   : payment.periodEnd;
+    return prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM school_subscriptions WHERE id = ${existing.subscriptionId} FOR UPDATE`;
 
-    if (start >= end) throw new BillingError('INVALID_PERIOD', 400);
+      const payment = await tx.subscriptionPayment.findFirst({ where: { id, deletedAt: null } });
+      if (!payment) throw new BillingError('PAYMENT_NOT_FOUND', 404);
 
-    if (input.periodStart || input.periodEnd) {
-      const overlap = await prisma.subscriptionPayment.findFirst({
-        where: {
-          subscriptionId: payment.subscriptionId,
-          id: { not: id },
-          deletedAt: null,
-          periodStart: { lt: end },
-          periodEnd:   { gt: start },
+      const start = input.periodStart ? new Date(input.periodStart) : payment.periodStart;
+      const end   = input.periodEnd   ? new Date(input.periodEnd)   : payment.periodEnd;
+
+      if (start >= end) throw new BillingError('INVALID_PERIOD', 400);
+
+      if (input.periodStart || input.periodEnd) {
+        const overlap = await tx.subscriptionPayment.findFirst({
+          where: {
+            subscriptionId: payment.subscriptionId,
+            id: { not: id },
+            deletedAt: null,
+            periodStart: { lt: end },
+            periodEnd:   { gt: start },
+          },
+        });
+        if (overlap) throw new BillingError('PERIOD_ALREADY_PAID', 409);
+      }
+
+      return tx.subscriptionPayment.update({
+        where: { id },
+        data: {
+          ...(input.amount      !== undefined && { amount: input.amount }),
+          ...(input.periodStart !== undefined && { periodStart: start }),
+          ...(input.periodEnd   !== undefined && { periodEnd:   end }),
+          ...(input.paidAt      !== undefined && { paidAt:      new Date(input.paidAt) }),
+          ...('note' in input                 && { note: input.note ?? null }),
         },
       });
-      if (overlap) throw new BillingError('PERIOD_ALREADY_PAID', 409);
-    }
-
-    return prisma.subscriptionPayment.update({
-      where: { id },
-      data: {
-        ...(input.amount      !== undefined && { amount: input.amount }),
-        ...(input.periodStart !== undefined && { periodStart: start }),
-        ...(input.periodEnd   !== undefined && { periodEnd:   end }),
-        ...(input.paidAt      !== undefined && { paidAt:      new Date(input.paidAt) }),
-        ...('note' in input                 && { note: input.note ?? null }),
-      },
     });
   },
 
@@ -317,21 +330,28 @@ export const billingService = {
   },
 
   async restorePayment(id: string) {
-    const payment = await prisma.subscriptionPayment.findFirst({ where: { id, deletedAt: { not: null } } });
-    if (!payment) throw new BillingError('PAYMENT_NOT_FOUND', 404);
+    const existing = await prisma.subscriptionPayment.findFirst({ where: { id, deletedAt: { not: null } } });
+    if (!existing) throw new BillingError('PAYMENT_NOT_FOUND', 404);
 
-    const overlap = await prisma.subscriptionPayment.findFirst({
-      where: {
-        subscriptionId: payment.subscriptionId,
-        id: { not: id },
-        deletedAt: null,
-        periodStart: { lt: payment.periodEnd },
-        periodEnd:   { gt: payment.periodStart },
-      },
+    return prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM school_subscriptions WHERE id = ${existing.subscriptionId} FOR UPDATE`;
+
+      const payment = await tx.subscriptionPayment.findFirst({ where: { id, deletedAt: { not: null } } });
+      if (!payment) throw new BillingError('PAYMENT_NOT_FOUND', 404);
+
+      const overlap = await tx.subscriptionPayment.findFirst({
+        where: {
+          subscriptionId: payment.subscriptionId,
+          id: { not: id },
+          deletedAt: null,
+          periodStart: { lt: payment.periodEnd },
+          periodEnd:   { gt: payment.periodStart },
+        },
+      });
+      if (overlap) throw new BillingError('PERIOD_ALREADY_PAID', 409);
+
+      return tx.subscriptionPayment.update({ where: { id }, data: { deletedAt: null } });
     });
-    if (overlap) throw new BillingError('PERIOD_ALREADY_PAID', 409);
-
-    return prisma.subscriptionPayment.update({ where: { id }, data: { deletedAt: null } });
   },
 
   async getPayments(subscriptionId: string) {

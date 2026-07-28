@@ -25,6 +25,23 @@ export const usersController = {
   },
 
   /**
+   * GET /api/users/invitation/:token — Look up invitation info by token (public)
+   */
+  async getInvitationInfo(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { token } = req.params;
+      const info = await usersService.getInvitationInfo(token);
+      res.status(200).json(successResponse(info));
+    } catch (error) {
+      if (error instanceof UserServiceError) {
+        res.status(error.statusCode).json(errorResponse('USER_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
    * POST /api/users/register — Complete registration via invitation token (public)
    */
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {

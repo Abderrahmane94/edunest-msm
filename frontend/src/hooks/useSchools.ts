@@ -11,6 +11,7 @@ export interface SchoolItem {
   contactPhone: string;
   isActive: boolean;
   createdAt: string;
+  deletedAt?: string | null;
 }
 
 export function useSchoolsList() {

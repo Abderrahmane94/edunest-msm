@@ -95,8 +95,9 @@ class ChildrenService {
 
   /**
    * Get a single child by ID, scoped to the school.
+   * When requestingParentUserId is provided, the child must also be linked to that parent.
    */
-  async getById(id: string, schoolId: string): Promise<ChildWithEnrollments> {
+  async getById(id: string, schoolId: string, requestingParentUserId?: string): Promise<ChildWithEnrollments> {
     const child = await prisma.child.findFirst({
       where: { id, schoolId },
       include: enrollmentInclude,
@@ -106,7 +107,24 @@ class ChildrenService {
       throw new ChildServiceError('Child not found', 404);
     }
 
+    if (requestingParentUserId) {
+      await this.assertParentLinked(id, requestingParentUserId);
+    }
+
     return child;
+  }
+
+  /**
+   * Throws if the given parent user is not linked to the given child.
+   */
+  private async assertParentLinked(childId: string, parentUserId: string): Promise<void> {
+    const link = await prisma.parentChildLink.findUnique({
+      where: { childId_parentUserId: { childId, parentUserId } },
+    });
+
+    if (!link) {
+      throw new ChildServiceError('Child not found', 404);
+    }
   }
 
   /**
@@ -210,6 +228,18 @@ class ChildrenService {
       );
     }
 
+    // Enforce classroom capacity
+    const enrollmentCount = await prisma.classroomEnrollment.count({
+      where: { classroomId: input.classroomId },
+    });
+
+    if (enrollmentCount >= classroom.capacity) {
+      throw new ChildServiceError(
+        `Classroom "${classroom.name}" is at full capacity (${classroom.capacity}).`,
+        409,
+      );
+    }
+
     // Create the enrollment
     const enrollment = await prisma.classroomEnrollment.create({
       data: {
@@ -269,17 +299,21 @@ class ChildrenService {
   /**
    * Generate a signed URL for a child's photo with 1-hour expiry.
    */
-  getPhotoUrl(childId: string, schoolId: string): Promise<PhotoUrlResponse> {
-    return this.getPhotoUrlInternal(childId, schoolId);
+  getPhotoUrl(childId: string, schoolId: string, requestingParentUserId?: string): Promise<PhotoUrlResponse> {
+    return this.getPhotoUrlInternal(childId, schoolId, requestingParentUserId);
   }
 
-  private async getPhotoUrlInternal(childId: string, schoolId: string): Promise<PhotoUrlResponse> {
+  private async getPhotoUrlInternal(childId: string, schoolId: string, requestingParentUserId?: string): Promise<PhotoUrlResponse> {
     const child = await prisma.child.findFirst({
       where: { id: childId, schoolId },
     });
 
     if (!child) {
       throw new ChildServiceError('Child not found', 404);
+    }
+
+    if (requestingParentUserId) {
+      await this.assertParentLinked(childId, requestingParentUserId);
     }
 
     if (!child.photoPublicId) {

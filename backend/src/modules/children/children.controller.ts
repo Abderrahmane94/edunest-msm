@@ -50,7 +50,8 @@ export const childrenController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
-      const child = await childrenService.getById(id, schoolId);
+      const requestingParentUserId = req.user!.role === 'parent' ? req.user!.userId : undefined;
+      const child = await childrenService.getById(id, schoolId, requestingParentUserId);
       res.status(200).json(successResponse(child));
     } catch (error) {
       if (error instanceof ChildServiceError) {
@@ -149,7 +150,8 @@ export const childrenController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
-      const photoUrl = await childrenService.getPhotoUrl(id, schoolId);
+      const requestingParentUserId = req.user!.role === 'parent' ? req.user!.userId : undefined;
+      const photoUrl = await childrenService.getPhotoUrl(id, schoolId, requestingParentUserId);
       res.status(200).json(successResponse(photoUrl));
     } catch (error) {
       if (error instanceof ChildServiceError) {

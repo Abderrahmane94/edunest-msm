@@ -28,9 +28,14 @@ export function UserDetailPage() {
   });
   const [saveSuccess, setSaveSuccess] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
+  const loadedUserId = React.useRef<string | null>(null);
 
   React.useEffect(() => {
-    if (user) {
+    // Only re-initialize the form when we land on a different user, not on
+    // every background refetch of the same user (e.g. after toggling active
+    // status) — otherwise in-progress unsaved edits get silently discarded.
+    if (user && loadedUserId.current !== user.id) {
+      loadedUserId.current = user.id;
       setFormData({
         first_name: user.first_name,
         last_name: user.last_name,

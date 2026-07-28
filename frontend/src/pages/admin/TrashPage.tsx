@@ -21,6 +21,7 @@ import {
   type TrashItem,
 } from '@/hooks/useTrash';
 import { useDeletedPayments, useRestorePayment, type SchoolPaymentRecord } from '@/hooks/useBilling';
+import { useAuth } from '@/contexts/AuthContext';
 
 type EntityTab = TrashEntityType | 'payments';
 
@@ -215,7 +216,10 @@ function DeletedPaymentsTab() {
 
 export function TrashPage() {
   const { t, i18n } = useTranslation();
-  const [activeTab, setActiveTab] = React.useState<EntityTab>('schools');
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin';
+  const visibleTabs = isSuperAdmin ? ENTITY_TABS : ENTITY_TABS.filter((tab) => tab.key !== 'schools');
+  const [activeTab, setActiveTab] = React.useState<EntityTab>(isSuperAdmin ? 'schools' : 'users');
   const [page, setPage] = React.useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [selectedItem, setSelectedItem] = React.useState<TrashItem | null>(null);
@@ -356,7 +360,7 @@ export function TrashPage() {
 
       {/* Entity type tabs */}
       <div className="flex items-center gap-2">
-        {ENTITY_TABS.map((tab) => (
+        {visibleTabs.map((tab) => (
           <Button
             key={tab.key}
             variant={activeTab === tab.key ? 'primary' : 'secondary'}

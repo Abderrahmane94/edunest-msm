@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
 export function ResetPasswordRequestPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,7 +19,7 @@ export function ResetPasswordRequestPage() {
 
     try {
       const response = await apiClient.post(
-        '/auth/reset-password',
+        '/auth/password-reset/request',
         { email },
         { skipAuth: true } as RequestInit,
       );
@@ -25,10 +27,10 @@ export function ResetPasswordRequestPage() {
       if (response.success) {
         setIsSuccess(true);
       } else {
-        setError(response.error?.message || 'Unable to send reset email. Please try again.');
+        setError(response.error?.message || t('auth.resetPasswordRequest.genericError'));
       }
     } catch {
-      setError('An unexpected error occurred. Please try again.');
+      setError(t('auth.resetPasswordRequest.unexpectedError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -39,13 +41,13 @@ export function ResetPasswordRequestPage() {
       <div className="min-h-screen flex items-center justify-center bg-page px-4">
         <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6 text-center">
           <h1 className="text-display font-bold text-text-heading mb-4">
-            Check Your Email
+            {t('auth.resetPasswordRequest.checkEmailTitle')}
           </h1>
           <p className="text-body text-text-secondary mb-6">
-            If an account exists for <span className="font-medium text-foreground">{email}</span>, we've sent a password reset link.
+            {t('auth.resetPasswordRequest.checkEmailMessage', { email })}
           </p>
           <Link to="/login">
-            <Button variant="secondary">Back to Login</Button>
+            <Button variant="secondary">{t('auth.resetPasswordRequest.backToLogin')}</Button>
           </Link>
         </div>
       </div>
@@ -56,10 +58,10 @@ export function ResetPasswordRequestPage() {
     <div className="min-h-screen flex items-center justify-center bg-page px-4">
       <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6">
         <h1 className="text-display font-bold text-text-heading mb-2">
-          Reset Password
+          {t('auth.resetPasswordRequest.title')}
         </h1>
         <p className="text-body text-text-secondary mb-6">
-          Enter your email address and we'll send you a link to reset your password.
+          {t('auth.resetPasswordRequest.subtitle')}
         </p>
 
         {error && (
@@ -70,10 +72,10 @@ export function ResetPasswordRequestPage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input
-            label="Email"
+            label={t('auth.resetPasswordRequest.email')}
             name="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder={t('auth.resetPasswordRequest.emailPlaceholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -87,7 +89,7 @@ export function ResetPasswordRequestPage() {
             className="w-full mt-2"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Sending…' : 'Send Reset Link'}
+            {isSubmitting ? t('auth.resetPasswordRequest.submitting') : t('auth.resetPasswordRequest.submit')}
           </Button>
         </form>
 
@@ -96,7 +98,7 @@ export function ResetPasswordRequestPage() {
             to="/login"
             className="text-body text-[var(--color-accent)] hover:underline"
           >
-            Back to Login
+            {t('auth.resetPasswordRequest.backToLogin')}
           </Link>
         </div>
       </div>

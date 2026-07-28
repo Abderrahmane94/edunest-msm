@@ -34,8 +34,11 @@ export function ChangePasswordPage() {
 
     setLoading(true);
     try {
-      const res = await apiClient.post('/users/change-password', { newPassword });
+      const res = await apiClient.post<{ message: string; accessToken: string }>('/users/change-password', { newPassword });
       if (!res.success) throw new Error(res.error?.message ?? t('common.error'));
+      if (res.data?.accessToken) {
+        localStorage.setItem('access_token', res.data.accessToken);
+      }
       clearMustChangePassword();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.error'));

@@ -138,24 +138,9 @@ export function useSendFileMessage(conversationId?: string) {
       formData.append('file', file);
       formData.append('message_type', messageType);
 
-      const token = localStorage.getItem('access_token');
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-      const response = await fetch(
-        `${baseUrl}/communication/conversations/${conversationId}/messages`,
-        {
-          method: 'POST',
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to send file message');
-      }
-
-      return response.json();
+      const res = await apiClient.uploadFile(`/communication/conversations/${conversationId}/messages`, formData);
+      if (!res.success) throw new Error(res.error?.message || 'Failed to send file message');
+      return res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });

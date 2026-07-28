@@ -20,6 +20,7 @@ import {
   type SubscriptionPlan, type SchoolSubscription, type BillingStats, type SchoolPaymentRecord,
 } from '@/hooks/useBilling';
 import { useSchoolsList } from '@/hooks/useSchools';
+import { useAuth } from '@/contexts/AuthContext';
 
 type Tab = 'dashboard' | 'plans' | 'subscriptions' | 'payments';
 
@@ -1294,7 +1295,19 @@ function PaymentsTab() {
 /* ─── Page ─── */
 export function BillingPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = React.useState<Tab>('dashboard');
+
+  if (user?.role !== 'super_admin') {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <h1 className="text-page-title font-semibold text-text-heading">{t('billing.title')}</h1>
+        <div className="bg-card border border-border rounded-lg p-8 text-center">
+          <p className="text-body text-text-secondary">{t('schools.superAdminOnly')}</p>
+        </div>
+      </div>
+    );
+  }
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'dashboard', label: t('billing.tabs.dashboard'), icon: <TrendingUp className="w-4 h-4" /> },

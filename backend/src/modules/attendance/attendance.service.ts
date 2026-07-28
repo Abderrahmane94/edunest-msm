@@ -464,10 +464,21 @@ class AttendanceService {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0); // Last day of the month
 
-    // Get the child's current classroom enrollment to determine totalSchoolDays
+    // Get the child's classroom enrollment active during the requested month
+    // (a child can have separate enrollments across academic years, so pick the
+    // one whose classroom's academic year actually covers this month/year).
     const enrollment = await prisma.classroomEnrollment.findFirst({
-      where: { childId },
+      where: {
+        childId,
+        classroom: {
+          academicYear: {
+            startDate: { lte: endDate },
+            endDate: { gte: startDate },
+          },
+        },
+      },
       select: { classroomId: true },
+      orderBy: { enrolledAt: 'desc' },
     });
 
     let totalSchoolDays = 0;
@@ -567,7 +578,16 @@ class AttendanceService {
             photoPublicId: true,
             schoolId: true,
             enrollments: {
+              where: {
+                classroom: {
+                  academicYear: {
+                    startDate: { lte: endDate },
+                    endDate: { gte: startDate },
+                  },
+                },
+              },
               select: { classroomId: true },
+              orderBy: { enrolledAt: 'desc' },
               take: 1,
             },
           },

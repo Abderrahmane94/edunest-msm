@@ -602,79 +602,83 @@ class FinanceService {
     input: RecordCashPaymentInput,
     adminUserId: string,
   ): Promise<CashPaymentResponse> {
-    const invoice = await prisma.invoice.findFirst({
-      where: { id: invoiceId, schoolId },
-    });
-
-    if (!invoice) {
-      throw new FinanceServiceError('Invoice not found', 404);
-    }
-
-    // Reject if invoice is cancelled or already fully paid
-    if (invoice.status === 'cancelled') {
-      throw new FinanceServiceError('Cannot record payment on a cancelled invoice', 400);
-    }
-
-    if (invoice.status === 'paid') {
-      throw new FinanceServiceError('Cannot record payment on a fully paid invoice', 400);
-    }
-
-    const previousStatus = invoice.status;
-    const currentRemaining = invoice.remainingAmount !== null
-      ? Number(invoice.remainingAmount)
-      : Number(invoice.finalAmount);
-
     const amountReceived = input.amount_received;
 
-    // Calculate new remaining amount
-    const newRemaining = Math.round((currentRemaining - amountReceived) * 100) / 100;
+    const { invoice, newStatus, newRemaining, cashPayment } = await prisma.$transaction(async (tx) => {
+      // Lock the invoice row for the duration of the transaction so concurrent
+      // cash-payment submissions against the same invoice are serialized instead
+      // of both reading the same stale remainingAmount.
+      await tx.$queryRaw`SELECT id FROM invoices WHERE id = ${invoiceId} FOR UPDATE`;
 
-    // Determine new status
-    let newStatus: 'paid' | 'partial';
-    if (newRemaining <= 0) {
-      newStatus = 'paid';
-    } else {
-      newStatus = 'partial';
-    }
+      const invoice = await tx.invoice.findFirst({
+        where: { id: invoiceId, schoolId },
+      });
 
-    // Update invoice
-    await prisma.invoice.update({
-      where: { id: invoiceId },
-      data: {
-        status: newStatus,
-        paymentMethod: 'cash',
-        remainingAmount: newRemaining <= 0 ? 0 : newRemaining,
-        ...(newStatus === 'paid' && { paidAt: new Date() }),
-      },
-    });
+      if (!invoice) {
+        throw new FinanceServiceError('Invoice not found', 404);
+      }
 
-    // Create CashPayment record
-    const cashPayment = await prisma.cashPayment.create({
-      data: {
-        invoiceId,
-        schoolId,
-        amount: amountReceived,
-        receivedBy: adminUserId,
-        receivedAt: new Date(input.received_at),
-        note: input.note ?? null,
-      },
-    });
+      // Reject if invoice is cancelled or already fully paid
+      if (invoice.status === 'cancelled') {
+        throw new FinanceServiceError('Cannot record payment on a cancelled invoice', 400);
+      }
 
-    // Create PaymentAuditLog entry
-    await prisma.paymentAuditLog.create({
-      data: {
-        invoiceId,
-        action: 'cash_payment_recorded',
-        performedBy: adminUserId,
-        previousStatus,
-        newStatus,
-        metadata: {
-          amount_received: amountReceived,
-          remaining_amount: newRemaining <= 0 ? 0 : newRemaining,
-          note: input.note ?? null,
-          cash_payment_id: cashPayment.id,
+      if (invoice.status === 'paid') {
+        throw new FinanceServiceError('Cannot record payment on a fully paid invoice', 400);
+      }
+
+      const previousStatus = invoice.status;
+      const currentRemaining = invoice.remainingAmount !== null
+        ? Number(invoice.remainingAmount)
+        : Number(invoice.finalAmount);
+
+      // Calculate new remaining amount
+      const newRemaining = Math.round((currentRemaining - amountReceived) * 100) / 100;
+
+      // Determine new status
+      const newStatus: 'paid' | 'partial' = newRemaining <= 0 ? 'paid' : 'partial';
+
+      // Update invoice
+      await tx.invoice.update({
+        where: { id: invoiceId },
+        data: {
+          status: newStatus,
+          paymentMethod: 'cash',
+          remainingAmount: newRemaining <= 0 ? 0 : newRemaining,
+          ...(newStatus === 'paid' && { paidAt: new Date() }),
         },
-      },
+      });
+
+      // Create CashPayment record
+      const cashPayment = await tx.cashPayment.create({
+        data: {
+          invoiceId,
+          schoolId,
+          amount: amountReceived,
+          receivedBy: adminUserId,
+          receivedAt: new Date(input.received_at),
+          note: input.note ?? null,
+        },
+      });
+
+      // Create PaymentAuditLog entry
+      await tx.paymentAuditLog.create({
+        data: {
+          invoiceId,
+          action: 'cash_payment_recorded',
+          performedBy: adminUserId,
+          previousStatus,
+          newStatus,
+          metadata: {
+            amount_received: amountReceived,
+            remaining_amount: newRemaining <= 0 ? 0 : newRemaining,
+            note: input.note ?? null,
+            cash_payment_id: cashPayment.id,
+          },
+        },
+      });
+
+      return { invoice, newStatus, newRemaining, cashPayment };
     });
 
     // Fetch admin name for notification
@@ -748,11 +752,12 @@ class FinanceService {
    */
   async getCashPaymentReceipt(
     cashPaymentId: string,
+    schoolId: string,
     userId?: string,
     userRole?: string,
   ): Promise<CashPaymentResponse & { invoice: InvoiceResponse }> {
     const cashPayment = await prisma.cashPayment.findFirst({
-      where: { id: cashPaymentId },
+      where: { id: cashPaymentId, schoolId },
       include: { invoice: true },
     });
 

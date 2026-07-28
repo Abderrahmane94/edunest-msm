@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
 export function ResetPasswordConfirmPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -20,8 +22,8 @@ export function ResetPasswordConfirmPage() {
   function validate(): boolean {
     const errors: Record<string, string> = {};
 
-    if (password.length < 8) errors.password = 'Password must be at least 8 characters';
-    if (password !== confirmPassword) errors.confirmPassword = 'Passwords do not match';
+    if (password.length < 8) errors.password = t('auth.resetPasswordConfirm.passwordMinLength');
+    if (password !== confirmPassword) errors.confirmPassword = t('auth.resetPasswordConfirm.passwordMismatch');
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -37,18 +39,18 @@ export function ResetPasswordConfirmPage() {
 
     try {
       const response = await apiClient.post(
-        '/auth/reset-password/confirm',
-        { token, password },
+        '/auth/password-reset/confirm',
+        { token, newPassword: password },
         { skipAuth: true } as RequestInit,
       );
 
       if (response.success) {
         setIsSuccess(true);
       } else {
-        setError(response.error?.message || 'Unable to reset password. The link may have expired.');
+        setError(response.error?.message || t('auth.resetPasswordConfirm.genericError'));
       }
     } catch {
-      setError('An unexpected error occurred. Please try again.');
+      setError(t('auth.resetPasswordConfirm.unexpectedError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -59,13 +61,13 @@ export function ResetPasswordConfirmPage() {
       <div className="min-h-screen flex items-center justify-center bg-page px-4">
         <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6 text-center">
           <h1 className="text-display font-bold text-text-heading mb-4">
-            Invalid Link
+            {t('auth.resetPasswordConfirm.invalidLinkTitle')}
           </h1>
           <p className="text-body text-text-secondary mb-4">
-            No reset token found. Please request a new password reset link.
+            {t('auth.resetPasswordConfirm.invalidLinkMessage')}
           </p>
           <Link to="/reset-password">
-            <Button variant="secondary">Request New Link</Button>
+            <Button variant="secondary">{t('auth.resetPasswordConfirm.requestNewLink')}</Button>
           </Link>
         </div>
       </div>
@@ -77,13 +79,13 @@ export function ResetPasswordConfirmPage() {
       <div className="min-h-screen flex items-center justify-center bg-page px-4">
         <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6 text-center">
           <h1 className="text-display font-bold text-text-heading mb-4">
-            Password Updated
+            {t('auth.resetPasswordConfirm.successTitle')}
           </h1>
           <p className="text-body text-text-secondary mb-6">
-            Your password has been reset successfully. You can now sign in with your new password.
+            {t('auth.resetPasswordConfirm.successMessage')}
           </p>
           <Button variant="primary" onClick={() => navigate('/login')}>
-            Go to Login
+            {t('auth.resetPasswordConfirm.goToLogin')}
           </Button>
         </div>
       </div>
@@ -94,10 +96,10 @@ export function ResetPasswordConfirmPage() {
     <div className="min-h-screen flex items-center justify-center bg-page px-4">
       <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6">
         <h1 className="text-display font-bold text-text-heading mb-2">
-          Set New Password
+          {t('auth.resetPasswordConfirm.title')}
         </h1>
         <p className="text-body text-text-secondary mb-6">
-          Enter your new password below.
+          {t('auth.resetPasswordConfirm.subtitle')}
         </p>
 
         {error && (
@@ -108,10 +110,10 @@ export function ResetPasswordConfirmPage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input
-            label="New Password"
+            label={t('auth.resetPasswordConfirm.newPassword')}
             name="password"
             type="password"
-            placeholder="At least 8 characters"
+            placeholder={t('auth.resetPasswordConfirm.newPasswordPlaceholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={fieldErrors.password}
@@ -120,10 +122,10 @@ export function ResetPasswordConfirmPage() {
           />
 
           <Input
-            label="Confirm New Password"
+            label={t('auth.resetPasswordConfirm.confirmNewPassword')}
             name="confirmPassword"
             type="password"
-            placeholder="Re-enter your password"
+            placeholder={t('auth.resetPasswordConfirm.confirmNewPasswordPlaceholder')}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             error={fieldErrors.confirmPassword}
@@ -138,7 +140,7 @@ export function ResetPasswordConfirmPage() {
             className="w-full mt-2"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Updating…' : 'Update Password'}
+            {isSubmitting ? t('auth.resetPasswordConfirm.submitting') : t('auth.resetPasswordConfirm.submit')}
           </Button>
         </form>
       </div>

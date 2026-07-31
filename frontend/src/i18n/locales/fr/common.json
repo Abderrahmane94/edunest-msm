@@ -154,7 +154,8 @@
     "notifications": "Notifications",
     "trash": "Corbeille",
     "timetable": "Jours de présence",
-    "payroll": "Paie"
+    "payroll": "Paie",
+    "announcements": "Annonces"
   },
   "schools": {
     "title": "Gestion des écoles",
@@ -971,6 +972,9 @@
       "daysAgo": "il y a {{count}} j"
     }
   },
+  "teacherCommunication": {
+    "title": "Annonces et événements"
+  },
   "teacherAttendance": {
     "title": "Appel de présence",
     "noClassroom": "Aucune classe ne vous est assignée. Contactez votre administrateur.",
@@ -1072,6 +1076,12 @@
     "error": "Impossible de charger les notifications. Veuillez réessayer.",
     "empty": "Aucune notification pour le moment.",
     "unread": "Non lu"
+  },
+  "parentAnnouncements": {
+    "title": "Annonces et événements",
+    "subtitle": "Suivez l'actualité de l'école",
+    "error": "Impossible de charger les annonces. Veuillez réessayer.",
+    "respondToConsent": "Répondre"
   },
   "parentInvoices": {
     "title": "Factures et consentements",

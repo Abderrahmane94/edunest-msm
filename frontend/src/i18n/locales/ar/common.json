@@ -154,7 +154,8 @@
     "notifications": "الإشعارات",
     "trash": "سلة المحذوفات",
     "timetable": "أيام الحضور",
-    "payroll": "الرواتب"
+    "payroll": "الرواتب",
+    "announcements": "الإعلانات"
   },
   "schools": {
     "title": "إدارة المدارس",
@@ -972,6 +973,9 @@
       "daysAgo": "منذ {{count}} يوم"
     }
   },
+  "teacherCommunication": {
+    "title": "الإعلانات والفعاليات"
+  },
   "teacherAttendance": {
     "title": "نداء الحضور",
     "noClassroom": "لم يتم تعيين قسم لك. تواصل مع المسؤول.",
@@ -1073,6 +1077,12 @@
     "error": "تعذر تحميل الإشعارات. يرجى المحاولة مرة أخرى.",
     "empty": "لا توجد إشعارات حتى الآن.",
     "unread": "غير مقروء"
+  },
+  "parentAnnouncements": {
+    "title": "الإعلانات والفعاليات",
+    "subtitle": "تابع مستجدات المدرسة",
+    "error": "تعذر تحميل الإعلانات. يرجى المحاولة مرة أخرى.",
+    "respondToConsent": "الرد"
   },
   "parentInvoices": {
     "title": "الفواتير والموافقات",

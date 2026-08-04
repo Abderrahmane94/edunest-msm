@@ -87,6 +87,7 @@ export const authService = {
       schoolId: user.schoolId,
       branchId: user.branchId,
       role: user.role,
+      mustChangePassword: user.mustChangePassword,
     };
 
     const accessToken = generateAccessToken(tokenPayload);
@@ -140,11 +141,28 @@ export const authService = {
       throw new AuthError('Invalid or expired refresh token', 401);
     }
 
+    // Re-fetch the user so a demotion/deactivation is picked up immediately,
+    // instead of trusting the (potentially stale) role/schoolId baked into the refresh token.
+    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    if (!user || !user.isActive) {
+      await prisma.refreshToken.delete({ where: { id: storedToken.id } });
+      throw new AuthError('Invalid or expired refresh token', 401);
+    }
+
+    if (user.schoolId) {
+      const school = await prisma.school.findUnique({ where: { id: user.schoolId } });
+      if (school && !school.isActive) {
+        await prisma.refreshToken.delete({ where: { id: storedToken.id } });
+        throw new AuthError('Invalid or expired refresh token', 401);
+      }
+    }
+
     const newAccessToken = generateAccessToken({
-      userId: payload.userId,
-      schoolId: payload.schoolId,
+      userId: user.id,
+      schoolId: user.schoolId,
       branchId: payload.branchId,
-      role: payload.role,
+      role: user.role,
+      mustChangePassword: user.mustChangePassword,
     });
 
     return { accessToken: newAccessToken };
@@ -185,7 +203,7 @@ export const authService = {
     });
 
     // Send password reset email
-    const resetUrl = `${getFrontendUrl()}/reset-password?token=${token}`;
+    const resetUrl = `${getFrontendUrl()}/reset-password/confirm?token=${token}`;
     await emailService.sendPasswordResetEmail(user.email, user.firstName, resetUrl);
   },
 
@@ -227,7 +245,7 @@ export const authService = {
     ]);
   },
 
-  async changePassword(userId: string, newPassword: string): Promise<void> {
+  async changePassword(userId: string, newPassword: string): Promise<{ accessToken: string }> {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new AuthError('User not found', 404);
 
@@ -239,6 +257,17 @@ export const authService = {
 
     // Invalidate all existing refresh tokens so the user re-authenticates with new password
     await prisma.refreshToken.deleteMany({ where: { userId } });
+
+    // Issue a fresh access token with mustChangePassword cleared so the current
+    // session isn't immediately blocked by the mustChangePassword gate below.
+    const accessToken = generateAccessToken({
+      userId: user.id,
+      schoolId: user.schoolId,
+      role: user.role,
+      mustChangePassword: false,
+    });
+
+    return { accessToken };
   },
 
   verifyAccessToken,

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 import { Button } from './Button';
@@ -37,6 +38,7 @@ export interface DialogContentProps {
 
 export function DialogContent({ children, className }: DialogContentProps) {
   const { open, onOpenChange } = useDialogContext();
+  const { t } = useTranslation();
   const contentRef = React.useRef<HTMLDivElement>(null);
 
   // Trap focus and handle escape key
@@ -84,7 +86,7 @@ export function DialogContent({ children, className }: DialogContentProps) {
           size="icon"
           className="absolute top-4 end-4"
           onClick={() => onOpenChange(false)}
-          aria-label="Close dialog"
+          aria-label={t('common.closeDialog', 'Close dialog')}
         >
           <X className="w-4 h-4" />
         </Button>

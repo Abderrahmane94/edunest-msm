@@ -34,7 +34,8 @@ export const classroomsController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
-      const teacherId = req.query.teacher_id as string | undefined;
+      // Teachers may only ever list their own assigned classrooms, regardless of query params.
+      const teacherId = req.user!.role === 'teacher' ? req.user!.userId : (req.query.teacher_id as string | undefined);
       const { classrooms, total } = await classroomsService.list(schoolId, page, pageSize, teacherId);
       res.status(200).json(paginatedResponse(classrooms, page, pageSize, total));
     } catch (error) {
@@ -53,7 +54,8 @@ export const classroomsController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
-      const classroom = await classroomsService.getById(id, schoolId);
+      const requestingTeacherUserId = req.user!.role === 'teacher' ? req.user!.userId : undefined;
+      const classroom = await classroomsService.getById(id, schoolId, requestingTeacherUserId);
       res.status(200).json(successResponse(classroom));
     } catch (error) {
       if (error instanceof ClassroomServiceError) {
@@ -109,9 +111,14 @@ export const classroomsController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
+      await classroomsService.assertNoEnrollments(id);
       await softDeleteService.softDelete('classroom', id, schoolId);
       res.status(200).json(successResponse({ message: 'Classroom deleted successfully' }));
     } catch (error) {
+      if (error instanceof ClassroomServiceError) {
+        res.status(error.statusCode).json(errorResponse('CLASSROOM_ERROR', error.message));
+        return;
+      }
       if (error instanceof SoftDeleteError) {
         const code = error.statusCode === 409 ? 'ALREADY_DELETED' : 'NOT_FOUND';
         res.status(error.statusCode).json(errorResponse(code, error.message));

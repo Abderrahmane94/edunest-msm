@@ -70,8 +70,14 @@ export const trashController = {
    */
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.role === 'super_admin' ? '' : req.user!.schoolId!;
       const model = ENTITY_TYPE_TO_MODEL[req.params.entityType];
+
+      if (model === 'school' && req.user!.role !== 'super_admin') {
+        res.status(403).json(errorResponse('FORBIDDEN', 'Only super admins can manage deleted schools'));
+        return;
+      }
+
+      const schoolId = req.user!.role === 'super_admin' ? '' : req.user!.schoolId!;
       const { page, pageSize } = trashQuerySchema.parse(req.query);
 
       const { data, total } = await softDeleteService.listDeleted(model, schoolId, page, pageSize);
@@ -95,8 +101,14 @@ export const trashController = {
    */
   async restore(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.role === 'super_admin' ? undefined : req.user!.schoolId!;
       const model = ENTITY_TYPE_TO_MODEL[req.params.entityType];
+
+      if (model === 'school' && req.user!.role !== 'super_admin') {
+        res.status(403).json(errorResponse('FORBIDDEN', 'Only super admins can manage deleted schools'));
+        return;
+      }
+
+      const schoolId = req.user!.role === 'super_admin' ? undefined : req.user!.schoolId!;
       const { id } = req.params;
 
       const restoredEntity = await softDeleteService.restore(model, id, schoolId);
@@ -116,8 +128,14 @@ export const trashController = {
    */
   async hardDelete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const schoolId = req.user!.role === 'super_admin' ? undefined : req.user!.schoolId!;
       const model = ENTITY_TYPE_TO_MODEL[req.params.entityType];
+
+      if (model === 'school' && req.user!.role !== 'super_admin') {
+        res.status(403).json(errorResponse('FORBIDDEN', 'Only super admins can manage deleted schools'));
+        return;
+      }
+
+      const schoolId = req.user!.role === 'super_admin' ? undefined : req.user!.schoolId!;
       const { id } = req.params;
 
       await softDeleteService.hardDelete(model, id, schoolId);

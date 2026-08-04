@@ -25,6 +25,9 @@ router.post('/', requireAdmin, validate(createUserDirectlySchema), usersControll
 // POST /api/users/invite — Send invitation email (admin only)
 router.post('/invite', requireAdmin, validate(inviteUserSchema), usersController.invite);
 
+// GET /api/users/invitation/:token — Look up invitation info by token (public)
+router.get('/invitation/:token', usersController.getInvitationInfo);
+
 // POST /api/users/register — Complete registration via invitation token (public)
 router.post('/register', validate(registerUserSchema), usersController.register);
 

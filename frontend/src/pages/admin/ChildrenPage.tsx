@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Link2, Phone } from 'lucide-react';
+import { Plus, Link2, Phone, Trash2 } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import {
   Button,
@@ -18,7 +18,11 @@ import {
 } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
-import { useChildren, useCreateChild, useLinkParent, type Child } from '@/hooks/useChildren';
+import {
+  useChildren, useCreateChild, useLinkParent,
+  useEmergencyContacts, useAddEmergencyContact, useRemoveEmergencyContact,
+  type Child,
+} from '@/hooks/useChildren';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
 import { useUsers } from '@/hooks/useUsers';
 
@@ -321,9 +325,11 @@ function EmergencyContactsDialog({
   child: Child | null;
 }) {
   const { t } = useTranslation();
-  const [contacts, setContacts] = React.useState<
-    { name: string; relationship: string; phone: string; is_authorized_pickup: boolean }[]
-  >([]);
+  const childId = child?.id ?? '';
+  const { data: contacts = [], isLoading: contactsLoading } = useEmergencyContacts(childId);
+  const addContact = useAddEmergencyContact();
+  const removeContact = useRemoveEmergencyContact();
+
   const [newContact, setNewContact] = React.useState({
     name: '',
     relationship: '',
@@ -331,9 +337,7 @@ function EmergencyContactsDialog({
     is_authorized_pickup: false,
   });
   const [errors, setErrors] = React.useState<Record<string, string>>({});
-
-  // In a real implementation, we'd fetch existing contacts here
-  // For now, this provides the UI for adding contacts
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value, type, checked } = e.target;
@@ -361,11 +365,25 @@ function EmergencyContactsDialog({
     return Object.keys(newErrors).length === 0;
   }
 
-  function handleAddContact() {
-    if (!validate()) return;
-    setContacts((prev) => [...prev, { ...newContact }]);
-    setNewContact({ name: '', relationship: '', phone: '', is_authorized_pickup: false });
-    setErrors({});
+  async function handleAddContact() {
+    if (!validate() || !childId) return;
+    setSubmitError(null);
+    try {
+      await addContact.mutateAsync({ childId, ...newContact });
+      setNewContact({ name: '', relationship: '', phone: '', is_authorized_pickup: false });
+      setErrors({});
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : t('common.error'));
+    }
+  }
+
+  async function handleRemoveContact(contactId: string) {
+    if (!childId) return;
+    try {
+      await removeContact.mutateAsync({ childId, contactId });
+    } catch {
+      // Surfaced via removeContact.isError below if needed
+    }
   }
 
   return (
@@ -380,11 +398,15 @@ function EmergencyContactsDialog({
           </DialogDescription>
         </DialogHeader>
 
+        {contactsLoading && (
+          <p className="text-caption text-text-secondary mb-4">{t('common.loading')}</p>
+        )}
+
         {contacts.length > 0 && (
           <div className="space-y-2 mb-4">
-            {contacts.map((contact, idx) => (
+            {contacts.map((contact) => (
               <div
-                key={idx}
+                key={contact.id}
                 className="flex items-center justify-between p-3 bg-subtle rounded-md"
               >
                 <div>
@@ -393,11 +415,22 @@ function EmergencyContactsDialog({
                     {contact.relationship} • {contact.phone}
                   </p>
                 </div>
-                {contact.is_authorized_pickup && (
-                  <StatusBadge variant="present">
-                    {t('children.emergencyContacts.authorizedPickup')}
-                  </StatusBadge>
-                )}
+                <div className="flex items-center gap-2">
+                  {contact.is_authorized_pickup && (
+                    <StatusBadge variant="present">
+                      {t('children.emergencyContacts.authorizedPickup')}
+                    </StatusBadge>
+                  )}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleRemoveContact(contact.id)}
+                    disabled={removeContact.isPending}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -469,18 +502,17 @@ function EmergencyContactsDialog({
             </span>
           </label>
 
-          <Button type="button" variant="secondary" size="sm" onClick={handleAddContact}>
+          {submitError && <p className="text-body text-danger">{submitError}</p>}
+
+          <Button type="button" variant="secondary" size="sm" onClick={handleAddContact} disabled={addContact.isPending}>
             <Plus className="w-4 h-4" />
-            {t('children.emergencyContacts.add')}
+            {addContact.isPending ? t('common.loading') : t('children.emergencyContacts.add')}
           </Button>
         </div>
 
         <DialogFooter>
-          <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            {t('common.cancel')}
-          </Button>
           <Button onClick={() => onOpenChange(false)}>
-            {t('common.save')}
+            {t('common.close')}
           </Button>
         </DialogFooter>
       </DialogContent>

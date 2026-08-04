@@ -1,5 +1,40 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
+
+const EXPIRY_SECONDS: Record<'photo' | 'document', number> = {
+  photo: 60 * 60, // 1 hour
+  document: 24 * 60 * 60, // 24 hours
+};
+
+function getUploadsSigningSecret(): string {
+  const secret = process.env.JWT_ACCESS_SECRET;
+  if (!secret) throw new Error('JWT_ACCESS_SECRET is not configured');
+  return secret;
+}
+
+/**
+ * Signs a local-storage upload path so it can't be accessed just by guessing the filename.
+ */
+export function signUploadPath(publicId: string, expires: number): string {
+  return crypto
+    .createHmac('sha256', getUploadsSigningSecret())
+    .update(`${publicId}:${expires}`)
+    .digest('hex');
+}
+
+/**
+ * Verifies a signed local-storage upload path. Used by the /uploads static route guard.
+ */
+export function verifyUploadPath(publicId: string, expires: number, token: string): boolean {
+  if (!Number.isFinite(expires) || Date.now() / 1000 > expires) {
+    return false;
+  }
+  const expected = signUploadPath(publicId, expires);
+  const expectedBuf = Buffer.from(expected, 'hex');
+  const actualBuf = Buffer.from(token, 'hex');
+  return expectedBuf.length === actualBuf.length && crypto.timingSafeEqual(expectedBuf, actualBuf);
+}
 
 export interface UploadOptions {
   folder: string;
@@ -56,9 +91,11 @@ class CloudinaryService {
    * @param publicId - The Cloudinary public_id of the resource
    * @param type - The type of resource (determines expiry: photo=1hr, document=24hr)
    */
-  generateSignedUrl(publicId: string, _type: 'photo' | 'document'): string {
+  generateSignedUrl(publicId: string, type: 'photo' | 'document'): string {
     if (!this.apiKey || process.env.NODE_ENV !== 'production') {
-      return `/uploads/${publicId}`;
+      const expires = Math.floor(Date.now() / 1000) + EXPIRY_SECONDS[type];
+      const token = signUploadPath(publicId, expires);
+      return `/uploads/${publicId}?expires=${expires}&token=${token}`;
     }
 
     // Production implementation would use Cloudinary SDK for signed URLs

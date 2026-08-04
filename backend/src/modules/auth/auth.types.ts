@@ -5,6 +5,7 @@ export interface TokenPayload {
   schoolId: string | null;
   branchId?: string | null;
   role: UserRole;
+  mustChangePassword?: boolean;
 }
 
 export interface LoginResponse {

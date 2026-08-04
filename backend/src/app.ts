@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import { authMiddleware } from './middleware/auth.middleware';
 import { tenancyMiddleware } from './middleware/tenancy.middleware';
 import { errorResponse } from './utils/response';
+import { verifyUploadPath } from './services/cloudinary.service';
 import authRoutes from './modules/auth/auth.routes';
 import schoolRoutes from './modules/schools/schools.routes';
 import userRoutes from './modules/users/users.routes';
@@ -41,8 +42,20 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files publicly (logos, etc.)
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+// Serve uploaded files behind a signed, expiring URL (see cloudinaryService.generateSignedUrl)
+function verifyUploadsAccess(req: Request, res: Response, next: NextFunction): void {
+  const publicId = req.path.replace(/^\//, '');
+  const expires = Number(req.query.expires);
+  const token = typeof req.query.token === 'string' ? req.query.token : '';
+
+  if (!token || !verifyUploadPath(publicId, expires, token)) {
+    res.status(403).json(errorResponse('FORBIDDEN', 'Invalid or expired file link'));
+    return;
+  }
+  next();
+}
+
+app.use('/uploads', verifyUploadsAccess, express.static(path.join(__dirname, '..', 'uploads')));
 
 // Health check (no auth required)
 app.get('/health', (_req, res) => {
@@ -58,7 +71,18 @@ const rateLimiter = rateLimit({
   message: errorResponse('RATE_LIMIT_EXCEEDED', 'Too many requests, please try again later'),
 });
 
+// Stricter limiter for credential-guessing-prone endpoints (login, password reset)
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: errorResponse('RATE_LIMIT_EXCEEDED', 'Too many attempts, please try again later'),
+});
+
 // Global middleware stack for /api routes (applied in order)
+app.use('/api/auth/login', authRateLimiter);
+app.use('/api/auth/password-reset', authRateLimiter);
 app.use('/api', rateLimiter);
 app.use('/api', authMiddleware);
 app.use('/api', tenancyMiddleware);

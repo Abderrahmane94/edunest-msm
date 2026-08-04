@@ -292,13 +292,13 @@ export function ChildDetailPage() {
         <div className="bg-card border border-border rounded-lg p-6 space-y-3">
           <h2 className="text-subsection font-semibold text-text-heading">{t('children.emergencyContacts.title')}</h2>
           <div className="space-y-2">
-            {(emergencyContacts as Record<string, unknown>[]).map((c) => (
-              <div key={c.id as string} className="flex items-center justify-between bg-subtle rounded-lg px-3 py-2">
+            {(emergencyContacts ?? []).map((c) => (
+              <div key={c.id} className="flex items-center justify-between bg-subtle rounded-lg px-3 py-2">
                 <div>
-                  <span className="text-body font-medium text-foreground">{c.name as string}</span>
-                  <span className="text-caption text-text-secondary ms-2">({c.relationship as string})</span>
-                  <span className="text-caption text-text-secondary ms-2">{c.phone as string}</span>
-                  {!!c.isAuthorizedPickup && <span className="ms-2 text-micro text-success font-medium">{t('children.emergencyContacts.authorizedPickup')}</span>}
+                  <span className="text-body font-medium text-foreground">{c.name}</span>
+                  <span className="text-caption text-text-secondary ms-2">({c.relationship})</span>
+                  <span className="text-caption text-text-secondary ms-2">{c.phone}</span>
+                  {c.is_authorized_pickup && <span className="ms-2 text-micro text-success font-medium">{t('children.emergencyContacts.authorizedPickup')}</span>}
                 </div>
               </div>
             ))}

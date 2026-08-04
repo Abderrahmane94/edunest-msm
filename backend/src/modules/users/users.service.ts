@@ -93,10 +93,16 @@ export const usersService = {
       throw new UserServiceError('Invitation token has expired', 400);
     }
 
+    const school = await prisma.school.findUnique({
+      where: { id: invitation.schoolId },
+      select: { name: true },
+    });
+
     return {
       email: invitation.email,
       role: invitation.role,
       schoolId: invitation.schoolId,
+      schoolName: school?.name,
     };
   },
 
@@ -370,6 +376,7 @@ export const usersService = {
         preferredLanguage: (input.preferredLanguage ?? 'fr') as Language,
         isActive: true,
         mustChangePassword: true,
+        phone: input.phone,
       },
       select: {
         id: true, schoolId: true, firstName: true, lastName: true,
@@ -383,7 +390,7 @@ export const usersService = {
   /**
    * Update a user's editable profile fields (admin only).
    */
-  async update(id: string, schoolId: string | null, input: { firstName?: string; lastName?: string; role?: UserRole; preferredLanguage?: Language }) {
+  async update(id: string, schoolId: string | null, input: { firstName?: string; lastName?: string; role?: UserRole; preferredLanguage?: Language; phone?: string }) {
     const user = await prisma.user.findFirst({ where: schoolId ? { id, schoolId } : { id } });
 
     if (!user) {
@@ -397,6 +404,7 @@ export const usersService = {
         ...(input.lastName !== undefined && { lastName: input.lastName }),
         ...(input.role !== undefined && { role: input.role }),
         ...(input.preferredLanguage !== undefined && { preferredLanguage: input.preferredLanguage }),
+        ...(input.phone !== undefined && { phone: input.phone }),
       },
       select: {
         id: true, schoolId: true, firstName: true, lastName: true,

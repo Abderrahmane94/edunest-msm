@@ -974,18 +974,6 @@ class CommunicationService {
     pageSize: number,
     classroomId?: string,
   ): Promise<{ announcements: AnnouncementResponse[]; total: number }> {
-    const where: Record<string, unknown> = { schoolId, publishedAt: { not: null } };
-
-    if (classroomId) {
-      // Show announcements for this specific classroom AND school-wide announcements
-      where.OR = [
-        { classroomId },
-        { classroomId: null },
-      ];
-      delete where.schoolId;
-      where.AND = [{ schoolId }];
-    }
-
     const [announcements, total] = await Promise.all([
       prisma.announcement.findMany({
         where: classroomId
@@ -1246,6 +1234,7 @@ class CommunicationService {
   async getEventById(
     eventId: string,
     schoolId: string,
+    requestingParentUserId?: string,
   ): Promise<EventResponse> {
     const event = await prisma.event.findFirst({
       where: { id: eventId, schoolId },
@@ -1268,7 +1257,20 @@ class CommunicationService {
       select: { id: true, firstName: true, lastName: true },
     });
 
-    const consentForms: ConsentFormResponse[] = event.consentForms.map((form) => ({
+    let visibleConsentForms = event.consentForms;
+    if (requestingParentUserId) {
+      const ownChildIds = new Set(
+        (
+          await prisma.parentChildLink.findMany({
+            where: { parentUserId: requestingParentUserId },
+            select: { childId: true },
+          })
+        ).map((link) => link.childId),
+      );
+      visibleConsentForms = event.consentForms.filter((form) => ownChildIds.has(form.childId));
+    }
+
+    const consentForms: ConsentFormResponse[] = visibleConsentForms.map((form) => ({
       id: form.id,
       eventId: form.eventId,
       childId: form.childId,

@@ -48,6 +48,12 @@ export const schoolsController = {
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+
+      if (req.user!.role !== 'super_admin' && req.user!.schoolId !== id) {
+        res.status(403).json(errorResponse('FORBIDDEN', 'You do not have access to this school'));
+        return;
+      }
+
       const school = await schoolsService.getById(id);
       res.status(200).json(successResponse(school));
     } catch (error) {
@@ -65,6 +71,12 @@ export const schoolsController = {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+
+      if (req.user!.role !== 'super_admin' && req.user!.schoolId !== id) {
+        res.status(403).json(errorResponse('FORBIDDEN', 'You do not have access to this school'));
+        return;
+      }
+
       const input = req.body as UpdateSchoolInput;
       const school = await schoolsService.update(id, input);
       res.status(200).json(successResponse(school));
@@ -143,6 +155,11 @@ export const schoolsController = {
   async uploadLogo(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+
+      if (req.user!.role !== 'super_admin' && req.user!.schoolId !== id) {
+        res.status(403).json(errorResponse('FORBIDDEN', 'You do not have access to this school'));
+        return;
+      }
 
       if (!req.file?.buffer) {
         res.status(400).json(errorResponse('VALIDATION_ERROR', 'Logo image file is required'));

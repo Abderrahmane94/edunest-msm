@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -12,9 +12,9 @@ interface InvitationInfo {
 }
 
 export function RegisterPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { setTokens } = useAuth();
 
   const token = searchParams.get('token') || '';
 
@@ -27,43 +27,44 @@ export function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingInvitation, setIsLoadingInvitation] = useState(true);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
     async function verifyInvitation() {
       if (!token) {
-        setError('No invitation token provided. Please use the link from your invitation email.');
+        setError(t('auth.register.noToken'));
         setIsLoadingInvitation(false);
         return;
       }
 
       try {
         const response = await apiClient.get<InvitationInfo>(
-          `/auth/invitation/${token}`,
+          `/users/invitation/${token}`,
           { skipAuth: true } as RequestInit,
         );
 
         if (response.success && response.data) {
           setInvitation(response.data);
         } else {
-          setError(response.error?.message || 'Invalid or expired invitation link.');
+          setError(response.error?.message || t('auth.register.invalidOrExpired'));
         }
       } catch {
-        setError('Unable to verify invitation. Please try again later.');
+        setError(t('auth.register.verifyFailed'));
       } finally {
         setIsLoadingInvitation(false);
       }
     }
 
     verifyInvitation();
-  }, [token]);
+  }, [token, t]);
 
   function validate(): boolean {
     const errors: Record<string, string> = {};
 
-    if (!firstName.trim()) errors.firstName = 'First name is required';
-    if (!lastName.trim()) errors.lastName = 'Last name is required';
-    if (password.length < 8) errors.password = 'Password must be at least 8 characters';
-    if (password !== confirmPassword) errors.confirmPassword = 'Passwords do not match';
+    if (!firstName.trim()) errors.firstName = t('auth.register.firstNameRequired');
+    if (!lastName.trim()) errors.lastName = t('auth.register.lastNameRequired');
+    if (password.length < 8) errors.password = t('auth.register.passwordMinLength');
+    if (password !== confirmPassword) errors.confirmPassword = t('auth.register.passwordMismatch');
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -78,20 +79,19 @@ export function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await apiClient.post<{ accessToken: string; refreshToken: string }>(
-        '/auth/register',
+      const response = await apiClient.post(
+        '/users/register',
         { token, firstName, lastName, password },
         { skipAuth: true } as RequestInit,
       );
 
-      if (response.success && response.data) {
-        setTokens(response.data.accessToken, response.data.refreshToken);
-        navigate('/');
+      if (response.success) {
+        setIsSuccess(true);
       } else {
-        setError(response.error?.message || 'Registration failed. Please try again.');
+        setError(response.error?.message || t('auth.register.genericError'));
       }
     } catch {
-      setError('An unexpected error occurred. Please try again.');
+      setError(t('auth.register.unexpectedError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -100,7 +100,7 @@ export function RegisterPage() {
   if (isLoadingInvitation) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-page">
-        <p className="text-body text-text-secondary">Verifying invitation…</p>
+        <p className="text-body text-text-secondary">{t('auth.register.verifying')}</p>
       </div>
     );
   }
@@ -110,11 +110,29 @@ export function RegisterPage() {
       <div className="min-h-screen flex items-center justify-center bg-page px-4">
         <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6 text-center">
           <h1 className="text-display font-bold text-text-heading mb-4">
-            Invalid Invitation
+            {t('auth.register.invalidTitle')}
           </h1>
           <p className="text-body text-text-secondary mb-4">{error}</p>
           <Button variant="secondary" onClick={() => navigate('/login')}>
-            Go to Login
+            {t('auth.register.goToLogin')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-page px-4">
+        <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6 text-center">
+          <h1 className="text-display font-bold text-text-heading mb-4">
+            {t('auth.register.successTitle')}
+          </h1>
+          <p className="text-body text-text-secondary mb-6">
+            {t('auth.register.successMessage')}
+          </p>
+          <Button variant="primary" onClick={() => navigate('/login')}>
+            {t('auth.register.goToLoginButton')}
           </Button>
         </div>
       </div>
@@ -125,11 +143,11 @@ export function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-page px-4">
       <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6">
         <h1 className="text-display font-bold text-text-heading mb-2">
-          Create Account
+          {t('auth.register.title')}
         </h1>
         <p className="text-body text-text-secondary mb-6">
-          You've been invited as <span className="font-medium text-foreground capitalize">{invitation.role.replace('_', ' ')}</span>
-          {invitation.schoolName && <> at <span className="font-medium text-foreground">{invitation.schoolName}</span></>}
+          {t('auth.register.invitedAs')} <span className="font-medium text-foreground capitalize">{invitation.role.replace('_', ' ')}</span>
+          {invitation.schoolName && <> {t('auth.register.at')} <span className="font-medium text-foreground">{invitation.schoolName}</span></>}
         </p>
 
         {error && (
@@ -140,19 +158,19 @@ export function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input
-            label="Email"
+            label={t('auth.email')}
             name="email"
             type="email"
             value={invitation.email}
             disabled
-            helperText="Set by your invitation"
+            helperText={t('auth.register.emailSetByInvitation')}
           />
 
           <Input
-            label="First Name"
+            label={t('auth.register.firstName')}
             name="firstName"
             type="text"
-            placeholder="Enter your first name"
+            placeholder={t('auth.register.firstNamePlaceholder')}
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             error={fieldErrors.firstName}
@@ -161,10 +179,10 @@ export function RegisterPage() {
           />
 
           <Input
-            label="Last Name"
+            label={t('auth.register.lastName')}
             name="lastName"
             type="text"
-            placeholder="Enter your last name"
+            placeholder={t('auth.register.lastNamePlaceholder')}
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             error={fieldErrors.lastName}
@@ -173,10 +191,10 @@ export function RegisterPage() {
           />
 
           <Input
-            label="Password"
+            label={t('auth.register.password')}
             name="password"
             type="password"
-            placeholder="At least 8 characters"
+            placeholder={t('auth.register.passwordPlaceholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={fieldErrors.password}
@@ -185,10 +203,10 @@ export function RegisterPage() {
           />
 
           <Input
-            label="Confirm Password"
+            label={t('auth.register.confirmPassword')}
             name="confirmPassword"
             type="password"
-            placeholder="Re-enter your password"
+            placeholder={t('auth.register.confirmPasswordPlaceholder')}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             error={fieldErrors.confirmPassword}
@@ -203,7 +221,7 @@ export function RegisterPage() {
             className="w-full mt-2"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Creating account…' : 'Create Account'}
+            {isSubmitting ? t('auth.register.submitting') : t('auth.register.submit')}
           </Button>
         </form>
       </div>

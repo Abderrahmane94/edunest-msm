@@ -85,7 +85,7 @@ class ClassroomsService {
   /**
    * Get a single classroom by ID, scoped to the school.
    */
-  async getById(id: string, schoolId: string): Promise<ClassroomWithTeacher> {
+  async getById(id: string, schoolId: string, requestingTeacherUserId?: string): Promise<ClassroomWithTeacher> {
     const classroom = await prisma.classroom.findFirst({
       where: { id, schoolId },
       include: {
@@ -94,6 +94,10 @@ class ClassroomsService {
     });
 
     if (!classroom) {
+      throw new ClassroomServiceError('Classroom not found', 404);
+    }
+
+    if (requestingTeacherUserId && classroom.teacherUserId !== requestingTeacherUserId) {
       throw new ClassroomServiceError('Classroom not found', 404);
     }
 
@@ -184,9 +188,18 @@ class ClassroomsService {
       throw new ClassroomServiceError('Classroom not found', 404);
     }
 
-    // Check for existing enrollments
+    await this.assertNoEnrollments(id);
+
+    await prisma.classroom.delete({ where: { id } });
+  }
+
+  /**
+   * Throws if the classroom has any child enrollments. Shared by both the
+   * hard-delete path above and the soft-delete route used in production.
+   */
+  async assertNoEnrollments(classroomId: string): Promise<void> {
     const enrollmentCount = await prisma.classroomEnrollment.count({
-      where: { classroomId: id },
+      where: { classroomId },
     });
 
     if (enrollmentCount > 0) {
@@ -195,8 +208,6 @@ class ClassroomsService {
         409,
       );
     }
-
-    await prisma.classroom.delete({ where: { id } });
   }
 }
 

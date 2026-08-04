@@ -11,7 +11,8 @@ export const timetableController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { classroomId } = req.params;
-      const result = await timetableService.getWorkingDays(classroomId, schoolId);
+      const requestingTeacherUserId = req.user!.role === 'teacher' ? req.user!.userId : undefined;
+      const result = await timetableService.getWorkingDays(classroomId, schoolId, requestingTeacherUserId);
       res.status(200).json(successResponse(result));
     } catch (error) {
       if (error instanceof TimetableServiceError) {

@@ -44,7 +44,7 @@ class SocketService implements ISocketService {
   initialize(httpServer: HttpServer): void {
     this.io = new Server(httpServer, {
       cors: {
-        origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+        origin: (process.env.FRONTEND_URL || 'http://localhost:5173').split(',').concat(['http://localhost:5174']),
         credentials: true,
       },
     });

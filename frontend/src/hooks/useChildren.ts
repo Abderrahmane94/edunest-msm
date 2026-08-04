@@ -169,15 +169,57 @@ export function useRemoveParentLink() {
   });
 }
 
+function mapEmergencyContact(c: Record<string, unknown>): EmergencyContact {
+  return {
+    id: c.id as string,
+    name: c.name as string,
+    relationship: c.relationship as string,
+    phone: c.phone as string,
+    is_authorized_pickup: Boolean(c.isAuthorizedPickup),
+  };
+}
+
 export function useEmergencyContacts(childId: string) {
   return useQuery({
     queryKey: ['emergency-contacts', childId],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>[]>(`/children/${childId}/emergency-contacts`);
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to load emergency contacts');
-      return Array.isArray(res.data) ? res.data : [];
+      return Array.isArray(res.data) ? res.data.map(mapEmergencyContact) : [];
     },
     enabled: !!childId,
+  });
+}
+
+export function useAddEmergencyContact() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, name, relationship, phone, is_authorized_pickup }: {
+      childId: string; name: string; relationship: string; phone: string; is_authorized_pickup: boolean;
+    }) => {
+      const res = await apiClient.post(`/children/${childId}/emergency-contacts`, {
+        name, relationship, phone, isAuthorizedPickup: is_authorized_pickup,
+      });
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to add emergency contact');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['emergency-contacts', variables.childId] });
+    },
+  });
+}
+
+export function useRemoveEmergencyContact() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, contactId }: { childId: string; contactId: string }) => {
+      const res = await apiClient.delete(`/children/${childId}/emergency-contacts/${contactId}`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to remove emergency contact');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['emergency-contacts', variables.childId] });
+    },
   });
 }
 

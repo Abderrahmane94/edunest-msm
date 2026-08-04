@@ -40,6 +40,7 @@ export const updateUserSchema = z.object({
     errorMap: () => ({ message: 'Role must be admin, teacher, or parent' }),
   }).optional(),
   preferredLanguage: z.enum(['ar', 'fr']).optional(),
+  phone: z.string().min(1).max(20).optional(),
 });
 
 export const createUserDirectlySchema = z.object({
@@ -51,6 +52,7 @@ export const createUserDirectlySchema = z.object({
   }),
   preferredLanguage: z.enum(['ar', 'fr']).optional().default('fr'),
   schoolId: z.string().uuid('Invalid school ID').optional(), // only used when super_admin provides it
+  phone: z.string().min(1).max(20).optional(),
 });
 
 export type CreateUserDirectlyInput = z.infer<typeof createUserDirectlySchema>;

@@ -418,8 +418,9 @@ export const communicationController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
+      const requestingParentUserId = req.user!.role === 'parent' ? req.user!.userId : undefined;
 
-      const event = await communicationService.getEventById(id, schoolId);
+      const event = await communicationService.getEventById(id, schoolId, requestingParentUserId);
       res.status(200).json(successResponse(event));
     } catch (error) {
       if (error instanceof CommunicationServiceError) {

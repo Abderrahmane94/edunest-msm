@@ -90,6 +90,7 @@ class NotificationService implements INotificationService {
       where: { id: userId },
       select: {
         email: true,
+        phone: true,
         fcmToken: true,
         preferredLanguage: true,
         firstName: true,
@@ -125,12 +126,12 @@ class NotificationService implements INotificationService {
       );
     }
 
-    if (channels.includes('sms')) {
+    if (channels.includes('sms') && CRITICAL_SMS_TYPES.includes(type)) {
       // SMS is restricted to critical notifications only (absence_alert, payment_overdue)
-      if (CRITICAL_SMS_TYPES.includes(type)) {
-        console.log(`[NotificationService] SMS channel dispatched for critical notification type "${type}" to user ${userId}`);
+      if (user.phone) {
+        deliveryPromises.push(smsService.send({ to: user.phone, body }));
       } else {
-        console.log(`[NotificationService] SMS channel skipped for non-critical notification type "${type}" — only absence_alert and payment_overdue qualify`);
+        console.warn(`[NotificationService] SMS skipped for user ${userId} — no phone number on file`);
       }
     }
 
@@ -197,6 +198,7 @@ class NotificationService implements INotificationService {
               select: {
                 id: true,
                 email: true,
+                phone: true,
                 fcmToken: true,
                 preferredLanguage: true,
                 firstName: true,
@@ -261,14 +263,18 @@ class NotificationService implements INotificationService {
 
       // SMS only to primary parent
       if (link.isPrimary) {
-        smsService
-          .send({
-            to: parent.email, // In production, this would be the parent's phone number
-            body: localized.body,
-          })
-          .catch((err) => {
-            console.error(`[NotificationService] SMS failed for user ${parent.id}:`, err);
-          });
+        if (parent.phone) {
+          smsService
+            .send({
+              to: parent.phone,
+              body: localized.body,
+            })
+            .catch((err) => {
+              console.error(`[NotificationService] SMS failed for user ${parent.id}:`, err);
+            });
+        } else {
+          console.warn(`[NotificationService] SMS skipped for parent ${parent.id} — no phone number on file`);
+        }
       }
     }
   }

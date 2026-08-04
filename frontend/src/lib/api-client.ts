@@ -145,6 +145,36 @@ class ApiClient {
   async delete<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
+
+  /**
+   * POST a FormData body (file upload). Unlike request(), this never forces a
+   * Content-Type header — the browser must set the multipart boundary itself —
+   * but still gets the same 401 -> refresh -> retry handling as JSON requests.
+   */
+  async uploadFile<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
+    const url = `${this.baseUrl}${endpoint}`;
+    const buildAuthHeaders = () => {
+      const headers = new Headers();
+      const token = this.getAccessToken();
+      if (token) headers.set('Authorization', `Bearer ${token}`);
+      return headers;
+    };
+
+    let response = await fetch(url, { method: 'POST', headers: buildAuthHeaders(), body: formData });
+
+    if (response.status === 401) {
+      const newToken = await this.refreshAccessToken();
+      if (!newToken) {
+        return {
+          success: false,
+          error: { code: 'UNAUTHORIZED', message: 'Session expired. Please log in again.' },
+        };
+      }
+      response = await fetch(url, { method: 'POST', headers: buildAuthHeaders(), body: formData });
+    }
+
+    return response.json();
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

@@ -239,6 +239,7 @@ function NotificationItem({
   notification: Notification;
   locale: string;
 }) {
+  const { t } = useTranslation();
   const markRead = useMarkNotificationRead();
 
   const Icon = NOTIFICATION_ICONS[notification.type] ?? Bell;
@@ -288,7 +289,7 @@ function NotificationItem({
             {!notification.is_read && (
               <span
                 className="shrink-0 w-2 h-2 mt-2 rounded-full bg-[var(--color-accent)]"
-                aria-label="Unread"
+                aria-label={t('parentNotifications.unread', 'Unread')}
               />
             )}
           </div>

@@ -105,24 +105,9 @@ export function TeacherDailyReportPage() {
         formData.append('photos', file);
       });
 
-      const token = localStorage.getItem('access_token');
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-      const response = await fetch(
-        `${baseUrl}/communication/daily-reports/${reportId}/photos`,
-        {
-          method: 'POST',
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to upload photos');
-      }
-
-      return response.json();
+      const res = await apiClient.uploadFile(`/communication/daily-reports/${reportId}/photos`, formData);
+      if (!res.success) throw new Error(res.error?.message || 'Failed to upload photos');
+      return res;
     },
   });
 

@@ -3,7 +3,10 @@ import { authService } from '../modules/auth/auth.service';
 
 // Route prefixes that don't require authentication.
 // These are relative to the mount point (e.g., if mounted on /api, /auth matches /api/auth).
-const PUBLIC_ROUTE_PREFIXES = ['/auth', '/users/register', '/finance/webhooks'];
+const PUBLIC_ROUTE_PREFIXES = ['/auth', '/users/register', '/users/invitation', '/finance/webhooks'];
+
+// Routes an authenticated user must still be able to reach while mustChangePassword is set.
+const PASSWORD_CHANGE_ALLOWED_PREFIXES = ['/users/change-password'];
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
   // Skip authentication for public routes
@@ -30,6 +33,18 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
 
   try {
     const payload = authService.verifyAccessToken(token);
+
+    if (payload.mustChangePassword && !PASSWORD_CHANGE_ALLOWED_PREFIXES.some((prefix) => req.path.startsWith(prefix))) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'PASSWORD_CHANGE_REQUIRED',
+          message: 'You must change your password before continuing',
+        },
+      });
+      return;
+    }
+
     req.user = payload;
     next();
   } catch {

@@ -313,10 +313,11 @@ export const financeController = {
    */
   async getCashPaymentReceipt(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { id } = req.params;
-      const receipt = await financeService.getCashPaymentReceipt(id, userId, userRole);
+      const receipt = await financeService.getCashPaymentReceipt(id, schoolId, userId, userRole);
       // Placeholder: return JSON data that would be used for PDF generation
       res.status(200).json(successResponse({
         ...receipt,

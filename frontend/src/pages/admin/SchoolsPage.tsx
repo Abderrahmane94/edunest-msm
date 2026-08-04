@@ -20,36 +20,8 @@ import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api-client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-export interface SchoolItem {
-  id: string;
-  name: string;
-  address: string;
-  wilaya: string;
-  contactEmail: string;
-  contactPhone: string;
-  isActive: boolean;
-  createdAt: string;
-  deletedAt: string | null;
-}
-
-export function useSchoolsList() {
-  const { user } = useAuth();
-  return useQuery({
-    queryKey: ['schools-list'],
-    queryFn: async () => {
-      const res = await apiClient.get<unknown>('/schools');
-      const raw = res.data;
-      if (Array.isArray(raw)) return raw as SchoolItem[];
-      if (raw && typeof raw === 'object' && 'schools' in (raw as object)) {
-        return (raw as { schools: SchoolItem[] }).schools;
-      }
-      return [];
-    },
-    enabled: user?.role === 'super_admin',
-  });
-}
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSchoolsList, type SchoolItem } from '@/hooks/useSchools';
 
 export function useCreateSchool() {
   const queryClient = useQueryClient();

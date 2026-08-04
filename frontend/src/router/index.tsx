@@ -40,8 +40,8 @@ import {
   PaymentManagementPage,
   EnrollmentDetailPage,
 } from '@/pages/admin/payments';
-import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage } from '@/pages/teacher';
-import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentInvoicesPage, ParentPaymentsPage } from '@/pages/parent';
+import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage, TeacherAnnouncementsPage } from '@/pages/teacher';
+import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentInvoicesPage, ParentAnnouncementsPage, ParentPaymentsPage } from '@/pages/parent';
 import { AdminLayout, ParentLayout } from '@/components/layout';
 import type { NavItem } from '@/components/layout';
 import { useSchool } from '@/hooks/useSchool';
@@ -66,6 +66,7 @@ import {
   Trash2,
   Clock,
   Banknote,
+  Megaphone,
   CreditCard,
 } from 'lucide-react';
 
@@ -164,12 +165,14 @@ const teacherNavItems: NavItem[] = [
   { label: 'nav.attendance', href: '/teacher/attendance', icon: ClipboardCheck },
   { label: 'nav.reports', href: '/teacher/reports', icon: FileText },
   { label: 'nav.messages', href: '/teacher/messages', icon: MessageCircle },
+  { label: 'nav.announcements', href: '/teacher/announcements', icon: Megaphone },
 ];
 
 const parentNavItems: NavItem[] = [
   { label: 'nav.reports', href: '/parent', icon: FileText },
   { label: 'nav.attendance', href: '/parent/attendance', icon: CalendarDays },
   { label: 'nav.messages', href: '/parent/messages', icon: MessageCircle },
+  { label: 'nav.announcements', href: '/parent/announcements', icon: Megaphone },
   { label: 'nav.invoices', href: '/parent/invoices', icon: Receipt },
   { label: 'nav.payments', href: '/parent/payments', icon: Wallet },
   { label: 'nav.notifications', href: '/parent/notifications', icon: Bell },
@@ -379,6 +382,7 @@ export const routes: RouteObject[] = [
               { path: 'attendance', element: <TeacherAttendancePage /> },
               { path: 'reports', element: <TeacherDailyReportPage /> },
               { path: 'messages', element: <TeacherMessagesPage /> },
+              { path: 'announcements', element: <TeacherAnnouncementsPage /> },
             ],
           },
         ],
@@ -395,6 +399,7 @@ export const routes: RouteObject[] = [
               { index: true, element: <ParentFeedPage /> },
               { path: 'attendance', element: <ParentAttendancePage /> },
               { path: 'messages', element: <ParentMessagesPage /> },
+              { path: 'announcements', element: <ParentAnnouncementsPage /> },
               { path: 'invoices', element: <ParentInvoicesPage /> },
               { path: 'payments', element: <ParentPaymentsPage /> },
               { path: 'notifications', element: <ParentNotificationsPage /> },

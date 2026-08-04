@@ -141,35 +141,74 @@ export const payrollService = {
   async recordPayment(schoolId: string, data: RecordPaymentInput) {
     const user = await prisma.user.findFirst({
       where: { id: data.userId, schoolId, deletedAt: null },
+      include: { employeeSalary: true },
     });
     if (!user) throw new PayrollError('Employee not found', 404);
 
-    const existing = await prisma.salaryPayment.findFirst({
-      where: { userId: data.userId, month: data.month, year: data.year, deletedAt: null },
-    });
-    if (existing) {
-      throw new PayrollError(
-        `Payment for ${data.month}/${data.year} already exists for this employee`,
-      );
+    // If a salary configuration exists, the submitted baseSalary must match it —
+    // otherwise an admin (or a buggy client) could bypass the configured rate entirely.
+    const EPSILON = 0.01;
+    if (user.employeeSalary) {
+      if (user.employeeSalary.salaryType === 'fixed') {
+        const expected = Number(user.employeeSalary.baseSalary);
+        if (Math.abs(data.baseSalary - expected) > EPSILON) {
+          throw new PayrollError(
+            `baseSalary must match the configured fixed salary (${expected.toFixed(2)})`,
+          );
+        }
+      } else {
+        const rate = Number(user.employeeSalary.ratePerStudent);
+        const expected = Math.round(rate * (data.studentCount ?? 0) * 100) / 100;
+        if (Math.abs(data.baseSalary - expected) > EPSILON) {
+          throw new PayrollError(
+            `baseSalary must match the configured per-student rate (${rate.toFixed(2)} x ${data.studentCount ?? 0} students = ${expected.toFixed(2)})`,
+          );
+        }
+      }
     }
 
     const net = data.baseSalary + data.bonuses - data.deductions;
-    const payment = await prisma.salaryPayment.create({
-      data: {
-        userId: data.userId,
-        schoolId,
-        month: data.month,
-        year: data.year,
-        baseSalary: new Prisma.Decimal(data.baseSalary),
-        bonuses: new Prisma.Decimal(data.bonuses),
-        deductions: new Prisma.Decimal(data.deductions),
-        netSalary: new Prisma.Decimal(net),
-        studentCount: data.studentCount ?? null,
-        paidAt: new Date(data.paidAt),
-        note: data.note,
-      },
-      include: { user: { select: { firstName: true, lastName: true, role: true } } },
-    });
+    if (net < 0) {
+      throw new PayrollError('Net salary cannot be negative — deductions exceed base salary plus bonuses');
+    }
+
+    let payment;
+    try {
+      payment = await prisma.$transaction(async (tx) => {
+        const existing = await tx.salaryPayment.findFirst({
+          where: { userId: data.userId, month: data.month, year: data.year, deletedAt: null },
+        });
+        if (existing) {
+          throw new PayrollError(
+            `Payment for ${data.month}/${data.year} already exists for this employee`,
+          );
+        }
+
+        return tx.salaryPayment.create({
+          data: {
+            userId: data.userId,
+            schoolId,
+            month: data.month,
+            year: data.year,
+            baseSalary: new Prisma.Decimal(data.baseSalary),
+            bonuses: new Prisma.Decimal(data.bonuses),
+            deductions: new Prisma.Decimal(data.deductions),
+            netSalary: new Prisma.Decimal(net),
+            studentCount: data.studentCount ?? null,
+            paidAt: new Date(data.paidAt),
+            note: data.note,
+          },
+          include: { user: { select: { firstName: true, lastName: true, role: true } } },
+        });
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new PayrollError(
+          `Payment for ${data.month}/${data.year} already exists for this employee`,
+        );
+      }
+      throw error;
+    }
 
     return {
       id: payment.id,

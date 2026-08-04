@@ -17,8 +17,11 @@ import { notificationService } from '../services/notification.service';
  * Called by node-cron on a daily schedule.
  */
 export async function processOverdueInvoices(): Promise<void> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // dueDate is a @db.Date column (stored as UTC midnight), so the comparison
+  // must use UTC midnight too — a server-local midnight would shift the
+  // overdue boundary by the host's UTC offset.
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
   console.log(`[OverdueInvoicesJob] Running at ${new Date().toISOString()}`);
 
@@ -51,11 +54,18 @@ export async function processOverdueInvoices(): Promise<void> {
 
     for (const invoice of overdueInvoices) {
       try {
-        // Update invoice status to overdue
-        await prisma.invoice.update({
-          where: { id: invoice.id },
+        // Compare-and-swap on status so that if another instance of this job
+        // (e.g. a second server process) already flipped this invoice to
+        // overdue, we don't double-log the transition or double-notify the parent.
+        const { count } = await prisma.invoice.updateMany({
+          where: { id: invoice.id, status: 'sent' },
           data: { status: 'overdue' },
         });
+
+        if (count === 0) {
+          console.log(`[OverdueInvoicesJob] Invoice ${invoice.id} already processed by another run, skipping`);
+          continue;
+        }
 
         // Create PaymentAuditLog entry
         await prisma.paymentAuditLog.create({

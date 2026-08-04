@@ -15,17 +15,18 @@ class TimetableService {
   /**
    * Get working days for a classroom.
    */
-  async getWorkingDays(classroomId: string, schoolId: string) {
+  async getWorkingDays(classroomId: string, schoolId: string, requestingTeacherUserId?: string) {
     const classroom = await prisma.classroom.findFirst({
       where: { id: classroomId, schoolId, deletedAt: null },
-      select: { id: true, name: true, workingDays: true },
+      select: { id: true, name: true, workingDays: true, teacherUserId: true },
     });
 
-    if (!classroom) {
+    if (!classroom || (requestingTeacherUserId && classroom.teacherUserId !== requestingTeacherUserId)) {
       throw new TimetableServiceError('Classroom not found', 404);
     }
 
-    return classroom;
+    const { teacherUserId: _teacherUserId, ...rest } = classroom;
+    return rest;
   }
 
   /**

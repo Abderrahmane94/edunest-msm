@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   FileText,
@@ -641,7 +642,9 @@ function ConsentFormItem({ form }: { form: ConsentForm }) {
 
 export function ParentInvoicesPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = React.useState<TabId>('invoices');
+  const [searchParams] = useSearchParams();
+  const initialTab: TabId = searchParams.get('tab') === 'consent' ? 'consent' : 'invoices';
+  const [activeTab, setActiveTab] = React.useState<TabId>(initialTab);
 
   return (
     <div className="min-h-screen bg-page">

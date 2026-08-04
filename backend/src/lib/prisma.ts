@@ -101,6 +101,14 @@ const MODELS_WITHOUT_SCHOOL_ID = new Set([
   'ConsentForm',
   'PaymentAuditLog',
   'Notification',
+  // Payment management models (scoped via Branch → School, not direct schoolId)
+  'BranchBillingConfig',
+  'BranchCalendar',
+  'Enrollment',
+  'BillingPeriod',
+  'PaymentRecord',
+  'PaymentAllocation',
+  'PaymentAuditEntry',
 ]);
 
 function applyQueryFilters(

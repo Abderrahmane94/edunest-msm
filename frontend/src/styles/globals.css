@@ -188,3 +188,56 @@
     transform: scaleX(-1);
   }
 }
+
+/* ─── Print Styles for Receipt ─── */
+@media print {
+  /* Hide everything except the receipt content */
+  body > *:not(.receipt-print-root) {
+    visibility: hidden;
+  }
+
+  /* Hide non-printable elements */
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print\\:block {
+    display: block !important;
+  }
+
+  /* Receipt dialog overrides for print */
+  [role="dialog"] {
+    position: static !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Receipt content styling */
+  .receipt-content {
+    padding: 24px !important;
+    max-width: 100% !important;
+  }
+
+  /* Ensure tables print properly */
+  .receipt-content table {
+    page-break-inside: avoid;
+  }
+
+  /* Remove background colors for print */
+  .receipt-content .bg-subtle,
+  .receipt-content .bg-danger\\/5,
+  .receipt-content .bg-warning\\/5 {
+    background-color: #f9f9f9 !important;
+  }
+
+  /* Ensure borders are visible in print */
+  .receipt-content .border {
+    border-color: #ccc !important;
+  }
+}

@@ -92,7 +92,12 @@
     "notifications": "الإشعارات",
     "trash": "سلة المحذوفات",
     "timetable": "أيام الحضور",
-    "payroll": "الرواتب"
+    "payroll": "الرواتب",
+    "payments": "المدفوعات",
+    "paymentsEnrollments": "التسجيلات",
+    "paymentsRecords": "التحصيلات",
+    "paymentsLate": "التأخيرات",
+    "paymentsRecon": "التسوية"
   },
   "schools": {
     "title": "إدارة المدارس",
@@ -157,6 +162,7 @@
     "save": "حفظ",
     "saved": "تم حفظ التغييرات",
     "cancel": "إلغاء",
+    "close": "إغلاق",
     "delete": "حذف",
     "edit": "تعديل",
     "create": "إنشاء",
@@ -1183,6 +1189,391 @@
     "errors": {
       "duplicatePayment": "توجد دفعة مسجلة لهذا الموظف في هذا الشهر.",
       "employeeNotFound": "الموظف غير موجود."
+    }
+  },
+  "payments": {
+    "branchConfig": {
+      "title": "إعدادات الفوترة",
+      "description": "تكوين إعدادات فوترة الفرع",
+      "noBranch": "لم يتم العثور على فرع. يرجى إنشاء فرع أولاً.",
+      "sectionBilling": "إعدادات دورة الفوترة",
+      "sectionNotifications": "الإشعارات",
+      "billingCycle": "دورة الفوترة",
+      "cycleMonthly": "شهري",
+      "cycleTrimester": "ثلاثي",
+      "cycleCustom": "مخصص",
+      "billingDueDay": "يوم الاستحقاق",
+      "billingDueDayHelper": "يوم من الشهر (1-28)",
+      "gracePeriodDays": "فترة السماح (أيام)",
+      "gracePeriodHelper": "عدد أيام السماح بعد تاريخ الاستحقاق (0-60)",
+      "defaultRecurringFee": "الرسوم الشهرية الافتراضية",
+      "feeHelper": "المبلغ بالدينار الجزائري (0.00 - 9,999,999.99)",
+      "currencyDZD": "د.ج",
+      "notificationSetting": "تفعيل إشعارات الدفع",
+      "notificationHelper": "إرسال إشعارات للأولياء بشأن المدفوعات المستحقة",
+      "create": "إنشاء الإعدادات",
+      "saved": "تم الحفظ بنجاح"
+    },
+    "validation": {
+      "billingCycleRequired": "دورة الفوترة مطلوبة",
+      "billingDueDayRequired": "يوم الاستحقاق مطلوب",
+      "billingDueDayInvalid": "يوم الاستحقاق يجب أن يكون رقماً",
+      "billingDueDayInteger": "يوم الاستحقاق يجب أن يكون عدداً صحيحاً",
+      "billingDueDayMin": "يوم الاستحقاق يجب أن يكون 1 على الأقل",
+      "billingDueDayMax": "يوم الاستحقاق يجب ألا يتجاوز 28",
+      "gracePeriodRequired": "فترة السماح مطلوبة",
+      "gracePeriodInvalid": "فترة السماح يجب أن تكون رقماً",
+      "gracePeriodInteger": "فترة السماح يجب أن تكون عدداً صحيحاً",
+      "gracePeriodMin": "فترة السماح يجب ألا تقل عن 0",
+      "gracePeriodMax": "فترة السماح يجب ألا تتجاوز 60 يوماً",
+      "defaultFeeRequired": "الرسوم الافتراضية مطلوبة",
+      "defaultFeeInvalid": "الرسوم الافتراضية يجب أن تكون رقماً",
+      "defaultFeeMin": "الرسوم الافتراضية يجب ألا تقل عن 0",
+      "defaultFeeMax": "الرسوم الافتراضية يجب ألا تتجاوز 9,999,999.99 د.ج"
+    },
+    "branchCalendar": {
+      "title": "التقويم الدراسي",
+      "description": "إدارة فترات الفوترة الدراسية",
+      "addEntry": "إضافة فترة",
+      "selectBranch": "الفرع",
+      "selectBranchPlaceholder": "اختر فرعاً",
+      "selectYear": "السنة الدراسية",
+      "selectYearPlaceholder": "اختر سنة دراسية",
+      "noBranch": "لا توجد فروع. يرجى إنشاء فرع أولاً.",
+      "selectPrompt": "اختر فرعاً وسنة دراسية لعرض فترات التقويم.",
+      "noEntries": "لا توجد فترات تقويم لهذا الفرع والسنة.",
+      "createEntry": "فترة تقويم جديدة",
+      "editEntry": "تعديل فترة التقويم",
+      "createDescription": "حدد فترة فوترة جديدة لهذا الفرع.",
+      "editDescription": "تحديث تفاصيل الفترة أدناه.",
+      "deleteTitle": "حذف فترة التقويم",
+      "deleteConfirmation": "هل أنت متأكد من حذف \"{{label}}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+      "columns": {
+        "label": "التسمية",
+        "periodStart": "بداية الفترة",
+        "periodEnd": "نهاية الفترة",
+        "dueDate": "تاريخ الاستحقاق"
+      },
+      "fields": {
+        "label": "التسمية",
+        "labelPlaceholder": "مثال: الفصل الأول",
+        "periodStart": "بداية الفترة",
+        "periodEnd": "نهاية الفترة",
+        "dueDate": "تاريخ الاستحقاق"
+      }
+    },
+    "enrollments": {
+      "title": "التسجيلات",
+      "description": "إدارة تسجيلات الأطفال والفترات المالية",
+      "create": "تسجيل جديد",
+      "columns": {
+        "childName": "اسم الطفل",
+        "academicYear": "السنة الدراسية",
+        "status": "الحالة",
+        "recurringFee": "الرسوم الشهرية",
+        "startDate": "تاريخ البدء"
+      },
+      "status": {
+        "active": "نشط",
+        "withdrawn": "منسحب",
+        "completed": "مكتمل"
+      },
+      "form": {
+        "title": "تسجيل طفل جديد",
+        "description": "إنشاء تسجيل جديد لطفل في فرع",
+        "child": "الطفل",
+        "selectChild": "اختر طفلاً",
+        "branch": "الفرع",
+        "selectBranch": "اختر فرعاً",
+        "academicYear": "السنة الدراسية",
+        "selectAcademicYear": "اختر سنة دراسية",
+        "startDate": "تاريخ البدء",
+        "recurringFee": "الرسوم الشهرية (د.ج)",
+        "recurringFeeHelper": "اختياري - إذا ترك فارغاً سيستخدم الإعداد الافتراضي للفرع",
+        "registrationFee": "رسوم التسجيل (د.ج)",
+        "registrationFeeHelper": "اختياري - رسوم تسجيل لمرة واحدة",
+        "firstPeriodAmount": "مبلغ الفترة الأولى (د.ج)",
+        "firstPeriodAmountHelper": "اختياري - للتسجيل في منتصف الدورة",
+        "feeValidation": "يجب أن يكون بين 0.00 و 9,999,999.99 بحد أقصى رقمين بعد الفاصلة",
+        "childRequired": "يرجى اختيار طفل",
+        "branchRequired": "يرجى اختيار فرع",
+        "academicYearRequired": "يرجى اختيار سنة دراسية",
+        "startDateRequired": "يرجى تحديد تاريخ البدء"
+      },
+      "result": {
+        "title": "تم إنشاء التسجيل بنجاح",
+        "periodsCreated": "عدد الفترات المنشأة",
+        "dateRange": "نطاق التواريخ",
+        "totalAmount": "المبلغ الإجمالي",
+        "to": "إلى"
+      },
+      "empty": "لا توجد تسجيلات"
+    },
+    "enrollmentDetail": {
+      "title": "تفاصيل التسجيل",
+      "info": "معلومات التسجيل",
+      "notFound": "لم يتم العثور على التسجيل",
+      "withdraw": "سحب التسجيل",
+      "withdrawalDate": "تاريخ الانسحاب",
+      "periods": {
+        "title": "فترات الفوترة",
+        "description": "{{count}} فترة فوترة",
+        "empty": "لا توجد فترات فوترة",
+        "registration": "رسوم التسجيل",
+        "columns": {
+          "period": "الفترة",
+          "dates": "التواريخ",
+          "amountDue": "المبلغ المستحق",
+          "status": "الحالة"
+        }
+      },
+      "periodStatus": {
+        "unpaid": "غير مدفوع",
+        "partial": "جزئي",
+        "late_partial": "متأخر جزئي",
+        "late": "متأخر",
+        "paid": "مدفوع",
+        "cancelled": "ملغى"
+      },
+      "withdrawal": {
+        "title": "سحب التسجيل",
+        "description": "سيتم إلغاء الفترات المستقبلية تلقائياً",
+        "date": "تاريخ الانسحاب",
+        "dateRequired": "يرجى تحديد تاريخ الانسحاب",
+        "amountDue": "المبلغ المستحق للفترة الحالية (د.ج)",
+        "amountDueHelper": "اختياري - تعديل مبلغ الفترة الجارية",
+        "confirm": "تأكيد الانسحاب"
+      }
+    },
+    "records": {
+      "title": "المدفوعات",
+      "description": "تسجيل وعرض المدفوعات"
+    },
+    "correction": {
+      "title": "تسجيل تصحيح",
+      "description": "تصحيح دفعة سابقة بتسجيل مبلغ سالب",
+      "openButton": "تصحيح",
+      "submit": "تسجيل التصحيح",
+      "selectPaymentPrompt": "اختر الدفعة الأصلية لعرض المبالغ القابلة للتصحيح.",
+      "registrationPeriod": "رسوم التسجيل",
+      "fields": {
+        "originalPayment": "الدفعة الأصلية",
+        "selectPayment": "اختر دفعة",
+        "channel": "القناة",
+        "valueDate": "تاريخ القيمة",
+        "referenceNote": "سبب التصحيح",
+        "referenceNoteHelper": "إلزامي — اذكر سبب التصحيح (1-500 حرف)",
+        "referenceNotePlaceholder": "مثال: خطأ في المبلغ، استرداد جزئي..."
+      },
+      "channels": {
+        "cash": "نقداً",
+        "ccp": "CCP",
+        "baridimob": "بريدي موب"
+      },
+      "allocations": {
+        "title": "التوزيع حسب الفترة",
+        "period": "الفترة",
+        "originalAmount": "المبلغ الأصلي",
+        "remaining": "المتبقي للتصحيح",
+        "correctionAmount": "مبلغ التصحيح",
+        "total": "إجمالي التصحيح"
+      },
+      "errors": {
+        "paymentRequired": "يرجى اختيار دفعة",
+        "channelRequired": "القناة مطلوبة",
+        "valueDateRequired": "تاريخ القيمة مطلوب",
+        "referenceNoteRequired": "سبب التصحيح إلزامي",
+        "referenceNoteTooLong": "يجب ألا يتجاوز السبب 500 حرف",
+        "noAmountEntered": "يرجى إدخال مبلغ تصحيح واحد على الأقل",
+        "allocationExceedsMax": "مبلغ التصحيح يتجاوز الحد الأقصى المسموح",
+        "negativeAmount": "يجب أن تكون المبالغ موجبة"
+      },
+      "success": {
+        "title": "تم تسجيل التصحيح",
+        "receiptNumber": "رقم الإيصال",
+        "totalCorrected": "إجمالي التصحيح"
+      }
+    },
+    "recording": {
+      "title": "تسجيل دفعة جديدة",
+      "description": "سجّل دفعة مستلمة وخصّصها لفترات الفوترة",
+      "record": "تسجيل دفعة",
+      "submit": "تسجيل الدفعة",
+      "addAllocation": "إضافة تخصيص",
+      "registrationPeriod": "رسوم التسجيل",
+      "allocationSum": "مجموع التخصيصات: {{sum}} / {{total}} د.ج",
+      "empty": "لا توجد مدفوعات مسجلة",
+      "typePayment": "دفعة",
+      "typeCorrection": "تصحيح",
+      "fields": {
+        "child": "الطفل",
+        "selectChild": "اختر طفلاً",
+        "totalAmount": "المبلغ الإجمالي (د.ج)",
+        "channel": "قناة الدفع",
+        "valueDate": "تاريخ القيمة",
+        "referenceNote": "مرجع / ملاحظة",
+        "referenceNotePlaceholder": "رقم التحويل أو ملاحظة...",
+        "allocations": "تخصيص الفترات",
+        "selectPeriod": "اختر فترة",
+        "branch": "الفرع",
+        "selectBranch": "اختر فرعاً"
+      },
+      "channels": {
+        "cash": "نقداً",
+        "ccp": "CCP",
+        "baridimob": "بريدي موب"
+      },
+      "columns": {
+        "receiptNumber": "رقم الوصل",
+        "child": "الطفل",
+        "amount": "المبلغ",
+        "channel": "القناة",
+        "valueDate": "التاريخ",
+        "type": "النوع",
+        "correctsPayment": "تصحيح: {{id}}…"
+      },
+      "errors": {
+        "childRequired": "يرجى اختيار طفل",
+        "amountInvalid": "المبلغ غير صالح (0.01 - 9,999,999.99)",
+        "valueDateRequired": "تاريخ القيمة مطلوب",
+        "referenceRequired": "المرجع مطلوب لقنوات CCP وبريدي موب",
+        "allocationRequired": "يجب تخصيص فترة واحدة على الأقل",
+        "allocationAmountInvalid": "مبلغ التخصيص غير صالح",
+        "allocationMismatch": "مجموع التخصيصات يجب أن يساوي المبلغ الإجمالي"
+      },
+      "success": {
+        "title": "تم تسجيل الدفعة بنجاح",
+        "receiptNumber": "رقم الوصل",
+        "amount": "المبلغ",
+        "channel": "القناة"
+      }
+    },
+    "late": {
+      "title": "المتأخرات",
+      "description": "لوحة متابعة المدفوعات المتأخرة حسب الفرع",
+      "filterBranch": "الفرع",
+      "selectBranch": "اختر فرعاً",
+      "filterStatus": "الحالة",
+      "filterAll": "كل المتأخرات",
+      "statusLate": "متأخر",
+      "statusLatePartial": "متأخر جزئي",
+      "empty": "لا توجد مدفوعات متأخرة. جميع الحسابات محدّثة.",
+      "columns": {
+        "childName": "الطفل",
+        "periodLabel": "الفترة",
+        "dueDate": "تاريخ الاستحقاق",
+        "graceEndDate": "نهاية المهلة",
+        "amountDue": "المبلغ المستحق",
+        "totalPaid": "المدفوع",
+        "outstanding": "المتبقي",
+        "status": "الحالة"
+      }
+    },
+    "reconciliation": {
+      "title": "التسوية",
+      "description": "تقرير تسوية المدفوعات حسب القناة",
+      "fields": {
+        "branch": "الفرع",
+        "selectBranch": "اختر فرعاً",
+        "rangeStart": "تاريخ البداية",
+        "rangeEnd": "تاريخ النهاية"
+      },
+      "columns": {
+        "channel": "القناة",
+        "totalAmount": "المبلغ الإجمالي (د.ج)",
+        "paymentCount": "عدد المدفوعات",
+        "correctionCount": "عدد التصحيحات"
+      },
+      "channels": {
+        "cash": "نقدي",
+        "ccp": "CCP",
+        "baridimob": "بريدي موب"
+      },
+      "grandTotal": "المجموع الكلي",
+      "print": "طباعة",
+      "export": "تصدير CSV",
+      "empty": "لا توجد بيانات للفترة المحددة.",
+      "printRange": "الفترة: {{start}} — {{end}}",
+      "errors": {
+        "invalidRange": "يجب أن يكون تاريخ البداية أقل من أو يساوي تاريخ النهاية.",
+        "fetchFailed": "خطأ في تحميل تقرير التسوية."
+      }
+    },
+    "receipt": {
+      "title": "إيصال",
+      "description": "تفاصيل الدفع والتخصيصات",
+      "print": "طباعة",
+      "error": "تعذر تحميل الإيصال. يرجى المحاولة مرة أخرى.",
+      "viewReceipt": "عرض الإيصال",
+      "viewButton": "عرض الإيصال",
+      "receiptNumber": "رقم الإيصال",
+      "child": "الطفل",
+      "amount": "المبلغ",
+      "channel": "القناة",
+      "valueDate": "تاريخ القيمة",
+      "type": "النوع",
+      "correctsPayment": "تصحيح للدفعة",
+      "referenceNote": "المرجع / الملاحظة",
+      "allocations": "التخصيصات",
+      "notFound": "الإيصال غير موجود"
+    },
+    "filters": {
+      "title": "التصفية",
+      "startDate": "تاريخ البداية",
+      "endDate": "تاريخ النهاية",
+      "channel": "القناة",
+      "child": "الطفل",
+      "allChannels": "جميع القنوات",
+      "allChildren": "جميع الأطفال",
+      "clear": "إعادة تعيين"
+    }
+  },
+  "parentPayments": {
+    "title": "المدفوعات",
+    "subtitle": "عرض فترات الفوترة وسجل المدفوعات",
+    "tabs": {
+      "periods": "الفوترة",
+      "history": "السجل",
+      "balances": "الرصيد"
+    },
+    "dueDate": "الاستحقاق",
+    "receipt": "الوصل",
+    "correction": "تصحيح",
+    "correctsReceipt": "تصحيح للوصل",
+    "allocatedPeriods": "الفترات المخصصة",
+    "paidInAdvance": "مدفوع مسبقاً",
+    "outstandingLabel": "الرصيد المستحق",
+    "noBalance": "لا يوجد رصيد مستحق",
+    "registrationFee": "رسوم التسجيل",
+    "viewReceipt": "عرض الإيصال",
+    "receiptTitle": "إيصال الدفع",
+    "allPaid": "مدفوع بالكامل",
+    "outstanding": "المستحق",
+    "noChildren": "لا يوجد أطفال مرتبطون بحسابك.",
+    "noChildrenHint": "تواصل مع المدرسة لربط أطفالك.",
+    "noPayments": "لا توجد مدفوعات مسجلة بعد.",
+    "status": {
+      "unpaid": "غير مدفوع",
+      "partial": "جزئي",
+      "late_partial": "متأخر جزئي",
+      "late": "متأخر",
+      "paid": "مدفوع",
+      "cancelled": "ملغى"
+    },
+    "channel": {
+      "cash": "نقداً",
+      "ccp": "CCP",
+      "baridimob": "بريدي موب"
+    },
+    "error": {
+      "periods": "تعذر تحميل فترات الفوترة.",
+      "history": "تعذر تحميل سجل المدفوعات.",
+      "balances": "تعذر تحميل الأرصدة."
+    },
+    "empty": {
+      "periods": "لا توجد فترات فوترة حتى الآن.",
+      "history": "لا توجد مدفوعات مسجلة حتى الآن.",
+      "balances": "لا يوجد أطفال مرتبطون بحسابك."
     }
   }
 }

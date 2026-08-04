@@ -81,6 +81,31 @@ enum InvoiceStatus {
   cancelled
 }
 
+// ─── Payment Management Enums ────────────────────────────────────────────────
+
+enum BillingCycleType {
+  monthly
+  trimester
+  custom
+}
+
+enum NotificationSettingType {
+  enabled
+  disabled
+}
+
+enum EnrollmentStatus {
+  active
+  withdrawn
+  completed
+}
+
+enum PaymentChannel {
+  cash
+  ccp
+  baridimob
+}
+
 enum PaymentMethod {
   online
   cash
@@ -146,57 +171,61 @@ model School {
   invoices      Invoice[]
   expenses      Expense[]
   subscription  SchoolSubscription?
+  branches      Branch[]
 
   @@index([deletedAt])
   @@map("schools")
 }
 
 model User {
-  id                String   @id @default(uuid())
-  schoolId          String?  @map("school_id")
-  firstName         String   @map("first_name")
-  lastName          String   @map("last_name")
-  email             String   @unique
-  passwordHash      String   @map("password_hash")
-  role              UserRole
-  isActive            Boolean  @default(true) @map("is_active")
-  mustChangePassword  Boolean  @default(false) @map("must_change_password")
-  fcmToken            String?  @map("fcm_token")
-  preferredLanguage   Language @default(fr) @map("preferred_language")
-  deletedAt           DateTime? @map("deleted_at")
-  createdAt           DateTime @default(now()) @map("created_at")
+  id                 String    @id @default(uuid())
+  schoolId           String?   @map("school_id")
+  branchId           String?   @map("branch_id")
+  firstName          String    @map("first_name")
+  lastName           String    @map("last_name")
+  email              String    @unique
+  passwordHash       String    @map("password_hash")
+  role               UserRole
+  isActive           Boolean   @default(true) @map("is_active")
+  mustChangePassword Boolean   @default(false) @map("must_change_password")
+  fcmToken           String?   @map("fcm_token")
+  preferredLanguage  Language  @default(fr) @map("preferred_language")
+  deletedAt          DateTime? @map("deleted_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
 
-  school              School?             @relation(fields: [schoolId], references: [id])
-  staffProfile        StaffProfile?
-  parentLinks         ParentChildLink[]
-  notifications       Notification[]
-  sentMessages        Message[]
-  teacherConversations Conversation[]     @relation("TeacherConversations")
-  parentConversations  Conversation[]     @relation("ParentConversations")
-  classrooms          Classroom[]
-  attendanceMarks     AttendanceRecord[]
-  invoicesAsParent    Invoice[]
+  school               School?              @relation(fields: [schoolId], references: [id])
+  branch               Branch?              @relation(fields: [branchId], references: [id])
+  staffProfile         StaffProfile?
+  parentLinks          ParentChildLink[]
+  notifications        Notification[]
+  sentMessages         Message[]
+  teacherConversations Conversation[]       @relation("TeacherConversations")
+  parentConversations  Conversation[]       @relation("ParentConversations")
+  classrooms           Classroom[]
+  attendanceMarks      AttendanceRecord[]
+  invoicesAsParent     Invoice[]
   cashPaymentsReceived CashPayment[]
-  auditLogs           PaymentAuditLog[]
-  refreshTokens       RefreshToken[]
-  passwordResetTokens PasswordResetToken[]
-  employeeSalary      EmployeeSalary?
-  salaryPayments      SalaryPayment[]
+  auditLogs            PaymentAuditLog[]
+  refreshTokens        RefreshToken[]
+  passwordResetTokens  PasswordResetToken[]
+  employeeSalary       EmployeeSalary?
+  salaryPayments       SalaryPayment[]
+  paymentRecords       PaymentRecord[]      @relation("PaymentRecorder")
 
   @@index([deletedAt])
   @@map("users")
 }
 
 model StaffProfile {
-  id            String       @id @default(uuid())
-  userId        String       @unique @map("user_id")
-  schoolId      String       @map("school_id")
-  position      String
-  contractType  ContractType @map("contract_type")
-  contractStart DateTime     @map("contract_start") @db.Date
-  contractEnd   DateTime?    @map("contract_end") @db.Date
-  documentPublicId String?   @map("document_public_id")
-  createdAt     DateTime     @default(now()) @map("created_at")
+  id               String       @id @default(uuid())
+  userId           String       @unique @map("user_id")
+  schoolId         String       @map("school_id")
+  position         String
+  contractType     ContractType @map("contract_type")
+  contractStart    DateTime     @map("contract_start") @db.Date
+  contractEnd      DateTime?    @map("contract_end") @db.Date
+  documentPublicId String?      @map("document_public_id")
+  createdAt        DateTime     @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id])
 
@@ -212,31 +241,33 @@ model AcademicYear {
   isActive  Boolean  @default(false) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
 
-  school     School      @relation(fields: [schoolId], references: [id])
-  classrooms Classroom[]
-  children   Child[]
-  feeStructures FeeStructure[]
+  school          School           @relation(fields: [schoolId], references: [id])
+  classrooms      Classroom[]
+  children        Child[]
+  feeStructures   FeeStructure[]
+  branchCalendars BranchCalendar[]
+  enrollments     Enrollment[]
 
   @@map("academic_years")
 }
 
 model Classroom {
-  id             String   @id @default(uuid())
-  schoolId       String   @map("school_id")
-  academicYearId String   @map("academic_year_id")
-  teacherUserId  String?  @map("teacher_user_id")
+  id             String    @id @default(uuid())
+  schoolId       String    @map("school_id")
+  academicYearId String    @map("academic_year_id")
+  teacherUserId  String?   @map("teacher_user_id")
   name           String
   capacity       Int
-  roomNumber     String?  @map("room_number")
+  roomNumber     String?   @map("room_number")
   level          String?
-  workingDays    Json     @default("[\"sunday\",\"monday\",\"tuesday\",\"wednesday\",\"thursday\"]") @map("working_days")
+  workingDays    Json      @default("[\"sunday\",\"monday\",\"tuesday\",\"wednesday\",\"thursday\"]") @map("working_days")
   deletedAt      DateTime? @map("deleted_at")
-  createdAt      DateTime @default(now()) @map("created_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
 
-  school       School       @relation(fields: [schoolId], references: [id])
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
-  teacher      User?        @relation(fields: [teacherUserId], references: [id])
-  enrollments  ClassroomEnrollment[]
+  school            School                @relation(fields: [schoolId], references: [id])
+  academicYear      AcademicYear          @relation(fields: [academicYearId], references: [id])
+  teacher           User?                 @relation(fields: [teacherUserId], references: [id])
+  enrollments       ClassroomEnrollment[]
   attendanceRecords AttendanceRecord[]
 
   @@index([deletedAt])
@@ -271,17 +302,19 @@ model Child {
   deletedAt      DateTime?   @map("deleted_at")
   createdAt      DateTime    @default(now()) @map("created_at")
 
-  school            School              @relation(fields: [schoolId], references: [id])
-  academicYear      AcademicYear        @relation(fields: [academicYearId], references: [id])
-  enrollments       ClassroomEnrollment[]
-  parentLinks       ParentChildLink[]
-  emergencyContacts EmergencyContact[]
-  medicalNotes      MedicalNote[]
-  attendanceRecords AttendanceRecord[]
-  dailyReports      DailyReport[]
-  invoices          Invoice[]
-  discounts         Discount[]
-  consentForms      ConsentForm[]
+  school             School                @relation(fields: [schoolId], references: [id])
+  academicYear       AcademicYear          @relation(fields: [academicYearId], references: [id])
+  enrollments        ClassroomEnrollment[]
+  parentLinks        ParentChildLink[]
+  emergencyContacts  EmergencyContact[]
+  medicalNotes       MedicalNote[]
+  attendanceRecords  AttendanceRecord[]
+  dailyReports       DailyReport[]
+  invoices           Invoice[]
+  discounts          Discount[]
+  consentForms       ConsentForm[]
+  paymentEnrollments Enrollment[]
+  paymentRecords     PaymentRecord[]
 
   @@index([schoolId, academicYearId, isActive])
   @@index([deletedAt])
@@ -304,12 +337,12 @@ model ParentChildLink {
 }
 
 model EmergencyContact {
-  id                 String  @id @default(uuid())
-  childId            String  @map("child_id")
+  id                 String   @id @default(uuid())
+  childId            String   @map("child_id")
   name               String
   relationship       String
   phone              String
-  isAuthorizedPickup Boolean @default(false) @map("is_authorized_pickup")
+  isAuthorizedPickup Boolean  @default(false) @map("is_authorized_pickup")
   createdAt          DateTime @default(now()) @map("created_at")
 
   child Child @relation(fields: [childId], references: [id])
@@ -353,17 +386,17 @@ model AttendanceRecord {
 }
 
 model DailyReport {
-  id                String   @id @default(uuid())
-  schoolId          String   @map("school_id")
-  childId           String   @map("child_id")
-  date              DateTime @db.Date
-  mood              Mood
-  mealsEaten        Int      @map("meals_eaten")
-  napDurationMinutes Int?    @map("nap_duration_minutes")
-  activities        String?
-  generalNote       String?  @map("general_note")
-  createdByUserId   String   @map("created_by_user_id")
-  createdAt         DateTime @default(now()) @map("created_at")
+  id                 String   @id @default(uuid())
+  schoolId           String   @map("school_id")
+  childId            String   @map("child_id")
+  date               DateTime @db.Date
+  mood               Mood
+  mealsEaten         Int      @map("meals_eaten")
+  napDurationMinutes Int?     @map("nap_duration_minutes")
+  activities         String?
+  generalNote        String?  @map("general_note")
+  createdByUserId    String   @map("created_by_user_id")
+  createdAt          DateTime @default(now()) @map("created_at")
 
   child  Child              @relation(fields: [childId], references: [id])
   photos DailyReportPhoto[]
@@ -373,10 +406,10 @@ model DailyReport {
 }
 
 model DailyReportPhoto {
-  id              String @id @default(uuid())
-  dailyReportId   String @map("daily_report_id")
-  cloudinaryPublicId String @map("cloudinary_public_id")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id                 String   @id @default(uuid())
+  dailyReportId      String   @map("daily_report_id")
+  cloudinaryPublicId String   @map("cloudinary_public_id")
+  createdAt          DateTime @default(now()) @map("created_at")
 
   dailyReport DailyReport @relation(fields: [dailyReportId], references: [id])
 
@@ -417,14 +450,14 @@ model Message {
 }
 
 model Announcement {
-  id          String    @id @default(uuid())
-  schoolId    String    @map("school_id")
-  classroomId String?   @map("classroom_id")
-  title       String
-  content     String
-  createdByUserId String @map("created_by_user_id")
-  publishedAt DateTime? @map("published_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id              String    @id @default(uuid())
+  schoolId        String    @map("school_id")
+  classroomId     String?   @map("classroom_id")
+  title           String
+  content         String
+  createdByUserId String    @map("created_by_user_id")
+  publishedAt     DateTime? @map("published_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
   @@map("announcements")
 }
@@ -481,29 +514,29 @@ model FeeStructure {
 }
 
 model Invoice {
-  id                 String        @id @default(uuid())
-  schoolId           String        @map("school_id")
-  childId            String        @map("child_id")
-  parentUserId       String        @map("parent_user_id")
-  feeStructureId     String        @map("fee_structure_id")
-  amount             Decimal       @db.Decimal(10, 2)
-  discountAmount     Decimal       @default(0) @map("discount_amount") @db.Decimal(10, 2)
-  finalAmount        Decimal       @map("final_amount") @db.Decimal(10, 2)
-  remainingAmount    Decimal?      @map("remaining_amount") @db.Decimal(10, 2)
-  currency           String        @default("DZD")
-  dueDate            DateTime      @map("due_date") @db.Date
-  status             InvoiceStatus @default(draft)
+  id                 String         @id @default(uuid())
+  schoolId           String         @map("school_id")
+  childId            String         @map("child_id")
+  parentUserId       String         @map("parent_user_id")
+  feeStructureId     String         @map("fee_structure_id")
+  amount             Decimal        @db.Decimal(10, 2)
+  discountAmount     Decimal        @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  finalAmount        Decimal        @map("final_amount") @db.Decimal(10, 2)
+  remainingAmount    Decimal?       @map("remaining_amount") @db.Decimal(10, 2)
+  currency           String         @default("DZD")
+  dueDate            DateTime       @map("due_date") @db.Date
+  status             InvoiceStatus  @default(draft)
   paymentMethod      PaymentMethod? @map("payment_method")
-  chargilyCheckoutId String?       @map("chargily_checkout_id")
-  chargilyPaymentUrl String?       @map("chargily_payment_url")
-  issuedAt           DateTime?     @map("issued_at")
-  paidAt             DateTime?     @map("paid_at")
-  createdAt          DateTime      @default(now()) @map("created_at")
+  chargilyCheckoutId String?        @map("chargily_checkout_id")
+  chargilyPaymentUrl String?        @map("chargily_payment_url")
+  issuedAt           DateTime?      @map("issued_at")
+  paidAt             DateTime?      @map("paid_at")
+  createdAt          DateTime       @default(now()) @map("created_at")
 
-  school       School       @relation(fields: [schoolId], references: [id])
-  child        Child        @relation(fields: [childId], references: [id])
-  parent       User         @relation(fields: [parentUserId], references: [id])
-  feeStructure FeeStructure @relation(fields: [feeStructureId], references: [id])
+  school       School            @relation(fields: [schoolId], references: [id])
+  child        Child             @relation(fields: [childId], references: [id])
+  parent       User              @relation(fields: [parentUserId], references: [id])
+  feeStructure FeeStructure      @relation(fields: [feeStructureId], references: [id])
   auditLogs    PaymentAuditLog[]
   cashPayments CashPayment[]
 
@@ -609,12 +642,12 @@ model RefreshToken {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  token     String   @unique
-  expiresAt DateTime @map("expires_at")
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -641,8 +674,8 @@ model SubscriptionPlan {
   id           String   @id @default(uuid())
   name         String
   description  String?
-  priceMonthly Decimal  @db.Decimal(10, 2) @map("price_monthly")
-  priceAnnual  Decimal? @db.Decimal(10, 2) @map("price_annual")
+  priceMonthly Decimal  @map("price_monthly") @db.Decimal(10, 2)
+  priceAnnual  Decimal? @map("price_annual") @db.Decimal(10, 2)
   currency     String   @default("DZD")
   maxChildren  Int?     @map("max_children")
   maxUsers     Int?     @map("max_users")
@@ -666,21 +699,21 @@ model SchoolSubscription {
   cancelledAt        DateTime?          @map("cancelled_at")
   createdAt          DateTime           @default(now()) @map("created_at")
 
-  school   School             @relation(fields: [schoolId], references: [id])
-  plan     SubscriptionPlan   @relation(fields: [planId], references: [id])
+  school   School                @relation(fields: [schoolId], references: [id])
+  plan     SubscriptionPlan      @relation(fields: [planId], references: [id])
   payments SubscriptionPayment[]
 
   @@map("school_subscriptions")
 }
 
 model SubscriptionPayment {
-  id             String   @id @default(uuid())
-  subscriptionId String   @map("subscription_id")
-  amount         Decimal  @db.Decimal(10, 2)
-  currency       String   @default("DZD")
-  periodStart    DateTime @map("period_start") @db.Date
-  periodEnd      DateTime @map("period_end") @db.Date
-  paidAt         DateTime @map("paid_at")
+  id             String    @id @default(uuid())
+  subscriptionId String    @map("subscription_id")
+  amount         Decimal   @db.Decimal(10, 2)
+  currency       String    @default("DZD")
+  periodStart    DateTime  @map("period_start") @db.Date
+  periodEnd      DateTime  @map("period_end") @db.Date
+  paidAt         DateTime  @map("paid_at")
   recordedBy     String    @map("recorded_by")
   note           String?
   createdAt      DateTime  @default(now()) @map("created_at")
@@ -698,8 +731,8 @@ model EmployeeSalary {
   userId         String   @unique @map("user_id")
   schoolId       String   @map("school_id")
   salaryType     String   @default("fixed") @map("salary_type")
-  baseSalary     Decimal? @db.Decimal(10, 2) @map("base_salary")
-  ratePerStudent Decimal? @db.Decimal(10, 2) @map("rate_per_student")
+  baseSalary     Decimal? @map("base_salary") @db.Decimal(10, 2)
+  ratePerStudent Decimal? @map("rate_per_student") @db.Decimal(10, 2)
   currency       String   @default("DZD")
   effectiveFrom  DateTime @map("effective_from") @db.Date
   notes          String?
@@ -713,15 +746,15 @@ model EmployeeSalary {
 }
 
 model SalaryPayment {
-  id          String    @id @default(uuid())
-  userId      String    @map("user_id")
-  schoolId    String    @map("school_id")
-  month       Int
-  year        Int
-  baseSalary  Decimal   @db.Decimal(10, 2) @map("base_salary")
-  bonuses     Decimal   @default(0) @db.Decimal(10, 2)
-  deductions  Decimal   @default(0) @db.Decimal(10, 2)
-  netSalary   Decimal   @db.Decimal(10, 2) @map("net_salary")
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  schoolId     String    @map("school_id")
+  month        Int
+  year         Int
+  baseSalary   Decimal   @map("base_salary") @db.Decimal(10, 2)
+  bonuses      Decimal   @default(0) @db.Decimal(10, 2)
+  deductions   Decimal   @default(0) @db.Decimal(10, 2)
+  netSalary    Decimal   @map("net_salary") @db.Decimal(10, 2)
   studentCount Int?      @map("student_count")
   paidAt       DateTime  @map("paid_at") @db.Date
   note         String?
@@ -747,4 +780,162 @@ model InvitationToken {
   createdAt DateTime  @default(now()) @map("created_at")
 
   @@map("invitation_tokens")
+}
+
+// ─── Payment Management ──────────────────────────────────────────────────────
+
+model Branch {
+  id        String    @id @default(uuid())
+  schoolId  String    @map("school_id")
+  name      String
+  address   String?
+  isActive  Boolean   @default(true) @map("is_active")
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  school         School               @relation(fields: [schoolId], references: [id])
+  billingConfig  BranchBillingConfig?
+  calendars      BranchCalendar[]
+  enrollments    Enrollment[]
+  paymentRecords PaymentRecord[]
+  users          User[]
+
+  @@index([schoolId])
+  @@index([deletedAt])
+  @@map("branches")
+}
+
+model BranchBillingConfig {
+  id                  String                  @id @default(uuid())
+  branchId            String                  @unique @map("branch_id")
+  billingCycle        BillingCycleType        @map("billing_cycle")
+  billingDueDay       Int                     @map("billing_due_day")
+  gracePeriodDays     Int                     @default(5) @map("grace_period_days")
+  defaultRecurringFee Decimal                 @map("default_recurring_fee") @db.Decimal(10, 2)
+  notificationSetting NotificationSettingType @default(disabled) @map("notification_setting")
+  createdAt           DateTime                @default(now()) @map("created_at")
+  updatedAt           DateTime                @updatedAt @map("updated_at")
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@map("branch_billing_configs")
+}
+
+model BranchCalendar {
+  id             String   @id @default(uuid())
+  branchId       String   @map("branch_id")
+  academicYearId String   @map("academic_year_id")
+  label          String
+  periodStart    DateTime @map("period_start") @db.Date
+  periodEnd      DateTime @map("period_end") @db.Date
+  dueDate        DateTime @map("due_date") @db.Date
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  branch       Branch       @relation(fields: [branchId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+
+  @@index([branchId, academicYearId])
+  @@map("branch_calendars")
+}
+
+model Enrollment {
+  id              String           @id @default(uuid())
+  childId         String           @map("child_id")
+  branchId        String           @map("branch_id")
+  academicYearId  String           @map("academic_year_id")
+  startDate       DateTime         @map("start_date") @db.Date
+  status          EnrollmentStatus @default(active)
+  registrationFee Decimal?         @map("registration_fee") @db.Decimal(10, 2)
+  recurringFee    Decimal          @map("recurring_fee") @db.Decimal(10, 2)
+  withdrawalDate  DateTime?        @map("withdrawal_date") @db.Date
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  child          Child           @relation(fields: [childId], references: [id])
+  branch         Branch          @relation(fields: [branchId], references: [id])
+  academicYear   AcademicYear    @relation(fields: [academicYearId], references: [id])
+  billingPeriods BillingPeriod[]
+
+  @@unique([childId, academicYearId])
+  @@index([branchId, academicYearId])
+  @@index([childId])
+  @@map("enrollments")
+}
+
+model BillingPeriod {
+  id                   String    @id @default(uuid())
+  enrollmentId         String    @map("enrollment_id")
+  periodStart          DateTime  @map("period_start") @db.Date
+  periodEnd            DateTime  @map("period_end") @db.Date
+  dueDate              DateTime  @map("due_date") @db.Date
+  graceEndDate         DateTime  @map("grace_end_date") @db.Date
+  amountDue            Decimal   @map("amount_due") @db.Decimal(10, 2)
+  isRegistrationPeriod Boolean   @default(false) @map("is_registration_period")
+  cancelledAt          DateTime? @map("cancelled_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  enrollment         Enrollment          @relation(fields: [enrollmentId], references: [id])
+  paymentAllocations PaymentAllocation[]
+
+  @@index([enrollmentId])
+  @@index([dueDate])
+  @@index([cancelledAt])
+  @@map("billing_periods")
+}
+
+model PaymentRecord {
+  id                String         @id @default(uuid())
+  branchId          String         @map("branch_id")
+  childId           String         @map("child_id")
+  receiptNumber     String         @unique @map("receipt_number")
+  totalAmount       Decimal        @map("total_amount") @db.Decimal(10, 2)
+  channel           PaymentChannel
+  valueDate         DateTime       @map("value_date") @db.Date
+  recordedBy        String         @map("recorded_by")
+  referenceNote     String?        @map("reference_note")
+  isCorrection      Boolean        @default(false) @map("is_correction")
+  correctsPaymentId String?        @map("corrects_payment_id")
+  createdAt         DateTime       @default(now()) @map("created_at")
+
+  branch           Branch              @relation(fields: [branchId], references: [id])
+  child            Child               @relation(fields: [childId], references: [id])
+  recorder         User                @relation("PaymentRecorder", fields: [recordedBy], references: [id])
+  correctedPayment PaymentRecord?      @relation("PaymentCorrections", fields: [correctsPaymentId], references: [id])
+  corrections      PaymentRecord[]     @relation("PaymentCorrections")
+  allocations      PaymentAllocation[]
+
+  @@index([branchId, valueDate])
+  @@index([childId])
+  @@index([correctsPaymentId])
+  @@map("payment_records")
+}
+
+model PaymentAllocation {
+  id              String   @id @default(uuid())
+  paymentRecordId String   @map("payment_record_id")
+  billingPeriodId String   @map("billing_period_id")
+  amount          Decimal  @db.Decimal(10, 2)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  paymentRecord PaymentRecord @relation(fields: [paymentRecordId], references: [id])
+  billingPeriod BillingPeriod @relation(fields: [billingPeriodId], references: [id])
+
+  @@unique([paymentRecordId, billingPeriodId])
+  @@index([billingPeriodId])
+  @@map("payment_allocations")
+}
+
+model PaymentAuditEntry {
+  id              String   @id @default(uuid())
+  branchId        String   @map("branch_id")
+  paymentRecordId String   @map("payment_record_id")
+  action          String
+  performedBy     String   @map("performed_by")
+  metadata        Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([branchId, createdAt])
+  @@index([paymentRecordId])
+  @@map("payment_audit_entries")
 }

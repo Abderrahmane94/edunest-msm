@@ -94,7 +94,12 @@
     "notifications": "Notifications",
     "trash": "Corbeille",
     "timetable": "Jours de présence",
-    "payroll": "Paie"
+    "payroll": "Paie",
+    "payments": "Paiements",
+    "paymentsEnrollments": "Inscriptions",
+    "paymentsRecords": "Encaissements",
+    "paymentsLate": "Retards",
+    "paymentsRecon": "Rapprochement"
   },
   "schools": {
     "title": "Gestion des écoles",
@@ -159,6 +164,7 @@
     "save": "Enregistrer",
     "saved": "Modifications enregistrées",
     "cancel": "Annuler",
+    "close": "Fermer",
     "delete": "Supprimer",
     "edit": "Modifier",
     "create": "Créer",
@@ -1184,6 +1190,391 @@
     "errors": {
       "duplicatePayment": "Un paiement existe déjà pour cet employé ce mois-ci.",
       "employeeNotFound": "Employé introuvable."
+    }
+  },
+  "payments": {
+    "branchConfig": {
+      "title": "Configuration de facturation",
+      "description": "Configurer les paramètres de facturation de la branche",
+      "noBranch": "Aucune branche trouvée. Veuillez d'abord créer une branche.",
+      "sectionBilling": "Paramètres du cycle de facturation",
+      "sectionNotifications": "Notifications",
+      "billingCycle": "Cycle de facturation",
+      "cycleMonthly": "Mensuel",
+      "cycleTrimester": "Trimestriel",
+      "cycleCustom": "Personnalisé",
+      "billingDueDay": "Jour d'échéance",
+      "billingDueDayHelper": "Jour du mois (1-28)",
+      "gracePeriodDays": "Période de grâce (jours)",
+      "gracePeriodHelper": "Nombre de jours de grâce après la date d'échéance (0-60)",
+      "defaultRecurringFee": "Frais récurrents par défaut",
+      "feeHelper": "Montant en DZD (0,00 - 9 999 999,99)",
+      "currencyDZD": "DZD",
+      "notificationSetting": "Activer les notifications de paiement",
+      "notificationHelper": "Envoyer des notifications aux parents concernant les paiements dus",
+      "create": "Créer la configuration",
+      "saved": "Enregistré avec succès"
+    },
+    "validation": {
+      "billingCycleRequired": "Le cycle de facturation est requis",
+      "billingDueDayRequired": "Le jour d'échéance est requis",
+      "billingDueDayInvalid": "Le jour d'échéance doit être un nombre",
+      "billingDueDayInteger": "Le jour d'échéance doit être un nombre entier",
+      "billingDueDayMin": "Le jour d'échéance doit être au moins 1",
+      "billingDueDayMax": "Le jour d'échéance ne doit pas dépasser 28",
+      "gracePeriodRequired": "La période de grâce est requise",
+      "gracePeriodInvalid": "La période de grâce doit être un nombre",
+      "gracePeriodInteger": "La période de grâce doit être un nombre entier",
+      "gracePeriodMin": "La période de grâce ne doit pas être inférieure à 0",
+      "gracePeriodMax": "La période de grâce ne doit pas dépasser 60 jours",
+      "defaultFeeRequired": "Les frais par défaut sont requis",
+      "defaultFeeInvalid": "Les frais par défaut doivent être un nombre",
+      "defaultFeeMin": "Les frais par défaut ne doivent pas être inférieurs à 0",
+      "defaultFeeMax": "Les frais par défaut ne doivent pas dépasser 9 999 999,99 DZD"
+    },
+    "branchCalendar": {
+      "title": "Calendrier académique",
+      "description": "Gérer les périodes de facturation académiques",
+      "addEntry": "Ajouter une période",
+      "selectBranch": "Branche",
+      "selectBranchPlaceholder": "Sélectionner une branche",
+      "selectYear": "Année scolaire",
+      "selectYearPlaceholder": "Sélectionner une année",
+      "noBranch": "Aucune branche trouvée. Veuillez d'abord créer une branche.",
+      "selectPrompt": "Sélectionnez une branche et une année scolaire pour voir les entrées du calendrier.",
+      "noEntries": "Aucune entrée de calendrier trouvée pour cette branche et cette année.",
+      "createEntry": "Nouvelle entrée de calendrier",
+      "editEntry": "Modifier l'entrée du calendrier",
+      "createDescription": "Définir une nouvelle période de facturation pour cette branche.",
+      "editDescription": "Mettre à jour les détails de la période ci-dessous.",
+      "deleteTitle": "Supprimer l'entrée du calendrier",
+      "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer \"{{label}}\" ? Cette action est irréversible.",
+      "columns": {
+        "label": "Libellé",
+        "periodStart": "Début de période",
+        "periodEnd": "Fin de période",
+        "dueDate": "Date d'échéance"
+      },
+      "fields": {
+        "label": "Libellé",
+        "labelPlaceholder": "ex. Trimestre 1",
+        "periodStart": "Début de période",
+        "periodEnd": "Fin de période",
+        "dueDate": "Date d'échéance"
+      }
+    },
+    "enrollments": {
+      "title": "Inscriptions",
+      "description": "Gérer les inscriptions des enfants et les périodes de facturation",
+      "create": "Nouvelle inscription",
+      "columns": {
+        "childName": "Nom de l'enfant",
+        "academicYear": "Année scolaire",
+        "status": "Statut",
+        "recurringFee": "Frais récurrents",
+        "startDate": "Date de début"
+      },
+      "status": {
+        "active": "Actif",
+        "withdrawn": "Retiré",
+        "completed": "Terminé"
+      },
+      "form": {
+        "title": "Nouvelle inscription",
+        "description": "Créer une nouvelle inscription pour un enfant dans une branche",
+        "child": "Enfant",
+        "selectChild": "Sélectionner un enfant",
+        "branch": "Branche",
+        "selectBranch": "Sélectionner une branche",
+        "academicYear": "Année scolaire",
+        "selectAcademicYear": "Sélectionner une année",
+        "startDate": "Date de début",
+        "recurringFee": "Frais récurrents (DZD)",
+        "recurringFeeHelper": "Optionnel — utilise le défaut de la branche si vide",
+        "registrationFee": "Frais d'inscription (DZD)",
+        "registrationFeeHelper": "Optionnel — frais unique à l'inscription",
+        "firstPeriodAmount": "Montant première période (DZD)",
+        "firstPeriodAmountHelper": "Optionnel — pour inscription en cours de cycle",
+        "feeValidation": "Doit être entre 0,00 et 9 999 999,99 avec max 2 décimales",
+        "childRequired": "Veuillez sélectionner un enfant",
+        "branchRequired": "Veuillez sélectionner une branche",
+        "academicYearRequired": "Veuillez sélectionner une année scolaire",
+        "startDateRequired": "Veuillez spécifier la date de début"
+      },
+      "result": {
+        "title": "Inscription créée avec succès",
+        "periodsCreated": "Périodes créées",
+        "dateRange": "Plage de dates",
+        "totalAmount": "Montant total",
+        "to": "au"
+      },
+      "empty": "Aucune inscription"
+    },
+    "enrollmentDetail": {
+      "title": "Détails de l'inscription",
+      "info": "Informations d'inscription",
+      "notFound": "Inscription introuvable",
+      "withdraw": "Retirer l'inscription",
+      "withdrawalDate": "Date de retrait",
+      "periods": {
+        "title": "Périodes de facturation",
+        "description": "{{count}} périodes de facturation",
+        "empty": "Aucune période de facturation",
+        "registration": "Frais d'inscription",
+        "columns": {
+          "period": "Période",
+          "dates": "Dates",
+          "amountDue": "Montant dû",
+          "status": "Statut"
+        }
+      },
+      "periodStatus": {
+        "unpaid": "Non payé",
+        "partial": "Partiel",
+        "late_partial": "Partiel en retard",
+        "late": "En retard",
+        "paid": "Payé",
+        "cancelled": "Annulé"
+      },
+      "withdrawal": {
+        "title": "Retirer l'inscription",
+        "description": "Les périodes futures seront automatiquement annulées",
+        "date": "Date de retrait",
+        "dateRequired": "Veuillez spécifier la date de retrait",
+        "amountDue": "Montant dû pour la période en cours (DZD)",
+        "amountDueHelper": "Optionnel — ajuster le montant de la période en cours",
+        "confirm": "Confirmer le retrait"
+      }
+    },
+    "records": {
+      "title": "Paiements",
+      "description": "Enregistrer et consulter les paiements"
+    },
+    "correction": {
+      "title": "Enregistrer une correction",
+      "description": "Corriger un paiement existant en enregistrant un montant négatif",
+      "openButton": "Correction",
+      "submit": "Enregistrer la correction",
+      "selectPaymentPrompt": "Sélectionnez un paiement original pour voir les allocations corrigeables.",
+      "registrationPeriod": "Frais d'inscription",
+      "fields": {
+        "originalPayment": "Paiement original",
+        "selectPayment": "Sélectionner un paiement",
+        "channel": "Canal",
+        "valueDate": "Date de valeur",
+        "referenceNote": "Motif de correction",
+        "referenceNoteHelper": "Obligatoire — indiquer la raison de la correction (1-500 caractères)",
+        "referenceNotePlaceholder": "Ex: Erreur de montant, remboursement partiel..."
+      },
+      "channels": {
+        "cash": "Espèces",
+        "ccp": "CCP",
+        "baridimob": "BaridiMob"
+      },
+      "allocations": {
+        "title": "Allocations par période",
+        "period": "Période",
+        "originalAmount": "Montant original",
+        "remaining": "Restant corrigeable",
+        "correctionAmount": "Montant correction",
+        "total": "Total correction"
+      },
+      "errors": {
+        "paymentRequired": "Veuillez sélectionner un paiement",
+        "channelRequired": "Le canal est requis",
+        "valueDateRequired": "La date de valeur est requise",
+        "referenceNoteRequired": "Le motif de correction est obligatoire",
+        "referenceNoteTooLong": "Le motif ne doit pas dépasser 500 caractères",
+        "noAmountEntered": "Veuillez saisir au moins un montant de correction",
+        "allocationExceedsMax": "Le montant de correction dépasse le maximum corrigeable",
+        "negativeAmount": "Les montants doivent être positifs"
+      },
+      "success": {
+        "title": "Correction enregistrée",
+        "receiptNumber": "Numéro de reçu",
+        "totalCorrected": "Total corrigé"
+      }
+    },
+    "recording": {
+      "title": "Enregistrer un paiement",
+      "description": "Enregistrez un paiement reçu et allouez-le aux périodes de facturation",
+      "record": "Enregistrer un paiement",
+      "submit": "Enregistrer",
+      "addAllocation": "Ajouter une allocation",
+      "registrationPeriod": "Frais d'inscription",
+      "allocationSum": "Total des allocations : {{sum}} / {{total}} DZD",
+      "empty": "Aucun paiement enregistré",
+      "typePayment": "Paiement",
+      "typeCorrection": "Correction",
+      "fields": {
+        "child": "Enfant",
+        "selectChild": "Sélectionner un enfant",
+        "totalAmount": "Montant total (DZD)",
+        "channel": "Canal de paiement",
+        "valueDate": "Date de valeur",
+        "referenceNote": "Référence / Note",
+        "referenceNotePlaceholder": "Numéro de transfert ou note...",
+        "allocations": "Allocation des périodes",
+        "selectPeriod": "Sélectionner une période",
+        "branch": "Branche",
+        "selectBranch": "Sélectionner une branche"
+      },
+      "channels": {
+        "cash": "Espèces",
+        "ccp": "CCP",
+        "baridimob": "BaridiMob"
+      },
+      "columns": {
+        "receiptNumber": "N° reçu",
+        "child": "Enfant",
+        "amount": "Montant",
+        "channel": "Canal",
+        "valueDate": "Date",
+        "type": "Type",
+        "correctsPayment": "Corrige : {{id}}…"
+      },
+      "errors": {
+        "childRequired": "Veuillez sélectionner un enfant",
+        "amountInvalid": "Montant invalide (0,01 - 9 999 999,99)",
+        "valueDateRequired": "La date de valeur est requise",
+        "referenceRequired": "La référence est requise pour les canaux CCP et BaridiMob",
+        "allocationRequired": "Au moins une allocation est requise",
+        "allocationAmountInvalid": "Montant d'allocation invalide",
+        "allocationMismatch": "Le total des allocations doit être égal au montant total"
+      },
+      "success": {
+        "title": "Paiement enregistré avec succès",
+        "receiptNumber": "N° de reçu",
+        "amount": "Montant",
+        "channel": "Canal"
+      }
+    },
+    "late": {
+      "title": "Retards de paiement",
+      "description": "Tableau de bord des paiements en retard par branche",
+      "filterBranch": "Branche",
+      "selectBranch": "Sélectionner une branche",
+      "filterStatus": "Statut",
+      "filterAll": "Tous les retards",
+      "statusLate": "En retard",
+      "statusLatePartial": "Partiel en retard",
+      "empty": "Aucun paiement en retard. Tous les comptes sont à jour.",
+      "columns": {
+        "childName": "Enfant",
+        "periodLabel": "Période",
+        "dueDate": "Échéance",
+        "graceEndDate": "Fin de grâce",
+        "amountDue": "Montant dû",
+        "totalPaid": "Total payé",
+        "outstanding": "Restant",
+        "status": "Statut"
+      }
+    },
+    "reconciliation": {
+      "title": "Rapprochement",
+      "description": "Rapport de rapprochement des paiements par canal",
+      "fields": {
+        "branch": "Branche",
+        "selectBranch": "Sélectionner une branche",
+        "rangeStart": "Date de début",
+        "rangeEnd": "Date de fin"
+      },
+      "columns": {
+        "channel": "Canal",
+        "totalAmount": "Montant total (DZD)",
+        "paymentCount": "Nb paiements",
+        "correctionCount": "Nb corrections"
+      },
+      "channels": {
+        "cash": "Espèces",
+        "ccp": "CCP",
+        "baridimob": "BaridiMob"
+      },
+      "grandTotal": "Total général",
+      "print": "Imprimer",
+      "export": "Exporter CSV",
+      "empty": "Aucune donnée pour la plage de dates sélectionnée.",
+      "printRange": "Période : {{start}} — {{end}}",
+      "errors": {
+        "invalidRange": "La date de début doit être antérieure ou égale à la date de fin.",
+        "fetchFailed": "Erreur lors du chargement du rapport de rapprochement."
+      }
+    },
+    "receipt": {
+      "title": "Reçu",
+      "description": "Détails du paiement et allocations",
+      "print": "Imprimer",
+      "error": "Impossible de charger le reçu. Veuillez réessayer.",
+      "viewReceipt": "Voir le reçu",
+      "viewButton": "Voir le reçu",
+      "receiptNumber": "N° de reçu",
+      "child": "Enfant",
+      "amount": "Montant",
+      "channel": "Canal",
+      "valueDate": "Date de valeur",
+      "type": "Type",
+      "correctsPayment": "Corrige le paiement",
+      "referenceNote": "Référence / Note",
+      "allocations": "Allocations",
+      "notFound": "Reçu introuvable"
+    },
+    "filters": {
+      "title": "Filtres",
+      "startDate": "Date début",
+      "endDate": "Date fin",
+      "channel": "Canal",
+      "child": "Enfant",
+      "allChannels": "Tous les canaux",
+      "allChildren": "Tous les enfants",
+      "clear": "Réinitialiser"
+    }
+  },
+  "parentPayments": {
+    "title": "Paiements",
+    "subtitle": "Consultez les périodes de facturation et l'historique des paiements",
+    "tabs": {
+      "periods": "Facturation",
+      "history": "Historique",
+      "balances": "Solde"
+    },
+    "dueDate": "Échéance",
+    "receipt": "Reçu",
+    "correction": "Correction",
+    "correctsReceipt": "Corrige le reçu",
+    "allocatedPeriods": "Périodes allouées",
+    "paidInAdvance": "Payé en avance",
+    "outstandingLabel": "Solde impayé",
+    "noBalance": "Aucun solde impayé",
+    "registrationFee": "Frais d'inscription",
+    "viewReceipt": "Voir le reçu",
+    "receiptTitle": "Reçu de paiement",
+    "allPaid": "Tout payé",
+    "outstanding": "Restant dû",
+    "noChildren": "Aucun enfant lié à votre compte.",
+    "noChildrenHint": "Contactez votre école pour lier vos enfants.",
+    "noPayments": "Aucun paiement enregistré.",
+    "status": {
+      "unpaid": "Impayé",
+      "partial": "Partiel",
+      "late_partial": "En retard partiel",
+      "late": "En retard",
+      "paid": "Payé",
+      "cancelled": "Annulé"
+    },
+    "channel": {
+      "cash": "Espèces",
+      "ccp": "CCP",
+      "baridimob": "BaridiMob"
+    },
+    "error": {
+      "periods": "Impossible de charger les périodes de facturation.",
+      "history": "Impossible de charger l'historique des paiements.",
+      "balances": "Impossible de charger les soldes."
+    },
+    "empty": {
+      "periods": "Aucune période de facturation pour le moment.",
+      "history": "Aucun paiement enregistré pour le moment.",
+      "balances": "Aucun enfant lié à votre compte."
     }
   }
 }

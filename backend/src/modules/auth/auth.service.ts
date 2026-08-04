@@ -85,6 +85,7 @@ export const authService = {
     const tokenPayload: TokenPayload = {
       userId: user.id,
       schoolId: user.schoolId,
+      branchId: user.branchId,
       role: user.role,
       mustChangePassword: user.mustChangePassword,
     };
@@ -159,6 +160,7 @@ export const authService = {
     const newAccessToken = generateAccessToken({
       userId: user.id,
       schoolId: user.schoolId,
+      branchId: payload.branchId,
       role: user.role,
       mustChangePassword: user.mustChangePassword,
     });

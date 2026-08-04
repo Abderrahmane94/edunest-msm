@@ -3,6 +3,7 @@ import { UserRole } from '@prisma/client';
 export interface TokenPayload {
   userId: string;
   schoolId: string | null;
+  branchId?: string | null;
   role: UserRole;
   mustChangePassword?: boolean;
 }

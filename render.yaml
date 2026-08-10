@@ -2,6 +2,7 @@ services:
   - type: web
     name: edunest-backend
     runtime: docker
+    branch: production
     dockerfilePath: ./backend/Dockerfile
     dockerContext: .
     plan: free

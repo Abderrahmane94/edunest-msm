@@ -58,7 +58,8 @@ class CloudinaryService {
     this.cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'demo';
     this.apiKey = process.env.CLOUDINARY_API_KEY || '';
     this.apiSecret = process.env.CLOUDINARY_API_SECRET || '';
-    // Ensure apiSecret is available for production HMAC signing
+    // Reserved for the real Cloudinary SDK integration (cloud_name config, HMAC signing)
+    void this.cloudName;
     void this.apiSecret;
   }
 

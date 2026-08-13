@@ -197,6 +197,18 @@ This starts:
 - Backend on port 4000
 - Frontend (nginx) on port 3000
 
+## E2E Testing
+
+Playwright end-to-end tests live in `e2e/`, covering login for all roles, admin user management, teacher attendance marking, and parent portal navigation.
+
+```bash
+docker compose up postgres -d   # if not already running
+npm run test:e2e                # headless run
+npm run test:e2e:ui             # interactive UI mode
+```
+
+Each run resets a dedicated `edunest_e2e` database (drop, recreate, migrate, seed) and starts the backend/frontend on separate ports (`3100`/`5180`) from your normal dev servers, so it's safe to run alongside `npm run dev` without touching your local data.
+
 ## API Documentation
 
 All API endpoints follow the format:

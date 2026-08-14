@@ -36,7 +36,11 @@ class EmailService {
         Authorization: `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify({
-        from: 'EduNest <noreply@edunest.app>',
+        // Resend's shared sandbox sender — works without owning/verifying a
+        // domain, but can only deliver to the Resend account's own signup
+        // email until a real domain is verified. Switch this to a verified
+        // domain address once one is available.
+        from: 'EduNest <onboarding@resend.dev>',
         to: options.to,
         subject: options.subject,
         html: options.html,

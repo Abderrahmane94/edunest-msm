@@ -202,9 +202,15 @@ export const authService = {
       },
     });
 
-    // Send password reset email
+    // Send password reset email. The token is already persisted regardless —
+    // don't let a transient email-provider failure surface as a 500 and leak
+    // that this account exists (the whole point of the always-succeed contract above).
     const resetUrl = `${getFrontendUrl()}/reset-password/confirm?token=${token}`;
-    await emailService.sendPasswordResetEmail(user.email, user.firstName, resetUrl);
+    try {
+      await emailService.sendPasswordResetEmail(user.email, user.firstName, resetUrl);
+    } catch (err) {
+      console.error('[AuthService] Failed to send password reset email:', err);
+    }
   },
 
   async confirmPasswordReset(input: PasswordResetConfirmInput): Promise<void> {

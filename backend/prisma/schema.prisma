@@ -183,7 +183,10 @@ model User {
   branchId           String?   @map("branch_id")
   firstName          String    @map("first_name")
   lastName           String    @map("last_name")
-  email              String    @unique
+  // Not @unique here: uniqueness is enforced only among non-deleted rows via
+  // a partial index (see migration 0011_unique_email_excludes_deleted), so a
+  // soft-deleted user's email can be reused by a new/invited user.
+  email              String
   passwordHash       String    @map("password_hash")
   role               UserRole
   isActive           Boolean   @default(true) @map("is_active")
@@ -214,6 +217,7 @@ model User {
   paymentRecords       PaymentRecord[]      @relation("PaymentRecorder")
 
   @@index([deletedAt])
+  @@index([email])
   @@map("users")
 }
 

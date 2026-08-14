@@ -18,8 +18,17 @@ interface AuthState {
   isLoading: boolean;
 }
 
+export interface LoginSchoolOption {
+  schoolId: string | null;
+  schoolName: string | null;
+}
+
+export type LoginResult =
+  | { status: 'success' }
+  | { status: 'choiceRequired'; schools: LoginSchoolOption[] };
+
 interface AuthContextValue extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, schoolId?: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
   setTokens: (accessToken: string, refreshToken: string) => void;
   clearMustChangePassword: () => void;
@@ -94,8 +103,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('auth:logout', handleLogout);
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, schoolId?: string): Promise<LoginResult> => {
     const response = await apiClient.post<{
+      choiceRequired?: true;
+      schools?: LoginSchoolOption[];
       accessToken: string;
       refreshToken: string;
       user: {
@@ -109,12 +120,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     }>(
       '/auth/login',
-      { email, password },
+      { email, password, schoolId },
       { skipAuth: true } as RequestInit,
     );
 
     if (!response.success || !response.data) {
       throw new Error(response.error?.message || 'Login failed');
+    }
+
+    if (response.data.choiceRequired) {
+      return { status: 'choiceRequired', schools: response.data.schools ?? [] };
     }
 
     const { accessToken, refreshToken, user: userData } = response.data;
@@ -135,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('user', JSON.stringify(user));
 
     setState({ user, isAuthenticated: true, isLoading: false });
+    return { status: 'success' };
   }, []);
 
   const logout = useCallback(async () => {

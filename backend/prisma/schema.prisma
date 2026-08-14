@@ -183,9 +183,10 @@ model User {
   branchId           String?   @map("branch_id")
   firstName          String    @map("first_name")
   lastName           String    @map("last_name")
-  // Not @unique here: uniqueness is enforced only among non-deleted rows via
-  // a partial index (see migration 0011_unique_email_excludes_deleted), so a
-  // soft-deleted user's email can be reused by a new/invited user.
+  // Not @unique here: uniqueness is enforced only among non-deleted rows,
+  // scoped per school, via a partial index (see migrations 0011 and 0012) —
+  // the same email can belong to separate accounts in different schools,
+  // and a soft-deleted user's email can be reused by a new/invited user.
   email              String
   passwordHash       String    @map("password_hash")
   role               UserRole
@@ -218,6 +219,7 @@ model User {
 
   @@index([deletedAt])
   @@index([email])
+  @@index([email, schoolId])
   @@map("users")
 }
 

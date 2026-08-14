@@ -27,9 +27,10 @@ export const usersService = {
    * Send an invitation email to a user with a one-time token.
    */
   async invite(email: string, role: UserRole, schoolId: string): Promise<{ message: string }> {
-    // Check if user already exists in this school
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    // Check if the user already exists in this specific school — the same
+    // email can belong to separate accounts in different schools.
+    const existingUser = await prisma.user.findFirst({
+      where: { email, schoolId },
     });
 
     if (existingUser) {
@@ -45,9 +46,9 @@ export const usersService = {
       throw new UserServiceError('School not found', 404);
     }
 
-    // Invalidate any existing unused invitation tokens for this email
+    // Invalidate any existing unused invitation tokens for this email in this school
     await prisma.invitationToken.updateMany({
-      where: { email, usedAt: null },
+      where: { email, schoolId, usedAt: null },
       data: { usedAt: new Date() },
     });
 
@@ -137,9 +138,9 @@ export const usersService = {
       throw new UserServiceError('Invitation token has expired', 400);
     }
 
-    // Check if user already exists (race condition guard)
-    const existingUser = await prisma.user.findUnique({
-      where: { email: invitation.email },
+    // Check if user already exists in this school (race condition guard)
+    const existingUser = await prisma.user.findFirst({
+      where: { email: invitation.email, schoolId: invitation.schoolId },
     });
 
     if (existingUser) {
@@ -364,7 +365,8 @@ export const usersService = {
    * Used by super_admin (any school) and admin (their own school).
    */
   async createDirectly(schoolId: string, input: CreateUserDirectlyInput) {
-    const existing = await prisma.user.findUnique({ where: { email: input.email } });
+    // Scoped to this school — the same email can already exist in a different school.
+    const existing = await prisma.user.findFirst({ where: { email: input.email, schoolId } });
     if (existing) {
       throw new UserServiceError('A user with this email already exists', 409);
     }

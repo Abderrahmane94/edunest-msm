@@ -70,6 +70,11 @@
       "sameAsDefault": "Veuillez choisir un mot de passe différent du mot de passe par défaut"
     },
     "forgotPassword": "Mot de passe oublié ?",
+    "schoolSelect": {
+      "title": "Choisissez votre école",
+      "subtitle": "Cette adresse e-mail est associée à plusieurs écoles. Sélectionnez celle à laquelle vous souhaitez accéder.",
+      "noSchool": "Compte plateforme (sans école)"
+    },
     "register": {
       "verifying": "Vérification de l'invitation…",
       "invalidTitle": "Invitation invalide",
@@ -227,6 +232,7 @@
     "cancel": "Annuler",
     "closeDialog": "Fermer la boîte de dialogue",
     "close": "Fermer",
+    "continue": "Continuer",
     "delete": "Supprimer",
     "edit": "Modifier",
     "create": "Créer",

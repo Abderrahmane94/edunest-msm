@@ -29,12 +29,9 @@ class SchoolsService {
    * Create a new school (super_admin only).
    */
   async create(input: CreateSchoolInput): Promise<SchoolResponse & { director: { id: string; email: string; firstName: string; lastName: string } }> {
-    // Check if director email is already taken
-    const existingUser = await prisma.user.findUnique({ where: { email: input.director.email } });
-    if (existingUser) {
-      throw new SchoolServiceError('A user with this email already exists', 409);
-    }
-
+    // No pre-check needed: email is only unique per-school (see migration
+    // 0011/0012), and this school doesn't exist yet, so the director's email
+    // can't already be taken within it — the same person can direct multiple schools.
     const passwordHash = await bcrypt.hash('edunest26', BCRYPT_ROUNDS);
 
     const { school, director } = await prisma.$transaction(async (tx) => {

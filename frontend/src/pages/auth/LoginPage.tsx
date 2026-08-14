@@ -1,8 +1,8 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Mail, Lock, LogIn, GraduationCap, Users, ClipboardCheck, BarChart3, Languages, Eye, EyeOff, AlertCircle, ShieldOff } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Mail, Lock, LogIn, GraduationCap, Users, ClipboardCheck, BarChart3, Languages, Eye, EyeOff, AlertCircle, ShieldOff, Building2, ArrowLeft } from 'lucide-react';
+import { useAuth, type LoginSchoolOption } from '@/contexts/AuthContext';
 
 function getDefaultRoute(role?: string): string {
   switch (role) {
@@ -25,6 +25,8 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<{ type: 'credentials' | 'user' | 'school'; title: string; hint?: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [schoolChoices, setSchoolChoices] = useState<LoginSchoolOption[] | null>(null);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
 
   function toggleLanguage() {
     const newLang = i18n.language === 'ar' ? 'fr' : 'ar';
@@ -41,7 +43,11 @@ export function LoginPage() {
     setError(null);
     setIsSubmitting(true);
     try {
-      await login(email, password);
+      const result = await login(email, password);
+      if (result.status === 'choiceRequired') {
+        setSchoolChoices(result.schools);
+        setIsSubmitting(false);
+      }
     } catch (err) {
       const msg = (err instanceof Error ? err.message : '').toLowerCase();
       if (msg.includes('deactivated')) {
@@ -53,6 +59,25 @@ export function LoginPage() {
       }
       setIsSubmitting(false);
     }
+  }
+
+  async function handleSchoolChoiceSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!selectedSchoolId) return;
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await login(email, password, selectedSchoolId);
+    } catch {
+      setError({ type: 'credentials', title: t('auth.loginError') });
+      setIsSubmitting(false);
+    }
+  }
+
+  function handleBackToLogin() {
+    setSchoolChoices(null);
+    setSelectedSchoolId(null);
+    setError(null);
   }
 
   const features = [
@@ -128,6 +153,69 @@ export function LoginPage() {
         </div>
 
         <div className="w-full max-w-[400px]">
+          {schoolChoices ? (
+            <>
+              <button
+                type="button"
+                onClick={handleBackToLogin}
+                className="flex items-center gap-1.5 text-caption text-text-secondary hover:text-foreground mb-4 transition"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                {t('common.back')}
+              </button>
+              <div className="mb-8">
+                <h1 className="text-display font-bold text-text-heading">{t('auth.schoolSelect.title')}</h1>
+                <p className="text-body text-text-secondary mt-1">{t('auth.schoolSelect.subtitle')}</p>
+              </div>
+
+              {error && (
+                <div className="mb-5 p-4 rounded-xl bg-[var(--color-danger-muted)] border border-danger/20 flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
+                  <p className="text-body font-medium text-danger">{error.title}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSchoolChoiceSubmit} className="space-y-5">
+                <div className="space-y-2">
+                  {schoolChoices.map((school) => (
+                    <label
+                      key={school.schoolId ?? 'none'}
+                      className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:bg-hover cursor-pointer transition has-[:checked]:border-[var(--color-accent)] has-[:checked]:bg-[var(--color-accent-muted)]"
+                    >
+                      <input
+                        type="radio"
+                        name="schoolChoice"
+                        value={school.schoolId ?? ''}
+                        checked={selectedSchoolId === (school.schoolId ?? '')}
+                        onChange={() => setSelectedSchoolId(school.schoolId ?? '')}
+                        className="accent-[var(--color-accent)]"
+                      />
+                      <Building2 className="w-4 h-4 text-text-secondary shrink-0" />
+                      <span className="text-body font-medium text-foreground">
+                        {school.schoolName ?? t('auth.schoolSelect.noSchool')}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !selectedSchoolId}
+                  className="w-full h-11 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1"
+                >
+                  {isSubmitting ? (
+                    <span className="animate-pulse">{t('common.loading')}</span>
+                  ) : (
+                    <>
+                      <LogIn className="w-4 h-4" />
+                      {t('common.continue')}
+                    </>
+                  )}
+                </button>
+              </form>
+            </>
+          ) : (
+          <>
           <div className="mb-8">
             <h1 className="text-display font-bold text-text-heading">{t('auth.welcome')}</h1>
             <p className="text-body text-text-secondary mt-1">{t('auth.welcomeSub')}</p>
@@ -216,6 +304,8 @@ export function LoginPage() {
               )}
             </button>
           </form>
+          </>
+          )}
         </div>
       </div>
     </div>

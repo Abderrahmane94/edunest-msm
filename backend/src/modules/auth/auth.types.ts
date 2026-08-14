@@ -14,6 +14,17 @@ export interface LoginResponse {
   user: UserInfo;
 }
 
+export interface LoginSchoolOption {
+  schoolId: string | null;
+  schoolName: string | null;
+}
+
+/** Returned instead of LoginResponse when email+password match accounts in more than one school. */
+export interface LoginChoiceRequired {
+  choiceRequired: true;
+  schools: LoginSchoolOption[];
+}
+
 export interface UserInfo {
   id: string;
   email: string;

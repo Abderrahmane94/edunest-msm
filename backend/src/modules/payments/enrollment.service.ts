@@ -66,6 +66,16 @@ class EnrollmentService {
       const ayEnd = new Date(academicYear.endDate);
       const enrollStart = new Date(startDate);
 
+      // Validate start_date is within academic year range (Req 3.10)
+      if (enrollStart < ayStart || enrollStart > ayEnd) {
+        const formatDate = (d: Date) => d.toISOString().split('T')[0];
+        throw new EnrollmentServiceError(
+          `Start date must be within the academic year range (${formatDate(ayStart)} to ${formatDate(ayEnd)})`,
+          400,
+          'VALIDATION_ERROR',
+        );
+      }
+
       // (c) Check unique constraint (childId + academicYearId)
       const existing = await tx.enrollment.findUnique({
         where: { childId_academicYearId: { childId, academicYearId } },
@@ -165,6 +175,7 @@ class EnrollmentService {
       const generationResult = generatePeriodsForEnrollment({
         enrollmentId: enrollment.id,
         startDate: enrollStart,
+        academicYearStartDate: ayStart,
         academicYearEndDate: ayEnd,
         billingCycle: config.billingCycle as 'monthly' | 'trimester' | 'custom',
         billingDueDay: config.billingDueDay,
@@ -506,6 +517,8 @@ class EnrollmentService {
   /**
    * Determine the first recurring period's start date based on billing cycle.
    * Used to validate the firstPeriodAmountDue constraint (Req 7.8).
+   *
+   * For monthly: uses the later of startDate's month or academic year start month.
    */
   private async getFirstPeriodStart(
     startDate: Date,
@@ -515,8 +528,14 @@ class EnrollmentService {
     tx: Prisma.TransactionClient,
   ): Promise<Date> {
     if (billingCycle === 'monthly') {
-      // First period start is the first day of the month containing startDate
-      return new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      // Get academic year start to determine effective start
+      const academicYear = await tx.academicYear.findUnique({
+        where: { id: academicYearId },
+        select: { startDate: true },
+      });
+      const ayStart = academicYear ? new Date(academicYear.startDate) : startDate;
+      const effectiveStart = startDate > ayStart ? startDate : ayStart;
+      return new Date(effectiveStart.getFullYear(), effectiveStart.getMonth(), 1);
     }
 
     // For trimester/custom, get calendar rows and find the first one

@@ -239,6 +239,7 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-1',
         startDate: new Date(2024, 8, 15), // Sep 15, 2024
+        academicYearStartDate: new Date(2024, 8, 15),
         academicYearEndDate: new Date(2025, 5, 30), // Jun 30, 2025
         billingCycle: 'monthly',
         billingDueDay: 10,
@@ -258,6 +259,7 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-1',
         startDate: new Date(2024, 0, 15), // Jan 15
+        academicYearStartDate: new Date(2024, 0, 15),
         academicYearEndDate: new Date(2024, 2, 31), // Mar 31
         billingCycle: 'monthly',
         billingDueDay: 10,
@@ -288,6 +290,7 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-1',
         startDate: new Date(2024, 3, 20), // Apr 20
+        academicYearStartDate: new Date(2024, 3, 20),
         academicYearEndDate: new Date(2024, 5, 30), // Jun 30
         billingCycle: 'monthly',
         billingDueDay: 15,
@@ -308,6 +311,8 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-1',
         startDate: new Date(2024, 0, 1),
+        academicYearStartDate: new Date(2024, 0, 1),
+        academicYearStartDate: new Date(2024, 0, 1),
         academicYearEndDate: new Date(2024, 0, 31),
         billingCycle: 'monthly',
         billingDueDay: 10,
@@ -326,6 +331,8 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-1',
         startDate: new Date(2024, 0, 1),
+        academicYearStartDate: new Date(2024, 0, 1),
+        academicYearStartDate: new Date(2024, 0, 1),
         academicYearEndDate: new Date(2024, 0, 31),
         billingCycle: 'monthly',
         billingDueDay: 10,
@@ -344,6 +351,8 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-1',
         startDate: new Date(2024, 0, 1),
+        academicYearStartDate: new Date(2024, 0, 1),
+        academicYearStartDate: new Date(2024, 0, 1),
         academicYearEndDate: new Date(2024, 2, 31),
         billingCycle: 'monthly',
         billingDueDay: 5,
@@ -364,6 +373,8 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-1',
         startDate: new Date(2024, 5, 10),
+        academicYearStartDate: new Date(2024, 5, 10),
+        academicYearStartDate: new Date(2024, 5, 10),
         academicYearEndDate: new Date(2024, 5, 30),
         billingCycle: 'monthly',
         billingDueDay: 15,
@@ -390,6 +401,7 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-2',
         startDate: new Date(2024, 8, 1), // Sep 1
+        academicYearStartDate: new Date(2024, 8, 1),
         academicYearEndDate: new Date(2025, 5, 30),
         billingCycle: 'trimester',
         billingDueDay: 10,
@@ -412,6 +424,7 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-2',
         startDate: new Date(2025, 0, 5), // Jan 5, 2025 — first row's periodEnd (Dec 31) is before this
+        academicYearStartDate: new Date(2025, 0, 5),
         academicYearEndDate: new Date(2025, 5, 30),
         billingCycle: 'trimester',
         billingDueDay: 10,
@@ -429,6 +442,8 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-2',
         startDate: new Date(2025, 4, 1),
+        academicYearStartDate: new Date(2025, 4, 1),
+        academicYearStartDate: new Date(2025, 4, 1),
         academicYearEndDate: new Date(2025, 5, 30),
         billingCycle: 'trimester',
         billingDueDay: 10,
@@ -450,6 +465,8 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-2',
         startDate: new Date(2024, 8, 1),
+        academicYearStartDate: new Date(2024, 8, 1),
+        academicYearStartDate: new Date(2024, 8, 1),
         academicYearEndDate: new Date(2025, 7, 31),
         billingCycle: 'trimester',
         billingDueDay: 10,
@@ -473,6 +490,8 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-3',
         startDate: new Date(2024, 8, 1),
+        academicYearStartDate: new Date(2024, 8, 1),
+        academicYearStartDate: new Date(2024, 8, 1),
         academicYearEndDate: new Date(2025, 5, 30),
         billingCycle: 'custom',
         billingDueDay: 10,
@@ -493,6 +512,7 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-3',
         startDate: new Date(2025, 6, 1), // After all rows end
+        academicYearStartDate: new Date(2025, 6, 1),
         academicYearEndDate: new Date(2025, 8, 30),
         billingCycle: 'custom',
         billingDueDay: 10,
@@ -515,6 +535,8 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-3',
         startDate: new Date(2024, 8, 1),
+        academicYearStartDate: new Date(2024, 8, 1),
+        academicYearStartDate: new Date(2024, 8, 1),
         academicYearEndDate: new Date(2025, 5, 30),
         billingCycle: 'custom',
         billingDueDay: 10,
@@ -534,6 +556,8 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-4',
         startDate: new Date(2024, 8, 15),
+        academicYearStartDate: new Date(2024, 8, 15),
+        academicYearStartDate: new Date(2024, 8, 15),
         academicYearEndDate: new Date(2025, 5, 30),
         billingCycle: 'monthly',
         billingDueDay: 10,
@@ -558,6 +582,8 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-4',
         startDate: new Date(2024, 8, 15),
+        academicYearStartDate: new Date(2024, 8, 15),
+        academicYearStartDate: new Date(2024, 8, 15),
         academicYearEndDate: new Date(2025, 5, 30),
         billingCycle: 'monthly',
         billingDueDay: 10,
@@ -577,6 +603,8 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-4',
         startDate: new Date(2024, 8, 15),
+        academicYearStartDate: new Date(2024, 8, 15),
+        academicYearStartDate: new Date(2024, 8, 15),
         academicYearEndDate: new Date(2024, 8, 30),
         billingCycle: 'monthly',
         billingDueDay: 10,
@@ -599,6 +627,7 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-5',
         startDate: new Date(2024, 0, 15), // Jan 15 > Jan 1 (period start)
+        academicYearStartDate: new Date(2024, 0, 15),
         academicYearEndDate: new Date(2024, 2, 31),
         billingCycle: 'monthly',
         billingDueDay: 10,
@@ -623,6 +652,7 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-5',
         startDate: new Date(2024, 0, 1), // Jan 1 = Jan 1 (period start)
+        academicYearStartDate: new Date(2024, 0, 1),
         academicYearEndDate: new Date(2024, 2, 31),
         billingCycle: 'monthly',
         billingDueDay: 10,
@@ -643,6 +673,8 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-5',
         startDate: new Date(2024, 0, 15),
+        academicYearStartDate: new Date(2024, 0, 15),
+        academicYearStartDate: new Date(2024, 0, 15),
         academicYearEndDate: new Date(2024, 2, 31),
         billingCycle: 'monthly',
         billingDueDay: 10,
@@ -663,6 +695,8 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-6',
         startDate: new Date(2024, 0, 10),
+        academicYearStartDate: new Date(2024, 0, 10),
+        academicYearStartDate: new Date(2024, 0, 10),
         academicYearEndDate: new Date(2024, 2, 31),
         billingCycle: 'monthly',
         billingDueDay: 5,
@@ -694,6 +728,7 @@ describe('generatePeriodsForEnrollment', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-6',
         startDate: new Date(2024, 8, 10), // Sep 10 — before first period_start of Sep 15
+        academicYearStartDate: new Date(2024, 8, 10),
         academicYearEndDate: new Date(2025, 5, 30),
         billingCycle: 'trimester',
         billingDueDay: 10,

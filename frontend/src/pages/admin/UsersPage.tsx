@@ -2,12 +2,13 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '@/lib/formatters';
-import { Shield, ShieldOff } from 'lucide-react';
+import { Shield, ShieldOff, Mail } from 'lucide-react';
 import { Button, CreateButton, DataTable, StatusBadge } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { useUsers, useToggleUserActive, type User } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
 import { InviteUserDialog } from './InviteUserDialog';
+import { InviteByEmailDialog } from './InviteByEmailDialog';
 
 function RoleBadge({ role }: { role: string }) {
   const { t } = useTranslation();
@@ -35,6 +36,7 @@ export function UsersPage() {
   const [sortColumn, setSortColumn] = React.useState<string>('created_at');
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('desc');
   const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false);
+  const [inviteByEmailDialogOpen, setInviteByEmailDialogOpen] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
@@ -185,7 +187,15 @@ export function UsersPage() {
         <h1 className="text-page-title font-semibold text-text-heading">
           {t('users.title')}
         </h1>
-        <CreateButton label={t('users.create')} onClick={() => setInviteDialogOpen(true)} />
+        <div className="flex items-center gap-2">
+          {!isSuperAdmin && (
+            <Button variant="secondary" onClick={() => setInviteByEmailDialogOpen(true)}>
+              <Mail className="w-4 h-4" />
+              {t('users.invite')}
+            </Button>
+          )}
+          <CreateButton label={t('users.create')} onClick={() => setInviteDialogOpen(true)} />
+        </div>
       </div>
 
       {actionError && (
@@ -216,6 +226,11 @@ export function UsersPage() {
       <InviteUserDialog
         open={inviteDialogOpen}
         onOpenChange={setInviteDialogOpen}
+      />
+
+      <InviteByEmailDialog
+        open={inviteByEmailDialogOpen}
+        onOpenChange={setInviteByEmailDialogOpen}
       />
     </div>
   );

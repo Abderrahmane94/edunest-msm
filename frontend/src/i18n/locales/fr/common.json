@@ -344,7 +344,8 @@
       "phone": "Téléphone",
       "phonePlaceholder": "+213 5XX XX XX XX",
       "role": "Rôle",
-      "send": "Envoyer l'invitation"
+      "send": "Envoyer l'invitation",
+      "sent": "Invitation envoyée à {{email}}. Le lien expire dans 48 heures."
     }
   },
   "academicYears": {

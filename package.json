@@ -5,13 +5,16 @@
   "description": "EduNest — Kindergarten School Management System",
   "workspaces": [
     "backend",
-    "frontend"
+    "frontend",
+    "e2e"
   ],
   "scripts": {
     "dev:backend": "npm run dev --workspace=backend",
     "dev:frontend": "npm run dev --workspace=frontend",
     "build:backend": "npm run build --workspace=backend",
     "build:frontend": "npm run build --workspace=frontend",
+    "test:e2e": "npm run test --workspace=e2e",
+    "test:e2e:ui": "npm run test:ui --workspace=e2e",
     "lint": "npm run lint --workspaces",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""

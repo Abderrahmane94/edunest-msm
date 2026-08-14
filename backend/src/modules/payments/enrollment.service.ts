@@ -4,6 +4,9 @@ import { generatePeriodsForEnrollment } from './billing-period.service';
 import type { CreateEnrollmentSchemaInput } from './payments.schema';
 import type { EnrollmentGenerationResult } from './payments.types';
 
+/** The interactive-transaction client type actually produced by our tenant/soft-delete-extended `prisma`. */
+type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
 export class EnrollmentServiceError extends Error {
   constructor(
     message: string,
@@ -23,7 +26,7 @@ class EnrollmentService {
    */
   async create(
     input: CreateEnrollmentSchemaInput,
-    userId: string,
+    _userId: string,
   ): Promise<EnrollmentGenerationResult> {
     const { childId, branchId, academicYearId, startDate, registrationFee } = input;
     let { recurringFee, firstPeriodAmountDue } = input;
@@ -62,7 +65,6 @@ class EnrollmentService {
         );
       }
 
-      const ayStart = new Date(academicYear.startDate);
       const ayEnd = new Date(academicYear.endDate);
       const enrollStart = new Date(startDate);
 
@@ -525,7 +527,7 @@ class EnrollmentService {
     billingCycle: 'monthly' | 'trimester' | 'custom',
     branchId: string,
     academicYearId: string,
-    tx: Prisma.TransactionClient,
+    tx: TransactionClient,
   ): Promise<Date> {
     if (billingCycle === 'monthly') {
       // Get academic year start to determine effective start

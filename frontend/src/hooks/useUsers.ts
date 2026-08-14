@@ -141,14 +141,11 @@ export function useToggleUserActive() {
 }
 
 export function useInviteUser() {
-  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { email: string; role: string; first_name: string; last_name: string }) => {
-      const res = await apiClient.post('/users/invite', data);
+    mutationFn: async (data: { email: string; role: string }) => {
+      const res = await apiClient.post<{ message: string }>('/users/invite', data);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to send invitation');
       return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
     },
   });
 }

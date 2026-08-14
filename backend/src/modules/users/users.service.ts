@@ -66,9 +66,15 @@ export const usersService = {
       },
     });
 
-    // Send invitation email
+    // Send invitation email. The token is already persisted regardless — don't
+    // let a transient email-provider failure fail the whole request; the admin
+    // action (creating the invitation) already succeeded at this point.
     const invitationUrl = `${getFrontendUrl()}/register?token=${token}`;
-    await emailService.sendInvitationEmail(email, invitationUrl, school.name, role);
+    try {
+      await emailService.sendInvitationEmail(email, invitationUrl, school.name, role);
+    } catch (err) {
+      console.error('[UsersService] Failed to send invitation email:', err);
+    }
 
     return { message: 'Invitation sent successfully' };
   },

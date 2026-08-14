@@ -11,6 +11,22 @@ async function main() {
 
   console.log('🌱 Seeding database...');
 
+  // Create super admin user (password: superadmin123) — platform-level, no school
+  const superAdminPasswordHash = await bcrypt.hash('superadmin123', 10);
+  const superAdmin = await prisma.user.create({
+    data: {
+      schoolId: null,
+      firstName: 'Super',
+      lastName: 'Admin',
+      email: 'superadmin@edunest.dz',
+      passwordHash: superAdminPasswordHash,
+      role: 'super_admin',
+      isActive: true,
+      preferredLanguage: 'fr',
+    },
+  });
+  console.log(`✅ Super admin user created: ${superAdmin.email}`);
+
   // Create a school
   const school = await prisma.school.create({
     data: {
@@ -137,9 +153,10 @@ async function main() {
 
   console.log('\n🎉 Seed complete! You can now sign in with:');
   console.log('─────────────────────────────────────────');
-  console.log('  Admin:   admin@edunest.dz   / admin123');
-  console.log('  Teacher: teacher@edunest.dz / teacher123');
-  console.log('  Parent:  parent@edunest.dz  / parent123');
+  console.log('  Super admin: superadmin@edunest.dz / superadmin123');
+  console.log('  Admin:       admin@edunest.dz       / admin123');
+  console.log('  Teacher:     teacher@edunest.dz     / teacher123');
+  console.log('  Parent:      parent@edunest.dz      / parent123');
   console.log('─────────────────────────────────────────');
 
   await prisma.$disconnect();

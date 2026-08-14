@@ -71,10 +71,11 @@ const rateLimiter = rateLimit({
   message: errorResponse('RATE_LIMIT_EXCEEDED', 'Too many requests, please try again later'),
 });
 
-// Stricter limiter for credential-guessing-prone endpoints (login, password reset)
+// Stricter limiter for credential-guessing-prone endpoints (login, password reset).
+// Relaxed under NODE_ENV=test so E2E suites can log in repeatedly without tripping it.
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  max: process.env.NODE_ENV === 'test' ? 1000 : 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: errorResponse('RATE_LIMIT_EXCEEDED', 'Too many attempts, please try again later'),

@@ -93,7 +93,7 @@ class ChargilyGateway implements IChargilyGateway {
       throw new Error(`Chargily checkout creation failed: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as { id: string; checkout_url: string };
 
     return {
       id: data.id,
@@ -157,7 +157,13 @@ class ChargilyGateway implements IChargilyGateway {
       throw new Error(`Chargily get checkout failed: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as {
+      id: string;
+      status: 'pending' | 'paid' | 'failed' | 'expired';
+      amount: number;
+      currency: string;
+      metadata?: Record<string, string>;
+    };
 
     return {
       id: data.id,

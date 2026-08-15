@@ -325,8 +325,10 @@ export function TeacherMessagesPage() {
                 </div>
               </div>
 
-              {/* Messages area */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {/* Messages area — forced LTR structure so sent messages always
+                  align right regardless of interface language (Messenger-style);
+                  each bubble's own text still gets its natural direction via dir="auto". */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3" dir="ltr">
                 {messagesLoading ? (
                   <div className="space-y-3">
                     {Array.from({ length: 4 }).map((_, i) => (

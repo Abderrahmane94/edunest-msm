@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Send,
   Paperclip,
@@ -22,13 +23,13 @@ import {
   useMarkMessageRead,
   useCreateConversation,
   type Conversation,
-  type Message,
 } from '@/hooks/useMessaging';
 
 export function TeacherMessagesPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { on, joinRoom, leaveRoom } = useSocket();
+  const queryClient = useQueryClient();
 
   const [activeConversationId, setActiveConversationId] = React.useState<string | null>(null);
   const [messageInput, setMessageInput] = React.useState('');
@@ -72,25 +73,31 @@ export function TeacherMessagesPage() {
   // Listen for new messages via Socket.io
   React.useEffect(() => {
     const unsubNew = on('message:new', (data: unknown) => {
-      const msg = data as Message;
-      // If the message is in the active conversation, the query will refetch
-      if (msg.conversation_id === activeConversationId) {
+      // Raw socket payload is the backend's response shape (camelCase),
+      // unlike the Message type from useMessaging which is mapped to
+      // snake_case — read the real field names here.
+      const msg = data as { conversationId: string; senderUserId: string; id: string };
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      if (msg.conversationId === activeConversationId) {
+        queryClient.invalidateQueries({ queryKey: ['messages', activeConversationId] });
         // Mark as read if it's from the other party
-        if (msg.sender_user_id !== user?.id) {
+        if (msg.senderUserId !== user?.id) {
           markRead.mutate(msg.id);
         }
       }
     });
 
     const unsubRead = on('message:read', () => {
-      // Read receipt received — queries will refetch
+      if (activeConversationId) {
+        queryClient.invalidateQueries({ queryKey: ['messages', activeConversationId] });
+      }
     });
 
     return () => {
       unsubNew();
       unsubRead();
     };
-  }, [on, activeConversationId, user?.id, markRead]);
+  }, [on, activeConversationId, user?.id, markRead, queryClient]);
 
   // Scroll to bottom when messages change
   React.useEffect(() => {

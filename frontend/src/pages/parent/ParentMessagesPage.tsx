@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Send,
   Paperclip,
@@ -20,13 +21,13 @@ import {
   useSendFileMessage,
   useMarkMessageRead,
   type Conversation,
-  type Message,
 } from '@/hooks/useMessaging';
 
 export function ParentMessagesPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { on, joinRoom, leaveRoom } = useSocket();
+  const queryClient = useQueryClient();
 
   const [activeConversationId, setActiveConversationId] = React.useState<string | null>(null);
   const [messageInput, setMessageInput] = React.useState('');
@@ -71,23 +72,30 @@ export function ParentMessagesPage() {
   // Listen for new messages via Socket.io
   React.useEffect(() => {
     const unsubNew = on('message:new', (data: unknown) => {
-      const msg = data as Message;
-      if (msg.conversation_id === activeConversationId) {
-        if (msg.sender_user_id !== user?.id) {
+      // Raw socket payload is the backend's response shape (camelCase),
+      // unlike the Message type from useMessaging which is mapped to
+      // snake_case — read the real field names here.
+      const msg = data as { conversationId: string; senderUserId: string; id: string };
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      if (msg.conversationId === activeConversationId) {
+        queryClient.invalidateQueries({ queryKey: ['messages', activeConversationId] });
+        if (msg.senderUserId !== user?.id) {
           markRead.mutate(msg.id);
         }
       }
     });
 
     const unsubRead = on('message:read', () => {
-      // Read receipt received — queries will refetch
+      if (activeConversationId) {
+        queryClient.invalidateQueries({ queryKey: ['messages', activeConversationId] });
+      }
     });
 
     return () => {
       unsubNew();
       unsubRead();
     };
-  }, [on, activeConversationId, user?.id, markRead]);
+  }, [on, activeConversationId, user?.id, markRead, queryClient]);
 
   // Scroll to bottom when messages change
   React.useEffect(() => {

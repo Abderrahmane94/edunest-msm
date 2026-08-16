@@ -41,6 +41,8 @@ export const updateUserSchema = z.object({
   }).optional(),
   preferredLanguage: z.enum(['ar', 'fr']).optional(),
   phone: z.string().min(1).max(20).optional(),
+  address: z.string().min(1).max(500).optional(),
+  nationalId: z.string().min(1).max(50).optional(),
 });
 
 export const createUserDirectlySchema = z.object({
@@ -53,6 +55,8 @@ export const createUserDirectlySchema = z.object({
   preferredLanguage: z.enum(['ar', 'fr']).optional().default('fr'),
   schoolId: z.string().uuid('Invalid school ID').optional(), // only used when super_admin provides it
   phone: z.string().min(1).max(20).optional(),
+  address: z.string().min(1).max(500).optional(),
+  nationalId: z.string().min(1).max(50).optional(),
 });
 
 export type CreateUserDirectlyInput = z.infer<typeof createUserDirectlySchema>;

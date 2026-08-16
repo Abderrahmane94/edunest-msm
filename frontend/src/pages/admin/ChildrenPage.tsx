@@ -20,7 +20,7 @@ import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import {
   useChildren, useCreateChild, useLinkParent, useEmergencyContacts,
-  type Child,
+  type Child, type BloodType,
 } from '@/hooks/useChildren';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
 import { useUsers } from '@/hooks/useUsers';
@@ -55,17 +55,22 @@ function CreateChildDialog({
   const { data: academicYears } = useAcademicYears();
   const activeYear = (academicYears ?? []).find((y) => y.is_active);
   const today = new Date().toISOString().split('T')[0];
-  const [formData, setFormData] = React.useState({
+  const emptyForm = {
     first_name: '',
     last_name: '',
     date_of_birth: '',
     gender: 'male',
     enrollment_date: today,
-  });
+    national_id: '',
+    address: '',
+    place_of_birth: '',
+    blood_type: '' as BloodType | '',
+  };
+  const [formData, setFormData] = React.useState(emptyForm);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   function resetForm() {
-    setFormData({ first_name: '', last_name: '', date_of_birth: '', gender: 'male', enrollment_date: today });
+    setFormData({ ...emptyForm, enrollment_date: today });
     setErrors({});
   }
 
@@ -116,6 +121,10 @@ function CreateChildDialog({
         gender: formData.gender,
         enrollment_date: formData.enrollment_date,
         academic_year_id: activeYear.id,
+        national_id: formData.national_id.trim() || undefined,
+        address: formData.address.trim() || undefined,
+        place_of_birth: formData.place_of_birth.trim() || undefined,
+        blood_type: formData.blood_type || undefined,
       });
       resetForm();
       onOpenChange(false);
@@ -136,7 +145,16 @@ function CreateChildDialog({
     { value: 'female', label: t('children.form.female') },
   ];
 
-
+  const bloodTypeOptions = [
+    { value: 'a_positive', label: t('children.form.bloodTypes.a_positive') },
+    { value: 'a_negative', label: t('children.form.bloodTypes.a_negative') },
+    { value: 'b_positive', label: t('children.form.bloodTypes.b_positive') },
+    { value: 'b_negative', label: t('children.form.bloodTypes.b_negative') },
+    { value: 'ab_positive', label: t('children.form.bloodTypes.ab_positive') },
+    { value: 'ab_negative', label: t('children.form.bloodTypes.ab_negative') },
+    { value: 'o_positive', label: t('children.form.bloodTypes.o_positive') },
+    { value: 'o_negative', label: t('children.form.bloodTypes.o_negative') },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -217,6 +235,47 @@ function CreateChildDialog({
               onChange={handleChange}
             />
           </FormField>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+            <FormField label={t('children.form.nationalId')} htmlFor="child-national-id">
+              <Input
+                id="child-national-id"
+                name="national_id"
+                value={formData.national_id}
+                onChange={handleChange}
+                placeholder={t('children.form.nationalIdPlaceholder')}
+              />
+            </FormField>
+
+            <FormField label={t('children.form.placeOfBirth')} htmlFor="child-place-of-birth">
+              <Input
+                id="child-place-of-birth"
+                name="place_of_birth"
+                value={formData.place_of_birth}
+                onChange={handleChange}
+                placeholder={t('children.form.placeOfBirthPlaceholder')}
+              />
+            </FormField>
+          </div>
+
+          <FormField label={t('children.form.address')} htmlFor="child-address">
+            <Input
+              id="child-address"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder={t('children.form.addressPlaceholder')}
+            />
+          </FormField>
+
+          <FormSelect
+            label={t('children.form.bloodType')}
+            name="blood_type"
+            value={formData.blood_type}
+            onChange={handleSelectChange}
+            options={bloodTypeOptions}
+            placeholder={t('children.form.selectBloodType')}
+          />
 
           {errors.form && (
             <p className="text-body text-danger mt-1">{errors.form}</p>

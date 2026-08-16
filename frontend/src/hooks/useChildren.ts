@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
+export type BloodType = 'a_positive' | 'a_negative' | 'b_positive' | 'b_negative' | 'ab_positive' | 'ab_negative' | 'o_positive' | 'o_negative';
+
 export interface Child {
   id: string;
   first_name: string;
@@ -12,6 +14,10 @@ export interface Child {
   is_active: boolean;
   classroom_name?: string;
   parent_names?: string[];
+  national_id?: string | null;
+  address?: string | null;
+  place_of_birth?: string | null;
+  blood_type?: BloodType | null;
   created_at: string;
   deleted_at?: string | null;
 }
@@ -21,6 +27,8 @@ export interface EmergencyContact {
   name: string;
   relationship: string;
   phone: string;
+  address?: string | null;
+  national_id?: string | null;
   is_authorized_pickup: boolean;
 }
 
@@ -76,6 +84,10 @@ function mapChild(raw: Record<string, unknown>): Child {
     is_active: (raw.isActive ?? raw.is_active) as boolean,
     classroom_name: classroomName,
     parent_names: (raw.parentNames ?? raw.parent_names ?? []) as string[],
+    national_id: (raw.nationalId ?? raw.national_id ?? null) as string | null,
+    address: (raw.address ?? null) as string | null,
+    place_of_birth: (raw.placeOfBirth ?? raw.place_of_birth ?? null) as string | null,
+    blood_type: (raw.bloodType ?? raw.blood_type ?? null) as BloodType | null,
     created_at: (raw.createdAt ?? raw.created_at) as string,
     deleted_at: (raw.deletedAt ?? raw.deleted_at ?? null) as string | null,
   };
@@ -96,13 +108,17 @@ export function useChild(id: string) {
 export function useUpdateChild() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; first_name?: string; last_name?: string; date_of_birth?: string; gender?: string; enrollment_date?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; first_name?: string; last_name?: string; date_of_birth?: string; gender?: string; enrollment_date?: string; national_id?: string; address?: string; place_of_birth?: string; blood_type?: BloodType }) => {
       const body: Record<string, unknown> = {};
       if (data.first_name !== undefined) body.firstName = data.first_name;
       if (data.last_name !== undefined) body.lastName = data.last_name;
       if (data.date_of_birth !== undefined) body.dateOfBirth = data.date_of_birth;
       if (data.gender !== undefined) body.gender = data.gender;
       if (data.enrollment_date !== undefined) body.enrollmentDate = data.enrollment_date;
+      if (data.national_id !== undefined) body.nationalId = data.national_id;
+      if (data.address !== undefined) body.address = data.address;
+      if (data.place_of_birth !== undefined) body.placeOfBirth = data.place_of_birth;
+      if (data.blood_type !== undefined) body.bloodType = data.blood_type;
       const res = await apiClient.put(`/children/${id}`, body);
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to update child');
       return res.data;
@@ -203,6 +219,8 @@ function mapEmergencyContact(c: Record<string, unknown>): EmergencyContact {
     name: c.name as string,
     relationship: c.relationship as string,
     phone: c.phone as string,
+    address: (c.address ?? null) as string | null,
+    national_id: (c.nationalId ?? c.national_id ?? null) as string | null,
     is_authorized_pickup: Boolean(c.isAuthorizedPickup),
   };
 }
@@ -222,11 +240,11 @@ export function useEmergencyContacts(childId: string) {
 export function useAddEmergencyContact() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ childId, name, relationship, phone, is_authorized_pickup }: {
-      childId: string; name: string; relationship: string; phone: string; is_authorized_pickup: boolean;
+    mutationFn: async ({ childId, name, relationship, phone, address, national_id, is_authorized_pickup }: {
+      childId: string; name: string; relationship: string; phone: string; address?: string; national_id?: string; is_authorized_pickup: boolean;
     }) => {
       const res = await apiClient.post(`/children/${childId}/emergency-contacts`, {
-        name, relationship, phone, isAuthorizedPickup: is_authorized_pickup,
+        name, relationship, phone, address, nationalId: national_id, isAuthorizedPickup: is_authorized_pickup,
       });
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to add emergency contact');
       return res.data;
@@ -240,11 +258,11 @@ export function useAddEmergencyContact() {
 export function useUpdateEmergencyContact() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ childId, contactId, name, relationship, phone, is_authorized_pickup }: {
-      childId: string; contactId: string; name: string; relationship: string; phone: string; is_authorized_pickup: boolean;
+    mutationFn: async ({ childId, contactId, name, relationship, phone, address, national_id, is_authorized_pickup }: {
+      childId: string; contactId: string; name: string; relationship: string; phone: string; address?: string; national_id?: string; is_authorized_pickup: boolean;
     }) => {
       const res = await apiClient.put(`/children/${childId}/emergency-contacts/${contactId}`, {
-        name, relationship, phone, isAuthorizedPickup: is_authorized_pickup,
+        name, relationship, phone, address, nationalId: national_id, isAuthorizedPickup: is_authorized_pickup,
       });
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to update emergency contact');
       return res.data;
@@ -272,7 +290,7 @@ export function useRemoveEmergencyContact() {
 export function useCreateChild() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { first_name: string; last_name: string; date_of_birth: string; gender: string; enrollment_date: string; academic_year_id: string }) => {
+    mutationFn: async (data: { first_name: string; last_name: string; date_of_birth: string; gender: string; enrollment_date: string; academic_year_id: string; national_id?: string; address?: string; place_of_birth?: string; blood_type?: BloodType }) => {
       const res = await apiClient.post('/children', {
         firstName: data.first_name,
         lastName: data.last_name,
@@ -280,6 +298,10 @@ export function useCreateChild() {
         gender: data.gender,
         enrollmentDate: data.enrollment_date,
         academicYearId: data.academic_year_id,
+        nationalId: data.national_id,
+        address: data.address,
+        placeOfBirth: data.place_of_birth,
+        bloodType: data.blood_type,
       });
       if (!res.success) {
         throw new Error(res.error?.message ?? 'Failed to create child');

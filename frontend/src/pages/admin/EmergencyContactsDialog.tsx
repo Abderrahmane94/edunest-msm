@@ -21,11 +21,13 @@ interface ContactFormState {
   relationshipOption: string;
   relationshipOther: string;
   phone: string;
+  address: string;
+  national_id: string;
   is_authorized_pickup: boolean;
 }
 
 const emptyForm: ContactFormState = {
-  name: '', relationshipOption: 'mother', relationshipOther: '', phone: '', is_authorized_pickup: false,
+  name: '', relationshipOption: 'mother', relationshipOther: '', phone: '', address: '', national_id: '', is_authorized_pickup: false,
 };
 
 interface EmergencyContactsDialogProps {
@@ -93,6 +95,8 @@ export function EmergencyContactsDialog({ open, onOpenChange, childId, childName
         name: newContact.name.trim(),
         relationship: resolveRelationship(newContact),
         phone: newContact.phone.trim(),
+        address: newContact.address.trim() || undefined,
+        national_id: newContact.national_id.trim() || undefined,
         is_authorized_pickup: newContact.is_authorized_pickup,
       });
       setNewContact(emptyForm);
@@ -113,7 +117,15 @@ export function EmergencyContactsDialog({ open, onOpenChange, childId, childName
   function startEdit(contact: EmergencyContact) {
     const { option, other } = relationshipToForm(contact.relationship);
     setEditingId(contact.id);
-    setEditForm({ name: contact.name, relationshipOption: option, relationshipOther: other, phone: contact.phone, is_authorized_pickup: contact.is_authorized_pickup });
+    setEditForm({
+      name: contact.name,
+      relationshipOption: option,
+      relationshipOther: other,
+      phone: contact.phone,
+      address: contact.address ?? '',
+      national_id: contact.national_id ?? '',
+      is_authorized_pickup: contact.is_authorized_pickup,
+    });
     setEditErrors({});
     setEditError(null);
   }
@@ -136,6 +148,8 @@ export function EmergencyContactsDialog({ open, onOpenChange, childId, childName
         name: editForm.name.trim(),
         relationship: resolveRelationship(editForm),
         phone: editForm.phone.trim(),
+        address: editForm.address.trim() || undefined,
+        national_id: editForm.national_id.trim() || undefined,
         is_authorized_pickup: editForm.is_authorized_pickup,
       });
       setEditingId(null);
@@ -209,6 +223,22 @@ export function EmergencyContactsDialog({ open, onOpenChange, childId, childName
                       onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))}
                     />
                   </FormField>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                    <FormField label={t('children.emergencyContacts.address')} htmlFor={`ec-edit-address-${contact.id}`}>
+                      <Input
+                        id={`ec-edit-address-${contact.id}`}
+                        value={editForm.address}
+                        onChange={(e) => setEditForm((p) => ({ ...p, address: e.target.value }))}
+                      />
+                    </FormField>
+                    <FormField label={t('children.emergencyContacts.nationalId')} htmlFor={`ec-edit-national-id-${contact.id}`}>
+                      <Input
+                        id={`ec-edit-national-id-${contact.id}`}
+                        value={editForm.national_id}
+                        onChange={(e) => setEditForm((p) => ({ ...p, national_id: e.target.value }))}
+                      />
+                    </FormField>
+                  </div>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -237,6 +267,13 @@ export function EmergencyContactsDialog({ open, onOpenChange, childId, childName
                     <p className="text-caption text-text-secondary">
                       {contact.relationship} • {contact.phone}
                     </p>
+                    {(contact.address || contact.national_id) && (
+                      <p className="text-caption text-text-secondary">
+                        {contact.address && <span>{contact.address}</span>}
+                        {contact.address && contact.national_id && <span> • </span>}
+                        {contact.national_id && <span dir="ltr">{contact.national_id}</span>}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     {contact.is_authorized_pickup && (
@@ -324,6 +361,25 @@ export function EmergencyContactsDialog({ open, onOpenChange, childId, childName
               placeholder="+213 XX XX XX XX"
             />
           </FormField>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+            <FormField label={t('children.emergencyContacts.address')} htmlFor="ec-address">
+              <Input
+                id="ec-address"
+                value={newContact.address}
+                onChange={(e) => setNewContact((p) => ({ ...p, address: e.target.value }))}
+                placeholder={t('children.emergencyContacts.addressPlaceholder')}
+              />
+            </FormField>
+            <FormField label={t('children.emergencyContacts.nationalId')} htmlFor="ec-national-id">
+              <Input
+                id="ec-national-id"
+                value={newContact.national_id}
+                onChange={(e) => setNewContact((p) => ({ ...p, national_id: e.target.value }))}
+                placeholder={t('children.emergencyContacts.nationalIdPlaceholder')}
+              />
+            </FormField>
+          </div>
 
           <label className="flex items-center gap-2 cursor-pointer">
             <input

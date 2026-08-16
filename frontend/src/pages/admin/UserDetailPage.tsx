@@ -25,6 +25,9 @@ export function UserDetailPage() {
     last_name: '',
     role: '',
     preferred_language: '',
+    phone: '',
+    address: '',
+    national_id: '',
   });
   const [saveSuccess, setSaveSuccess] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
@@ -41,6 +44,9 @@ export function UserDetailPage() {
         last_name: user.last_name,
         role: user.role,
         preferred_language: user.preferred_language,
+        phone: user.phone ?? '',
+        address: user.address ?? '',
+        national_id: user.national_id ?? '',
       });
     }
   }, [user]);
@@ -181,6 +187,20 @@ export function UserDetailPage() {
 
           <FormField label={t('users.detail.email')} htmlFor="u-email">
             <Input id="u-email" value={user.email} disabled className="opacity-60 cursor-not-allowed" />
+          </FormField>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+            <FormField label={t('users.detail.phone')} htmlFor="u-phone">
+              <Input id="u-phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} />
+            </FormField>
+
+            <FormField label={t('users.detail.nationalId')} htmlFor="u-national-id">
+              <Input id="u-national-id" name="national_id" value={formData.national_id} onChange={handleChange} />
+            </FormField>
+          </div>
+
+          <FormField label={t('users.detail.address')} htmlFor="u-address">
+            <Input id="u-address" name="address" value={formData.address} onChange={handleChange} />
           </FormField>
 
           <p className="text-caption text-text-secondary">

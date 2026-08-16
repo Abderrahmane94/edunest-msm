@@ -15,6 +15,7 @@ import {
   useSetPrimaryParentLink,
   useEmergencyContacts,
   useLinkParent,
+  type BloodType,
 } from '@/hooks/useChildren';
 import { useClassrooms } from '@/hooks/useClassrooms';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
@@ -48,6 +49,10 @@ export function ChildDetailPage() {
     date_of_birth: '',
     gender: '',
     enrollment_date: '',
+    national_id: '',
+    address: '',
+    place_of_birth: '',
+    blood_type: '' as BloodType | '',
   });
   const [saveSuccess, setSaveSuccess] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
@@ -68,6 +73,10 @@ export function ChildDetailPage() {
         date_of_birth: child.date_of_birth?.split('T')[0] ?? '',
         gender: child.gender,
         enrollment_date: child.enrollment_date?.split('T')[0] ?? '',
+        national_id: child.national_id ?? '',
+        address: child.address ?? '',
+        place_of_birth: child.place_of_birth ?? '',
+        blood_type: child.blood_type ?? '',
       });
     }
   }, [child]);
@@ -85,7 +94,7 @@ export function ChildDetailPage() {
     setSaveSuccess(false);
     setSaveError(null);
     try {
-      await updateChild.mutateAsync({ id: childId!, ...formData });
+      await updateChild.mutateAsync({ id: childId!, ...formData, blood_type: formData.blood_type || undefined });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -124,6 +133,17 @@ export function ChildDetailPage() {
     { value: 'mother', label: t('children.linkParent.mother') },
     { value: 'father', label: t('children.linkParent.father') },
     { value: 'guardian', label: t('children.linkParent.guardian') },
+  ];
+
+  const bloodTypeOptions = [
+    { value: 'a_positive', label: t('children.form.bloodTypes.a_positive') },
+    { value: 'a_negative', label: t('children.form.bloodTypes.a_negative') },
+    { value: 'b_positive', label: t('children.form.bloodTypes.b_positive') },
+    { value: 'b_negative', label: t('children.form.bloodTypes.b_negative') },
+    { value: 'ab_positive', label: t('children.form.bloodTypes.ab_positive') },
+    { value: 'ab_negative', label: t('children.form.bloodTypes.ab_negative') },
+    { value: 'o_positive', label: t('children.form.bloodTypes.o_positive') },
+    { value: 'o_negative', label: t('children.form.bloodTypes.o_negative') },
   ];
 
   const classroomOptions = (classrooms ?? []).map((c) => ({ value: c.id, label: c.name }));
@@ -197,7 +217,26 @@ export function ChildDetailPage() {
             <FormField label={t('children.form.enrollmentDate')} htmlFor="c-enrollment">
               <Input id="c-enrollment" name="enrollment_date" type="date" value={formData.enrollment_date} onChange={handleChange} />
             </FormField>
+            <FormField label={t('children.form.nationalId')} htmlFor="c-national-id">
+              <Input id="c-national-id" name="national_id" value={formData.national_id} onChange={handleChange} />
+            </FormField>
+            <FormField label={t('children.form.placeOfBirth')} htmlFor="c-place-of-birth">
+              <Input id="c-place-of-birth" name="place_of_birth" value={formData.place_of_birth} onChange={handleChange} />
+            </FormField>
+            <FormField label={t('children.form.bloodType')} htmlFor="c-blood-type">
+              <FormSelect
+                label=""
+                name="blood_type"
+                value={formData.blood_type}
+                onChange={handleSelectChange}
+                options={bloodTypeOptions}
+                placeholder={t('children.form.selectBloodType')}
+              />
+            </FormField>
           </div>
+          <FormField label={t('children.form.address')} htmlFor="c-address">
+            <Input id="c-address" name="address" value={formData.address} onChange={handleChange} />
+          </FormField>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap mt-4">
@@ -387,10 +426,19 @@ export function ChildDetailPage() {
               {(emergencyContacts ?? []).map((c) => (
                 <div key={c.id} className="flex items-center justify-between bg-subtle rounded-lg px-3 py-2">
                   <div>
-                    <span className="text-body font-medium text-foreground">{c.name}</span>
-                    <span className="text-caption text-text-secondary ms-2">({c.relationship})</span>
-                    <span className="text-caption text-text-secondary ms-2">{c.phone}</span>
-                    {c.is_authorized_pickup && <span className="ms-2 text-micro text-success font-medium">{t('children.emergencyContacts.authorizedPickup')}</span>}
+                    <div>
+                      <span className="text-body font-medium text-foreground">{c.name}</span>
+                      <span className="text-caption text-text-secondary ms-2">({c.relationship})</span>
+                      <span className="text-caption text-text-secondary ms-2">{c.phone}</span>
+                      {c.is_authorized_pickup && <span className="ms-2 text-micro text-success font-medium">{t('children.emergencyContacts.authorizedPickup')}</span>}
+                    </div>
+                    {(c.address || c.national_id) && (
+                      <p className="text-caption text-text-secondary">
+                        {c.address && <span>{c.address}</span>}
+                        {c.address && c.national_id && <span> · </span>}
+                        {c.national_id && <span dir="ltr">{c.national_id}</span>}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}

@@ -55,6 +55,10 @@ class ChildrenService {
         enrollmentDate: new Date(input.enrollmentDate),
         learnerType: 'child',
         isActive: true,
+        nationalId: input.nationalId,
+        address: input.address,
+        placeOfBirth: input.placeOfBirth,
+        bloodType: input.bloodType,
       },
       include: enrollmentInclude,
     });
@@ -170,6 +174,10 @@ class ChildrenService {
         ...(input.gender !== undefined && { gender: input.gender }),
         ...(input.enrollmentDate !== undefined && { enrollmentDate: new Date(input.enrollmentDate) }),
         ...(input.academicYearId !== undefined && { academicYearId: input.academicYearId }),
+        ...(input.nationalId !== undefined && { nationalId: input.nationalId }),
+        ...(input.address !== undefined && { address: input.address }),
+        ...(input.placeOfBirth !== undefined && { placeOfBirth: input.placeOfBirth }),
+        ...(input.bloodType !== undefined && { bloodType: input.bloodType }),
       },
       include: enrollmentInclude,
     });
@@ -589,6 +597,8 @@ class ChildrenService {
         name: input.name,
         relationship: input.relationship,
         phone: input.phone,
+        address: input.address,
+        nationalId: input.nationalId,
         isAuthorizedPickup: input.isAuthorizedPickup ?? false,
       },
     });
@@ -650,6 +660,8 @@ class ChildrenService {
         ...(input.name !== undefined && { name: input.name }),
         ...(input.relationship !== undefined && { relationship: input.relationship }),
         ...(input.phone !== undefined && { phone: input.phone }),
+        ...(input.address !== undefined && { address: input.address }),
+        ...(input.nationalId !== undefined && { nationalId: input.nationalId }),
         ...(input.isAuthorizedPickup !== undefined && { isAuthorizedPickup: input.isAuthorizedPickup }),
       },
     });

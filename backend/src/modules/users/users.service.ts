@@ -229,6 +229,9 @@ export const usersService = {
           role: true,
           isActive: true,
           fcmToken: true,
+          phone: true,
+          address: true,
+          nationalId: true,
           preferredLanguage: true,
           createdAt: true,
           school: { select: { id: true, name: true } },
@@ -261,6 +264,9 @@ export const usersService = {
         role: true,
         isActive: true,
         fcmToken: true,
+        phone: true,
+        address: true,
+        nationalId: true,
         preferredLanguage: true,
         createdAt: true,
         school: {
@@ -305,6 +311,9 @@ export const usersService = {
         role: true,
         isActive: true,
         fcmToken: true,
+        phone: true,
+        address: true,
+        nationalId: true,
         preferredLanguage: true,
         createdAt: true,
       },
@@ -344,6 +353,9 @@ export const usersService = {
           role: true,
           isActive: true,
           fcmToken: true,
+          phone: true,
+          address: true,
+          nationalId: true,
           preferredLanguage: true,
           createdAt: true,
         },
@@ -385,10 +397,13 @@ export const usersService = {
         isActive: true,
         mustChangePassword: true,
         phone: input.phone,
+        address: input.address,
+        nationalId: input.nationalId,
       },
       select: {
         id: true, schoolId: true, firstName: true, lastName: true,
         email: true, role: true, isActive: true, preferredLanguage: true, createdAt: true,
+        phone: true, address: true, nationalId: true,
       },
     });
 
@@ -398,7 +413,7 @@ export const usersService = {
   /**
    * Update a user's editable profile fields (admin only).
    */
-  async update(id: string, schoolId: string | null, input: { firstName?: string; lastName?: string; role?: UserRole; preferredLanguage?: Language; phone?: string }) {
+  async update(id: string, schoolId: string | null, input: { firstName?: string; lastName?: string; role?: UserRole; preferredLanguage?: Language; phone?: string; address?: string; nationalId?: string }) {
     const user = await prisma.user.findFirst({ where: schoolId ? { id, schoolId } : { id } });
 
     if (!user) {
@@ -413,10 +428,13 @@ export const usersService = {
         ...(input.role !== undefined && { role: input.role }),
         ...(input.preferredLanguage !== undefined && { preferredLanguage: input.preferredLanguage }),
         ...(input.phone !== undefined && { phone: input.phone }),
+        ...(input.address !== undefined && { address: input.address }),
+        ...(input.nationalId !== undefined && { nationalId: input.nationalId }),
       },
       select: {
         id: true, schoolId: true, firstName: true, lastName: true,
         email: true, role: true, isActive: true, fcmToken: true,
+        phone: true, address: true, nationalId: true,
         preferredLanguage: true, createdAt: true,
       },
     });

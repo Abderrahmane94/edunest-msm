@@ -1,4 +1,4 @@
-import { Gender, LearnerType } from '@prisma/client';
+import { Gender, LearnerType, BloodType } from '@prisma/client';
 
 export interface ChildResponse {
   id: string;
@@ -11,6 +11,10 @@ export interface ChildResponse {
   photoPublicId: string | null;
   enrollmentDate: Date;
   learnerType: LearnerType;
+  nationalId: string | null;
+  address: string | null;
+  placeOfBirth: string | null;
+  bloodType: BloodType | null;
   isActive: boolean;
   createdAt: Date;
 }
@@ -69,6 +73,8 @@ export interface EmergencyContactResponse {
   name: string;
   relationship: string;
   phone: string;
+  address: string | null;
+  nationalId: string | null;
   isAuthorizedPickup: boolean;
   createdAt: Date;
 }

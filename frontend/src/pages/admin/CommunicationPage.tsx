@@ -232,7 +232,9 @@ function EventsTab({
       header: t('communication.events.columns.target'),
       render: (row) => (
         <span className="text-body text-text-secondary">
-          {row.classroom_name ?? t('communication.announcements.allSchool')}
+          {row.classrooms.length > 0
+            ? row.classrooms.map((c) => c.name).join(', ')
+            : t('communication.announcements.allSchool')}
         </span>
       ),
     },
@@ -626,20 +628,16 @@ function CreateEventDialog({
   const [endDatetime, setEndDatetime] = React.useState('');
   const [location, setLocation] = React.useState('');
   const [requiresConsent, setRequiresConsent] = React.useState(false);
-  const [classroomId, setClassroomId] = React.useState('');
+  const [classroomIds, setClassroomIds] = React.useState<string[]>([]);
 
   const createEvent = useCreateEvent();
   const { data: academicYears } = useAcademicYears();
   const activeYear = (academicYears ?? []).find((y) => y.is_active);
   const { data: classrooms } = useClassrooms(activeYear?.id);
 
-  const classroomOptions = [
-    { value: '', label: t('communication.announcements.allSchool') },
-    ...(classrooms ?? []).map((c: Classroom) => ({
-      value: c.id,
-      label: c.name,
-    })),
-  ];
+  function toggleClassroom(id: string) {
+    setClassroomIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -653,7 +651,7 @@ function CreateEventDialog({
         end_datetime: endDatetime,
         location: location.trim() || undefined,
         requires_consent: requiresConsent,
-        classroom_id: classroomId || undefined,
+        classroom_ids: classroomIds.length > 0 ? classroomIds : undefined,
       },
       {
         onSuccess: () => {
@@ -663,7 +661,7 @@ function CreateEventDialog({
           setEndDatetime('');
           setLocation('');
           setRequiresConsent(false);
-          setClassroomId('');
+          setClassroomIds([]);
           onOpenChange(false);
         },
       }
@@ -702,13 +700,30 @@ function CreateEventDialog({
             />
           </FormField>
 
-          <FormSelect
-            label={t('communication.announcements.form.target')}
-            name="event-classroom"
-            value={classroomId}
-            onChange={(e) => setClassroomId(e.target.value)}
-            options={classroomOptions}
-          />
+          <FormField label={t('communication.announcements.form.target')} htmlFor="event-classrooms">
+            <div id="event-classrooms" className="border border-border rounded-md p-3 space-y-2 max-h-40 overflow-y-auto">
+              {(classrooms ?? []).length === 0 ? (
+                <p className="text-caption text-text-secondary">{t('communication.events.form.noClassrooms')}</p>
+              ) : (
+                (classrooms ?? []).map((c: Classroom) => (
+                  <label key={c.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={classroomIds.includes(c.id)}
+                      onChange={() => toggleClassroom(c.id)}
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                    />
+                    <span className="text-body text-foreground">{c.name}</span>
+                  </label>
+                ))
+              )}
+            </div>
+            <p className="text-caption text-text-secondary mt-1">
+              {classroomIds.length === 0
+                ? t('communication.announcements.allSchool')
+                : t('communication.events.form.classroomsSelected', { count: classroomIds.length })}
+            </p>
+          </FormField>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label={t('communication.events.form.startDatetime')} htmlFor="event-start" required>

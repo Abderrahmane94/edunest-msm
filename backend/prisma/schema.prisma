@@ -289,6 +289,7 @@ model Classroom {
   teacher           User?                 @relation(fields: [teacherUserId], references: [id])
   enrollments       ClassroomEnrollment[]
   attendanceRecords AttendanceRecord[]
+  eventLinks        EventClassroom[]
 
   @@index([deletedAt])
   @@map("classrooms")
@@ -492,7 +493,6 @@ model Announcement {
 model Event {
   id              String    @id @default(uuid())
   schoolId        String    @map("school_id")
-  classroomId     String?   @map("classroom_id")
   title           String
   description     String?
   startDatetime   DateTime  @map("start_datetime")
@@ -503,8 +503,26 @@ model Event {
   createdAt       DateTime  @default(now()) @map("created_at")
 
   consentForms ConsentForm[]
+  classrooms   EventClassroom[]
 
   @@map("events")
+}
+
+/**
+ * Links an event to one of the (possibly several) classrooms it's scoped to.
+ * No rows for an event means it applies to the whole school.
+ */
+model EventClassroom {
+  id          String   @id @default(uuid())
+  eventId     String   @map("event_id")
+  classroomId String   @map("classroom_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  event     Event     @relation(fields: [eventId], references: [id])
+  classroom Classroom @relation(fields: [classroomId], references: [id])
+
+  @@unique([eventId, classroomId])
+  @@map("event_classrooms")
 }
 
 model ConsentForm {

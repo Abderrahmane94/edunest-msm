@@ -1059,6 +1059,7 @@ class CommunicationService {
     if (!event) throw new CommunicationServiceError('Event not found', 404);
     await prisma.$transaction([
       prisma.consentForm.deleteMany({ where: { eventId } }),
+      prisma.eventClassroom.deleteMany({ where: { eventId } }),
       prisma.event.delete({ where: { id: eventId } }),
     ]);
   }
@@ -1097,29 +1098,29 @@ class CommunicationService {
   // ─── Events & Consent Forms ──────────────────────────────────────────────────
 
   /**
-   * Create an event for the school, optionally scoped to a single classroom.
+   * Create an event for the school, optionally scoped to one or more classrooms.
    * Only admins can create events.
    * When requires_consent is true, generates ConsentForm records for each active
-   * child in the school — or, when classroomId is set, only for children enrolled
-   * in that classroom.
+   * child in the school — or, when classroomIds is set, only for children enrolled
+   * in any of those classrooms.
    */
   async createEvent(
     schoolId: string,
     userId: string,
     input: CreateEventInput,
   ): Promise<EventResponse> {
-    const { title, description, startDatetime, endDatetime, location, requiresConsent, classroomId } = input;
+    const { title, description, startDatetime, endDatetime, location, requiresConsent, classroomIds } = input;
 
-    // If classroomId is provided, verify it belongs to this school
-    let classroom: { id: string; name: string } | null = null;
-    if (classroomId) {
-      classroom = await prisma.classroom.findFirst({
-        where: { id: classroomId, schoolId },
+    // If classroomIds are provided, verify they all belong to this school
+    let classrooms: { id: string; name: string }[] = [];
+    if (classroomIds && classroomIds.length > 0) {
+      classrooms = await prisma.classroom.findMany({
+        where: { id: { in: classroomIds }, schoolId },
         select: { id: true, name: true },
       });
 
-      if (!classroom) {
-        throw new CommunicationServiceError('Classroom not found or does not belong to this school', 404);
+      if (classrooms.length !== classroomIds.length) {
+        throw new CommunicationServiceError('One or more classrooms were not found or do not belong to this school', 404);
       }
     }
 
@@ -1127,7 +1128,6 @@ class CommunicationService {
     const event = await prisma.event.create({
       data: {
         schoolId,
-        classroomId: classroomId || null,
         title,
         description: description || null,
         startDatetime: new Date(startDatetime),
@@ -1138,16 +1138,22 @@ class CommunicationService {
       },
     });
 
+    if (classrooms.length > 0) {
+      await prisma.eventClassroom.createMany({
+        data: classrooms.map((c) => ({ eventId: event.id, classroomId: c.id })),
+      });
+    }
+
     let consentForms: ConsentFormResponse[] = [];
 
     // If requires_consent, generate ConsentForm records for each active child in
-    // the school (or, when scoped to a classroom, just the children enrolled in it)
+    // the school (or, when scoped to classrooms, just the children enrolled in any of them)
     if (requiresConsent) {
       const activeChildren = await prisma.child.findMany({
         where: {
           schoolId,
           isActive: true,
-          ...(classroomId && { enrollments: { some: { classroomId } } }),
+          ...(classroomIds && classroomIds.length > 0 && { enrollments: { some: { classroomId: { in: classroomIds } } } }),
         },
         select: { id: true, firstName: true, lastName: true },
       });
@@ -1189,7 +1195,6 @@ class CommunicationService {
     return {
       id: event.id,
       schoolId: event.schoolId,
-      classroomId: event.classroomId,
       title: event.title,
       description: event.description,
       startDatetime: event.startDatetime,
@@ -1199,7 +1204,7 @@ class CommunicationService {
       createdByUserId: event.createdByUserId,
       createdAt: event.createdAt,
       createdBy: creator || undefined,
-      classroom,
+      classrooms,
       consentForms,
     };
   }
@@ -1233,15 +1238,20 @@ class CommunicationService {
     });
     const creatorMap = new Map(creators.map((c) => [c.id, c]));
 
-    // Get classroom info for scoped events
-    const classroomIds = [...new Set(events.map((e) => e.classroomId).filter((id): id is string => !!id))];
-    const classrooms = classroomIds.length > 0
-      ? await prisma.classroom.findMany({
-          where: { id: { in: classroomIds } },
-          select: { id: true, name: true },
+    // Get classroom info for scoped events (grouped by event)
+    const eventIds = events.map((e) => e.id);
+    const eventClassroomLinks = eventIds.length > 0
+      ? await prisma.eventClassroom.findMany({
+          where: { eventId: { in: eventIds } },
+          select: { eventId: true, classroom: { select: { id: true, name: true } } },
         })
       : [];
-    const classroomMap = new Map(classrooms.map((c) => [c.id, c]));
+    const classroomsByEvent = new Map<string, { id: string; name: string }[]>();
+    for (const link of eventClassroomLinks) {
+      const list = classroomsByEvent.get(link.eventId) ?? [];
+      list.push(link.classroom);
+      classroomsByEvent.set(link.eventId, list);
+    }
 
     // Compute consent stats in a single query for events that require consent,
     // rather than fetching full ConsentForm rows per event.
@@ -1263,7 +1273,6 @@ class CommunicationService {
     const eventResponses: EventResponse[] = events.map((event) => ({
       id: event.id,
       schoolId: event.schoolId,
-      classroomId: event.classroomId,
       title: event.title,
       description: event.description,
       startDatetime: event.startDatetime,
@@ -1273,7 +1282,7 @@ class CommunicationService {
       createdByUserId: event.createdByUserId,
       createdAt: event.createdAt,
       createdBy: creatorMap.get(event.createdByUserId),
-      classroom: event.classroomId ? classroomMap.get(event.classroomId) ?? null : null,
+      classrooms: classroomsByEvent.get(event.id) ?? [],
       consentStats: event.requiresConsent
         ? statsByEvent.get(event.id) ?? { total: 0, approved: 0, declined: 0, pending: 0 }
         : undefined,
@@ -1299,6 +1308,11 @@ class CommunicationService {
             child: { select: { id: true, firstName: true, lastName: true } },
           },
         },
+        classrooms: {
+          include: {
+            classroom: { select: { id: true, name: true } },
+          },
+        },
       },
     });
 
@@ -1312,13 +1326,7 @@ class CommunicationService {
       select: { id: true, firstName: true, lastName: true },
     });
 
-    // Get classroom info if scoped
-    const classroom = event.classroomId
-      ? await prisma.classroom.findUnique({
-          where: { id: event.classroomId },
-          select: { id: true, name: true },
-        })
-      : null;
+    const classrooms = event.classrooms.map((link) => link.classroom);
 
     let visibleConsentForms = event.consentForms;
     if (requestingParentUserId) {
@@ -1346,7 +1354,6 @@ class CommunicationService {
     return {
       id: event.id,
       schoolId: event.schoolId,
-      classroomId: event.classroomId,
       title: event.title,
       description: event.description,
       startDatetime: event.startDatetime,
@@ -1356,7 +1363,7 @@ class CommunicationService {
       createdByUserId: event.createdByUserId,
       createdAt: event.createdAt,
       createdBy: creator || undefined,
-      classroom,
+      classrooms,
       consentForms,
     };
   }

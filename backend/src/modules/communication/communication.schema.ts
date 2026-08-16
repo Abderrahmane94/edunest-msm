@@ -162,7 +162,7 @@ export const createEventSchema = z.object({
   endDatetime: z.string().datetime({ message: 'end_datetime must be a valid ISO 8601 datetime' }).optional().nullable(),
   location: z.string().max(500, 'Location must not exceed 500 characters').optional().nullable(),
   requiresConsent: z.boolean().optional().default(false),
-  classroomId: uuidSchema.optional(),
+  classroomIds: z.array(uuidSchema).optional(),
 });
 
 /**

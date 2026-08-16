@@ -1036,7 +1036,9 @@
         "location": "المكان",
         "locationPlaceholder": "مثال: ساحة المدرسة",
         "requiresConsent": "يتطلب موافقة أولياء الأمور",
-        "createEvent": "إنشاء"
+        "createEvent": "إنشاء",
+        "noClassrooms": "لا توجد أقسام متاحة",
+        "classroomsSelected": "{{count}} قسم مختار"
       }
     },
     "consent": {

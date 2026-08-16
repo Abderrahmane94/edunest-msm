@@ -1035,7 +1035,9 @@
         "location": "Lieu",
         "locationPlaceholder": "Ex: Cour de l'école",
         "requiresConsent": "Nécessite le consentement des parents",
-        "createEvent": "Créer"
+        "createEvent": "Créer",
+        "noClassrooms": "Aucune classe disponible",
+        "classroomsSelected": "{{count}} classe(s) sélectionnée(s)"
       }
     },
     "consent": {

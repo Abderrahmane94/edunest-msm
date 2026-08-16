@@ -112,7 +112,11 @@ export function EventDetailPage() {
             <Users className="w-4 h-4 shrink-0 text-text-secondary" />
             <div>
               <p className="text-caption text-text-secondary">{t('communication.events.columns.target')}</p>
-              <p className="text-body text-foreground">{event.classroom_name ?? t('communication.announcements.allSchool')}</p>
+              <p className="text-body text-foreground">
+                {event.classrooms.length > 0
+                  ? event.classrooms.map((c) => c.name).join(', ')
+                  : t('communication.announcements.allSchool')}
+              </p>
             </div>
           </div>
         </div>

@@ -33,7 +33,7 @@ export function MessageBubble({ message, isSent, i18nNamespace }: MessageBubbleP
         )}
       >
         {message.message_type === 'text' && (
-          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+          <p className="whitespace-pre-wrap break-words" dir="auto">{message.content}</p>
         )}
 
         {message.message_type === 'photo' && (

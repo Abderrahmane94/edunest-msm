@@ -143,5 +143,15 @@ export interface EventResponse {
     firstName: string;
     lastName: string;
   };
+  classrooms: {
+    id: string;
+    name: string;
+  }[];
   consentForms?: ConsentFormResponse[];
+  consentStats?: {
+    total: number;
+    approved: number;
+    declined: number;
+    pending: number;
+  };
 }

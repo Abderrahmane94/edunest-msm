@@ -12,6 +12,9 @@ export interface User {
   created_at: string;
   school_id?: string;
   school_name?: string;
+  phone?: string | null;
+  address?: string | null;
+  national_id?: string | null;
 }
 
 interface UsersParams {
@@ -41,6 +44,9 @@ function mapUser(raw: Record<string, unknown>): User {
     created_at: (raw.createdAt ?? raw.created_at) as string,
     school_id: (raw.schoolId ?? raw.school_id) as string | undefined,
     school_name: school ? (school.name as string) : undefined,
+    phone: (raw.phone ?? null) as string | null,
+    address: (raw.address ?? null) as string | null,
+    national_id: (raw.nationalId ?? raw.national_id ?? null) as string | null,
   };
 }
 
@@ -105,12 +111,15 @@ export function useUser(id: string) {
 export function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; first_name?: string; last_name?: string; role?: string; preferred_language?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; first_name?: string; last_name?: string; role?: string; preferred_language?: string; phone?: string; address?: string; national_id?: string }) => {
       const body: Record<string, unknown> = {};
       if (data.first_name !== undefined) body.firstName = data.first_name;
       if (data.last_name !== undefined) body.lastName = data.last_name;
       if (data.role !== undefined) body.role = data.role;
       if (data.preferred_language !== undefined) body.preferredLanguage = data.preferred_language;
+      if (data.phone !== undefined) body.phone = data.phone;
+      if (data.address !== undefined) body.address = data.address;
+      if (data.national_id !== undefined) body.nationalId = data.national_id;
 
       const res = await apiClient.patch(`/users/${id}`, body);
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to update user');

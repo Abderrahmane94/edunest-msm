@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
+export type BloodType = 'a_positive' | 'a_negative' | 'b_positive' | 'b_negative' | 'ab_positive' | 'ab_negative' | 'o_positive' | 'o_negative';
+
 export interface Child {
   id: string;
   first_name: string;
@@ -12,6 +14,11 @@ export interface Child {
   is_active: boolean;
   classroom_name?: string;
   parent_names?: string[];
+  national_id?: string | null;
+  address?: string | null;
+  place_of_birth?: string | null;
+  blood_type?: BloodType | null;
+  has_authorized_pickup?: boolean;
   created_at: string;
   deleted_at?: string | null;
 }
@@ -21,7 +28,21 @@ export interface EmergencyContact {
   name: string;
   relationship: string;
   phone: string;
+  address?: string | null;
+  national_id?: string | null;
   is_authorized_pickup: boolean;
+}
+
+export type MedicalNoteType = 'allergy' | 'condition' | 'medication';
+export type MedicalNoteSeverity = 'low' | 'medium' | 'high';
+
+export interface MedicalNote {
+  id: string;
+  type: MedicalNoteType;
+  title: string;
+  details: string | null;
+  severity: MedicalNoteSeverity;
+  created_at: string;
 }
 
 interface ChildrenParams {
@@ -75,7 +96,12 @@ function mapChild(raw: Record<string, unknown>): Child {
     photo_url: (raw.photoPublicId ?? raw.photo_url) as string | undefined,
     is_active: (raw.isActive ?? raw.is_active) as boolean,
     classroom_name: classroomName,
-    parent_names: (raw.parent_names ?? []) as string[],
+    parent_names: (raw.parentNames ?? raw.parent_names ?? []) as string[],
+    national_id: (raw.nationalId ?? raw.national_id ?? null) as string | null,
+    address: (raw.address ?? null) as string | null,
+    place_of_birth: (raw.placeOfBirth ?? raw.place_of_birth ?? null) as string | null,
+    blood_type: (raw.bloodType ?? raw.blood_type ?? null) as BloodType | null,
+    has_authorized_pickup: (raw.hasAuthorizedPickup ?? raw.has_authorized_pickup) as boolean | undefined,
     created_at: (raw.createdAt ?? raw.created_at) as string,
     deleted_at: (raw.deletedAt ?? raw.deleted_at ?? null) as string | null,
   };
@@ -96,13 +122,17 @@ export function useChild(id: string) {
 export function useUpdateChild() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; first_name?: string; last_name?: string; date_of_birth?: string; gender?: string; enrollment_date?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; first_name?: string; last_name?: string; date_of_birth?: string; gender?: string; enrollment_date?: string; national_id?: string; address?: string; place_of_birth?: string; blood_type?: BloodType }) => {
       const body: Record<string, unknown> = {};
       if (data.first_name !== undefined) body.firstName = data.first_name;
       if (data.last_name !== undefined) body.lastName = data.last_name;
       if (data.date_of_birth !== undefined) body.dateOfBirth = data.date_of_birth;
       if (data.gender !== undefined) body.gender = data.gender;
       if (data.enrollment_date !== undefined) body.enrollmentDate = data.enrollment_date;
+      if (data.national_id !== undefined) body.nationalId = data.national_id;
+      if (data.address !== undefined) body.address = data.address;
+      if (data.place_of_birth !== undefined) body.placeOfBirth = data.place_of_birth;
+      if (data.blood_type !== undefined) body.bloodType = data.blood_type;
       const res = await apiClient.put(`/children/${id}`, body);
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to update child');
       return res.data;
@@ -169,12 +199,42 @@ export function useRemoveParentLink() {
   });
 }
 
+export function useUpdateParentLink() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, linkId, relationship, canPickup }: { childId: string; linkId: string; relationship: string; canPickup?: boolean }) => {
+      const res = await apiClient.put(`/children/${childId}/parent-links/${linkId}`, { relationship, canPickup });
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update parent link');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['parent-links', variables.childId] });
+    },
+  });
+}
+
+export function useSetPrimaryParentLink() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, linkId }: { childId: string; linkId: string }) => {
+      const res = await apiClient.patch(`/children/${childId}/parent-links/${linkId}/primary`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to set primary parent');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['parent-links', variables.childId] });
+    },
+  });
+}
+
 function mapEmergencyContact(c: Record<string, unknown>): EmergencyContact {
   return {
     id: c.id as string,
     name: c.name as string,
     relationship: c.relationship as string,
     phone: c.phone as string,
+    address: (c.address ?? null) as string | null,
+    national_id: (c.nationalId ?? c.national_id ?? null) as string | null,
     is_authorized_pickup: Boolean(c.isAuthorizedPickup),
   };
 }
@@ -194,13 +254,31 @@ export function useEmergencyContacts(childId: string) {
 export function useAddEmergencyContact() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ childId, name, relationship, phone, is_authorized_pickup }: {
-      childId: string; name: string; relationship: string; phone: string; is_authorized_pickup: boolean;
+    mutationFn: async ({ childId, name, relationship, phone, address, national_id, is_authorized_pickup }: {
+      childId: string; name: string; relationship: string; phone: string; address?: string; national_id?: string; is_authorized_pickup: boolean;
     }) => {
       const res = await apiClient.post(`/children/${childId}/emergency-contacts`, {
-        name, relationship, phone, isAuthorizedPickup: is_authorized_pickup,
+        name, relationship, phone, address, nationalId: national_id, isAuthorizedPickup: is_authorized_pickup,
       });
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to add emergency contact');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['emergency-contacts', variables.childId] });
+    },
+  });
+}
+
+export function useUpdateEmergencyContact() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, contactId, name, relationship, phone, address, national_id, is_authorized_pickup }: {
+      childId: string; contactId: string; name: string; relationship: string; phone: string; address?: string; national_id?: string; is_authorized_pickup: boolean;
+    }) => {
+      const res = await apiClient.put(`/children/${childId}/emergency-contacts/${contactId}`, {
+        name, relationship, phone, address, nationalId: national_id, isAuthorizedPickup: is_authorized_pickup,
+      });
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update emergency contact');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -226,7 +304,7 @@ export function useRemoveEmergencyContact() {
 export function useCreateChild() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { first_name: string; last_name: string; date_of_birth: string; gender: string; enrollment_date: string; academic_year_id: string }) => {
+    mutationFn: async (data: { first_name: string; last_name: string; date_of_birth: string; gender: string; enrollment_date: string; academic_year_id: string; national_id?: string; address?: string; place_of_birth?: string; blood_type?: BloodType }) => {
       const res = await apiClient.post('/children', {
         firstName: data.first_name,
         lastName: data.last_name,
@@ -234,6 +312,10 @@ export function useCreateChild() {
         gender: data.gender,
         enrollmentDate: data.enrollment_date,
         academicYearId: data.academic_year_id,
+        nationalId: data.national_id,
+        address: data.address,
+        placeOfBirth: data.place_of_birth,
+        bloodType: data.blood_type,
       });
       if (!res.success) {
         throw new Error(res.error?.message ?? 'Failed to create child');
@@ -246,11 +328,80 @@ export function useCreateChild() {
   });
 }
 
+function mapMedicalNote(n: Record<string, unknown>): MedicalNote {
+  return {
+    id: n.id as string,
+    type: n.type as MedicalNoteType,
+    title: n.title as string,
+    details: (n.details ?? null) as string | null,
+    severity: n.severity as MedicalNoteSeverity,
+    created_at: (n.createdAt ?? n.created_at) as string,
+  };
+}
+
+export function useMedicalNotes(childId: string) {
+  return useQuery({
+    queryKey: ['medical-notes', childId],
+    queryFn: async () => {
+      const res = await apiClient.get<Record<string, unknown>[]>(`/children/${childId}/medical-notes`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load medical notes');
+      return Array.isArray(res.data) ? res.data.map(mapMedicalNote) : [];
+    },
+    enabled: !!childId,
+  });
+}
+
+export function useAddMedicalNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, type, title, details, severity }: {
+      childId: string; type: MedicalNoteType; title: string; details?: string; severity: MedicalNoteSeverity;
+    }) => {
+      const res = await apiClient.post(`/children/${childId}/medical-notes`, { type, title, details, severity });
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to add medical note');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['medical-notes', variables.childId] });
+    },
+  });
+}
+
+export function useUpdateMedicalNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, noteId, type, title, details, severity }: {
+      childId: string; noteId: string; type: MedicalNoteType; title: string; details?: string; severity: MedicalNoteSeverity;
+    }) => {
+      const res = await apiClient.put(`/children/${childId}/medical-notes/${noteId}`, { type, title, details, severity });
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update medical note');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['medical-notes', variables.childId] });
+    },
+  });
+}
+
+export function useRemoveMedicalNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, noteId }: { childId: string; noteId: string }) => {
+      const res = await apiClient.delete(`/children/${childId}/medical-notes/${noteId}`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to remove medical note');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['medical-notes', variables.childId] });
+    },
+  });
+}
+
 export function useLinkParent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ childId, parentId, relationship }: { childId: string; parentId: string; relationship: string }) => {
-      const res = await apiClient.post(`/children/${childId}/parent-links`, { parentUserId: parentId, relationship });
+    mutationFn: async ({ childId, parentId, relationship, canPickup }: { childId: string; parentId: string; relationship: string; canPickup?: boolean }) => {
+      const res = await apiClient.post(`/children/${childId}/parent-links`, { parentUserId: parentId, relationship, canPickup });
       if (!res.success) {
         throw new Error(res.error?.message ?? 'Failed to link parent');
       }

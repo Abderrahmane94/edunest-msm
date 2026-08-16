@@ -48,6 +48,7 @@ vi.mock('../../lib/prisma', () => ({
     classroom: {
       findFirst: vi.fn(),
       findUnique: vi.fn(),
+      findMany: vi.fn(),
     },
     announcement: {
       findFirst: vi.fn(),
@@ -68,6 +69,11 @@ vi.mock('../../lib/prisma', () => ({
       create: vi.fn(),
       createMany: vi.fn(),
       update: vi.fn(),
+    },
+    eventClassroom: {
+      findMany: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -147,6 +153,7 @@ const mockPrisma = prisma as unknown as {
   classroom: {
     findFirst: ReturnType<typeof vi.fn>;
     findUnique: ReturnType<typeof vi.fn>;
+    findMany: ReturnType<typeof vi.fn>;
   };
   announcement: {
     findFirst: ReturnType<typeof vi.fn>;
@@ -167,6 +174,11 @@ const mockPrisma = prisma as unknown as {
     create: ReturnType<typeof vi.fn>;
     createMany: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+  };
+  eventClassroom: {
+    findMany: ReturnType<typeof vi.fn>;
+    createMany: ReturnType<typeof vi.fn>;
+    deleteMany: ReturnType<typeof vi.fn>;
   };
   $transaction: ReturnType<typeof vi.fn>;
 };
@@ -1372,6 +1384,8 @@ describe('CommunicationService', () => {
       mockPrisma.user.findMany.mockResolvedValue([
         { id: 'admin-1', firstName: 'Admin', lastName: 'User' },
       ]);
+      mockPrisma.eventClassroom.findMany.mockResolvedValue([]);
+      mockPrisma.consentForm.findMany.mockResolvedValue([]);
 
       const result = await communicationService.listEvents(schoolId, 1, 20);
 
@@ -1406,6 +1420,7 @@ describe('CommunicationService', () => {
             child: { id: 'child-1', firstName: 'Ahmed', lastName: 'Ben Ali' },
           },
         ],
+        classrooms: [],
       });
       mockPrisma.user.findUnique.mockResolvedValue({
         id: 'admin-1',

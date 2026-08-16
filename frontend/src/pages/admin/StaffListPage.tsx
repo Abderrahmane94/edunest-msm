@@ -6,61 +6,64 @@ import { formatDate } from '@/lib/formatters';
 import { DataTable, StatusBadge } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { useUsers, type User } from '@/hooks/useUsers';
+import { useStaffList, type StaffProfile } from '@/hooks/useStaff';
+
+interface StaffRow {
+  user: User;
+  profile?: StaffProfile;
+}
 
 export function StaffListPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [page, setPage] = React.useState(1);
   const [search, setSearch] = React.useState('');
-  const [sortColumn, setSortColumn] = React.useState<string>('created_at');
-  const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('desc');
 
   const pageSize = 10;
 
-  // Staff are users with role teacher or admin
-  const { data, isLoading } = useUsers({
-    page,
-    pageSize,
-    search: search || undefined,
-    sortColumn,
-    sortDirection,
-  });
+  // Fetch everyone (small school rosters), then filter/merge client-side —
+  // the users list has no role filter and the staff list has no user data
+  // beyond the linked profile, so neither endpoint alone can drive this page.
+  const { data: usersData, isLoading: usersLoading } = useUsers({ pageSize: 100 });
+  const { data: staffData, isLoading: staffLoading } = useStaffList({ pageSize: 100 });
 
-  // Filter to staff roles (teacher, admin) on the client side
-  // In a real implementation, the API would support role filtering
-  const staffUsers = React.useMemo(() => {
-    const users = data?.users ?? [];
-    return users.filter((u) => u.role === 'teacher' || u.role === 'admin');
-  }, [data?.users]);
+  const rows = React.useMemo(() => {
+    const profileByUserId = new Map((staffData?.profiles ?? []).map((p) => [p.user_id, p]));
+    const staffUsers = (usersData?.users ?? []).filter((u) => u.role === 'teacher' || u.role === 'admin');
+    const combined: StaffRow[] = staffUsers.map((user) => ({ user, profile: profileByUserId.get(user.id) }));
 
-  const total = data?.total ?? 0;
+    if (!search.trim()) return combined;
+    const q = search.trim().toLowerCase();
+    return combined.filter(
+      (row) =>
+        `${row.user.first_name} ${row.user.last_name}`.toLowerCase().includes(q) ||
+        row.user.email.toLowerCase().includes(q),
+    );
+  }, [usersData?.users, staffData?.profiles, search]);
 
-  function handleSort(column: string, direction: 'asc' | 'desc') {
-    setSortColumn(column);
-    setSortDirection(direction);
-    setPage(1);
-  }
+  const total = rows.length;
+  const pageRows = rows.slice((page - 1) * pageSize, page * pageSize);
+  const isLoading = usersLoading || staffLoading;
 
   function handleSearch(query: string) {
     setSearch(query);
     setPage(1);
   }
 
-  const columns: Column<User>[] = [
+  const columns: Column<StaffRow>[] = [
     {
       key: 'name',
       header: t('staff.columns.name'),
-      sortable: true,
-      render: (user) => (
+      render: (row) => (
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-[var(--color-accent-muted)] text-primary flex items-center justify-center text-label font-semibold">
-            {user.first_name.charAt(0)}{user.last_name.charAt(0)}
+            {row.user.first_name.charAt(0)}{row.user.last_name.charAt(0)}
           </div>
           <div>
             <p className="text-body font-medium text-foreground">
-              {user.first_name} {user.last_name}
+              {row.user.first_name} {row.user.last_name}
             </p>
-            <p className="text-caption text-text-secondary">{user.email}</p>
+            <p className="text-caption text-text-secondary">{row.user.email}</p>
           </div>
         </div>
       ),
@@ -68,31 +71,52 @@ export function StaffListPage() {
     {
       key: 'role',
       header: t('staff.columns.role'),
-      sortable: true,
-      render: (user) => (
+      render: (row) => (
         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-micro font-medium bg-[var(--color-role-teacher-bg,#DBEAFE)] text-[var(--color-role-teacher,#1D4ED8)]">
-          {t(`users.roles.${user.role}`)}
+          {t(`users.roles.${row.user.role}`)}
         </span>
       ),
+    },
+    {
+      key: 'position',
+      header: t('staff.columns.position'),
+      render: (row) =>
+        row.profile ? (
+          <span className="text-body text-foreground">{row.profile.position}</span>
+        ) : (
+          <span className="text-body text-text-disabled">{t('staff.noProfileYet')}</span>
+        ),
+    },
+    {
+      key: 'contract_type',
+      header: t('staff.columns.contractType'),
+      render: (row) =>
+        row.profile ? (
+          <span className="text-body text-text-secondary">{t(`staff.contractTypes.${row.profile.contract_type}`)}</span>
+        ) : (
+          <span className="text-body text-text-disabled">—</span>
+        ),
+    },
+    {
+      key: 'contract_dates',
+      header: t('staff.columns.contractDates'),
+      render: (row) =>
+        row.profile ? (
+          <span className="text-caption text-text-secondary" dir="ltr">
+            {formatDate(row.profile.contract_start)}
+            {row.profile.contract_end ? ` – ${formatDate(row.profile.contract_end)}` : ''}
+          </span>
+        ) : (
+          <span className="text-body text-text-disabled">—</span>
+        ),
     },
     {
       key: 'is_active',
       header: t('staff.columns.status'),
-      sortable: true,
-      render: (user) => (
-        <StatusBadge variant={user.is_active ? 'present' : 'cancelled'}>
-          {user.is_active ? t('users.active') : t('users.inactive')}
+      render: (row) => (
+        <StatusBadge variant={row.user.is_active ? 'present' : 'cancelled'}>
+          {row.user.is_active ? t('users.active') : t('users.inactive')}
         </StatusBadge>
-      ),
-    },
-    {
-      key: 'created_at',
-      header: t('staff.columns.joined'),
-      sortable: true,
-      render: (user) => (
-        <span className="text-caption text-text-secondary" dir="ltr">
-          {formatDate(user.created_at)}
-        </span>
       ),
     },
   ];
@@ -126,17 +150,14 @@ export function StaffListPage() {
         </h1>
       </div>
 
-      <DataTable<User>
+      <DataTable<StaffRow>
         columns={columns}
-        data={staffUsers}
-        keyExtractor={(user) => user.id}
-        onRowClick={(user) => navigate(`/admin/staff/${user.id}`)}
+        data={pageRows}
+        keyExtractor={(row) => row.user.id}
+        onRowClick={(row) => navigate(`/admin/staff/${row.user.id}`)}
         searchable
         searchPlaceholder={t('staff.searchPlaceholder')}
         onSearch={handleSearch}
-        sortColumn={sortColumn}
-        sortDirection={sortDirection}
-        onSort={handleSort}
         page={page}
         pageSize={pageSize}
         total={total}

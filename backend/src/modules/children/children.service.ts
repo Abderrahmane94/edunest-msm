@@ -1,8 +1,8 @@
 import prisma from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { softDeleteService } from '../../services/soft-delete.service';
-import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput } from './children.schema';
-import type { ChildWithEnrollments, ClassroomEnrollmentResponse, PhotoUrlResponse, ParentChildLinkResponse, EmergencyContactResponse } from './children.types';
+import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, UpdateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput, CreateMedicalNoteInput, UpdateMedicalNoteInput } from './children.schema';
+import type { ChildWithEnrollments, ClassroomEnrollmentResponse, PhotoUrlResponse, ParentChildLinkResponse, EmergencyContactResponse, MedicalNoteResponse } from './children.types';
 
 export class ChildServiceError extends Error {
   constructor(
@@ -55,6 +55,10 @@ class ChildrenService {
         enrollmentDate: new Date(input.enrollmentDate),
         learnerType: 'child',
         isActive: true,
+        nationalId: input.nationalId,
+        address: input.address,
+        placeOfBirth: input.placeOfBirth,
+        bloodType: input.bloodType,
       },
       include: enrollmentInclude,
     });
@@ -85,12 +89,26 @@ class ChildrenService {
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
-        include: enrollmentInclude,
+        include: {
+          ...enrollmentInclude,
+          parentLinks: {
+            include: { parent: { select: { firstName: true, lastName: true } } },
+          },
+          emergencyContacts: true,
+        },
       }),
       prisma.child.count({ where }),
     ]);
 
-    return { children, total };
+    const childrenWithParentNames = children.map(({ parentLinks, emergencyContacts, ...child }) => ({
+      ...child,
+      parentNames: parentLinks.map((link) => `${link.parent.firstName} ${link.parent.lastName}`),
+      hasAuthorizedPickup:
+        parentLinks.some((link) => link.canPickup) ||
+        emergencyContacts.some((contact) => contact.isAuthorizedPickup),
+    }));
+
+    return { children: childrenWithParentNames, total };
   }
 
   /**
@@ -160,6 +178,10 @@ class ChildrenService {
         ...(input.gender !== undefined && { gender: input.gender }),
         ...(input.enrollmentDate !== undefined && { enrollmentDate: new Date(input.enrollmentDate) }),
         ...(input.academicYearId !== undefined && { academicYearId: input.academicYearId }),
+        ...(input.nationalId !== undefined && { nationalId: input.nationalId }),
+        ...(input.address !== undefined && { address: input.address }),
+        ...(input.placeOfBirth !== undefined && { placeOfBirth: input.placeOfBirth }),
+        ...(input.bloodType !== undefined && { bloodType: input.bloodType }),
       },
       include: enrollmentInclude,
     });
@@ -383,6 +405,7 @@ class ChildrenService {
         parentUserId: input.parentUserId,
         relationship: input.relationship,
         isPrimary: false,
+        canPickup: input.canPickup ?? true,
       },
       include: {
         parent: {
@@ -428,6 +451,54 @@ class ChildrenService {
     });
 
     return links;
+  }
+
+  /**
+   * Update a parent-child link's relationship.
+   */
+  async updateParentLink(
+    childId: string,
+    schoolId: string,
+    linkId: string,
+    input: UpdateParentLinkInput,
+  ): Promise<ParentChildLinkResponse> {
+    // Verify child exists and belongs to the school
+    const child = await prisma.child.findFirst({
+      where: { id: childId, schoolId },
+    });
+
+    if (!child) {
+      throw new ChildServiceError('Child not found', 404);
+    }
+
+    // Verify the link exists and belongs to this child
+    const link = await prisma.parentChildLink.findFirst({
+      where: { id: linkId, childId },
+    });
+
+    if (!link) {
+      throw new ChildServiceError('Parent-child link not found', 404);
+    }
+
+    const updated = await prisma.parentChildLink.update({
+      where: { id: linkId },
+      data: {
+        relationship: input.relationship,
+        ...(input.canPickup !== undefined && { canPickup: input.canPickup }),
+      },
+      include: {
+        parent: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return updated;
   }
 
   /**
@@ -534,6 +605,8 @@ class ChildrenService {
         name: input.name,
         relationship: input.relationship,
         phone: input.phone,
+        address: input.address,
+        nationalId: input.nationalId,
         isAuthorizedPickup: input.isAuthorizedPickup ?? false,
       },
     });
@@ -595,6 +668,8 @@ class ChildrenService {
         ...(input.name !== undefined && { name: input.name }),
         ...(input.relationship !== undefined && { relationship: input.relationship }),
         ...(input.phone !== undefined && { phone: input.phone }),
+        ...(input.address !== undefined && { address: input.address }),
+        ...(input.nationalId !== undefined && { nationalId: input.nationalId }),
         ...(input.isAuthorizedPickup !== undefined && { isAuthorizedPickup: input.isAuthorizedPickup }),
       },
     });
@@ -626,6 +701,131 @@ class ChildrenService {
 
     await prisma.emergencyContact.delete({
       where: { id: contactId },
+    });
+  }
+
+  // ─── Medical Notes ────────────────────────────────────────────────────────
+
+  /**
+   * Add a medical note (allergy, condition, or medication) for a child.
+   */
+  async addMedicalNote(
+    childId: string,
+    schoolId: string,
+    input: CreateMedicalNoteInput,
+  ): Promise<MedicalNoteResponse> {
+    const child = await prisma.child.findFirst({
+      where: { id: childId, schoolId },
+    });
+
+    if (!child) {
+      throw new ChildServiceError('Child not found', 404);
+    }
+
+    const note = await prisma.medicalNote.create({
+      data: {
+        childId,
+        type: input.type,
+        title: input.title,
+        details: input.details,
+        severity: input.severity,
+      },
+    });
+    return note;
+  }
+
+  /**
+   * List all medical notes for a child, scoped to the school. Teachers may
+   * only view notes for children enrolled in their own classroom.
+   */
+  async getMedicalNotes(
+    childId: string,
+    schoolId: string,
+    requestingTeacherUserId?: string,
+  ): Promise<MedicalNoteResponse[]> {
+    const child = await prisma.child.findFirst({
+      where: { id: childId, schoolId },
+    });
+
+    if (!child) {
+      throw new ChildServiceError('Child not found', 404);
+    }
+
+    if (requestingTeacherUserId) {
+      const enrollment = await prisma.classroomEnrollment.findFirst({
+        where: { childId, classroom: { teacherUserId: requestingTeacherUserId, schoolId } },
+      });
+      if (!enrollment) {
+        throw new ChildServiceError('This child is not in your assigned classroom', 403);
+      }
+    }
+
+    const notes = await prisma.medicalNote.findMany({
+      where: { childId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return notes;
+  }
+
+  /**
+   * Update a medical note. Only updates provided fields.
+   */
+  async updateMedicalNote(
+    childId: string,
+    schoolId: string,
+    noteId: string,
+    input: UpdateMedicalNoteInput,
+  ): Promise<MedicalNoteResponse> {
+    const child = await prisma.child.findFirst({
+      where: { id: childId, schoolId },
+    });
+
+    if (!child) {
+      throw new ChildServiceError('Child not found', 404);
+    }
+
+    const note = await prisma.medicalNote.findFirst({
+      where: { id: noteId, childId },
+    });
+
+    if (!note) {
+      throw new ChildServiceError('Medical note not found', 404);
+    }
+
+    const updated = await prisma.medicalNote.update({
+      where: { id: noteId },
+      data: {
+        ...(input.type !== undefined && { type: input.type }),
+        ...(input.title !== undefined && { title: input.title }),
+        ...(input.details !== undefined && { details: input.details }),
+        ...(input.severity !== undefined && { severity: input.severity }),
+      },
+    });
+    return updated;
+  }
+
+  /**
+   * Remove a medical note.
+   */
+  async removeMedicalNote(childId: string, schoolId: string, noteId: string): Promise<void> {
+    const child = await prisma.child.findFirst({
+      where: { id: childId, schoolId },
+    });
+
+    if (!child) {
+      throw new ChildServiceError('Child not found', 404);
+    }
+
+    const note = await prisma.medicalNote.findFirst({
+      where: { id: noteId, childId },
+    });
+
+    if (!note) {
+      throw new ChildServiceError('Medical note not found', 404);
+    }
+
+    await prisma.medicalNote.delete({
+      where: { id: noteId },
     });
   }
 }

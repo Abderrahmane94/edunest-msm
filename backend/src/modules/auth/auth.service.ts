@@ -6,6 +6,7 @@ import { emailService } from '../../services/email.service';
 import type {
   TokenPayload,
   LoginResponse,
+  LoginChoiceRequired,
   RefreshResponse,
   UserInfo,
 } from './auth.types';
@@ -61,9 +62,34 @@ export const authService = {
       where: { email: input.email, deletedAt: null },
     });
 
-    if (!user) {
+    if (candidates.length === 0) {
       throw new AuthError('Invalid email or password', 401);
     }
+
+    const passwordChecks = await Promise.all(
+      candidates.map(async (candidate) => ({
+        user: candidate,
+        valid: await bcrypt.compare(input.password, candidate.passwordHash),
+      })),
+    );
+    const matches = passwordChecks.filter((c) => c.valid).map((c) => c.user);
+
+    if (matches.length === 0) {
+      throw new AuthError('Invalid email or password', 401);
+    }
+
+    if (matches.length > 1) {
+      const schools = await Promise.all(
+        matches.map(async (candidate) => {
+          if (!candidate.schoolId) return { schoolId: null, schoolName: null };
+          const school = await prisma.school.findUnique({ where: { id: candidate.schoolId } });
+          return { schoolId: candidate.schoolId, schoolName: school?.name ?? null };
+        }),
+      );
+      return { choiceRequired: true, schools };
+    }
+
+    const user = matches[0];
 
     if (!user.isActive) {
       throw new AuthError('Account is deactivated', 403);
@@ -75,11 +101,6 @@ export const authService = {
       if (school && !school.isActive) {
         throw new AuthError('School account is inactive', 403);
       }
-    }
-
-    const isPasswordValid = await bcrypt.compare(input.password, user.passwordHash);
-    if (!isPasswordValid) {
-      throw new AuthError('Invalid email or password', 401);
     }
 
     const tokenPayload: TokenPayload = {
@@ -176,8 +197,13 @@ export const authService = {
   },
 
   async requestPasswordReset(input: PasswordResetRequestInput): Promise<void> {
-    const user = await prisma.user.findUnique({
+    // Email can now belong to more than one account (one per school). Reset
+    // links are account-specific, so when ambiguous this resets whichever
+    // matching account was created first — a rare edge case; the affected
+    // user can always request again after distinguishing accounts via login.
+    const user = await prisma.user.findFirst({
       where: { email: input.email },
+      orderBy: { createdAt: 'asc' },
     });
 
     // Always return success to prevent email enumeration

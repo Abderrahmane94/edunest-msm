@@ -19,6 +19,7 @@ export interface SchoolEvent {
   end_datetime: string;
   location?: string;
   requires_consent: boolean;
+  classrooms: { id: string; name: string }[];
   consent_stats?: {
     total: number;
     approved: number;
@@ -53,6 +54,7 @@ function mapAnnouncement(raw: Record<string, unknown>): Announcement {
 }
 
 function mapEvent(raw: Record<string, unknown>): SchoolEvent {
+  const classrooms = (raw.classrooms ?? []) as { id: string; name: string }[];
   return {
     id: raw.id as string,
     title: raw.title as string,
@@ -61,7 +63,8 @@ function mapEvent(raw: Record<string, unknown>): SchoolEvent {
     end_datetime: (raw.endDatetime ?? raw.end_datetime ?? '') as string,
     location: raw.location as string | undefined,
     requires_consent: (raw.requiresConsent ?? raw.requires_consent ?? false) as boolean,
-    consent_stats: raw.consent_stats as SchoolEvent['consent_stats'] | undefined,
+    classrooms,
+    consent_stats: (raw.consentStats ?? raw.consent_stats) as SchoolEvent['consent_stats'] | undefined,
   };
 }
 
@@ -176,16 +179,20 @@ export function useCreateEvent() {
       end_datetime: string;
       location?: string;
       requires_consent: boolean;
+      classroom_ids?: string[];
     }) => {
-      // Map to camelCase for the backend
+      // Map to camelCase for the backend, converting the <input type="datetime-local">
+      // value (e.g. "2026-08-20T10:00", no timezone) into a full ISO 8601 UTC string —
+      // the backend schema requires z.string().datetime() with a trailing "Z".
       const body: Record<string, unknown> = {
         title: data.title,
         description: data.description,
-        startDatetime: data.start_datetime,    // snake_case → camelCase
-        endDatetime: data.end_datetime,
+        startDatetime: new Date(data.start_datetime).toISOString(),
+        endDatetime: new Date(data.end_datetime).toISOString(),
         requiresConsent: data.requires_consent,
       };
       if (data.location) body.location = data.location;
+      if (data.classroom_ids && data.classroom_ids.length > 0) body.classroomIds = data.classroom_ids;
 
       const res = await apiClient.post('/communication/events', body);
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to create event');
@@ -201,9 +208,20 @@ export function useEventConsent(eventId?: string) {
   return useQuery({
     queryKey: ['event-consent', eventId],
     queryFn: async () => {
-      const res = await apiClient.get<{ consents: ConsentEntry[] }>(`/communication/events/${eventId}/consent`);
+      // There is no dedicated /consent endpoint — consent forms come embedded
+      // in the event detail response, so derive the per-child list from that.
+      const res = await apiClient.get<Record<string, unknown>>(`/communication/events/${eventId}`);
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to load consent data');
-      return res.data?.consents ?? [];
+      const forms = (res.data?.consentForms ?? []) as Record<string, unknown>[];
+      return forms.map((form): ConsentEntry => {
+        const child = form.child as Record<string, string> | undefined;
+        return {
+          child_id: form.childId as string,
+          child_name: child ? `${child.firstName} ${child.lastName}`.trim() : '',
+          status: form.status as ConsentEntry['status'],
+          responded_at: (form.respondedAt ?? undefined) as string | undefined,
+        };
+      });
     },
     enabled: !!eventId,
   });

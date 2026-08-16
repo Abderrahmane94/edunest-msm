@@ -61,7 +61,7 @@ export function useMessages(conversationId?: string) {
         `/communication/conversations/${conversationId}/messages`
       );
       const raw = Array.isArray(res.data) ? res.data : [];
-      return raw.map((m: Record<string, unknown>) => ({
+      const mapped = raw.map((m: Record<string, unknown>) => ({
         id: m.id as string,
         conversation_id: (m.conversationId ?? m.conversation_id) as string,
         sender_user_id: (m.senderUserId ?? m.sender_user_id) as string,
@@ -72,6 +72,10 @@ export function useMessages(conversationId?: string) {
         is_read: (m.isRead ?? m.is_read ?? false) as boolean,
         created_at: (m.createdAt ?? m.created_at ?? '') as string,
       })) as Message[];
+      // The API returns newest-first (efficient for "give me the latest page"),
+      // but the chat UI displays oldest-to-newest top-to-bottom, auto-scrolled
+      // to the bottom — reverse here so every consumer gets display order.
+      return mapped.reverse();
     },
     enabled: !!conversationId,
   });

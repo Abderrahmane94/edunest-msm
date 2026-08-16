@@ -13,7 +13,7 @@ import { useSchoolsList } from '@/hooks/useSchools';
 function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string }) => {
+    mutationFn: async (data: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string; address?: string; nationalId?: string }) => {
       const res = await apiClient.post('/users', data);
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to create user');
       return res.data;
@@ -37,7 +37,7 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
   const createUser = useCreateUser();
   const { data: schools } = useSchoolsList();
 
-  const emptyForm = { firstName: '', lastName: '', email: '', phone: '', role: 'teacher', preferredLanguage: 'fr', schoolId: '' };
+  const emptyForm = { firstName: '', lastName: '', email: '', phone: '', address: '', nationalId: '', role: 'teacher', preferredLanguage: 'fr', schoolId: '' };
   const [form, setForm] = React.useState(emptyForm);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [createError, setCreateError] = React.useState<string | null>(null);
@@ -75,7 +75,7 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
     if (!validate()) return;
     setCreateError(null);
     try {
-      const payload: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string } = {
+      const payload: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string; address?: string; nationalId?: string } = {
         firstName: form.firstName,
         lastName: form.lastName,
         email: form.email,
@@ -84,6 +84,8 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
       };
       if (isSuperAdmin && form.schoolId) payload.schoolId = form.schoolId;
       if (form.phone.trim()) payload.phone = form.phone.trim();
+      if (form.address.trim()) payload.address = form.address.trim();
+      if (form.nationalId.trim()) payload.nationalId = form.nationalId.trim();
       await createUser.mutateAsync(payload);
       resetForm();
       onOpenChange(false);
@@ -145,6 +147,15 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
           <FormField label={t('users.invite_form.phone')} htmlFor="cu-phone">
             <Input id="cu-phone" name="phone" type="tel" value={form.phone} onChange={handleChange} placeholder={t('users.invite_form.phonePlaceholder')} />
           </FormField>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+            <FormField label={t('users.invite_form.address')} htmlFor="cu-address">
+              <Input id="cu-address" name="address" value={form.address} onChange={handleChange} placeholder={t('users.invite_form.addressPlaceholder')} />
+            </FormField>
+            <FormField label={t('users.invite_form.nationalId')} htmlFor="cu-national-id">
+              <Input id="cu-national-id" name="nationalId" value={form.nationalId} onChange={handleChange} placeholder={t('users.invite_form.nationalIdPlaceholder')} />
+            </FormField>
+          </div>
 
           <p className="text-caption text-text-secondary -mt-1 mb-2">{t('users.create_form.defaultPasswordHint')}</p>
 

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Link2, Phone, Trash2 } from 'lucide-react';
+import { Link2, Phone, HeartPulse } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import {
   Button,
@@ -19,36 +19,70 @@ import {
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import {
-  useChildren, useCreateChild, useLinkParent,
-  useEmergencyContacts, useAddEmergencyContact, useRemoveEmergencyContact,
-  type Child,
+  useChildren, useCreateChild, useLinkParent, useMedicalNotes,
+  type Child, type BloodType,
 } from '@/hooks/useChildren';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
 import { useUsers } from '@/hooks/useUsers';
+import { EmergencyContactsDialog } from './EmergencyContactsDialog';
+import { MedicalNotesDialog } from './MedicalNotesDialog';
+
+/** Minimal shape needed by dialogs that only display/reference a child's identity. */
+type ChildRef = Pick<Child, 'id' | 'first_name' | 'last_name'>;
+
+/** Small table-cell warning shown when nobody — parent or emergency contact — is authorized to pick up this child. */
+function PickupContactWarning({ child }: { child: Child }) {
+  const { t } = useTranslation();
+  if (child.has_authorized_pickup !== false) return null;
+  return (
+    <StatusBadge variant="absent" title={t('children.emergencyContacts.noPickupContact')}>
+      {t('children.emergencyContacts.noPickupContact')}
+    </StatusBadge>
+  );
+}
+
+/** Small table-cell warning shown when a child has a high-severity medical note. */
+function HighSeverityMedicalWarning({ childId }: { childId: string }) {
+  const { t } = useTranslation();
+  const { data: notes } = useMedicalNotes(childId);
+  if (!notes || !notes.some((n) => n.severity === 'high')) return null;
+  return (
+    <StatusBadge variant="absent" title={t('children.medicalNotes.highSeverityWarning')}>
+      {t('children.medicalNotes.highSeverityWarning')}
+    </StatusBadge>
+  );
+}
 
 function CreateChildDialog({
   open,
   onOpenChange,
+  onCreated,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreated?: (child: ChildRef) => void;
 }) {
   const { t } = useTranslation();
   const createChild = useCreateChild();
   const { data: academicYears } = useAcademicYears();
   const activeYear = (academicYears ?? []).find((y) => y.is_active);
   const today = new Date().toISOString().split('T')[0];
-  const [formData, setFormData] = React.useState({
+  const emptyForm = {
     first_name: '',
     last_name: '',
     date_of_birth: '',
     gender: 'male',
     enrollment_date: today,
-  });
+    national_id: '',
+    address: '',
+    place_of_birth: '',
+    blood_type: '' as BloodType | '',
+  };
+  const [formData, setFormData] = React.useState(emptyForm);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   function resetForm() {
-    setFormData({ first_name: '', last_name: '', date_of_birth: '', gender: 'male', enrollment_date: today });
+    setFormData({ ...emptyForm, enrollment_date: today });
     setErrors({});
   }
 
@@ -89,17 +123,25 @@ function CreateChildDialog({
       return;
     }
 
+    const { first_name, last_name } = formData;
+
     try {
-      await createChild.mutateAsync({
-        first_name: formData.first_name,
-        last_name: formData.last_name,
+      const result = await createChild.mutateAsync({
+        first_name,
+        last_name,
         date_of_birth: formData.date_of_birth,
         gender: formData.gender,
         enrollment_date: formData.enrollment_date,
         academic_year_id: activeYear.id,
+        national_id: formData.national_id.trim() || undefined,
+        address: formData.address.trim() || undefined,
+        place_of_birth: formData.place_of_birth.trim() || undefined,
+        blood_type: formData.blood_type || undefined,
       });
       resetForm();
       onOpenChange(false);
+      const newId = (result as { id?: string } | undefined)?.id;
+      if (newId) onCreated?.({ id: newId, first_name, last_name });
     } catch {
       // Error handled by React Query
     }
@@ -115,7 +157,16 @@ function CreateChildDialog({
     { value: 'female', label: t('children.form.female') },
   ];
 
-
+  const bloodTypeOptions = [
+    { value: 'a_positive', label: t('children.form.bloodTypes.a_positive') },
+    { value: 'a_negative', label: t('children.form.bloodTypes.a_negative') },
+    { value: 'b_positive', label: t('children.form.bloodTypes.b_positive') },
+    { value: 'b_negative', label: t('children.form.bloodTypes.b_negative') },
+    { value: 'ab_positive', label: t('children.form.bloodTypes.ab_positive') },
+    { value: 'ab_negative', label: t('children.form.bloodTypes.ab_negative') },
+    { value: 'o_positive', label: t('children.form.bloodTypes.o_positive') },
+    { value: 'o_negative', label: t('children.form.bloodTypes.o_negative') },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -197,6 +248,47 @@ function CreateChildDialog({
             />
           </FormField>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+            <FormField label={t('children.form.nationalId')} htmlFor="child-national-id">
+              <Input
+                id="child-national-id"
+                name="national_id"
+                value={formData.national_id}
+                onChange={handleChange}
+                placeholder={t('children.form.nationalIdPlaceholder')}
+              />
+            </FormField>
+
+            <FormField label={t('children.form.placeOfBirth')} htmlFor="child-place-of-birth">
+              <Input
+                id="child-place-of-birth"
+                name="place_of_birth"
+                value={formData.place_of_birth}
+                onChange={handleChange}
+                placeholder={t('children.form.placeOfBirthPlaceholder')}
+              />
+            </FormField>
+          </div>
+
+          <FormField label={t('children.form.address')} htmlFor="child-address">
+            <Input
+              id="child-address"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder={t('children.form.addressPlaceholder')}
+            />
+          </FormField>
+
+          <FormSelect
+            label={t('children.form.bloodType')}
+            name="blood_type"
+            value={formData.blood_type}
+            onChange={handleSelectChange}
+            options={bloodTypeOptions}
+            placeholder={t('children.form.selectBloodType')}
+          />
+
           {errors.form && (
             <p className="text-body text-danger mt-1">{errors.form}</p>
           )}
@@ -222,7 +314,7 @@ function LinkParentDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  child: Child | null;
+  child: ChildRef | null;
 }) {
   const { t } = useTranslation();
   const linkParent = useLinkParent();
@@ -315,211 +407,6 @@ function LinkParentDialog({
   );
 }
 
-function EmergencyContactsDialog({
-  open,
-  onOpenChange,
-  child,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  child: Child | null;
-}) {
-  const { t } = useTranslation();
-  const childId = child?.id ?? '';
-  const { data: contacts = [], isLoading: contactsLoading } = useEmergencyContacts(childId);
-  const addContact = useAddEmergencyContact();
-  const removeContact = useRemoveEmergencyContact();
-
-  const [newContact, setNewContact] = React.useState({
-    name: '',
-    relationship: '',
-    phone: '',
-    is_authorized_pickup: false,
-  });
-  const [errors, setErrors] = React.useState<Record<string, string>>({});
-  const [submitError, setSubmitError] = React.useState<string | null>(null);
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const { name, value, type, checked } = e.target;
-    setNewContact((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-  }
-
-  function validate(): boolean {
-    const newErrors: Record<string, string> = {};
-    if (!newContact.name.trim()) {
-      newErrors.name = t('children.emergencyContacts.nameRequired');
-    }
-    if (!newContact.phone.trim()) {
-      newErrors.phone = t('children.emergencyContacts.phoneRequired');
-    }
-    if (!newContact.relationship.trim()) {
-      newErrors.relationship = t('children.emergencyContacts.relationshipRequired');
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }
-
-  async function handleAddContact() {
-    if (!validate() || !childId) return;
-    setSubmitError(null);
-    try {
-      await addContact.mutateAsync({ childId, ...newContact });
-      setNewContact({ name: '', relationship: '', phone: '', is_authorized_pickup: false });
-      setErrors({});
-    } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : t('common.error'));
-    }
-  }
-
-  async function handleRemoveContact(contactId: string) {
-    if (!childId) return;
-    try {
-      await removeContact.mutateAsync({ childId, contactId });
-    } catch {
-      // Surfaced via removeContact.isError below if needed
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[560px]">
-        <DialogHeader>
-          <DialogTitle>{t('children.emergencyContacts.title')}</DialogTitle>
-          <DialogDescription>
-            {t('children.emergencyContacts.description', {
-              name: child ? `${child.first_name} ${child.last_name}` : '',
-            })}
-          </DialogDescription>
-        </DialogHeader>
-
-        {contactsLoading && (
-          <p className="text-caption text-text-secondary mb-4">{t('common.loading')}</p>
-        )}
-
-        {contacts.length > 0 && (
-          <div className="space-y-2 mb-4">
-            {contacts.map((contact) => (
-              <div
-                key={contact.id}
-                className="flex items-center justify-between p-3 bg-subtle rounded-md"
-              >
-                <div>
-                  <p className="text-body font-medium text-foreground">{contact.name}</p>
-                  <p className="text-caption text-text-secondary">
-                    {contact.relationship} • {contact.phone}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {contact.is_authorized_pickup && (
-                    <StatusBadge variant="present">
-                      {t('children.emergencyContacts.authorizedPickup')}
-                    </StatusBadge>
-                  )}
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleRemoveContact(contact.id)}
-                    disabled={removeContact.isPending}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="border border-border rounded-lg p-4 space-y-3">
-          <p className="text-label font-medium text-foreground">
-            {t('children.emergencyContacts.addNew')}
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-            <FormField
-              label={t('children.emergencyContacts.name')}
-              htmlFor="ec-name"
-              error={errors.name}
-              required
-            >
-              <Input
-                id="ec-name"
-                name="name"
-                value={newContact.name}
-                onChange={handleChange}
-                placeholder={t('children.emergencyContacts.namePlaceholder')}
-              />
-            </FormField>
-
-            <FormField
-              label={t('children.emergencyContacts.relationship')}
-              htmlFor="ec-relationship"
-              error={errors.relationship}
-              required
-            >
-              <Input
-                id="ec-relationship"
-                name="relationship"
-                value={newContact.relationship}
-                onChange={handleChange}
-                placeholder={t('children.emergencyContacts.relationshipPlaceholder')}
-              />
-            </FormField>
-          </div>
-
-          <FormField
-            label={t('children.emergencyContacts.phone')}
-            htmlFor="ec-phone"
-            error={errors.phone}
-            required
-          >
-            <Input
-              id="ec-phone"
-              name="phone"
-              type="tel"
-              value={newContact.phone}
-              onChange={handleChange}
-              placeholder="+213 XX XX XX XX"
-            />
-          </FormField>
-
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              name="is_authorized_pickup"
-              checked={newContact.is_authorized_pickup}
-              onChange={handleChange}
-              className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-            />
-            <span className="text-body text-foreground">
-              {t('children.emergencyContacts.authorizedPickup')}
-            </span>
-          </label>
-
-          {submitError && <p className="text-body text-danger">{submitError}</p>}
-
-          <Button type="button" variant="secondary" size="sm" onClick={handleAddContact} disabled={addContact.isPending}>
-            <Plus className="w-4 h-4" />
-            {addContact.isPending ? t('common.loading') : t('children.emergencyContacts.add')}
-          </Button>
-        </div>
-
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>
-            {t('common.close')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export function ChildrenPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -534,7 +421,8 @@ export function ChildrenPage() {
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
   const [linkParentDialogOpen, setLinkParentDialogOpen] = React.useState(false);
   const [emergencyDialogOpen, setEmergencyDialogOpen] = React.useState(false);
-  const [selectedChild, setSelectedChild] = React.useState<Child | null>(null);
+  const [medicalDialogOpen, setMedicalDialogOpen] = React.useState(false);
+  const [selectedChild, setSelectedChild] = React.useState<ChildRef | null>(null);
 
   function handleSearch(query: string) {
     setSearch(query);
@@ -549,6 +437,11 @@ export function ChildrenPage() {
   function handleEmergencyContacts(child: Child) {
     setSelectedChild(child);
     setEmergencyDialogOpen(true);
+  }
+
+  function handleMedicalNotes(child: Child) {
+    setSelectedChild(child);
+    setMedicalDialogOpen(true);
   }
 
   const columns: Column<Child>[] = [
@@ -569,6 +462,8 @@ export function ChildrenPage() {
               {formatDate(child.date_of_birth)}
             </p>
           </div>
+          <PickupContactWarning child={child} />
+          <HighSeverityMedicalWarning childId={child.id} />
         </div>
       ),
     },
@@ -633,9 +528,18 @@ export function ChildrenPage() {
           >
             <Phone className="w-4 h-4" />
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => { e.stopPropagation(); handleMedicalNotes(child); }}
+            aria-label={t('children.medicalNotes.title')}
+            title={t('children.medicalNotes.title')}
+          >
+            <HeartPulse className="w-4 h-4" />
+          </Button>
         </div>
       ),
-      className: 'w-24',
+      className: 'w-32',
     },
   ];
 
@@ -682,7 +586,14 @@ export function ChildrenPage() {
         emptyMessage={t('children.noChildren')}
       />
 
-      <CreateChildDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      <CreateChildDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onCreated={(child) => {
+          setSelectedChild(child);
+          setEmergencyDialogOpen(true);
+        }}
+      />
 
       <LinkParentDialog
         open={linkParentDialogOpen}
@@ -693,7 +604,15 @@ export function ChildrenPage() {
       <EmergencyContactsDialog
         open={emergencyDialogOpen}
         onOpenChange={setEmergencyDialogOpen}
-        child={selectedChild}
+        childId={selectedChild?.id ?? ''}
+        childName={selectedChild ? `${selectedChild.first_name} ${selectedChild.last_name}` : ''}
+      />
+
+      <MedicalNotesDialog
+        open={medicalDialogOpen}
+        onOpenChange={setMedicalDialogOpen}
+        childId={selectedChild?.id ?? ''}
+        childName={selectedChild ? `${selectedChild.first_name} ${selectedChild.last_name}` : ''}
       />
     </div>
   );

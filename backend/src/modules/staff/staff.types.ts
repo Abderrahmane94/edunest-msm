@@ -24,5 +24,6 @@ export interface StaffProfileResponse {
   contractStart: Date;
   contractEnd: Date | null;
   documentPublicId: string | null;
+  documentFormat: string | null;
   createdAt: Date;
 }

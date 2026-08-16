@@ -3,6 +3,10 @@ import { z } from 'zod';
 export const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
+  // Only required when the email+password combination matches accounts in
+  // more than one school; the client resubmits with this set once the user
+  // picks which one they meant.
+  schoolId: z.string().optional(),
 });
 
 export const refreshSchema = z.object({

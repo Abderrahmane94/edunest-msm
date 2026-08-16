@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { childrenController } from './children.controller';
 import { requireAdmin, requireTeacherOrAdmin, requireActiveRole } from '../../middleware/rbac.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
-import { createChildSchema, updateChildSchema, enrollChildSchema, createParentLinkSchema, parentLinkParamsSchema, createEmergencyContactSchema, updateEmergencyContactSchema, emergencyContactParamsSchema } from './children.schema';
+import { createChildSchema, updateChildSchema, enrollChildSchema, createParentLinkSchema, updateParentLinkSchema, parentLinkParamsSchema, createEmergencyContactSchema, updateEmergencyContactSchema, emergencyContactParamsSchema, createMedicalNoteSchema, updateMedicalNoteSchema, medicalNoteParamsSchema } from './children.schema';
 import { idParamSchema } from '../../utils/validators';
 
 const router = Router();
@@ -39,6 +39,9 @@ router.post('/:id/parent-links', requireAdmin, validateParams(idParamSchema), va
 // GET /api/children/:id/parent-links — List parent links for a child (admin or teacher)
 router.get('/:id/parent-links', requireTeacherOrAdmin, validateParams(idParamSchema), childrenController.getParentLinks);
 
+// PUT /api/children/:id/parent-links/:linkId — Update a parent-child link's relationship (admin only)
+router.put('/:id/parent-links/:linkId', requireAdmin, validateParams(parentLinkParamsSchema), validate(updateParentLinkSchema), childrenController.updateParentLink);
+
 // DELETE /api/children/:id/parent-links/:linkId — Remove a parent-child link (admin only)
 router.delete('/:id/parent-links/:linkId', requireAdmin, validateParams(parentLinkParamsSchema), childrenController.removeParentLink);
 
@@ -58,5 +61,19 @@ router.put('/:id/emergency-contacts/:contactId', requireAdmin, validateParams(em
 
 // DELETE /api/children/:id/emergency-contacts/:contactId — Delete emergency contact (admin only)
 router.delete('/:id/emergency-contacts/:contactId', requireAdmin, validateParams(emergencyContactParamsSchema), childrenController.removeEmergencyContact);
+
+// ─── Medical Notes ───────────────────────────────────────────────────────────
+
+// POST /api/children/:id/medical-notes — Add medical note (admin only)
+router.post('/:id/medical-notes', requireAdmin, validateParams(idParamSchema), validate(createMedicalNoteSchema), childrenController.addMedicalNote);
+
+// GET /api/children/:id/medical-notes — List medical notes (admin, or teacher for their own classroom)
+router.get('/:id/medical-notes', requireTeacherOrAdmin, validateParams(idParamSchema), childrenController.getMedicalNotes);
+
+// PUT /api/children/:id/medical-notes/:noteId — Update medical note (admin only)
+router.put('/:id/medical-notes/:noteId', requireAdmin, validateParams(medicalNoteParamsSchema), validate(updateMedicalNoteSchema), childrenController.updateMedicalNote);
+
+// DELETE /api/children/:id/medical-notes/:noteId — Delete medical note (admin only)
+router.delete('/:id/medical-notes/:noteId', requireAdmin, validateParams(medicalNoteParamsSchema), childrenController.removeMedicalNote);
 
 export default router;

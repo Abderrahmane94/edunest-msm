@@ -40,7 +40,7 @@ import {
   PaymentManagementPage,
   EnrollmentDetailPage,
 } from '@/pages/admin/payments';
-import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage, TeacherAnnouncementsPage } from '@/pages/teacher';
+import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage, TeacherAnnouncementsPage, TeacherChildrenPage } from '@/pages/teacher';
 import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentInvoicesPage, ParentAnnouncementsPage, ParentPaymentsPage } from '@/pages/parent';
 import { AdminLayout, ParentLayout } from '@/components/layout';
 import type { NavItem } from '@/components/layout';
@@ -164,6 +164,7 @@ function getAdminNavItems(role: string): NavItem[] {
 const teacherNavItems: NavItem[] = [
   { label: 'nav.attendance', href: '/teacher/attendance', icon: ClipboardCheck },
   { label: 'nav.reports', href: '/teacher/reports', icon: FileText },
+  { label: 'nav.children', href: '/teacher/children', icon: Baby },
   { label: 'nav.messages', href: '/teacher/messages', icon: MessageCircle },
   { label: 'nav.announcements', href: '/teacher/announcements', icon: Megaphone },
 ];
@@ -381,6 +382,7 @@ export const routes: RouteObject[] = [
               { index: true, element: <TeacherAttendancePage /> },
               { path: 'attendance', element: <TeacherAttendancePage /> },
               { path: 'reports', element: <TeacherDailyReportPage /> },
+              { path: 'children', element: <TeacherChildrenPage /> },
               { path: 'messages', element: <TeacherMessagesPage /> },
               { path: 'announcements', element: <TeacherAnnouncementsPage /> },
             ],

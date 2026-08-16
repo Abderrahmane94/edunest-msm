@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { childrenService, ChildServiceError } from './children.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
-import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput } from './children.schema';
+import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, UpdateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput, CreateMedicalNoteInput, UpdateMedicalNoteInput } from './children.schema';
 import { paginationSchema } from '../../utils/validators';
 import { softDeleteService, SoftDeleteError } from '../../services/soft-delete.service';
 
@@ -200,6 +200,25 @@ export const childrenController = {
   },
 
   /**
+   * PUT /api/children/:id/parent-links/:linkId — Update a parent-child link's relationship
+   */
+  async updateParentLink(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const { id, linkId } = req.params;
+      const input = req.body as UpdateParentLinkInput;
+      const link = await childrenService.updateParentLink(id, schoolId, linkId, input);
+      res.status(200).json(successResponse(link));
+    } catch (error) {
+      if (error instanceof ChildServiceError) {
+        res.status(error.statusCode).json(errorResponse('CHILD_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
    * DELETE /api/children/:id/parent-links/:linkId — Remove a parent-child link
    */
   async removeParentLink(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -302,6 +321,84 @@ export const childrenController = {
       const { id, contactId } = req.params;
       await childrenService.removeEmergencyContact(id, schoolId, contactId);
       res.status(200).json(successResponse({ message: 'Emergency contact removed successfully' }));
+    } catch (error) {
+      if (error instanceof ChildServiceError) {
+        res.status(error.statusCode).json(errorResponse('CHILD_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  // ─── Medical Notes ────────────────────────────────────────────────────────
+
+  /**
+   * POST /api/children/:id/medical-notes — Add medical note
+   */
+  async addMedicalNote(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const { id } = req.params;
+      const input = req.body as CreateMedicalNoteInput;
+      const note = await childrenService.addMedicalNote(id, schoolId, input);
+      res.status(201).json(successResponse(note));
+    } catch (error) {
+      if (error instanceof ChildServiceError) {
+        res.status(error.statusCode).json(errorResponse('CHILD_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * GET /api/children/:id/medical-notes — List medical notes for a child.
+   * Teachers are restricted to children enrolled in their own classroom.
+   */
+  async getMedicalNotes(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const { id } = req.params;
+      const requestingTeacherUserId = req.user!.role === 'teacher' ? req.user!.userId : undefined;
+      const notes = await childrenService.getMedicalNotes(id, schoolId, requestingTeacherUserId);
+      res.status(200).json(successResponse(notes));
+    } catch (error) {
+      if (error instanceof ChildServiceError) {
+        res.status(error.statusCode).json(errorResponse('CHILD_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * PUT /api/children/:id/medical-notes/:noteId — Update medical note
+   */
+  async updateMedicalNote(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const { id, noteId } = req.params;
+      const input = req.body as UpdateMedicalNoteInput;
+      const note = await childrenService.updateMedicalNote(id, schoolId, noteId, input);
+      res.status(200).json(successResponse(note));
+    } catch (error) {
+      if (error instanceof ChildServiceError) {
+        res.status(error.statusCode).json(errorResponse('CHILD_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * DELETE /api/children/:id/medical-notes/:noteId — Delete medical note
+   */
+  async removeMedicalNote(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const { id, noteId } = req.params;
+      await childrenService.removeMedicalNote(id, schoolId, noteId);
+      res.status(200).json(successResponse({ message: 'Medical note removed successfully' }));
     } catch (error) {
       if (error instanceof ChildServiceError) {
         res.status(error.statusCode).json(errorResponse('CHILD_ERROR', error.message));

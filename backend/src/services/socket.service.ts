@@ -1,6 +1,7 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { authService } from '../modules/auth/auth.service';
+import prisma from '../lib/prisma';
 import type { TokenPayload } from '../modules/auth/auth.types';
 
 // --- Types ---
@@ -69,7 +70,7 @@ class SocketService implements ISocketService {
     // Connection handler — auto-join personal and school rooms
     this.io.on('connection', (socket: Socket) => {
       const authSocket = socket as AuthenticatedSocket;
-      const { userId, schoolId } = authSocket.data.user;
+      const { userId, schoolId, role } = authSocket.data.user;
 
       // Auto-join user to their personal room and school room
       const userRoom: RoomPattern = `user:${userId}`;
@@ -80,10 +81,47 @@ class SocketService implements ISocketService {
 
       console.log(`[Socket] User ${userId} connected — joined rooms: ${userRoom}, ${schoolRoom}`);
 
+      // Clients request to join room-scoped events (e.g. a conversation, while
+      // that chat is open) via these — only conversation rooms are grantable
+      // here, and only to participants/admins of that conversation's school.
+      socket.on('join', async (room: unknown) => {
+        if (typeof room !== 'string') return;
+        if (await this.canJoinRoom(room, userId, schoolId, role)) {
+          socket.join(room);
+        }
+      });
+
+      socket.on('leave', (room: unknown) => {
+        if (typeof room !== 'string') return;
+        socket.leave(room);
+      });
+
       socket.on('disconnect', () => {
         console.log(`[Socket] User ${userId} disconnected`);
       });
     });
+  }
+
+  /**
+   * Authorizes a client-requested room join. Only conversation rooms can be
+   * joined this way (user/school rooms are auto-joined on connect and not
+   * client-requestable), and only by that conversation's participants or an
+   * admin/super_admin of the same school.
+   */
+  private async canJoinRoom(
+    room: string,
+    userId: string,
+    schoolId: string | null,
+    role: string,
+  ): Promise<boolean> {
+    const match = /^conversation:(.+)$/.exec(room);
+    if (!match) return false;
+
+    const conversation = await prisma.conversation.findUnique({ where: { id: match[1] } });
+    if (!conversation || conversation.schoolId !== schoolId) return false;
+
+    if (role === 'admin' || role === 'super_admin') return true;
+    return userId === conversation.teacherUserId || userId === conversation.parentUserId;
   }
 
   /**

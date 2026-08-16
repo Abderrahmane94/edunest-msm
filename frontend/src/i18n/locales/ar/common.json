@@ -40,6 +40,11 @@
     "showPassword": "إظهار كلمة المرور",
     "hidePassword": "إخفاء كلمة المرور",
     "forgotPassword": "نسيت كلمة المرور؟",
+    "schoolSelect": {
+      "title": "اختر مدرستك",
+      "subtitle": "هذا البريد الإلكتروني مرتبط بعدة مدارس. اختر المدرسة التي تريد الوصول إليها.",
+      "noSchool": "حساب المنصة (بدون مدرسة)"
+    },
     "loginError": "بيانات الاعتماد غير صحيحة. يرجى المحاولة مرة أخرى.",
     "userDeactivated": "تم تعطيل حسابك.",
     "userDeactivatedHint": "تواصل مع مدير المؤسسة لإعادة تفعيله.",
@@ -226,6 +231,7 @@
     "saved": "تم حفظ التغييرات",
     "cancel": "إلغاء",
     "close": "إغلاق",
+    "continue": "متابعة",
     "closeDialog": "إغلاق مربع الحوار",
     "delete": "حذف",
     "edit": "تعديل",
@@ -315,6 +321,9 @@
       "firstName": "الاسم الأول",
       "lastName": "اسم العائلة",
       "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "address": "العنوان",
+      "nationalId": "رقم بطاقة التعريف الوطنية",
       "joined": "تاريخ الانضمام",
       "school": "المدرسة المرتبطة",
       "viewSchool": "عرض المدرسة",
@@ -344,6 +353,10 @@
       "emailInvalid": "بريد إلكتروني غير صالح",
       "phone": "الهاتف",
       "phonePlaceholder": "+213 5XX XX XX XX",
+      "address": "العنوان",
+      "addressPlaceholder": "العنوان الكامل",
+      "nationalId": "رقم بطاقة التعريف الوطنية",
+      "nationalIdPlaceholder": "رقم بطاقة التعريف",
       "role": "الدور",
       "send": "إرسال الدعوة",
       "sent": "تم إرسال الدعوة إلى {{email}}. ينتهي صلاحية الرابط خلال 48 ساعة."
@@ -440,6 +453,9 @@
       "enroll": "تسجيل",
       "parents": "أولياء الأمور المرتبطون",
       "link": "ربط",
+      "primary": "الرئيسي",
+      "setPrimary": "تعيين كجهة اتصال رئيسية",
+      "maxParentsReached": "تم الوصول إلى الحد الأقصى (2) من أولياء الأمور.",
       "dangerZone": "منطقة الخطر",
       "deleteWarning": "الحذف يعطّل الطفل بشكل نهائي.",
       "delete": "حذف هذا الطفل",
@@ -469,7 +485,25 @@
       "male": "ذكر",
       "female": "أنثى",
       "enrollmentDate": "تاريخ التسجيل",
-      "noActiveYear": "لا توجد سنة دراسية نشطة. يرجى تفعيل سنة دراسية أولاً."
+      "noActiveYear": "لا توجد سنة دراسية نشطة. يرجى تفعيل سنة دراسية أولاً.",
+      "nationalId": "رقم بطاقة التعريف / شهادة الميلاد",
+      "nationalIdPlaceholder": "رقم التعريف",
+      "address": "العنوان",
+      "addressPlaceholder": "العنوان الكامل",
+      "placeOfBirth": "مكان الميلاد",
+      "placeOfBirthPlaceholder": "مدينة الميلاد",
+      "bloodType": "فصيلة الدم",
+      "selectBloodType": "اختر فصيلة الدم",
+      "bloodTypes": {
+        "a_positive": "A+",
+        "a_negative": "A-",
+        "b_positive": "B+",
+        "b_negative": "B-",
+        "ab_positive": "AB+",
+        "ab_negative": "AB-",
+        "o_positive": "O+",
+        "o_negative": "O-"
+      }
     },
     "linkParent": {
       "title": "ربط ولي أمر",
@@ -479,7 +513,9 @@
       "relationship": "العلاقة",
       "mother": "أم",
       "father": "أب",
-      "guardian": "وصي"
+      "guardian": "وصي",
+      "canPickup": "مخول باستلام الطفل",
+      "cannotPickup": "غير مخول باستلام الطفل"
     },
     "emergencyContacts": {
       "title": "جهات اتصال الطوارئ",
@@ -491,10 +527,62 @@
       "relationship": "العلاقة",
       "relationshipPlaceholder": "مثال: عم",
       "relationshipRequired": "العلاقة مطلوبة",
+      "relationshipOther": "حدد",
+      "relationshipOtherPlaceholder": "حدد العلاقة",
+      "relationships": {
+        "mother": "الأم",
+        "father": "الأب",
+        "grandmother": "الجدة",
+        "grandfather": "الجد",
+        "sibling": "أخ/أخت",
+        "uncleAunt": "عم/عمة",
+        "guardian": "الوصي القانوني",
+        "familyFriend": "صديق العائلة",
+        "neighbor": "الجار",
+        "other": "أخرى"
+      },
       "phone": "الهاتف",
       "phoneRequired": "الهاتف مطلوب",
+      "phoneInvalid": "رقم هاتف غير صالح",
+      "address": "العنوان",
+      "addressPlaceholder": "العنوان الكامل",
+      "nationalId": "رقم بطاقة التعريف الوطنية",
+      "nationalIdPlaceholder": "رقم التعريف",
       "authorizedPickup": "مخول باستلام الطفل",
-      "add": "إضافة"
+      "add": "إضافة",
+      "edit": "تعديل",
+      "save": "حفظ",
+      "manage": "إدارة جهات الاتصال",
+      "noContacts": "لا توجد جهات اتصال طوارئ حتى الآن.",
+      "noPickupContact": "لا يوجد أحد مخول باستلام الطفل"
+    },
+    "medicalNotes": {
+      "title": "ملاحظات طبية",
+      "description": "إدارة الملاحظات الطبية (الحساسية، الحالات، الأدوية) لـ {{name}}.",
+      "manage": "إدارة الملاحظات",
+      "addNew": "إضافة ملاحظة",
+      "type": "النوع",
+      "types": {
+        "allergy": "حساسية",
+        "condition": "حالة صحية",
+        "medication": "دواء"
+      },
+      "severity": "الخطورة",
+      "severities": {
+        "low": "منخفضة",
+        "medium": "متوسطة",
+        "high": "مرتفعة"
+      },
+      "noteTitle": "العنوان",
+      "noteTitlePlaceholder": "مثال: حساسية من الفول السوداني",
+      "titleRequired": "العنوان مطلوب",
+      "details": "التفاصيل",
+      "detailsPlaceholder": "تفاصيل إضافية، الجرعة، التعليمات...",
+      "add": "إضافة",
+      "edit": "تعديل",
+      "save": "حفظ",
+      "noNotes": "لا توجد ملاحظات طبية حتى الآن.",
+      "highSeverityWarning": "ملاحظة طبية ذات خطورة مرتفعة"
     }
   },
   "staff": {
@@ -511,15 +599,23 @@
     "contractEnd": "نهاية العقد",
     "documents": "المستندات",
     "uploadDocument": "رفع",
+    "replaceDocument": "استبدال",
     "downloadDocument": "تحميل المستند",
+    "contractDocument": "مستند العقد",
     "noDocuments": "لا توجد مستندات مرفوعة",
     "uploadedOn": "تم الرفع في {{date}}",
     "saved": "تم تحديث الملف",
+    "noProfileYet": "لم يتم إنشاء ملف وظيفي لهذا الشخص بعد.",
+    "createProfile": "إنشاء الملف",
+    "notFound": "الموظف غير موجود",
     "columns": {
       "name": "الاسم",
       "role": "الدور",
       "status": "الحالة",
-      "joined": "تاريخ الانضمام"
+      "joined": "تاريخ الانضمام",
+      "position": "المنصب",
+      "contractType": "نوع العقد",
+      "contractDates": "العقد"
     },
     "contractTypes": {
       "full_time": "دوام كامل",
@@ -933,6 +1029,7 @@
         "title": "العنوان",
         "date": "التاريخ",
         "location": "المكان",
+        "target": "الهدف",
         "consent": "الموافقة"
       },
       "form": {
@@ -947,7 +1044,9 @@
         "location": "المكان",
         "locationPlaceholder": "مثال: ساحة المدرسة",
         "requiresConsent": "يتطلب موافقة أولياء الأمور",
-        "createEvent": "إنشاء"
+        "createEvent": "إنشاء",
+        "noClassrooms": "لا توجد أقسام متاحة",
+        "classroomsSelected": "{{count}} قسم مختار"
       }
     },
     "consent": {
@@ -993,6 +1092,9 @@
     "submitting": "جاري الحفظ...",
     "submitSuccess": "تم حفظ الحضور بنجاح",
     "submitError": "حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى."
+  },
+  "teacherChildren": {
+    "title": "أطفال قسمي"
   },
   "messages": {
     "title": "الرسائل",

@@ -1,4 +1,4 @@
-import { Gender, LearnerType } from '@prisma/client';
+import { Gender, LearnerType, BloodType, MedicalNoteType, Severity } from '@prisma/client';
 
 export interface ChildResponse {
   id: string;
@@ -11,6 +11,10 @@ export interface ChildResponse {
   photoPublicId: string | null;
   enrollmentDate: Date;
   learnerType: LearnerType;
+  nationalId: string | null;
+  address: string | null;
+  placeOfBirth: string | null;
+  bloodType: BloodType | null;
   isActive: boolean;
   createdAt: Date;
 }
@@ -26,6 +30,10 @@ export interface ChildWithEnrollments extends ChildResponse {
       level: string | null;
     };
   }[];
+  /** Only populated by list() — the detail page fetches parent links separately. */
+  parentNames?: string[];
+  /** Only populated by list() — true if any linked parent or emergency contact can pick up the child. */
+  hasAuthorizedPickup?: boolean;
 }
 
 export interface ClassroomEnrollmentResponse {
@@ -52,6 +60,7 @@ export interface ParentChildLinkResponse {
   parentUserId: string;
   relationship: string;
   isPrimary: boolean;
+  canPickup: boolean;
   createdAt: Date;
   parent: {
     id: string;
@@ -67,6 +76,18 @@ export interface EmergencyContactResponse {
   name: string;
   relationship: string;
   phone: string;
+  address: string | null;
+  nationalId: string | null;
   isAuthorizedPickup: boolean;
+  createdAt: Date;
+}
+
+export interface MedicalNoteResponse {
+  id: string;
+  childId: string;
+  type: MedicalNoteType;
+  title: string;
+  details: string | null;
+  severity: Severity;
   createdAt: Date;
 }

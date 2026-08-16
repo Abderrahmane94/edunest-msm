@@ -69,6 +69,24 @@ export const staffController = {
   },
 
   /**
+   * GET /api/staff/by-user/:userId — Get staff profile by linked user ID (admin only)
+   */
+  async getByUserId(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { userId } = req.params;
+      const schoolId = req.user!.schoolId!;
+      const profile = await staffService.getByUserId(userId, schoolId);
+      res.status(200).json(successResponse(profile));
+    } catch (error) {
+      if (error instanceof StaffServiceError) {
+        res.status(error.statusCode).json(errorResponse('STAFF_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
    * PUT /api/staff/:id — Update staff profile (admin only)
    */
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -102,12 +120,12 @@ export const staffController = {
       const { id } = req.params;
       const schoolId = req.user!.schoolId!;
 
-      if (!req.body || !Buffer.isBuffer(req.body)) {
-        res.status(400).json(errorResponse('VALIDATION_ERROR', 'Request body must contain a file buffer'));
+      if (!req.file) {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', 'No file uploaded'));
         return;
       }
 
-      const profile = await staffService.uploadDocument(id, schoolId, req.body);
+      const profile = await staffService.uploadDocument(id, schoolId, req.file.buffer, req.file.originalname);
       res.status(200).json(successResponse(profile));
     } catch (error) {
       if (error instanceof StaffServiceError) {
@@ -127,6 +145,24 @@ export const staffController = {
       const schoolId = req.user!.schoolId!;
       const result = await staffService.getDocumentUrl(id, schoolId);
       res.status(200).json(successResponse(result));
+    } catch (error) {
+      if (error instanceof StaffServiceError) {
+        res.status(error.statusCode).json(errorResponse('STAFF_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * DELETE /api/staff/:id/document — Delete staff document (admin only)
+   */
+  async deleteDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const schoolId = req.user!.schoolId!;
+      const profile = await staffService.deleteDocument(id, schoolId);
+      res.status(200).json(successResponse(profile));
     } catch (error) {
       if (error instanceof StaffServiceError) {
         res.status(error.statusCode).json(errorResponse('STAFF_ERROR', error.message));

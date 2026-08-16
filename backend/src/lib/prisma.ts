@@ -99,6 +99,7 @@ const MODELS_WITHOUT_SCHOOL_ID = new Set([
   'DailyReportPhoto',
   'Message',
   'ConsentForm',
+  'EventClassroom',
   'PaymentAuditLog',
   'Notification',
   // Payment management models (scoped via Branch → School, not direct schoolId)

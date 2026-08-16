@@ -17,6 +17,7 @@ import {
 import { useClassrooms } from '@/hooks/useClassrooms';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
 import { useUsers } from '@/hooks/useUsers';
+import { EmergencyContactsDialog } from './EmergencyContactsDialog';
 
 export function ChildDetailPage() {
   const { t } = useTranslation();
@@ -51,6 +52,7 @@ export function ChildDetailPage() {
   const [linkParentId, setLinkParentId] = React.useState('');
   const [linkRelationship, setLinkRelationship] = React.useState('mother');
   const [linkError, setLinkError] = React.useState<string | null>(null);
+  const [emergencyDialogOpen, setEmergencyDialogOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (child) {
@@ -288,23 +290,43 @@ export function ChildDetailPage() {
       </div>
 
       {/* Emergency contacts */}
-      {(emergencyContacts ?? []).length > 0 && (
-        <div className="bg-card border border-border rounded-lg p-6 space-y-3">
+      <div className="bg-card border border-border rounded-lg p-6 space-y-3">
+        <div className="flex items-center justify-between">
           <h2 className="text-subsection font-semibold text-text-heading">{t('children.emergencyContacts.title')}</h2>
-          <div className="space-y-2">
-            {(emergencyContacts ?? []).map((c) => (
-              <div key={c.id} className="flex items-center justify-between bg-subtle rounded-lg px-3 py-2">
-                <div>
-                  <span className="text-body font-medium text-foreground">{c.name}</span>
-                  <span className="text-caption text-text-secondary ms-2">({c.relationship})</span>
-                  <span className="text-caption text-text-secondary ms-2">{c.phone}</span>
-                  {c.is_authorized_pickup && <span className="ms-2 text-micro text-success font-medium">{t('children.emergencyContacts.authorizedPickup')}</span>}
-                </div>
-              </div>
-            ))}
-          </div>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setEmergencyDialogOpen(true)}>
+            {t('children.emergencyContacts.manage')}
+          </Button>
         </div>
-      )}
+
+        {(emergencyContacts ?? []).length === 0 ? (
+          <p className="text-body text-text-secondary">{t('children.emergencyContacts.noContacts')}</p>
+        ) : (
+          <>
+            {!(emergencyContacts ?? []).some((c) => c.is_authorized_pickup) && (
+              <StatusBadge variant="absent">{t('children.emergencyContacts.noPickupContact')}</StatusBadge>
+            )}
+            <div className="space-y-2">
+              {(emergencyContacts ?? []).map((c) => (
+                <div key={c.id} className="flex items-center justify-between bg-subtle rounded-lg px-3 py-2">
+                  <div>
+                    <span className="text-body font-medium text-foreground">{c.name}</span>
+                    <span className="text-caption text-text-secondary ms-2">({c.relationship})</span>
+                    <span className="text-caption text-text-secondary ms-2">{c.phone}</span>
+                    {c.is_authorized_pickup && <span className="ms-2 text-micro text-success font-medium">{t('children.emergencyContacts.authorizedPickup')}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      <EmergencyContactsDialog
+        open={emergencyDialogOpen}
+        onOpenChange={setEmergencyDialogOpen}
+        childId={childId!}
+        childName={child ? `${child.first_name} ${child.last_name}` : ''}
+      />
 
       {/* Danger zone */}
       <div className="bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3">

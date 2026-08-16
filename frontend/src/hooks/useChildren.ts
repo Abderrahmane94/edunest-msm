@@ -209,6 +209,24 @@ export function useAddEmergencyContact() {
   });
 }
 
+export function useUpdateEmergencyContact() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, contactId, name, relationship, phone, is_authorized_pickup }: {
+      childId: string; contactId: string; name: string; relationship: string; phone: string; is_authorized_pickup: boolean;
+    }) => {
+      const res = await apiClient.put(`/children/${childId}/emergency-contacts/${contactId}`, {
+        name, relationship, phone, isAuthorizedPickup: is_authorized_pickup,
+      });
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update emergency contact');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['emergency-contacts', variables.childId] });
+    },
+  });
+}
+
 export function useRemoveEmergencyContact() {
   const queryClient = useQueryClient();
   return useMutation({

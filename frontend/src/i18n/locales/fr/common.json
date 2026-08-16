@@ -496,10 +496,30 @@
       "relationship": "Relation",
       "relationshipPlaceholder": "Ex: Oncle",
       "relationshipRequired": "La relation est requise",
+      "relationshipOther": "Précisez",
+      "relationshipOtherPlaceholder": "Précisez la relation",
+      "relationships": {
+        "mother": "Mère",
+        "father": "Père",
+        "grandmother": "Grand-mère",
+        "grandfather": "Grand-père",
+        "sibling": "Frère/Sœur",
+        "uncleAunt": "Oncle/Tante",
+        "guardian": "Tuteur légal",
+        "familyFriend": "Ami de la famille",
+        "neighbor": "Voisin",
+        "other": "Autre"
+      },
       "phone": "Téléphone",
       "phoneRequired": "Le téléphone est requis",
+      "phoneInvalid": "Numéro de téléphone invalide",
       "authorizedPickup": "Autorisé à récupérer l'enfant",
-      "add": "Ajouter"
+      "add": "Ajouter",
+      "edit": "Modifier",
+      "save": "Enregistrer",
+      "manage": "Gérer les contacts",
+      "noContacts": "Aucun contact d'urgence pour le moment.",
+      "noPickupContact": "Aucun contact autorisé à récupérer l'enfant"
     }
   },
   "staff": {

@@ -77,7 +77,8 @@ export const createEmergencyContactSchema = z.object({
   phone: z
     .string()
     .min(1, 'Phone number is required')
-    .max(50, 'Phone number must not exceed 50 characters'),
+    .max(50, 'Phone number must not exceed 50 characters')
+    .regex(/^\+?[0-9\s\-().]{6,50}$/, 'Phone number must contain only digits, spaces, and +-().'),
   isAuthorizedPickup: z.boolean().optional().default(false),
 });
 
@@ -96,6 +97,7 @@ export const updateEmergencyContactSchema = z.object({
     .string()
     .min(1, 'Phone number is required')
     .max(50, 'Phone number must not exceed 50 characters')
+    .regex(/^\+?[0-9\s\-().]{6,50}$/, 'Phone number must contain only digits, spaces, and +-().')
     .optional(),
   isAuthorizedPickup: z.boolean().optional(),
 });

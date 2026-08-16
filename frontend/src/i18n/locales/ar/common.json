@@ -497,10 +497,30 @@
       "relationship": "العلاقة",
       "relationshipPlaceholder": "مثال: عم",
       "relationshipRequired": "العلاقة مطلوبة",
+      "relationshipOther": "حدد",
+      "relationshipOtherPlaceholder": "حدد العلاقة",
+      "relationships": {
+        "mother": "الأم",
+        "father": "الأب",
+        "grandmother": "الجدة",
+        "grandfather": "الجد",
+        "sibling": "أخ/أخت",
+        "uncleAunt": "عم/عمة",
+        "guardian": "الوصي القانوني",
+        "familyFriend": "صديق العائلة",
+        "neighbor": "الجار",
+        "other": "أخرى"
+      },
       "phone": "الهاتف",
       "phoneRequired": "الهاتف مطلوب",
+      "phoneInvalid": "رقم هاتف غير صالح",
       "authorizedPickup": "مخول باستلام الطفل",
-      "add": "إضافة"
+      "add": "إضافة",
+      "edit": "تعديل",
+      "save": "حفظ",
+      "manage": "إدارة جهات الاتصال",
+      "noContacts": "لا توجد جهات اتصال طوارئ حتى الآن.",
+      "noPickupContact": "لا يوجد أحد مخول باستلام الطفل"
     }
   },
   "staff": {

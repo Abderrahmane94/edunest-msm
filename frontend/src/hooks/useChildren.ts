@@ -18,6 +18,7 @@ export interface Child {
   address?: string | null;
   place_of_birth?: string | null;
   blood_type?: BloodType | null;
+  has_authorized_pickup?: boolean;
   created_at: string;
   deleted_at?: string | null;
 }
@@ -100,6 +101,7 @@ function mapChild(raw: Record<string, unknown>): Child {
     address: (raw.address ?? null) as string | null,
     place_of_birth: (raw.placeOfBirth ?? raw.place_of_birth ?? null) as string | null,
     blood_type: (raw.bloodType ?? raw.blood_type ?? null) as BloodType | null,
+    has_authorized_pickup: (raw.hasAuthorizedPickup ?? raw.has_authorized_pickup) as boolean | undefined,
     created_at: (raw.createdAt ?? raw.created_at) as string,
     deleted_at: (raw.deletedAt ?? raw.deleted_at ?? null) as string | null,
   };
@@ -200,8 +202,8 @@ export function useRemoveParentLink() {
 export function useUpdateParentLink() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ childId, linkId, relationship }: { childId: string; linkId: string; relationship: string }) => {
-      const res = await apiClient.put(`/children/${childId}/parent-links/${linkId}`, { relationship });
+    mutationFn: async ({ childId, linkId, relationship, canPickup }: { childId: string; linkId: string; relationship: string; canPickup?: boolean }) => {
+      const res = await apiClient.put(`/children/${childId}/parent-links/${linkId}`, { relationship, canPickup });
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to update parent link');
       return res.data;
     },
@@ -398,8 +400,8 @@ export function useRemoveMedicalNote() {
 export function useLinkParent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ childId, parentId, relationship }: { childId: string; parentId: string; relationship: string }) => {
-      const res = await apiClient.post(`/children/${childId}/parent-links`, { parentUserId: parentId, relationship });
+    mutationFn: async ({ childId, parentId, relationship, canPickup }: { childId: string; parentId: string; relationship: string; canPickup?: boolean }) => {
+      const res = await apiClient.post(`/children/${childId}/parent-links`, { parentUserId: parentId, relationship, canPickup });
       if (!res.success) {
         throw new Error(res.error?.message ?? 'Failed to link parent');
       }

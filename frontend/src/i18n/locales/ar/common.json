@@ -513,7 +513,9 @@
       "relationship": "العلاقة",
       "mother": "أم",
       "father": "أب",
-      "guardian": "وصي"
+      "guardian": "وصي",
+      "canPickup": "مخول باستلام الطفل",
+      "cannotPickup": "غير مخول باستلام الطفل"
     },
     "emergencyContacts": {
       "title": "جهات اتصال الطوارئ",

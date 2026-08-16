@@ -512,7 +512,9 @@
       "relationship": "Relation",
       "mother": "Mère",
       "father": "Père",
-      "guardian": "Tuteur"
+      "guardian": "Tuteur",
+      "canPickup": "Autorisé(e) à récupérer l'enfant",
+      "cannotPickup": "Non autorisé à récupérer l'enfant"
     },
     "emergencyContacts": {
       "title": "Contacts d'urgence",

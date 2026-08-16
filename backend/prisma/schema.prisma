@@ -351,6 +351,7 @@ model ParentChildLink {
   parentUserId String   @map("parent_user_id")
   relationship String
   isPrimary    Boolean  @default(false) @map("is_primary")
+  canPickup    Boolean  @default(true) @map("can_pickup")
   createdAt    DateTime @default(now()) @map("created_at")
 
   child  Child @relation(fields: [childId], references: [id])

@@ -68,6 +68,7 @@ export function ChildDetailPage() {
   const [medicalDialogOpen, setMedicalDialogOpen] = React.useState(false);
   const [editingLinkId, setEditingLinkId] = React.useState<string | null>(null);
   const [editLinkRelationship, setEditLinkRelationship] = React.useState('mother');
+  const [editLinkCanPickup, setEditLinkCanPickup] = React.useState(true);
 
   React.useEffect(() => {
     if (child) {
@@ -154,6 +155,10 @@ export function ChildDetailPage() {
   const parentOptions = parents
     .filter((p) => !(parentLinks ?? []).some((l: Record<string, unknown>) => l.parentUserId === p.id))
     .map((p) => ({ value: p.id, label: `${p.first_name} ${p.last_name} (${p.email})` }));
+
+  const hasAuthorizedPickup =
+    (parentLinks ?? []).some((l: Record<string, unknown>) => l.canPickup !== false) ||
+    (emergencyContacts ?? []).some((c) => c.is_authorized_pickup);
 
   if (isLoading) {
     return (
@@ -282,6 +287,9 @@ export function ChildDetailPage() {
       {/* Parent links */}
       <div className="bg-card border border-border rounded-lg p-6 space-y-3">
         <h2 className="text-subsection font-semibold text-text-heading">{t('children.detail.parents')}</h2>
+        {!hasAuthorizedPickup && (
+          <StatusBadge variant="absent">{t('children.emergencyContacts.noPickupContact')}</StatusBadge>
+        )}
         {(parentLinks ?? []).length === 0 ? (
           <p className="text-body text-text-secondary">{t('children.noParents')}</p>
         ) : (
@@ -319,9 +327,25 @@ export function ChildDetailPage() {
                           <Star className="w-3.5 h-3.5 fill-current" /> {t('children.detail.primary')}
                         </span>
                       )}
+                      {!isEditing && link.canPickup === false && (
+                        <span className="text-micro text-danger font-medium">
+                          {t('children.linkParent.cannotPickup')}
+                        </span>
+                      )}
                     </div>
                     {!!parent?.email && (
                       <p className="text-caption text-text-secondary" dir="ltr">{parent.email as string}</p>
+                    )}
+                    {isEditing && (
+                      <label className="flex items-center gap-2 mt-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editLinkCanPickup}
+                          onChange={(e) => setEditLinkCanPickup(e.target.checked)}
+                          className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                        />
+                        <span className="text-caption text-foreground">{t('children.linkParent.canPickup')}</span>
+                      </label>
                     )}
                   </div>
                   <div className="flex items-center gap-1">
@@ -330,7 +354,7 @@ export function ChildDetailPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => {
-                          updateParentLink.mutate({ childId: childId!, linkId, relationship: editLinkRelationship });
+                          updateParentLink.mutate({ childId: childId!, linkId, relationship: editLinkRelationship, canPickup: editLinkCanPickup });
                           setEditingLinkId(null);
                         }}
                         disabled={updateParentLink.isPending}
@@ -356,6 +380,7 @@ export function ChildDetailPage() {
                           onClick={() => {
                             setEditingLinkId(linkId);
                             setEditLinkRelationship(link.relationship as string);
+                            setEditLinkCanPickup(link.canPickup !== false);
                           }}
                         >
                           <Pencil className="w-4 h-4 text-text-secondary" />
@@ -423,9 +448,6 @@ export function ChildDetailPage() {
           <p className="text-body text-text-secondary">{t('children.emergencyContacts.noContacts')}</p>
         ) : (
           <>
-            {!(emergencyContacts ?? []).some((c) => c.is_authorized_pickup) && (
-              <StatusBadge variant="absent">{t('children.emergencyContacts.noPickupContact')}</StatusBadge>
-            )}
             <div className="space-y-2">
               {(emergencyContacts ?? []).map((c) => (
                 <div key={c.id} className="flex items-center justify-between bg-subtle rounded-lg px-3 py-2">

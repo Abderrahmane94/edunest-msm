@@ -32,6 +32,8 @@ export interface ChildWithEnrollments extends ChildResponse {
   }[];
   /** Only populated by list() — the detail page fetches parent links separately. */
   parentNames?: string[];
+  /** Only populated by list() — true if any linked parent or emergency contact can pick up the child. */
+  hasAuthorizedPickup?: boolean;
 }
 
 export interface ClassroomEnrollmentResponse {
@@ -58,6 +60,7 @@ export interface ParentChildLinkResponse {
   parentUserId: string;
   relationship: string;
   isPrimary: boolean;
+  canPickup: boolean;
   createdAt: Date;
   parent: {
     id: string;

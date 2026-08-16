@@ -19,7 +19,7 @@ import {
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import {
-  useChildren, useCreateChild, useLinkParent, useEmergencyContacts, useMedicalNotes,
+  useChildren, useCreateChild, useLinkParent, useMedicalNotes,
   type Child, type BloodType,
 } from '@/hooks/useChildren';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
@@ -30,11 +30,10 @@ import { MedicalNotesDialog } from './MedicalNotesDialog';
 /** Minimal shape needed by dialogs that only display/reference a child's identity. */
 type ChildRef = Pick<Child, 'id' | 'first_name' | 'last_name'>;
 
-/** Small table-cell warning shown when a child has nobody authorized to pick them up. */
-function PickupContactWarning({ childId }: { childId: string }) {
+/** Small table-cell warning shown when nobody — parent or emergency contact — is authorized to pick up this child. */
+function PickupContactWarning({ child }: { child: Child }) {
   const { t } = useTranslation();
-  const { data: contacts } = useEmergencyContacts(childId);
-  if (!contacts || contacts.some((c) => c.is_authorized_pickup)) return null;
+  if (child.has_authorized_pickup !== false) return null;
   return (
     <StatusBadge variant="absent" title={t('children.emergencyContacts.noPickupContact')}>
       {t('children.emergencyContacts.noPickupContact')}
@@ -463,7 +462,7 @@ export function ChildrenPage() {
               {formatDate(child.date_of_birth)}
             </p>
           </div>
-          <PickupContactWarning childId={child.id} />
+          <PickupContactWarning child={child} />
           <HighSeverityMedicalWarning childId={child.id} />
         </div>
       ),

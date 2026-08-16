@@ -94,14 +94,18 @@ class ChildrenService {
           parentLinks: {
             include: { parent: { select: { firstName: true, lastName: true } } },
           },
+          emergencyContacts: true,
         },
       }),
       prisma.child.count({ where }),
     ]);
 
-    const childrenWithParentNames = children.map(({ parentLinks, ...child }) => ({
+    const childrenWithParentNames = children.map(({ parentLinks, emergencyContacts, ...child }) => ({
       ...child,
       parentNames: parentLinks.map((link) => `${link.parent.firstName} ${link.parent.lastName}`),
+      hasAuthorizedPickup:
+        parentLinks.some((link) => link.canPickup) ||
+        emergencyContacts.some((contact) => contact.isAuthorizedPickup),
     }));
 
     return { children: childrenWithParentNames, total };
@@ -401,6 +405,7 @@ class ChildrenService {
         parentUserId: input.parentUserId,
         relationship: input.relationship,
         isPrimary: false,
+        canPickup: input.canPickup ?? true,
       },
       include: {
         parent: {
@@ -477,7 +482,10 @@ class ChildrenService {
 
     const updated = await prisma.parentChildLink.update({
       where: { id: linkId },
-      data: { relationship: input.relationship },
+      data: {
+        relationship: input.relationship,
+        ...(input.canPickup !== undefined && { canPickup: input.canPickup }),
+      },
       include: {
         parent: {
           select: {

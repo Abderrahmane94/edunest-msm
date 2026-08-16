@@ -82,12 +82,14 @@ export const createParentLinkSchema = z.object({
   relationship: z.enum(['mother', 'father', 'guardian'], {
     errorMap: () => ({ message: 'Relationship must be mother, father, or guardian' }),
   }),
+  canPickup: z.boolean().optional(),
 });
 
 export const updateParentLinkSchema = z.object({
   relationship: z.enum(['mother', 'father', 'guardian'], {
     errorMap: () => ({ message: 'Relationship must be mother, father, or guardian' }),
   }),
+  canPickup: z.boolean().optional(),
 });
 
 export const parentLinkParamsSchema = z.object({

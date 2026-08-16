@@ -1210,6 +1210,23 @@ class CommunicationService {
     });
     const creatorMap = new Map(creators.map((c) => [c.id, c]));
 
+    // Compute consent stats in a single query for events that require consent,
+    // rather than fetching full ConsentForm rows per event.
+    const consentEventIds = events.filter((e) => e.requiresConsent).map((e) => e.id);
+    const consentStatuses = consentEventIds.length > 0
+      ? await prisma.consentForm.findMany({
+          where: { eventId: { in: consentEventIds } },
+          select: { eventId: true, status: true },
+        })
+      : [];
+    const statsByEvent = new Map<string, { total: number; approved: number; declined: number; pending: number }>();
+    for (const form of consentStatuses) {
+      const stats = statsByEvent.get(form.eventId) ?? { total: 0, approved: 0, declined: 0, pending: 0 };
+      stats.total += 1;
+      stats[form.status] += 1;
+      statsByEvent.set(form.eventId, stats);
+    }
+
     const eventResponses: EventResponse[] = events.map((event) => ({
       id: event.id,
       schoolId: event.schoolId,
@@ -1222,6 +1239,9 @@ class CommunicationService {
       createdByUserId: event.createdByUserId,
       createdAt: event.createdAt,
       createdBy: creatorMap.get(event.createdByUserId),
+      consentStats: event.requiresConsent
+        ? statsByEvent.get(event.id) ?? { total: 0, approved: 0, declined: 0, pending: 0 }
+        : undefined,
     }));
 
     return { events: eventResponses, total };

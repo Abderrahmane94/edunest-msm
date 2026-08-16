@@ -144,4 +144,10 @@ export interface EventResponse {
     lastName: string;
   };
   consentForms?: ConsentFormResponse[];
+  consentStats?: {
+    total: number;
+    approved: number;
+    declined: number;
+    pending: number;
+  };
 }

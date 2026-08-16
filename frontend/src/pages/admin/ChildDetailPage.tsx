@@ -14,6 +14,7 @@ import {
   useUpdateParentLink,
   useSetPrimaryParentLink,
   useEmergencyContacts,
+  useMedicalNotes,
   useLinkParent,
   type BloodType,
 } from '@/hooks/useChildren';
@@ -21,6 +22,7 @@ import { useClassrooms } from '@/hooks/useClassrooms';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
 import { useUsers } from '@/hooks/useUsers';
 import { EmergencyContactsDialog } from './EmergencyContactsDialog';
+import { MedicalNotesDialog, severityBadgeVariant } from './MedicalNotesDialog';
 
 export function ChildDetailPage() {
   const { t } = useTranslation();
@@ -35,6 +37,7 @@ export function ChildDetailPage() {
   const updateParentLink = useUpdateParentLink();
   const setPrimaryParentLink = useSetPrimaryParentLink();
   const { data: emergencyContacts } = useEmergencyContacts(childId!);
+  const { data: medicalNotes } = useMedicalNotes(childId!);
   const linkParent = useLinkParent();
 
   const { data: academicYears } = useAcademicYears();
@@ -62,6 +65,7 @@ export function ChildDetailPage() {
   const [linkRelationship, setLinkRelationship] = React.useState('mother');
   const [linkError, setLinkError] = React.useState<string | null>(null);
   const [emergencyDialogOpen, setEmergencyDialogOpen] = React.useState(false);
+  const [medicalDialogOpen, setMedicalDialogOpen] = React.useState(false);
   const [editingLinkId, setEditingLinkId] = React.useState<string | null>(null);
   const [editLinkRelationship, setEditLinkRelationship] = React.useState('mother');
 
@@ -450,6 +454,46 @@ export function ChildDetailPage() {
       <EmergencyContactsDialog
         open={emergencyDialogOpen}
         onOpenChange={setEmergencyDialogOpen}
+        childId={childId!}
+        childName={child ? `${child.first_name} ${child.last_name}` : ''}
+      />
+
+      {/* Medical notes */}
+      <div className="bg-card border border-border rounded-lg p-6 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-subsection font-semibold text-text-heading">{t('children.medicalNotes.title')}</h2>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setMedicalDialogOpen(true)}>
+            {t('children.medicalNotes.manage')}
+          </Button>
+        </div>
+
+        {(medicalNotes ?? []).length === 0 ? (
+          <p className="text-body text-text-secondary">{t('children.medicalNotes.noNotes')}</p>
+        ) : (
+          <div className="space-y-2">
+            {(medicalNotes ?? []).map((n) => (
+              <div key={n.id} className="flex items-center justify-between bg-subtle rounded-lg px-3 py-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-body font-medium text-foreground">{n.title}</span>
+                    <StatusBadge variant={severityBadgeVariant(n.severity)}>
+                      {t(`children.medicalNotes.severities.${n.severity}`)}
+                    </StatusBadge>
+                  </div>
+                  <p className="text-caption text-text-secondary">
+                    {t(`children.medicalNotes.types.${n.type}`)}
+                    {n.details && <span> • {n.details}</span>}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <MedicalNotesDialog
+        open={medicalDialogOpen}
+        onOpenChange={setMedicalDialogOpen}
         childId={childId!}
         childName={child ? `${child.first_name} ${child.last_name}` : ''}
       />

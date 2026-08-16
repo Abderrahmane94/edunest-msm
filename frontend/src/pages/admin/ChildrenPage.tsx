@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Link2, Phone } from 'lucide-react';
+import { Link2, Phone, HeartPulse } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import {
   Button,
@@ -19,12 +19,13 @@ import {
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import {
-  useChildren, useCreateChild, useLinkParent, useEmergencyContacts,
+  useChildren, useCreateChild, useLinkParent, useEmergencyContacts, useMedicalNotes,
   type Child, type BloodType,
 } from '@/hooks/useChildren';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
 import { useUsers } from '@/hooks/useUsers';
 import { EmergencyContactsDialog } from './EmergencyContactsDialog';
+import { MedicalNotesDialog } from './MedicalNotesDialog';
 
 /** Minimal shape needed by dialogs that only display/reference a child's identity. */
 type ChildRef = Pick<Child, 'id' | 'first_name' | 'last_name'>;
@@ -37,6 +38,18 @@ function PickupContactWarning({ childId }: { childId: string }) {
   return (
     <StatusBadge variant="absent" title={t('children.emergencyContacts.noPickupContact')}>
       {t('children.emergencyContacts.noPickupContact')}
+    </StatusBadge>
+  );
+}
+
+/** Small table-cell warning shown when a child has a high-severity medical note. */
+function HighSeverityMedicalWarning({ childId }: { childId: string }) {
+  const { t } = useTranslation();
+  const { data: notes } = useMedicalNotes(childId);
+  if (!notes || !notes.some((n) => n.severity === 'high')) return null;
+  return (
+    <StatusBadge variant="absent" title={t('children.medicalNotes.highSeverityWarning')}>
+      {t('children.medicalNotes.highSeverityWarning')}
     </StatusBadge>
   );
 }
@@ -409,6 +422,7 @@ export function ChildrenPage() {
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
   const [linkParentDialogOpen, setLinkParentDialogOpen] = React.useState(false);
   const [emergencyDialogOpen, setEmergencyDialogOpen] = React.useState(false);
+  const [medicalDialogOpen, setMedicalDialogOpen] = React.useState(false);
   const [selectedChild, setSelectedChild] = React.useState<ChildRef | null>(null);
 
   function handleSearch(query: string) {
@@ -424,6 +438,11 @@ export function ChildrenPage() {
   function handleEmergencyContacts(child: Child) {
     setSelectedChild(child);
     setEmergencyDialogOpen(true);
+  }
+
+  function handleMedicalNotes(child: Child) {
+    setSelectedChild(child);
+    setMedicalDialogOpen(true);
   }
 
   const columns: Column<Child>[] = [
@@ -445,6 +464,7 @@ export function ChildrenPage() {
             </p>
           </div>
           <PickupContactWarning childId={child.id} />
+          <HighSeverityMedicalWarning childId={child.id} />
         </div>
       ),
     },
@@ -509,9 +529,18 @@ export function ChildrenPage() {
           >
             <Phone className="w-4 h-4" />
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => { e.stopPropagation(); handleMedicalNotes(child); }}
+            aria-label={t('children.medicalNotes.title')}
+            title={t('children.medicalNotes.title')}
+          >
+            <HeartPulse className="w-4 h-4" />
+          </Button>
         </div>
       ),
-      className: 'w-24',
+      className: 'w-32',
     },
   ];
 
@@ -576,6 +605,13 @@ export function ChildrenPage() {
       <EmergencyContactsDialog
         open={emergencyDialogOpen}
         onOpenChange={setEmergencyDialogOpen}
+        childId={selectedChild?.id ?? ''}
+        childName={selectedChild ? `${selectedChild.first_name} ${selectedChild.last_name}` : ''}
+      />
+
+      <MedicalNotesDialog
+        open={medicalDialogOpen}
+        onOpenChange={setMedicalDialogOpen}
         childId={selectedChild?.id ?? ''}
         childName={selectedChild ? `${selectedChild.first_name} ${selectedChild.last_name}` : ''}
       />

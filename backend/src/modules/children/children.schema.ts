@@ -10,6 +10,13 @@ const nationalIdSchema = z.string().min(1).max(50);
 const addressSchema = z.string().min(1).max(500);
 const placeOfBirthSchema = z.string().min(1).max(255);
 
+const medicalNoteTypeSchema = z.enum(['allergy', 'condition', 'medication'], {
+  errorMap: () => ({ message: 'Type must be allergy, condition, or medication' }),
+});
+const medicalNoteSeveritySchema = z.enum(['low', 'medium', 'high'], {
+  errorMap: () => ({ message: 'Severity must be low, medium, or high' }),
+});
+
 export const createChildSchema = z.object({
   firstName: z
     .string()
@@ -134,6 +141,32 @@ export const emergencyContactParamsSchema = z.object({
   contactId: uuidSchema,
 });
 
+export const createMedicalNoteSchema = z.object({
+  type: medicalNoteTypeSchema,
+  title: z
+    .string()
+    .min(1, 'Title is required')
+    .max(255, 'Title must not exceed 255 characters'),
+  details: z.string().max(2000, 'Details must not exceed 2000 characters').optional(),
+  severity: medicalNoteSeveritySchema.optional().default('low'),
+});
+
+export const updateMedicalNoteSchema = z.object({
+  type: medicalNoteTypeSchema.optional(),
+  title: z
+    .string()
+    .min(1, 'Title is required')
+    .max(255, 'Title must not exceed 255 characters')
+    .optional(),
+  details: z.string().max(2000, 'Details must not exceed 2000 characters').optional(),
+  severity: medicalNoteSeveritySchema.optional(),
+});
+
+export const medicalNoteParamsSchema = z.object({
+  id: uuidSchema,
+  noteId: uuidSchema,
+});
+
 export type CreateChildInput = z.infer<typeof createChildSchema>;
 export type UpdateChildInput = z.infer<typeof updateChildSchema>;
 export type EnrollChildInput = z.infer<typeof enrollChildSchema>;
@@ -141,3 +174,5 @@ export type CreateParentLinkInput = z.infer<typeof createParentLinkSchema>;
 export type UpdateParentLinkInput = z.infer<typeof updateParentLinkSchema>;
 export type CreateEmergencyContactInput = z.infer<typeof createEmergencyContactSchema>;
 export type UpdateEmergencyContactInput = z.infer<typeof updateEmergencyContactSchema>;
+export type CreateMedicalNoteInput = z.infer<typeof createMedicalNoteSchema>;
+export type UpdateMedicalNoteInput = z.infer<typeof updateMedicalNoteSchema>;

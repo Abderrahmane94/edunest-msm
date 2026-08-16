@@ -32,6 +32,18 @@ export interface EmergencyContact {
   is_authorized_pickup: boolean;
 }
 
+export type MedicalNoteType = 'allergy' | 'condition' | 'medication';
+export type MedicalNoteSeverity = 'low' | 'medium' | 'high';
+
+export interface MedicalNote {
+  id: string;
+  type: MedicalNoteType;
+  title: string;
+  details: string | null;
+  severity: MedicalNoteSeverity;
+  created_at: string;
+}
+
 interface ChildrenParams {
   page?: number;
   pageSize?: number;
@@ -310,6 +322,75 @@ export function useCreateChild() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['children'] });
+    },
+  });
+}
+
+function mapMedicalNote(n: Record<string, unknown>): MedicalNote {
+  return {
+    id: n.id as string,
+    type: n.type as MedicalNoteType,
+    title: n.title as string,
+    details: (n.details ?? null) as string | null,
+    severity: n.severity as MedicalNoteSeverity,
+    created_at: (n.createdAt ?? n.created_at) as string,
+  };
+}
+
+export function useMedicalNotes(childId: string) {
+  return useQuery({
+    queryKey: ['medical-notes', childId],
+    queryFn: async () => {
+      const res = await apiClient.get<Record<string, unknown>[]>(`/children/${childId}/medical-notes`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load medical notes');
+      return Array.isArray(res.data) ? res.data.map(mapMedicalNote) : [];
+    },
+    enabled: !!childId,
+  });
+}
+
+export function useAddMedicalNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, type, title, details, severity }: {
+      childId: string; type: MedicalNoteType; title: string; details?: string; severity: MedicalNoteSeverity;
+    }) => {
+      const res = await apiClient.post(`/children/${childId}/medical-notes`, { type, title, details, severity });
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to add medical note');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['medical-notes', variables.childId] });
+    },
+  });
+}
+
+export function useUpdateMedicalNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, noteId, type, title, details, severity }: {
+      childId: string; noteId: string; type: MedicalNoteType; title: string; details?: string; severity: MedicalNoteSeverity;
+    }) => {
+      const res = await apiClient.put(`/children/${childId}/medical-notes/${noteId}`, { type, title, details, severity });
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update medical note');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['medical-notes', variables.childId] });
+    },
+  });
+}
+
+export function useRemoveMedicalNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, noteId }: { childId: string; noteId: string }) => {
+      const res = await apiClient.delete(`/children/${childId}/medical-notes/${noteId}`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to remove medical note');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['medical-notes', variables.childId] });
     },
   });
 }

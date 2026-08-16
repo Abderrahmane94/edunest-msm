@@ -1,4 +1,4 @@
-import { Gender, LearnerType, BloodType } from '@prisma/client';
+import { Gender, LearnerType, BloodType, MedicalNoteType, Severity } from '@prisma/client';
 
 export interface ChildResponse {
   id: string;
@@ -76,5 +76,15 @@ export interface EmergencyContactResponse {
   address: string | null;
   nationalId: string | null;
   isAuthorizedPickup: boolean;
+  createdAt: Date;
+}
+
+export interface MedicalNoteResponse {
+  id: string;
+  childId: string;
+  type: MedicalNoteType;
+  title: string;
+  details: string | null;
+  severity: Severity;
   createdAt: Date;
 }

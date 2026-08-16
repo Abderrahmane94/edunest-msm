@@ -552,6 +552,34 @@
       "manage": "Gérer les contacts",
       "noContacts": "Aucun contact d'urgence pour le moment.",
       "noPickupContact": "Aucun contact autorisé à récupérer l'enfant"
+    },
+    "medicalNotes": {
+      "title": "Notes médicales",
+      "description": "Gérer les notes médicales (allergies, conditions, médicaments) pour {{name}}.",
+      "manage": "Gérer les notes",
+      "addNew": "Ajouter une note",
+      "type": "Type",
+      "types": {
+        "allergy": "Allergie",
+        "condition": "Condition",
+        "medication": "Médicament"
+      },
+      "severity": "Sévérité",
+      "severities": {
+        "low": "Faible",
+        "medium": "Moyenne",
+        "high": "Élevée"
+      },
+      "noteTitle": "Titre",
+      "noteTitlePlaceholder": "Ex: Allergie aux arachides",
+      "titleRequired": "Le titre est requis",
+      "details": "Détails",
+      "detailsPlaceholder": "Précisions, dosage, instructions...",
+      "add": "Ajouter",
+      "edit": "Modifier",
+      "save": "Enregistrer",
+      "noNotes": "Aucune note médicale pour le moment.",
+      "highSeverityWarning": "Note médicale à sévérité élevée"
     }
   },
   "staff": {
@@ -1050,6 +1078,9 @@
     "submitting": "Enregistrement...",
     "submitSuccess": "Présence enregistrée avec succès",
     "submitError": "Erreur lors de l'enregistrement. Veuillez réessayer."
+  },
+  "teacherChildren": {
+    "title": "Enfants de ma classe"
   },
   "messages": {
     "title": "Messages",

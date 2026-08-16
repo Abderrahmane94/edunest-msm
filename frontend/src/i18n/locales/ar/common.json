@@ -553,6 +553,34 @@
       "manage": "إدارة جهات الاتصال",
       "noContacts": "لا توجد جهات اتصال طوارئ حتى الآن.",
       "noPickupContact": "لا يوجد أحد مخول باستلام الطفل"
+    },
+    "medicalNotes": {
+      "title": "ملاحظات طبية",
+      "description": "إدارة الملاحظات الطبية (الحساسية، الحالات، الأدوية) لـ {{name}}.",
+      "manage": "إدارة الملاحظات",
+      "addNew": "إضافة ملاحظة",
+      "type": "النوع",
+      "types": {
+        "allergy": "حساسية",
+        "condition": "حالة صحية",
+        "medication": "دواء"
+      },
+      "severity": "الخطورة",
+      "severities": {
+        "low": "منخفضة",
+        "medium": "متوسطة",
+        "high": "مرتفعة"
+      },
+      "noteTitle": "العنوان",
+      "noteTitlePlaceholder": "مثال: حساسية من الفول السوداني",
+      "titleRequired": "العنوان مطلوب",
+      "details": "التفاصيل",
+      "detailsPlaceholder": "تفاصيل إضافية، الجرعة، التعليمات...",
+      "add": "إضافة",
+      "edit": "تعديل",
+      "save": "حفظ",
+      "noNotes": "لا توجد ملاحظات طبية حتى الآن.",
+      "highSeverityWarning": "ملاحظة طبية ذات خطورة مرتفعة"
     }
   },
   "staff": {
@@ -1051,6 +1079,9 @@
     "submitting": "جاري الحفظ...",
     "submitSuccess": "تم حفظ الحضور بنجاح",
     "submitError": "حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى."
+  },
+  "teacherChildren": {
+    "title": "أطفال قسمي"
   },
   "messages": {
     "title": "الرسائل",

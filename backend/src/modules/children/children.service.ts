@@ -1,8 +1,8 @@
 import prisma from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { softDeleteService } from '../../services/soft-delete.service';
-import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, UpdateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput } from './children.schema';
-import type { ChildWithEnrollments, ClassroomEnrollmentResponse, PhotoUrlResponse, ParentChildLinkResponse, EmergencyContactResponse } from './children.types';
+import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, UpdateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput, CreateMedicalNoteInput, UpdateMedicalNoteInput } from './children.schema';
+import type { ChildWithEnrollments, ClassroomEnrollmentResponse, PhotoUrlResponse, ParentChildLinkResponse, EmergencyContactResponse, MedicalNoteResponse } from './children.types';
 
 export class ChildServiceError extends Error {
   constructor(
@@ -693,6 +693,131 @@ class ChildrenService {
 
     await prisma.emergencyContact.delete({
       where: { id: contactId },
+    });
+  }
+
+  // ─── Medical Notes ────────────────────────────────────────────────────────
+
+  /**
+   * Add a medical note (allergy, condition, or medication) for a child.
+   */
+  async addMedicalNote(
+    childId: string,
+    schoolId: string,
+    input: CreateMedicalNoteInput,
+  ): Promise<MedicalNoteResponse> {
+    const child = await prisma.child.findFirst({
+      where: { id: childId, schoolId },
+    });
+
+    if (!child) {
+      throw new ChildServiceError('Child not found', 404);
+    }
+
+    const note = await prisma.medicalNote.create({
+      data: {
+        childId,
+        type: input.type,
+        title: input.title,
+        details: input.details,
+        severity: input.severity,
+      },
+    });
+    return note;
+  }
+
+  /**
+   * List all medical notes for a child, scoped to the school. Teachers may
+   * only view notes for children enrolled in their own classroom.
+   */
+  async getMedicalNotes(
+    childId: string,
+    schoolId: string,
+    requestingTeacherUserId?: string,
+  ): Promise<MedicalNoteResponse[]> {
+    const child = await prisma.child.findFirst({
+      where: { id: childId, schoolId },
+    });
+
+    if (!child) {
+      throw new ChildServiceError('Child not found', 404);
+    }
+
+    if (requestingTeacherUserId) {
+      const enrollment = await prisma.classroomEnrollment.findFirst({
+        where: { childId, classroom: { teacherUserId: requestingTeacherUserId, schoolId } },
+      });
+      if (!enrollment) {
+        throw new ChildServiceError('This child is not in your assigned classroom', 403);
+      }
+    }
+
+    const notes = await prisma.medicalNote.findMany({
+      where: { childId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return notes;
+  }
+
+  /**
+   * Update a medical note. Only updates provided fields.
+   */
+  async updateMedicalNote(
+    childId: string,
+    schoolId: string,
+    noteId: string,
+    input: UpdateMedicalNoteInput,
+  ): Promise<MedicalNoteResponse> {
+    const child = await prisma.child.findFirst({
+      where: { id: childId, schoolId },
+    });
+
+    if (!child) {
+      throw new ChildServiceError('Child not found', 404);
+    }
+
+    const note = await prisma.medicalNote.findFirst({
+      where: { id: noteId, childId },
+    });
+
+    if (!note) {
+      throw new ChildServiceError('Medical note not found', 404);
+    }
+
+    const updated = await prisma.medicalNote.update({
+      where: { id: noteId },
+      data: {
+        ...(input.type !== undefined && { type: input.type }),
+        ...(input.title !== undefined && { title: input.title }),
+        ...(input.details !== undefined && { details: input.details }),
+        ...(input.severity !== undefined && { severity: input.severity }),
+      },
+    });
+    return updated;
+  }
+
+  /**
+   * Remove a medical note.
+   */
+  async removeMedicalNote(childId: string, schoolId: string, noteId: string): Promise<void> {
+    const child = await prisma.child.findFirst({
+      where: { id: childId, schoolId },
+    });
+
+    if (!child) {
+      throw new ChildServiceError('Child not found', 404);
+    }
+
+    const note = await prisma.medicalNote.findFirst({
+      where: { id: noteId, childId },
+    });
+
+    if (!note) {
+      throw new ChildServiceError('Medical note not found', 404);
+    }
+
+    await prisma.medicalNote.delete({
+      where: { id: noteId },
     });
   }
 }

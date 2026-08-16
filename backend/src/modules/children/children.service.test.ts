@@ -201,10 +201,13 @@ describe('ChildrenService', () => {
   });
 
   describe('list', () => {
-    it('should return paginated children for a school', async () => {
+    it('should return paginated children for a school, with linked parent names', async () => {
       const children = [
-        { id: 'child-1', schoolId, firstName: 'Ahmed', isActive: true, enrollments: [] },
-        { id: 'child-2', schoolId, firstName: 'Fatima', isActive: true, enrollments: [] },
+        {
+          id: 'child-1', schoolId, firstName: 'Ahmed', isActive: true, enrollments: [],
+          parentLinks: [{ parent: { firstName: 'Karim', lastName: 'Parent' } }],
+        },
+        { id: 'child-2', schoolId, firstName: 'Fatima', isActive: true, enrollments: [], parentLinks: [] },
       ];
 
       mockPrisma.child.findMany.mockResolvedValue(children);
@@ -212,7 +215,10 @@ describe('ChildrenService', () => {
 
       const result = await childrenService.list(schoolId, 1, 20);
 
-      expect(result.children).toEqual(children);
+      expect(result.children).toEqual([
+        { id: 'child-1', schoolId, firstName: 'Ahmed', isActive: true, enrollments: [], parentNames: ['Karim Parent'] },
+        { id: 'child-2', schoolId, firstName: 'Fatima', isActive: true, enrollments: [], parentNames: [] },
+      ]);
       expect(result.total).toBe(2);
       expect(mockPrisma.child.findMany).toHaveBeenCalledWith({
         where: { schoolId },

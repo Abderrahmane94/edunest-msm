@@ -75,7 +75,7 @@ function mapChild(raw: Record<string, unknown>): Child {
     photo_url: (raw.photoPublicId ?? raw.photo_url) as string | undefined,
     is_active: (raw.isActive ?? raw.is_active) as boolean,
     classroom_name: classroomName,
-    parent_names: (raw.parent_names ?? []) as string[],
+    parent_names: (raw.parentNames ?? raw.parent_names ?? []) as string[],
     created_at: (raw.createdAt ?? raw.created_at) as string,
     deleted_at: (raw.deletedAt ?? raw.deleted_at ?? null) as string | null,
   };

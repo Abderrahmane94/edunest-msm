@@ -26,6 +26,8 @@ export interface ChildWithEnrollments extends ChildResponse {
       level: string | null;
     };
   }[];
+  /** Only populated by list() — the detail page fetches parent links separately. */
+  parentNames?: string[];
 }
 
 export interface ClassroomEnrollmentResponse {

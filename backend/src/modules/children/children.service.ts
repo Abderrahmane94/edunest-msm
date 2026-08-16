@@ -85,12 +85,22 @@ class ChildrenService {
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
-        include: enrollmentInclude,
+        include: {
+          ...enrollmentInclude,
+          parentLinks: {
+            include: { parent: { select: { firstName: true, lastName: true } } },
+          },
+        },
       }),
       prisma.child.count({ where }),
     ]);
 
-    return { children, total };
+    const childrenWithParentNames = children.map(({ parentLinks, ...child }) => ({
+      ...child,
+      parentNames: parentLinks.map((link) => `${link.parent.firstName} ${link.parent.lastName}`),
+    }));
+
+    return { children: childrenWithParentNames, total };
   }
 
   /**

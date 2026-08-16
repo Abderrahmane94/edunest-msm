@@ -108,6 +108,13 @@ export function EventDetailPage() {
               </div>
             </div>
           )}
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 shrink-0 text-text-secondary" />
+            <div>
+              <p className="text-caption text-text-secondary">{t('communication.events.columns.target')}</p>
+              <p className="text-body text-foreground">{event.classroom_name ?? t('communication.announcements.allSchool')}</p>
+            </div>
+          </div>
         </div>
         {event.description && (
           <p className="text-body text-foreground whitespace-pre-wrap pt-2 border-t border-border">{event.description}</p>

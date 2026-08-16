@@ -228,6 +228,15 @@ function EventsTab({
       ),
     },
     {
+      key: 'classroom',
+      header: t('communication.events.columns.target'),
+      render: (row) => (
+        <span className="text-body text-text-secondary">
+          {row.classroom_name ?? t('communication.announcements.allSchool')}
+        </span>
+      ),
+    },
+    {
       key: 'consent',
       header: t('communication.events.columns.consent'),
       render: (row) => {
@@ -617,8 +626,20 @@ function CreateEventDialog({
   const [endDatetime, setEndDatetime] = React.useState('');
   const [location, setLocation] = React.useState('');
   const [requiresConsent, setRequiresConsent] = React.useState(false);
+  const [classroomId, setClassroomId] = React.useState('');
 
   const createEvent = useCreateEvent();
+  const { data: academicYears } = useAcademicYears();
+  const activeYear = (academicYears ?? []).find((y) => y.is_active);
+  const { data: classrooms } = useClassrooms(activeYear?.id);
+
+  const classroomOptions = [
+    { value: '', label: t('communication.announcements.allSchool') },
+    ...(classrooms ?? []).map((c: Classroom) => ({
+      value: c.id,
+      label: c.name,
+    })),
+  ];
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -632,6 +653,7 @@ function CreateEventDialog({
         end_datetime: endDatetime,
         location: location.trim() || undefined,
         requires_consent: requiresConsent,
+        classroom_id: classroomId || undefined,
       },
       {
         onSuccess: () => {
@@ -641,6 +663,7 @@ function CreateEventDialog({
           setEndDatetime('');
           setLocation('');
           setRequiresConsent(false);
+          setClassroomId('');
           onOpenChange(false);
         },
       }
@@ -678,6 +701,14 @@ function CreateEventDialog({
               className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground placeholder:text-text-disabled focus:outline-none focus:border-primary focus:shadow-focus-ring transition-all duration-150 resize-none"
             />
           </FormField>
+
+          <FormSelect
+            label={t('communication.announcements.form.target')}
+            name="event-classroom"
+            value={classroomId}
+            onChange={(e) => setClassroomId(e.target.value)}
+            options={classroomOptions}
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label={t('communication.events.form.startDatetime')} htmlFor="event-start" required>

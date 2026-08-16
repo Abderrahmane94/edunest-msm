@@ -130,6 +130,7 @@ export interface ConsentFormResponse {
 export interface EventResponse {
   id: string;
   schoolId: string;
+  classroomId: string | null;
   title: string;
   description: string | null;
   startDatetime: Date;
@@ -143,6 +144,10 @@ export interface EventResponse {
     firstName: string;
     lastName: string;
   };
+  classroom?: {
+    id: string;
+    name: string;
+  } | null;
   consentForms?: ConsentFormResponse[];
   consentStats?: {
     total: number;

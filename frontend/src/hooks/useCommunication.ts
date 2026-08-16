@@ -19,6 +19,8 @@ export interface SchoolEvent {
   end_datetime: string;
   location?: string;
   requires_consent: boolean;
+  classroom_id?: string | null;
+  classroom_name?: string | null;
   consent_stats?: {
     total: number;
     approved: number;
@@ -53,6 +55,7 @@ function mapAnnouncement(raw: Record<string, unknown>): Announcement {
 }
 
 function mapEvent(raw: Record<string, unknown>): SchoolEvent {
+  const classroom = raw.classroom as Record<string, string> | null | undefined;
   return {
     id: raw.id as string,
     title: raw.title as string,
@@ -61,6 +64,8 @@ function mapEvent(raw: Record<string, unknown>): SchoolEvent {
     end_datetime: (raw.endDatetime ?? raw.end_datetime ?? '') as string,
     location: raw.location as string | undefined,
     requires_consent: (raw.requiresConsent ?? raw.requires_consent ?? false) as boolean,
+    classroom_id: (raw.classroomId ?? raw.classroom_id ?? null) as string | null,
+    classroom_name: classroom?.name ?? null,
     consent_stats: (raw.consentStats ?? raw.consent_stats) as SchoolEvent['consent_stats'] | undefined,
   };
 }
@@ -176,6 +181,7 @@ export function useCreateEvent() {
       end_datetime: string;
       location?: string;
       requires_consent: boolean;
+      classroom_id?: string;
     }) => {
       // Map to camelCase for the backend, converting the <input type="datetime-local">
       // value (e.g. "2026-08-20T10:00", no timezone) into a full ISO 8601 UTC string —
@@ -188,6 +194,7 @@ export function useCreateEvent() {
         requiresConsent: data.requires_consent,
       };
       if (data.location) body.location = data.location;
+      if (data.classroom_id) body.classroomId = data.classroom_id;
 
       const res = await apiClient.post('/communication/events', body);
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to create event');

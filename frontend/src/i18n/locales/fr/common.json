@@ -1020,6 +1020,7 @@
         "title": "Titre",
         "date": "Date",
         "location": "Lieu",
+        "target": "Cible",
         "consent": "Consentement"
       },
       "form": {

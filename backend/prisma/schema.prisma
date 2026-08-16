@@ -492,6 +492,7 @@ model Announcement {
 model Event {
   id              String    @id @default(uuid())
   schoolId        String    @map("school_id")
+  classroomId     String?   @map("classroom_id")
   title           String
   description     String?
   startDatetime   DateTime  @map("start_datetime")

@@ -5,7 +5,7 @@ import { formatDate, formatDZD } from '@/lib/formatters';
 import { DataTable } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
-import { useBranches } from '@/hooks/useEnrollments';
+import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import {
   useLateDashboard,
   type LateDashboardEntry,
@@ -31,23 +31,10 @@ function StatusBadge({ status, label }: { status: LatePeriodStatus; label: strin
 
 export function LateDashboardPage() {
   const { t, i18n } = useTranslation();
-  const { data: branches } = useBranches();
-  const [selectedBranchId, setSelectedBranchId] = React.useState('');
+  const { branchId: selectedBranchId } = useDefaultBranch();
   const [statusFilter, setStatusFilter] = React.useState<LatePeriodStatus | ''>('');
 
-  // Auto-select first branch
-  React.useEffect(() => {
-    if (!selectedBranchId && branches && branches.length > 0) {
-      setSelectedBranchId(branches[0].id);
-    }
-  }, [branches, selectedBranchId]);
-
   const { data: entries, isLoading } = useLateDashboard(selectedBranchId, statusFilter);
-
-  const branchOptions = (branches ?? []).map((b) => ({
-    value: b.id,
-    label: b.name,
-  }));
 
   const statusOptions = [
     { value: '', label: t('payments.late.filterAll') },
@@ -151,18 +138,6 @@ export function LateDashboardPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-4">
-        {branchOptions.length > 1 && (
-          <div className="w-full max-w-xs">
-            <FormSelect
-              label={t('payments.late.filterBranch')}
-              name="branchFilter"
-              value={selectedBranchId}
-              onChange={(e) => setSelectedBranchId(e.target.value)}
-              options={branchOptions}
-              placeholder={t('payments.late.selectBranch')}
-            />
-          </div>
-        )}
         <div className="w-full max-w-xs">
           <FormSelect
             label={t('payments.late.filterStatus')}

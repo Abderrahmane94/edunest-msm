@@ -16,8 +16,8 @@ import {
 import { FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui/Input';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
+import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import {
-  useBranches,
   useBranchCalendar,
   useCreateBranchCalendar,
   useUpdateBranchCalendar,
@@ -57,11 +57,10 @@ export function BranchCalendarPage() {
   const { t } = useTranslation();
 
   // Data fetching
-  const { data: branches, isLoading: branchesLoading } = useBranches();
+  const { branchId: selectedBranchId } = useDefaultBranch();
   const { data: academicYears } = useAcademicYears();
 
   // Selection state
-  const [selectedBranchId, setSelectedBranchId] = React.useState<string>('');
   const [selectedAcademicYearId, setSelectedAcademicYearId] = React.useState<string>('');
 
   // Dialog state
@@ -69,13 +68,6 @@ export function BranchCalendarPage() {
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [editingEntry, setEditingEntry] = React.useState<BranchCalendarEntry | null>(null);
   const [deletingEntry, setDeletingEntry] = React.useState<BranchCalendarEntry | null>(null);
-
-  // Auto-select first branch
-  React.useEffect(() => {
-    if (!selectedBranchId && branches && branches.length > 0) {
-      setSelectedBranchId(branches[0].id);
-    }
-  }, [branches, selectedBranchId]);
 
   // Auto-select active academic year
   React.useEffect(() => {
@@ -218,10 +210,6 @@ export function BranchCalendarPage() {
     },
   ];
 
-  // Branch and year select options
-  const branchOptions = (branches ?? []).map((b) => ({ value: b.id, label: b.name }));
-  const yearOptions = (academicYears ?? []).map((y) => ({ value: y.id, label: y.name }));
-
   const isReady = selectedBranchId && selectedAcademicYearId;
   const isMutating = createMutation.isPending || updateMutation.isPending;
 
@@ -252,33 +240,19 @@ export function BranchCalendarPage() {
       <div className="flex flex-wrap gap-4">
         <div className="w-full sm:w-64">
           <FormSelect
-            label={t('payments.branchCalendar.selectBranch', 'Branch')}
-            name="branch"
-            value={selectedBranchId}
-            onChange={(e) => setSelectedBranchId(e.target.value)}
-            options={branchOptions}
-            placeholder={t('payments.branchCalendar.selectBranchPlaceholder', 'Select branch')}
-          />
-        </div>
-        <div className="w-full sm:w-64">
-          <FormSelect
             label={t('payments.branchCalendar.selectYear', 'Academic Year')}
             name="academicYear"
             value={selectedAcademicYearId}
             onChange={(e) => setSelectedAcademicYearId(e.target.value)}
-            options={yearOptions}
+            options={(academicYears ?? []).map((y) => ({ value: y.id, label: y.name }))}
             placeholder={t('payments.branchCalendar.selectYearPlaceholder', 'Select year')}
           />
         </div>
       </div>
 
       {/* Content */}
-      {branchesLoading ? (
-        <LoadingSkeleton />
-      ) : !branches || branches.length === 0 ? (
-        <EmptyState message={t('payments.branchCalendar.noBranch', 'No branches found. Please create a branch first.')} />
-      ) : !isReady ? (
-        <EmptyState message={t('payments.branchCalendar.selectPrompt', 'Select a branch and academic year to view calendar entries.')} />
+      {!isReady ? (
+        <EmptyState message={t('payments.branchCalendar.selectPrompt', 'Select an academic year to view calendar entries.')} />
       ) : entriesLoading ? (
         <LoadingSkeleton />
       ) : (

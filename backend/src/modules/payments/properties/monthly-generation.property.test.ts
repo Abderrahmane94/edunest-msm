@@ -92,6 +92,7 @@ describe('Property 2: Monthly Billing Period Generation Boundaries', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -123,6 +124,7 @@ describe('Property 2: Monthly Billing Period Generation Boundaries', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -160,6 +162,7 @@ describe('Property 2: Monthly Billing Period Generation Boundaries', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -196,6 +199,7 @@ describe('Property 2: Monthly Billing Period Generation Boundaries', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,

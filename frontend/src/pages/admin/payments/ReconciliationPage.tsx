@@ -4,7 +4,7 @@ import { FileBarChart, Printer, FileDown } from 'lucide-react';
 import { formatDZD } from '@/lib/formatters';
 import { Button, Input } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
-import { useBranches } from '@/hooks/useEnrollments';
+import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import { useReconciliation } from '@/hooks/useReconciliation';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -24,19 +24,11 @@ const CHANNELS = ['cash', 'ccp', 'baridimob'] as const;
 
 export function ReconciliationPage() {
   const { t, i18n } = useTranslation();
-  const { data: branches } = useBranches();
+  const { branchId: selectedBranchId } = useDefaultBranch();
 
-  const [selectedBranchId, setSelectedBranchId] = React.useState('');
   const [rangeStart, setRangeStart] = React.useState(getFirstDayOfMonth());
   const [rangeEnd, setRangeEnd] = React.useState(getTodayString());
   const [dateError, setDateError] = React.useState('');
-
-  // Auto-select first branch
-  React.useEffect(() => {
-    if (!selectedBranchId && branches && branches.length > 0) {
-      setSelectedBranchId(branches[0].id);
-    }
-  }, [branches, selectedBranchId]);
 
   // Validate date range
   React.useEffect(() => {
@@ -54,11 +46,6 @@ export function ReconciliationPage() {
     isQueryEnabled ? rangeStart : '',
     isQueryEnabled ? rangeEnd : ''
   );
-
-  const branchOptions = (branches ?? []).map((b) => ({
-    value: b.id,
-    label: b.name,
-  }));
 
   function handlePrint() {
     window.print();
@@ -147,19 +134,7 @@ export function ReconciliationPage() {
 
       {/* Filters */}
       <div className="bg-card border border-border rounded-lg p-4 print:border-0 print:p-0">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Branch selector */}
-          {branchOptions.length > 1 && (
-            <FormSelect
-              label={t('payments.reconciliation.fields.branch')}
-              name="reconciliationBranch"
-              value={selectedBranchId}
-              onChange={(e) => setSelectedBranchId(e.target.value)}
-              options={branchOptions}
-              placeholder={t('payments.reconciliation.fields.selectBranch')}
-            />
-          )}
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Start date */}
           <FormField
             label={t('payments.reconciliation.fields.rangeStart')}

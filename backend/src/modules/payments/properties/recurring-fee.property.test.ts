@@ -57,6 +57,7 @@ describe('Property 4: Recurring Fee as Amount Source', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -116,6 +117,7 @@ describe('Property 4: Recurring Fee as Amount Source', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate: new Date(year, 0, 1),
+            academicYearStartDate: new Date(year, 0, 1),
             academicYearEndDate: new Date(year, 11, 31),
             billingCycle: 'trimester',
             billingDueDay: 10,
@@ -164,6 +166,7 @@ describe('Property 4: Recurring Fee as Amount Source', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -218,6 +221,7 @@ describe('Property 4: Recurring Fee as Amount Source', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,

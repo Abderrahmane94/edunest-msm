@@ -6,6 +6,7 @@ import { DerivedPeriodStatus } from './payments.types';
 export interface GeneratePeriodsInput {
   enrollmentId: string;
   startDate: Date;
+  academicYearStartDate: Date;
   academicYearEndDate: Date;
   billingCycle: 'monthly' | 'trimester' | 'custom';
   billingDueDay: number;
@@ -79,6 +80,7 @@ export function generatePeriodsForEnrollment(input: GeneratePeriodsInput): Gener
   const {
     enrollmentId,
     startDate,
+    academicYearStartDate,
     academicYearEndDate,
     billingCycle,
     billingDueDay,
@@ -92,6 +94,7 @@ export function generatePeriodsForEnrollment(input: GeneratePeriodsInput): Gener
   const recurringPeriods = generateRecurringPeriods(
     enrollmentId,
     startDate,
+    academicYearStartDate,
     academicYearEndDate,
     billingCycle,
     billingDueDay,
@@ -160,6 +163,7 @@ export function generatePeriodsForEnrollment(input: GeneratePeriodsInput): Gener
 function generateRecurringPeriods(
   enrollmentId: string,
   startDate: Date,
+  academicYearStartDate: Date,
   academicYearEndDate: Date,
   billingCycle: 'monthly' | 'trimester' | 'custom',
   billingDueDay: number,
@@ -172,6 +176,7 @@ function generateRecurringPeriods(
       return generateMonthlyPeriods(
         enrollmentId,
         startDate,
+        academicYearStartDate,
         academicYearEndDate,
         billingDueDay,
         gracePeriodDays,
@@ -199,11 +204,19 @@ function generateRecurringPeriods(
 }
 
 /**
- * Generates monthly billing periods from startDate's month through academicYearEndDate's month.
+ * Generates monthly billing periods.
+ *
+ * The effective start month is the LATER of:
+ *   - the month containing the enrollment startDate
+ *   - the month containing the academic year start date
+ *
+ * This prevents generating periods for months before the academic year
+ * (e.g. enrollment in August when the school year starts in September).
  */
 function generateMonthlyPeriods(
   enrollmentId: string,
   startDate: Date,
+  academicYearStartDate: Date,
   academicYearEndDate: Date,
   billingDueDay: number,
   gracePeriodDays: number,
@@ -211,8 +224,11 @@ function generateMonthlyPeriods(
 ): GeneratedPeriod[] {
   const periods: GeneratedPeriod[] = [];
 
-  const startYear = startDate.getFullYear();
-  const startMonth = startDate.getMonth();
+  // Use the later of startDate's month and academic year start month
+  const effectiveStart = startDate > academicYearStartDate ? startDate : academicYearStartDate;
+
+  const startYear = effectiveStart.getFullYear();
+  const startMonth = effectiveStart.getMonth();
   const endYear = academicYearEndDate.getFullYear();
   const endMonth = academicYearEndDate.getMonth();
 

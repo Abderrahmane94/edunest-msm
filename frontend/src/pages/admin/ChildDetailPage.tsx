@@ -246,29 +246,39 @@ export function ChildDetailPage() {
             {(parentLinks as Record<string, unknown>[]).map((link) => {
               const linkId = link.id as string;
               const isEditing = editingLinkId === linkId;
+              const parent = link.parent as Record<string, unknown>;
               return (
                 <div key={linkId} className="flex items-center justify-between bg-subtle rounded-lg px-3 py-2">
-                  <div className="flex items-center gap-2 flex-1">
-                    <span className="text-body font-medium text-foreground">
-                      {(link.parent as Record<string, unknown>)?.firstName as string} {(link.parent as Record<string, unknown>)?.lastName as string}
-                    </span>
-                    {isEditing ? (
-                      <div className="w-36">
-                        <FormSelect
-                          label=""
-                          name={`edit-relationship-${linkId}`}
-                          value={editLinkRelationship}
-                          onChange={(e) => setEditLinkRelationship(e.target.value)}
-                          options={relationshipOptions}
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-caption text-text-secondary">({link.relationship as string})</span>
-                    )}
-                    {!!link.isPrimary && (
-                      <span className="flex items-center gap-0.5 text-micro text-success font-medium">
-                        <Star className="w-3.5 h-3.5 fill-current" /> {t('children.detail.primary')}
-                      </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="text-body font-medium text-primary hover:underline text-start"
+                        onClick={() => navigate(`/admin/users/${parent?.id as string}`)}
+                      >
+                        {parent?.firstName as string} {parent?.lastName as string}
+                      </button>
+                      {isEditing ? (
+                        <div className="w-36">
+                          <FormSelect
+                            label=""
+                            name={`edit-relationship-${linkId}`}
+                            value={editLinkRelationship}
+                            onChange={(e) => setEditLinkRelationship(e.target.value)}
+                            options={relationshipOptions}
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-caption text-text-secondary">({link.relationship as string})</span>
+                      )}
+                      {!!link.isPrimary && (
+                        <span className="flex items-center gap-0.5 text-micro text-success font-medium">
+                          <Star className="w-3.5 h-3.5 fill-current" /> {t('children.detail.primary')}
+                        </span>
+                      )}
+                    </div>
+                    {!!parent?.email && (
+                      <p className="text-caption text-text-secondary" dir="ltr">{parent.email as string}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1">

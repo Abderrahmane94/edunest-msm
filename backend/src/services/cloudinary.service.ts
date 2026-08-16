@@ -116,18 +116,27 @@ class CloudinaryService {
    * Generate a URL for accessing an authenticated resource.
    * @param publicId - The Cloudinary public_id of the resource
    * @param type - The type of resource (determines expiry: photo=1hr, document=24hr, local-disk fallback only)
+   * @param format - The resource's file format/extension. When provided (and Cloudinary is
+   *   configured), this uses `private_download_url` to produce a genuinely time-limited link;
+   *   without it, falls back to a signed-but-non-expiring delivery URL (proves it was generated
+   *   with our api_secret, but Cloudinary's own expiring links otherwise require enabling
+   *   token-based authentication in the account dashboard first).
    */
-  generateSignedUrl(publicId: string, type: 'photo' | 'document'): string {
+  generateSignedUrl(publicId: string, type: 'photo' | 'document', format?: string): string {
     if (!this.isConfigured()) {
       const expires = Math.floor(Date.now() / 1000) + EXPIRY_SECONDS[type];
       const token = signUploadPath(publicId, expires);
       return `/uploads/${publicId}?expires=${expires}&token=${token}`;
     }
 
-    // A signed Cloudinary delivery URL (proves it was generated with our
-    // api_secret) rather than a time-limited one — Cloudinary's own expiring
-    // links require enabling token-based authentication in the account
-    // dashboard first, which is a separate manual setup step.
+    if (format) {
+      return cloudinary.utils.private_download_url(publicId, format, {
+        resource_type: resourceTypeFor(type),
+        type: 'authenticated',
+        expires_at: Math.floor(Date.now() / 1000) + EXPIRY_SECONDS[type],
+      });
+    }
+
     return cloudinary.url(publicId, {
       type: 'authenticated',
       sign_url: true,

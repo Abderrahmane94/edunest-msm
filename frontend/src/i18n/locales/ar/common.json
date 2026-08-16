@@ -599,15 +599,23 @@
     "contractEnd": "نهاية العقد",
     "documents": "المستندات",
     "uploadDocument": "رفع",
+    "replaceDocument": "استبدال",
     "downloadDocument": "تحميل المستند",
+    "contractDocument": "مستند العقد",
     "noDocuments": "لا توجد مستندات مرفوعة",
     "uploadedOn": "تم الرفع في {{date}}",
     "saved": "تم تحديث الملف",
+    "noProfileYet": "لم يتم إنشاء ملف وظيفي لهذا الشخص بعد.",
+    "createProfile": "إنشاء الملف",
+    "notFound": "الموظف غير موجود",
     "columns": {
       "name": "الاسم",
       "role": "الدور",
       "status": "الحالة",
-      "joined": "تاريخ الانضمام"
+      "joined": "تاريخ الانضمام",
+      "position": "المنصب",
+      "contractType": "نوع العقد",
+      "contractDates": "العقد"
     },
     "contractTypes": {
       "full_time": "دوام كامل",

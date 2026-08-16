@@ -113,6 +113,32 @@ export const staffService = {
   },
 
   /**
+   * Get a staff profile by the linked user's ID within a school.
+   */
+  async getByUserId(userId: string, schoolId: string) {
+    const profile = await prisma.staffProfile.findFirst({
+      where: { userId, schoolId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!profile) {
+      throw new StaffServiceError('Staff profile not found', 404);
+    }
+
+    return profile;
+  },
+
+  /**
    * Update a staff profile.
    */
   async update(
@@ -194,7 +220,7 @@ export const staffService = {
     // Update the staff profile with the new document public ID
     const updated = await prisma.staffProfile.update({
       where: { id },
-      data: { documentPublicId: result.publicId },
+      data: { documentPublicId: result.publicId, documentFormat: result.format },
       include: {
         user: {
           select: {
@@ -227,8 +253,49 @@ export const staffService = {
       throw new StaffServiceError('No document uploaded for this staff profile', 404);
     }
 
-    const signedUrl = cloudinaryService.generateSignedUrl(profile.documentPublicId, 'document');
+    const signedUrl = cloudinaryService.generateSignedUrl(
+      profile.documentPublicId,
+      'document',
+      profile.documentFormat ?? undefined,
+    );
 
     return { url: signedUrl };
+  },
+
+  /**
+   * Delete the uploaded document for a staff profile.
+   */
+  async deleteDocument(id: string, schoolId: string) {
+    const profile = await prisma.staffProfile.findFirst({
+      where: { id, schoolId },
+    });
+
+    if (!profile) {
+      throw new StaffServiceError('Staff profile not found', 404);
+    }
+
+    if (!profile.documentPublicId) {
+      throw new StaffServiceError('No document uploaded for this staff profile', 404);
+    }
+
+    await cloudinaryService.deleteFile(profile.documentPublicId);
+
+    const updated = await prisma.staffProfile.update({
+      where: { id },
+      data: { documentPublicId: null, documentFormat: null },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    return updated;
   },
 };

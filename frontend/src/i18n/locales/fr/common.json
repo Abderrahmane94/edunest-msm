@@ -598,15 +598,23 @@
     "contractEnd": "Fin du contrat",
     "documents": "Documents",
     "uploadDocument": "Télécharger",
+    "replaceDocument": "Remplacer",
     "downloadDocument": "Télécharger le document",
+    "contractDocument": "Document contractuel",
     "noDocuments": "Aucun document téléchargé",
     "uploadedOn": "Téléchargé le {{date}}",
     "saved": "Profil mis à jour",
+    "noProfileYet": "Aucun profil de poste n'a encore été créé pour cette personne.",
+    "createProfile": "Créer le profil",
+    "notFound": "Membre du personnel introuvable",
     "columns": {
       "name": "Nom",
       "role": "Rôle",
       "status": "Statut",
-      "joined": "Inscrit le"
+      "joined": "Inscrit le",
+      "position": "Poste",
+      "contractType": "Type de contrat",
+      "contractDates": "Contrat"
     },
     "contractTypes": {
       "full_time": "Temps plein",

@@ -245,6 +245,7 @@ model StaffProfile {
   contractStart    DateTime     @map("contract_start") @db.Date
   contractEnd      DateTime?    @map("contract_end") @db.Date
   documentPublicId String?      @map("document_public_id")
+  documentFormat   String?      @map("document_format")
   createdAt        DateTime     @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id])

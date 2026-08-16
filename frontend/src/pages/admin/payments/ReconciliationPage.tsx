@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FileBarChart, Printer, FileDown } from 'lucide-react';
 import { formatDZD } from '@/lib/formatters';
 import { Button, Input } from '@/components/ui';
-import { FormField, FormSelect } from '@/components/forms';
+import { FormField } from '@/components/forms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import { useReconciliation } from '@/hooks/useReconciliation';
 

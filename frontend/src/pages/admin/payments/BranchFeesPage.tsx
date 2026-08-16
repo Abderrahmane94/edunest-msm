@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Trash2, Edit2, DollarSign, Users } from 'lucide-react';
+import { Trash2, Edit2, DollarSign, Users } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -458,9 +458,11 @@ export default function BranchFeesPage() {
             {t('payments.fees.title')}
           </h1>
         </div>
-        <CreateButton onClick={handleCreate} disabled={!selectedBranchId}>
-          {t('payments.fees.create')}
-        </CreateButton>
+        <CreateButton
+          label={t('payments.fees.create')}
+          onClick={handleCreate}
+          disabled={!selectedBranchId}
+        />
       </div>
 
       {/* Fees table */}
@@ -468,8 +470,7 @@ export default function BranchFeesPage() {
         columns={columns}
         data={fees ?? []}
         keyExtractor={(f) => f.id}
-        isLoading={isLoading}
-        emptyMessage={t('payments.fees.empty')}
+        emptyMessage={isLoading ? t('common.loading') : t('payments.fees.empty')}
       />
 
       {/* Create/Edit Dialog */}

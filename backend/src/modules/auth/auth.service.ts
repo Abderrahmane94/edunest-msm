@@ -57,14 +57,9 @@ function verifyRefreshToken(token: string): TokenPayload {
 }
 
 export const authService = {
-  async login(input: LoginInput): Promise<LoginResponse | LoginChoiceRequired> {
-    // Email is only unique per-school among active users (see migration
-    // 0011), so the same email can legitimately belong to several accounts
-    // in different schools.
-    const candidates = await prisma.user.findMany({
-      where: input.schoolId
-        ? { email: input.email, schoolId: input.schoolId }
-        : { email: input.email },
+  async login(input: LoginInput): Promise<LoginResponse> {
+    const user = await prisma.user.findFirst({
+      where: { email: input.email, deletedAt: null },
     });
 
     if (candidates.length === 0) {

@@ -21,12 +21,12 @@ import { FormField, FormSelect } from '@/components/forms';
 import {
   useEnrollments,
   useCreateEnrollment,
-  useBranches,
   type Enrollment,
   type EnrollmentGenerationResult,
 } from '@/hooks/useEnrollments';
 import { useChildren } from '@/hooks/useChildren';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
+import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 
 // ─── Fee Validation ────────────────────────────────────────────────────────────
 
@@ -56,12 +56,11 @@ function CreateEnrollmentDialog({
   const { t, i18n } = useTranslation();
   const createEnrollment = useCreateEnrollment();
   const { data: childrenData } = useChildren({ pageSize: 100 });
-  const { data: branches } = useBranches();
+  const { branchId: defaultBranchId } = useDefaultBranch();
   const { data: academicYears } = useAcademicYears();
 
   const [formData, setFormData] = React.useState({
     childId: '',
-    branchId: '',
     academicYearId: '',
     startDate: '',
     recurringFee: '',
@@ -75,7 +74,6 @@ function CreateEnrollmentDialog({
   function resetForm() {
     setFormData({
       childId: '',
-      branchId: '',
       academicYearId: '',
       startDate: '',
       recurringFee: '',
@@ -108,9 +106,6 @@ function CreateEnrollmentDialog({
     if (!formData.childId) {
       newErrors.childId = t('payments.enrollments.form.childRequired');
     }
-    if (!formData.branchId) {
-      newErrors.branchId = t('payments.enrollments.form.branchRequired');
-    }
     if (!formData.academicYearId) {
       newErrors.academicYearId = t('payments.enrollments.form.academicYearRequired');
     }
@@ -139,7 +134,7 @@ function CreateEnrollmentDialog({
     try {
       const result = await createEnrollment.mutateAsync({
         childId: formData.childId,
-        branchId: formData.branchId,
+        branchId: defaultBranchId,
         academicYearId: formData.academicYearId,
         startDate: formData.startDate,
         recurringFee: formData.recurringFee
@@ -166,11 +161,6 @@ function CreateEnrollmentDialog({
   const childOptions = (childrenData?.children ?? []).map((c) => ({
     value: c.id,
     label: `${c.first_name} ${c.last_name}`,
-  }));
-
-  const branchOptions = (branches ?? []).map((b) => ({
-    value: b.id,
-    label: b.name,
   }));
 
   const academicYearOptions = (academicYears ?? []).map((y) => ({
@@ -254,18 +244,6 @@ function CreateEnrollmentDialog({
             />
 
             <FormSelect
-              label={t('payments.enrollments.form.branch')}
-              name="branchId"
-              value={formData.branchId}
-              onChange={handleSelectChange}
-              options={branchOptions}
-              placeholder={t('payments.enrollments.form.selectBranch')}
-              error={errors.branchId}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-            <FormSelect
               label={t('payments.enrollments.form.academicYear')}
               name="academicYearId"
               value={formData.academicYearId}
@@ -274,7 +252,9 @@ function CreateEnrollmentDialog({
               placeholder={t('payments.enrollments.form.selectAcademicYear')}
               error={errors.academicYearId}
             />
+          </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormField
               label={t('payments.enrollments.form.startDate')}
               htmlFor="enrollment-start-date"

@@ -360,6 +360,11 @@ export const paymentsController = {
               branchId: true,
             },
           },
+          branchFee: {
+            select: {
+              name: true,
+            },
+          },
           paymentAllocations: {
             select: {
               amount: true,
@@ -398,6 +403,7 @@ export const paymentsController = {
           graceEndDate: period.graceEndDate,
           amountDue: period.amountDue,
           isRegistrationPeriod: period.isRegistrationPeriod,
+          branchFeeName: period.branchFee?.name ?? null,
           cancelledAt: period.cancelledAt,
           status: derived.status,
           isLate: derived.isLate,

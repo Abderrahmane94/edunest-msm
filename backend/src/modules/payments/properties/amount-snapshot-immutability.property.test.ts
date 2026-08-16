@@ -78,6 +78,7 @@ describe('Property 6: Amount Snapshot Immutability', () => {
           const input1: GeneratePeriodsInput = {
             enrollmentId: 'enrollment-1',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay: billingDueDay1,
@@ -102,6 +103,7 @@ describe('Property 6: Amount Snapshot Immutability', () => {
           const input2: GeneratePeriodsInput = {
             enrollmentId: 'enrollment-2',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay: billingDueDay2,
@@ -196,6 +198,7 @@ describe('Property 6: Amount Snapshot Immutability', () => {
           const input1: GeneratePeriodsInput = {
             enrollmentId: 'enrollment-1',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'trimester',
             billingDueDay: 10,
@@ -220,6 +223,7 @@ describe('Property 6: Amount Snapshot Immutability', () => {
           const input2: GeneratePeriodsInput = {
             enrollmentId: 'enrollment-2',
             startDate: new Date(year, 0, 15),
+            academicYearStartDate: new Date(year, 0, 1),
             academicYearEndDate: endDate,
             billingCycle: 'trimester',
             billingDueDay: 20,
@@ -294,6 +298,7 @@ describe('Property 6: Amount Snapshot Immutability', () => {
           const input1: GeneratePeriodsInput = {
             enrollmentId: 'enrollment-1',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -309,6 +314,7 @@ describe('Property 6: Amount Snapshot Immutability', () => {
           const input2: GeneratePeriodsInput = {
             enrollmentId: 'enrollment-2',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -359,6 +365,7 @@ describe('Property 6: Amount Snapshot Immutability', () => {
           const input1: GeneratePeriodsInput = {
             enrollmentId: 'enrollment-1',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -374,6 +381,7 @@ describe('Property 6: Amount Snapshot Immutability', () => {
           const input2: GeneratePeriodsInput = {
             enrollmentId: 'enrollment-2',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -421,6 +429,7 @@ describe('Property 6: Amount Snapshot Immutability', () => {
           const input1: GeneratePeriodsInput = {
             enrollmentId: 'enrollment-1',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay: billingDueDay1,
@@ -436,6 +445,7 @@ describe('Property 6: Amount Snapshot Immutability', () => {
           const input2: GeneratePeriodsInput = {
             enrollmentId: 'enrollment-2',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay: billingDueDay2,

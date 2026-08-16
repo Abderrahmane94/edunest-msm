@@ -72,6 +72,7 @@ describe('Property 5: Registration Period Generation', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -111,6 +112,7 @@ describe('Property 5: Registration Period Generation', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -150,6 +152,7 @@ describe('Property 5: Registration Period Generation', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -190,6 +193,7 @@ describe('Property 5: Registration Period Generation', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -229,6 +233,7 @@ describe('Property 5: Registration Period Generation', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -266,6 +271,7 @@ describe('Property 5: Registration Period Generation', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -303,6 +309,7 @@ describe('Property 5: Registration Period Generation', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,

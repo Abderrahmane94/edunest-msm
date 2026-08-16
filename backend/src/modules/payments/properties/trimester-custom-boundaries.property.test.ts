@@ -118,6 +118,7 @@ function arbTrimesterInput() {
 
           return {
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate,
             gracePeriodDays,
             billingDueDay,
@@ -177,6 +178,7 @@ function arbCustomInput() {
 
           return {
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate,
             gracePeriodDays,
             billingDueDay,
@@ -197,6 +199,7 @@ describe('Property 17: Trimester/Custom Period Boundaries From Calendar', () => 
             const input: GeneratePeriodsInput = {
               enrollmentId: 'test-enr-trimester',
               startDate,
+              academicYearStartDate: startDate,
               academicYearEndDate,
               billingCycle: 'trimester',
               billingDueDay,
@@ -225,6 +228,7 @@ describe('Property 17: Trimester/Custom Period Boundaries From Calendar', () => 
             const input: GeneratePeriodsInput = {
               enrollmentId: 'test-enr-trimester',
               startDate,
+              academicYearStartDate: startDate,
               academicYearEndDate,
               billingCycle: 'trimester',
               billingDueDay,
@@ -265,6 +269,7 @@ describe('Property 17: Trimester/Custom Period Boundaries From Calendar', () => 
             const input: GeneratePeriodsInput = {
               enrollmentId: 'test-enr-custom',
               startDate,
+              academicYearStartDate: startDate,
               academicYearEndDate,
               billingCycle: 'custom',
               billingDueDay,
@@ -297,6 +302,7 @@ describe('Property 17: Trimester/Custom Period Boundaries From Calendar', () => 
             const input: GeneratePeriodsInput = {
               enrollmentId: 'test-enr-custom',
               startDate,
+              academicYearStartDate: startDate,
               academicYearEndDate,
               billingCycle: 'custom',
               billingDueDay,

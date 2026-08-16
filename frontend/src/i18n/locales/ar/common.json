@@ -1410,6 +1410,45 @@
       "defaultFeeMin": "الرسوم الافتراضية يجب ألا تقل عن 0",
       "defaultFeeMax": "الرسوم الافتراضية يجب ألا تتجاوز 9,999,999.99 د.ج"
     },
+    "fees": {
+      "title": "رسوم الفرع",
+      "create": "رسم جديد",
+      "createTitle": "إنشاء رسم",
+      "editTitle": "تعديل الرسم",
+      "dialogDescription": "قم بإعداد رسم لمرة واحدة يمكن تطبيقه على التسجيلات",
+      "selectBranch": "الفرع",
+      "empty": "لا توجد رسوم مُعدّة",
+      "confirmDelete": "حذف الرسم « {{name}} »؟ لن تتأثر فترات الفوترة الموجودة.",
+      "fields": {
+        "name": "اسم الرسم",
+        "namePlaceholder": "مثال: رسوم النقل، اللباس المدرسي...",
+        "amount": "المبلغ (د.ج)"
+      },
+      "errors": {
+        "nameRequired": "الاسم مطلوب (1-100 حرف)",
+        "amountInvalid": "المبلغ يجب أن يكون بين 0.00 و 9,999,999.99 د.ج"
+      },
+      "assign": {
+        "button": "تعيين",
+        "title": "تعيين « {{name}} »",
+        "description": "اختر لمن تريد تطبيق هذا الرسم",
+        "targetLabel": "تطبيق على",
+        "targetSchool": "كل المدرسة",
+        "targetClassrooms": "فصول محددة",
+        "targetChildren": "طلاب محددين",
+        "selectChildren": "اختر الطلاب",
+        "searchPlaceholder": "ابحث عن طالب...",
+        "selectedCount": "{{count}} طالب(ة) محدد(ة)",
+        "selectClassrooms": "اختر الفصول",
+        "noChildren": "لا يوجد طلاب",
+        "noClassrooms": "لا توجد فصول",
+        "schoolConfirmation": "سيتم تطبيق هذا الرسم على جميع الطلاب المسجلين في المدرسة.",
+        "submit": "تطبيق الرسم",
+        "resultTitle": "تم تطبيق الرسم",
+        "resultApplied": "تم تطبيق الرسم على {{count}} طالب(ة)",
+        "resultSkipped": "{{count}} طالب(ة) لديهم هذا الرسم مسبقاً (تم تجاهلهم)"
+      }
+    },
     "branchCalendar": {
       "title": "التقويم الدراسي",
       "description": "إدارة فترات الفوترة الدراسية",
@@ -1579,6 +1618,7 @@
       "record": "تسجيل دفعة",
       "submit": "تسجيل الدفعة",
       "addAllocation": "إضافة تخصيص",
+      "suggestAllocation": "اقتراح التخصيص",
       "registrationPeriod": "رسوم التسجيل",
       "allocationSum": "مجموع التخصيصات: {{sum}} / {{total}} د.ج",
       "empty": "لا توجد مدفوعات مسجلة",
@@ -1618,6 +1658,7 @@
         "referenceRequired": "المرجع مطلوب لقنوات CCP وبريدي موب",
         "allocationRequired": "يجب تخصيص فترة واحدة على الأقل",
         "allocationAmountInvalid": "مبلغ التخصيص غير صالح",
+        "allocationExceedsOutstanding": "المبلغ المخصص ({{amount}} د.ج) يتجاوز الرصيد المتبقي ({{outstanding}} د.ج) للفترة",
         "allocationMismatch": "مجموع التخصيصات يجب أن يساوي المبلغ الإجمالي"
       },
       "success": {

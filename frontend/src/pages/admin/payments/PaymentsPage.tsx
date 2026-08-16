@@ -17,7 +17,7 @@ import {
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { useChildren } from '@/hooks/useChildren';
-import { useBranches } from '@/hooks/useEnrollments';
+import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import {
   useChildBillingPeriods,
   useRecordPayment,
@@ -101,6 +101,69 @@ function RecordPaymentDialog({
     );
   }, [billingPeriods]);
 
+  /**
+   * Sort available periods by priority:
+   * 1. Late periods first (isLate === true), sorted by dueDate ascending (oldest first)
+   * 2. Then non-late periods sorted by dueDate ascending (closest first)
+   */
+  const sortedPeriodsByPriority = React.useMemo(() => {
+    return [...availablePeriods].sort((a, b) => {
+      // Late periods come first
+      const aLate = a.isLate ? 1 : 0;
+      const bLate = b.isLate ? 1 : 0;
+      if (aLate !== bLate) return bLate - aLate;
+      // Within same late/non-late group, sort by dueDate ascending
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    });
+  }, [availablePeriods]);
+
+  /**
+   * Suggest allocations based on priority (late periods first, then closest due date).
+   * Distributes the total amount across periods, filling each up to its outstanding amount.
+   */
+  function suggestAllocations() {
+    const amount = Number(totalAmount);
+    if (!amount || amount <= 0 || sortedPeriodsByPriority.length === 0) return;
+
+    let remaining = amount;
+    const suggested: AllocationRow[] = [];
+
+    for (const period of sortedPeriodsByPriority) {
+      if (remaining <= 0) break;
+
+      const outstanding = Number(period.outstanding ?? period.amountDue);
+      if (outstanding <= 0) continue;
+
+      const allocAmount = Math.min(remaining, outstanding);
+      // Round to 2 decimal places
+      const rounded = Math.round(allocAmount * 100) / 100;
+
+      if (rounded >= 0.01) {
+        suggested.push({
+          id: crypto.randomUUID(),
+          billingPeriodId: period.id,
+          amount: rounded.toFixed(2),
+        });
+        remaining = Math.round((remaining - rounded) * 100) / 100;
+      }
+    }
+
+    // If we still have remaining amount but no more periods, add it to the last allocation
+    // (the user can manually adjust)
+    if (remaining > 0 && suggested.length > 0) {
+      const last = suggested[suggested.length - 1];
+      const newAmount = Number(last.amount) + remaining;
+      suggested[suggested.length - 1] = {
+        ...last,
+        amount: newAmount.toFixed(2),
+      };
+    }
+
+    if (suggested.length > 0) {
+      setAllocations(suggested);
+    }
+  }
+
   // Calculate allocation sum
   const allocationSum = React.useMemo(() => {
     return allocations.reduce((sum, row) => {
@@ -113,6 +176,28 @@ function RecordPaymentDialog({
   const isBalanced =
     totalAmountNum > 0 &&
     Math.abs(allocationSum - totalAmountNum) < 0.005;
+
+  // Auto-suggest allocations when total amount changes and a child is selected
+  const prevTotalRef = React.useRef('');
+  React.useEffect(() => {
+    const amount = Number(totalAmount);
+    if (
+      childId &&
+      amount > 0 &&
+      sortedPeriodsByPriority.length > 0 &&
+      totalAmount !== prevTotalRef.current
+    ) {
+      prevTotalRef.current = totalAmount;
+      // Only auto-suggest if allocations haven't been manually configured
+      const hasManualAllocations = allocations.some(
+        (row) => row.billingPeriodId && row.amount
+      );
+      if (!hasManualAllocations) {
+        suggestAllocations();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalAmount, childId, sortedPeriodsByPriority]);
 
   function resetForm() {
     setChildId('');
@@ -180,6 +265,18 @@ function RecordPaymentDialog({
         newErrors.allocations = t('payments.recording.errors.allocationAmountInvalid');
         break;
       }
+      // Validate allocation does not exceed outstanding for the period
+      const period = availablePeriods.find((p) => p.id === row.billingPeriodId);
+      if (period) {
+        const outstanding = Number(period.outstanding ?? period.amountDue);
+        if (Number(row.amount) > outstanding) {
+          newErrors.allocations = t('payments.recording.errors.allocationExceedsOutstanding', {
+            amount: Number(row.amount).toFixed(2),
+            outstanding: outstanding.toFixed(2),
+          });
+          break;
+        }
+      }
     }
 
     // Validate sum matches total
@@ -217,15 +314,29 @@ function RecordPaymentDialog({
     }
   }
 
-  // Build period options for select
+  // Build period options for select — sorted by priority (late first, then closest)
   const periodOptions = React.useMemo(() => {
-    return availablePeriods.map((p) => ({
-      value: p.id,
-      label: p.isRegistrationPeriod
-        ? t('payments.recording.registrationPeriod')
-        : `${formatDate(p.periodStart)} - ${formatDate(p.periodEnd)}`,
-    }));
-  }, [availablePeriods, t]);
+    return sortedPeriodsByPriority.map((p) => {
+      let label: string;
+      if (p.branchFeeName) {
+        // Fee period: show the fee name
+        label = p.branchFeeName;
+      } else if (p.isRegistrationPeriod) {
+        label = t('payments.recording.registrationPeriod');
+      } else {
+        // Monthly/recurring period: show date range
+        label = `${formatDate(p.periodStart)} - ${formatDate(p.periodEnd)}`;
+      }
+      const outstanding = Number(p.outstanding ?? p.amountDue);
+      const suffix = p.isLate
+        ? ` ⚠ ${formatDZD(outstanding, i18n.language)}`
+        : ` — ${formatDZD(outstanding, i18n.language)}`;
+      return {
+        value: p.id,
+        label: `${label}${suffix}`,
+      };
+    });
+  }, [sortedPeriodsByPriority, t, i18n.language]);
 
   const childOptions = (childrenData?.children ?? []).map((c) => ({
     value: c.id,
@@ -397,16 +508,29 @@ function RecordPaymentDialog({
               <label className="text-label font-medium text-foreground">
                 {t('payments.recording.fields.allocations')}
               </label>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={addAllocationRow}
-                disabled={!childId}
-              >
-                <Plus className="w-4 h-4 me-1" />
-                {t('payments.recording.addAllocation')}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={suggestAllocations}
+                  disabled={!childId || !totalAmount || availablePeriods.length === 0}
+                  title={t('payments.recording.suggestAllocation')}
+                >
+                  <Receipt className="w-4 h-4 me-1" />
+                  {t('payments.recording.suggestAllocation')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={addAllocationRow}
+                  disabled={!childId}
+                >
+                  <Plus className="w-4 h-4 me-1" />
+                  {t('payments.recording.addAllocation')}
+                </Button>
+              </div>
             </div>
 
             {/* Allocation rows */}
@@ -653,27 +777,14 @@ function PaymentHistoryFilters({
 
 export function PaymentsPage() {
   const { t, i18n } = useTranslation();
-  const { data: branches } = useBranches();
-  const [selectedBranchId, setSelectedBranchId] = React.useState('');
+  const { branchId: selectedBranchId } = useDefaultBranch();
   const [recordDialogOpen, setRecordDialogOpen] = React.useState(false);
   const [correctionDialogOpen, setCorrectionDialogOpen] = React.useState(false);
   const [receiptDialogOpen, setReceiptDialogOpen] = React.useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = React.useState<string | null>(null);
   const [filters, setFilters] = React.useState<PaymentRecordFilters>({});
 
-  // Auto-select first branch
-  React.useEffect(() => {
-    if (!selectedBranchId && branches && branches.length > 0) {
-      setSelectedBranchId(branches[0].id);
-    }
-  }, [branches, selectedBranchId]);
-
   const { data: records, isLoading } = usePaymentRecords(selectedBranchId, filters);
-
-  const branchOptions = (branches ?? []).map((b) => ({
-    value: b.id,
-    label: b.name,
-  }));
 
   function handleViewReceipt(record: PaymentRecord) {
     setSelectedPaymentId(record.id);
@@ -813,20 +924,6 @@ export function PaymentsPage() {
       <p className="text-body text-text-secondary">
         {t('payments.records.description')}
       </p>
-
-      {/* Branch selector */}
-      {branchOptions.length > 1 && (
-        <div className="max-w-xs">
-          <FormSelect
-            label={t('payments.recording.fields.branch')}
-            name="branchFilter"
-            value={selectedBranchId}
-            onChange={(e) => setSelectedBranchId(e.target.value)}
-            options={branchOptions}
-            placeholder={t('payments.recording.fields.selectBranch')}
-          />
-        </div>
-      )}
 
       {/* Filters */}
       <PaymentHistoryFilters

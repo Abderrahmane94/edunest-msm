@@ -846,10 +846,27 @@ model Branch {
   enrollments    Enrollment[]
   paymentRecords PaymentRecord[]
   users          User[]
+  fees           BranchFee[]
 
   @@index([schoolId])
   @@index([deletedAt])
   @@map("branches")
+}
+
+model BranchFee {
+  id        String    @id @default(uuid())
+  branchId  String    @map("branch_id")
+  name      String
+  amount    Decimal   @db.Decimal(10, 2)
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  branch         Branch          @relation(fields: [branchId], references: [id])
+  billingPeriods BillingPeriod[]
+
+  @@index([branchId])
+  @@map("branch_fees")
 }
 
 model BranchBillingConfig {
@@ -919,15 +936,18 @@ model BillingPeriod {
   graceEndDate         DateTime  @map("grace_end_date") @db.Date
   amountDue            Decimal   @map("amount_due") @db.Decimal(10, 2)
   isRegistrationPeriod Boolean   @default(false) @map("is_registration_period")
+  branchFeeId          String?   @map("branch_fee_id")
   cancelledAt          DateTime? @map("cancelled_at")
   createdAt            DateTime  @default(now()) @map("created_at")
 
   enrollment         Enrollment          @relation(fields: [enrollmentId], references: [id])
+  branchFee          BranchFee?          @relation(fields: [branchFeeId], references: [id])
   paymentAllocations PaymentAllocation[]
 
   @@index([enrollmentId])
   @@index([dueDate])
   @@index([cancelledAt])
+  @@index([branchFeeId])
   @@map("billing_periods")
 }
 

@@ -61,6 +61,7 @@ describe('Property 3: Grace End Date Invariant', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -101,6 +102,7 @@ describe('Property 3: Grace End Date Invariant', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -141,6 +143,7 @@ describe('Property 3: Grace End Date Invariant', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate,
+            academicYearStartDate: startDate,
             academicYearEndDate: endDate,
             billingCycle: 'monthly',
             billingDueDay,
@@ -200,6 +203,7 @@ describe('Property 3: Grace End Date Invariant', () => {
           const input: GeneratePeriodsInput = {
             enrollmentId: 'test-enr',
             startDate: new Date(calData.year, 0, 1),
+            academicYearStartDate: new Date(calData.year, 0, 1),
             academicYearEndDate: new Date(calData.year, 11, 31),
             billingCycle: 'trimester',
             billingDueDay: 10, // not used for trimester

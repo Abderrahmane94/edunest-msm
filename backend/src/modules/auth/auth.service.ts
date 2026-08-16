@@ -57,8 +57,8 @@ function verifyRefreshToken(token: string): TokenPayload {
 }
 
 export const authService = {
-  async login(input: LoginInput): Promise<LoginResponse> {
-    const user = await prisma.user.findFirst({
+  async login(input: LoginInput): Promise<LoginResponse | LoginChoiceRequired> {
+    const candidates = await prisma.user.findMany({
       where: { email: input.email, deletedAt: null },
     });
 

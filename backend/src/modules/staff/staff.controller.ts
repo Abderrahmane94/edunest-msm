@@ -125,7 +125,7 @@ export const staffController = {
         return;
       }
 
-      const profile = await staffService.uploadDocument(id, schoolId, req.file.buffer);
+      const profile = await staffService.uploadDocument(id, schoolId, req.file.buffer, req.file.originalname);
       res.status(200).json(successResponse(profile));
     } catch (error) {
       if (error instanceof StaffServiceError) {

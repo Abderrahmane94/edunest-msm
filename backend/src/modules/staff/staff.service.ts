@@ -196,7 +196,7 @@ export const staffService = {
   /**
    * Upload a document for a staff profile via Cloudinary.
    */
-  async uploadDocument(id: string, schoolId: string, file: Buffer) {
+  async uploadDocument(id: string, schoolId: string, file: Buffer, originalFilename?: string) {
     const profile = await prisma.staffProfile.findFirst({
       where: { id, schoolId },
     });
@@ -217,10 +217,19 @@ export const staffService = {
       accessMode: 'authenticated',
     });
 
+    // Cloudinary only auto-detects format for 'image' resources (content
+    // sniffing); 'raw' uploads like these documents need it derived from the
+    // original filename's extension instead, so private_download_url can
+    // later generate a genuinely time-limited link.
+    const extFromFilename = originalFilename?.includes('.')
+      ? originalFilename.split('.').pop()
+      : undefined;
+    const documentFormat = result.format || extFromFilename || null;
+
     // Update the staff profile with the new document public ID
     const updated = await prisma.staffProfile.update({
       where: { id },
-      data: { documentPublicId: result.publicId, documentFormat: result.format },
+      data: { documentPublicId: result.publicId, documentFormat },
       include: {
         user: {
           select: {

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { childrenController } from './children.controller';
 import { requireAdmin, requireTeacherOrAdmin, requireActiveRole } from '../../middleware/rbac.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
-import { createChildSchema, updateChildSchema, enrollChildSchema, createParentLinkSchema, parentLinkParamsSchema, createEmergencyContactSchema, updateEmergencyContactSchema, emergencyContactParamsSchema } from './children.schema';
+import { createChildSchema, updateChildSchema, enrollChildSchema, createParentLinkSchema, updateParentLinkSchema, parentLinkParamsSchema, createEmergencyContactSchema, updateEmergencyContactSchema, emergencyContactParamsSchema } from './children.schema';
 import { idParamSchema } from '../../utils/validators';
 
 const router = Router();
@@ -38,6 +38,9 @@ router.post('/:id/parent-links', requireAdmin, validateParams(idParamSchema), va
 
 // GET /api/children/:id/parent-links — List parent links for a child (admin or teacher)
 router.get('/:id/parent-links', requireTeacherOrAdmin, validateParams(idParamSchema), childrenController.getParentLinks);
+
+// PUT /api/children/:id/parent-links/:linkId — Update a parent-child link's relationship (admin only)
+router.put('/:id/parent-links/:linkId', requireAdmin, validateParams(parentLinkParamsSchema), validate(updateParentLinkSchema), childrenController.updateParentLink);
 
 // DELETE /api/children/:id/parent-links/:linkId — Remove a parent-child link (admin only)
 router.delete('/:id/parent-links/:linkId', requireAdmin, validateParams(parentLinkParamsSchema), childrenController.removeParentLink);

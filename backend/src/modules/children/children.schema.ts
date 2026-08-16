@@ -60,6 +60,12 @@ export const createParentLinkSchema = z.object({
   }),
 });
 
+export const updateParentLinkSchema = z.object({
+  relationship: z.enum(['mother', 'father', 'guardian'], {
+    errorMap: () => ({ message: 'Relationship must be mother, father, or guardian' }),
+  }),
+});
+
 export const parentLinkParamsSchema = z.object({
   id: uuidSchema,
   linkId: uuidSchema,
@@ -111,5 +117,6 @@ export type CreateChildInput = z.infer<typeof createChildSchema>;
 export type UpdateChildInput = z.infer<typeof updateChildSchema>;
 export type EnrollChildInput = z.infer<typeof enrollChildSchema>;
 export type CreateParentLinkInput = z.infer<typeof createParentLinkSchema>;
+export type UpdateParentLinkInput = z.infer<typeof updateParentLinkSchema>;
 export type CreateEmergencyContactInput = z.infer<typeof createEmergencyContactSchema>;
 export type UpdateEmergencyContactInput = z.infer<typeof updateEmergencyContactSchema>;

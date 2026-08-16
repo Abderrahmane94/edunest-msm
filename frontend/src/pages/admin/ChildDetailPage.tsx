@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Save, UserPlus, X } from 'lucide-react';
+import { ArrowLeft, Save, UserPlus, X, Star, Pencil, Check } from 'lucide-react';
 import { Button, StatusBadge, EntityDeleteButton } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
@@ -11,6 +11,8 @@ import {
   useEnrollChild,
   useParentLinks,
   useRemoveParentLink,
+  useUpdateParentLink,
+  useSetPrimaryParentLink,
   useEmergencyContacts,
   useLinkParent,
 } from '@/hooks/useChildren';
@@ -29,6 +31,8 @@ export function ChildDetailPage() {
   const enrollChild = useEnrollChild();
   const { data: parentLinks } = useParentLinks(childId!);
   const removeParentLink = useRemoveParentLink();
+  const updateParentLink = useUpdateParentLink();
+  const setPrimaryParentLink = useSetPrimaryParentLink();
   const { data: emergencyContacts } = useEmergencyContacts(childId!);
   const linkParent = useLinkParent();
 
@@ -53,6 +57,8 @@ export function ChildDetailPage() {
   const [linkRelationship, setLinkRelationship] = React.useState('mother');
   const [linkError, setLinkError] = React.useState<string | null>(null);
   const [emergencyDialogOpen, setEmergencyDialogOpen] = React.useState(false);
+  const [editingLinkId, setEditingLinkId] = React.useState<string | null>(null);
+  const [editLinkRelationship, setEditLinkRelationship] = React.useState('mother');
 
   React.useEffect(() => {
     if (child) {
@@ -237,25 +243,84 @@ export function ChildDetailPage() {
           <p className="text-body text-text-secondary">{t('children.noParents')}</p>
         ) : (
           <div className="space-y-2">
-            {(parentLinks as Record<string, unknown>[]).map((link) => (
-              <div key={link.id as string} className="flex items-center justify-between bg-subtle rounded-lg px-3 py-2">
-                <div>
-                  <span className="text-body font-medium text-foreground">
-                    {(link.parent as Record<string, unknown>)?.firstName as string} {(link.parent as Record<string, unknown>)?.lastName as string}
-                  </span>
-                  <span className="text-caption text-text-secondary ms-2">({link.relationship as string})</span>
-                  {!!link.isPrimary && <span className="ms-2 text-micro text-success font-medium">★</span>}
+            {(parentLinks as Record<string, unknown>[]).map((link) => {
+              const linkId = link.id as string;
+              const isEditing = editingLinkId === linkId;
+              return (
+                <div key={linkId} className="flex items-center justify-between bg-subtle rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2 flex-1">
+                    <span className="text-body font-medium text-foreground">
+                      {(link.parent as Record<string, unknown>)?.firstName as string} {(link.parent as Record<string, unknown>)?.lastName as string}
+                    </span>
+                    {isEditing ? (
+                      <div className="w-36">
+                        <FormSelect
+                          label=""
+                          name={`edit-relationship-${linkId}`}
+                          value={editLinkRelationship}
+                          onChange={(e) => setEditLinkRelationship(e.target.value)}
+                          options={relationshipOptions}
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-caption text-text-secondary">({link.relationship as string})</span>
+                    )}
+                    {!!link.isPrimary && (
+                      <span className="flex items-center gap-0.5 text-micro text-success font-medium">
+                        <Star className="w-3.5 h-3.5 fill-current" /> {t('children.detail.primary')}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {isEditing ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          updateParentLink.mutate({ childId: childId!, linkId, relationship: editLinkRelationship });
+                          setEditingLinkId(null);
+                        }}
+                        disabled={updateParentLink.isPending}
+                      >
+                        <Check className="w-4 h-4 text-success" />
+                      </Button>
+                    ) : (
+                      <>
+                        {!link.isPrimary && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title={t('children.detail.setPrimary')}
+                            onClick={() => setPrimaryParentLink.mutate({ childId: childId!, linkId })}
+                            disabled={setPrimaryParentLink.isPending}
+                          >
+                            <Star className="w-4 h-4 text-text-secondary" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setEditingLinkId(linkId);
+                            setEditLinkRelationship(link.relationship as string);
+                          }}
+                        >
+                          <Pencil className="w-4 h-4 text-text-secondary" />
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeParentLink.mutate({ childId: childId!, linkId })}
+                      disabled={removeParentLink.isPending}
+                    >
+                      <X className="w-4 h-4 text-danger" />
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeParentLink.mutate({ childId: childId!, linkId: link.id as string })}
-                  disabled={removeParentLink.isPending}
-                >
-                  <X className="w-4 h-4 text-danger" />
-                </Button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -285,6 +350,9 @@ export function ChildDetailPage() {
               {linkParent.isPending ? t('common.loading') : t('children.detail.link')}
             </Button>
           </div>
+        )}
+        {(parentLinks ?? []).length >= 2 && (
+          <p className="text-caption text-text-secondary">{t('children.detail.maxParentsReached')}</p>
         )}
         {linkError && <p className="text-body text-danger">{linkError}</p>}
       </div>

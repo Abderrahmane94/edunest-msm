@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { childrenService, ChildServiceError } from './children.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
-import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput } from './children.schema';
+import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, UpdateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput } from './children.schema';
 import { paginationSchema } from '../../utils/validators';
 import { softDeleteService, SoftDeleteError } from '../../services/soft-delete.service';
 
@@ -190,6 +190,25 @@ export const childrenController = {
       const { id } = req.params;
       const links = await childrenService.getParentLinks(id, schoolId);
       res.status(200).json(successResponse(links));
+    } catch (error) {
+      if (error instanceof ChildServiceError) {
+        res.status(error.statusCode).json(errorResponse('CHILD_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * PUT /api/children/:id/parent-links/:linkId — Update a parent-child link's relationship
+   */
+  async updateParentLink(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const { id, linkId } = req.params;
+      const input = req.body as UpdateParentLinkInput;
+      const link = await childrenService.updateParentLink(id, schoolId, linkId, input);
+      res.status(200).json(successResponse(link));
     } catch (error) {
       if (error instanceof ChildServiceError) {
         res.status(error.statusCode).json(errorResponse('CHILD_ERROR', error.message));

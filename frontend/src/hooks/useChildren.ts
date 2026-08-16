@@ -169,6 +169,34 @@ export function useRemoveParentLink() {
   });
 }
 
+export function useUpdateParentLink() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, linkId, relationship }: { childId: string; linkId: string; relationship: string }) => {
+      const res = await apiClient.put(`/children/${childId}/parent-links/${linkId}`, { relationship });
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update parent link');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['parent-links', variables.childId] });
+    },
+  });
+}
+
+export function useSetPrimaryParentLink() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, linkId }: { childId: string; linkId: string }) => {
+      const res = await apiClient.patch(`/children/${childId}/parent-links/${linkId}/primary`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to set primary parent');
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['parent-links', variables.childId] });
+    },
+  });
+}
+
 function mapEmergencyContact(c: Record<string, unknown>): EmergencyContact {
   return {
     id: c.id as string,

@@ -1,7 +1,7 @@
 import prisma from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { softDeleteService } from '../../services/soft-delete.service';
-import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput } from './children.schema';
+import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, UpdateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput } from './children.schema';
 import type { ChildWithEnrollments, ClassroomEnrollmentResponse, PhotoUrlResponse, ParentChildLinkResponse, EmergencyContactResponse } from './children.types';
 
 export class ChildServiceError extends Error {
@@ -428,6 +428,51 @@ class ChildrenService {
     });
 
     return links;
+  }
+
+  /**
+   * Update a parent-child link's relationship.
+   */
+  async updateParentLink(
+    childId: string,
+    schoolId: string,
+    linkId: string,
+    input: UpdateParentLinkInput,
+  ): Promise<ParentChildLinkResponse> {
+    // Verify child exists and belongs to the school
+    const child = await prisma.child.findFirst({
+      where: { id: childId, schoolId },
+    });
+
+    if (!child) {
+      throw new ChildServiceError('Child not found', 404);
+    }
+
+    // Verify the link exists and belongs to this child
+    const link = await prisma.parentChildLink.findFirst({
+      where: { id: linkId, childId },
+    });
+
+    if (!link) {
+      throw new ChildServiceError('Parent-child link not found', 404);
+    }
+
+    const updated = await prisma.parentChildLink.update({
+      where: { id: linkId },
+      data: { relationship: input.relationship },
+      include: {
+        parent: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return updated;
   }
 
   /**

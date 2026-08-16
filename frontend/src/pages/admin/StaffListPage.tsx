@@ -24,8 +24,8 @@ export function StaffListPage() {
   // Fetch everyone (small school rosters), then filter/merge client-side —
   // the users list has no role filter and the staff list has no user data
   // beyond the linked profile, so neither endpoint alone can drive this page.
-  const { data: usersData, isLoading: usersLoading } = useUsers({ pageSize: 200 });
-  const { data: staffData, isLoading: staffLoading } = useStaffList({ pageSize: 200 });
+  const { data: usersData, isLoading: usersLoading } = useUsers({ pageSize: 100 });
+  const { data: staffData, isLoading: staffLoading } = useStaffList({ pageSize: 100 });
 
   const rows = React.useMemo(() => {
     const profileByUserId = new Map((staffData?.profiles ?? []).map((p) => [p.user_id, p]));

@@ -190,6 +190,29 @@ class PaymentService {
         }
       }
 
+      // d.6 Each allocation amount must not exceed the period's outstanding balance
+      for (const alloc of allocations) {
+        const period = periods.find((p) => p.id === alloc.billingPeriodId);
+        if (!period) continue;
+
+        // Calculate total already paid for this period
+        const existingAllocations = await tx.paymentAllocation.aggregate({
+          where: { billingPeriodId: alloc.billingPeriodId },
+          _sum: { amount: true },
+        });
+
+        const totalPaid = existingAllocations._sum.amount ?? new Prisma.Decimal('0');
+        const outstanding = new Prisma.Decimal(period.amountDue).minus(totalPaid);
+
+        if (alloc.amount.gt(outstanding)) {
+          throw new PaymentServiceError(
+            `Allocation amount (${alloc.amount.toString()} DZD) exceeds outstanding balance (${outstanding.toString()} DZD) for billing period ${alloc.billingPeriodId}`,
+            400,
+            'VALIDATION_ERROR',
+          );
+        }
+      }
+
       // (e) Validate recordedBy resolves to an existing Staff user
       const recorder = await tx.user.findUnique({
         where: { id: recordedBy },

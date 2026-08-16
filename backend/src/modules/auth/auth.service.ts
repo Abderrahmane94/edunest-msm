@@ -57,8 +57,8 @@ function verifyRefreshToken(token: string): TokenPayload {
 
 export const authService = {
   async login(input: LoginInput): Promise<LoginResponse> {
-    const user = await prisma.user.findUnique({
-      where: { email: input.email },
+    const user = await prisma.user.findFirst({
+      where: { email: input.email, deletedAt: null },
     });
 
     if (!user) {

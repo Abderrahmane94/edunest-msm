@@ -102,8 +102,10 @@ const MODELS_WITHOUT_SCHOOL_ID = new Set([
   'PaymentAuditLog',
   'Notification',
   // Payment management models (scoped via Branch → School, not direct schoolId)
+  'Branch',
   'BranchBillingConfig',
   'BranchCalendar',
+  'BranchFee',
   'Enrollment',
   'BillingPeriod',
   'PaymentRecord',

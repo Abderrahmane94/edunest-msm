@@ -61,6 +61,23 @@ export const branchConfigController = {
           select: { id: true, name: true, isActive: true },
           orderBy: { name: 'asc' },
         });
+
+        // Auto-create a default branch if none exists for the school
+        if (branches.length === 0) {
+          const school = await prisma.school.findUnique({
+            where: { id: scope.schoolId },
+            select: { name: true },
+          });
+          const defaultBranch = await prisma.branch.create({
+            data: {
+              schoolId: scope.schoolId,
+              name: school?.name ?? 'Default',
+              isActive: true,
+            },
+            select: { id: true, name: true, isActive: true },
+          });
+          branches = [defaultBranch];
+        }
       } else {
         branches = [];
       }

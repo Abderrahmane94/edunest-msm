@@ -65,6 +65,7 @@ class EnrollmentService {
         );
       }
 
+      const ayStart = new Date(academicYear.startDate);
       const ayEnd = new Date(academicYear.endDate);
       const enrollStart = new Date(startDate);
 

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import branchConfigRoutes from './branch-config.routes';
 import branchCalendarRoutes from './branch-calendar.routes';
+import branchFeeRoutes from './branch-fee.routes';
 import enrollmentRoutes from './enrollment.routes';
 import paymentsRoutes from './payments.routes';
 import parentPortalRoutes from './parent-portal.routes';
@@ -16,6 +17,9 @@ router.use(branchConfigRoutes);
 
 // Branch calendar period boundaries
 router.use(branchCalendarRoutes);
+
+// Branch fee configuration
+router.use(branchFeeRoutes);
 
 // Enrollment management
 router.use(enrollmentRoutes);

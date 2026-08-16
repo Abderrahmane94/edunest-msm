@@ -1307,6 +1307,45 @@
       "defaultFeeMin": "Les frais par défaut ne doivent pas être inférieurs à 0",
       "defaultFeeMax": "Les frais par défaut ne doivent pas dépasser 9 999 999,99 DZD"
     },
+    "fees": {
+      "title": "Frais de branche",
+      "create": "Nouveau frais",
+      "createTitle": "Créer un frais",
+      "editTitle": "Modifier le frais",
+      "dialogDescription": "Configurez un frais ponctuel applicable aux inscriptions",
+      "selectBranch": "Branche",
+      "empty": "Aucun frais configuré",
+      "confirmDelete": "Supprimer le frais « {{name}} » ? Les périodes de facturation existantes ne seront pas affectées.",
+      "fields": {
+        "name": "Nom du frais",
+        "namePlaceholder": "Ex: Frais de transport, Tenue scolaire...",
+        "amount": "Montant (DZD)"
+      },
+      "errors": {
+        "nameRequired": "Le nom est requis (1-100 caractères)",
+        "amountInvalid": "Le montant doit être entre 0.00 et 9 999 999.99 DZD"
+      },
+      "assign": {
+        "button": "Assigner",
+        "title": "Assigner « {{name}} »",
+        "description": "Choisissez à qui appliquer ce frais",
+        "targetLabel": "Appliquer à",
+        "targetSchool": "Toute l'école",
+        "targetClassrooms": "Classes spécifiques",
+        "targetChildren": "Élèves spécifiques",
+        "selectChildren": "Sélectionner les élèves",
+        "searchPlaceholder": "Rechercher un élève...",
+        "selectedCount": "{{count}} élève(s) sélectionné(s)",
+        "selectClassrooms": "Sélectionner les classes",
+        "noChildren": "Aucun élève trouvé",
+        "noClassrooms": "Aucune classe trouvée",
+        "schoolConfirmation": "Ce frais sera appliqué à tous les élèves inscrits de l'école.",
+        "submit": "Appliquer le frais",
+        "resultTitle": "Frais appliqué",
+        "resultApplied": "Frais appliqué à {{count}} élève(s)",
+        "resultSkipped": "{{count}} élève(s) avaient déjà ce frais (ignorés)"
+      }
+    },
     "branchCalendar": {
       "title": "Calendrier académique",
       "description": "Gérer les périodes de facturation académiques",
@@ -1476,6 +1515,7 @@
       "record": "Enregistrer un paiement",
       "submit": "Enregistrer",
       "addAllocation": "Ajouter une allocation",
+      "suggestAllocation": "Suggérer l'allocation",
       "registrationPeriod": "Frais d'inscription",
       "allocationSum": "Total des allocations : {{sum}} / {{total}} DZD",
       "empty": "Aucun paiement enregistré",
@@ -1515,6 +1555,7 @@
         "referenceRequired": "La référence est requise pour les canaux CCP et BaridiMob",
         "allocationRequired": "Au moins une allocation est requise",
         "allocationAmountInvalid": "Montant d'allocation invalide",
+        "allocationExceedsOutstanding": "Le montant alloué ({{amount}} DZD) dépasse le solde restant ({{outstanding}} DZD) de la période",
         "allocationMismatch": "Le total des allocations doit être égal au montant total"
       },
       "success": {

@@ -93,6 +93,7 @@ function CreateClassroomDialog({
         room_number: formData.room_number || undefined,
         level: formData.level,
         academic_year_id: academicYearId,
+        teacher_id: formData.teacher_id || undefined,
       });
       resetForm();
       onOpenChange(false);

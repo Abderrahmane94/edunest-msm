@@ -19,6 +19,7 @@ export const createClassroomSchema = z.object({
     .max(100, 'Level must not exceed 100 characters')
     .optional(),
   academicYearId: uuidSchema,
+  teacherUserId: uuidSchema.optional(),
 });
 
 export const updateClassroomSchema = z.object({

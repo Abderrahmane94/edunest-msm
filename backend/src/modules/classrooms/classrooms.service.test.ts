@@ -93,6 +93,7 @@ describe('ClassroomsService', () => {
           capacity: 25,
           roomNumber: 'R101',
           level: 'KG1',
+          teacherUserId: null,
         },
         include: { teacher: { select: { id: true, firstName: true, lastName: true, email: true } } },
       });
@@ -112,6 +113,45 @@ describe('ClassroomsService', () => {
         message: 'Academic year not found or does not belong to this school',
         statusCode: 404,
       });
+    });
+
+    it('should assign the teacher when teacherUserId is provided', async () => {
+      const input = {
+        name: 'Class A',
+        capacity: 25,
+        academicYearId: 'ay-1',
+        teacherUserId: 'teacher-1',
+      };
+
+      mockPrisma.academicYear.findFirst.mockResolvedValue({ id: 'ay-1', schoolId });
+      mockPrisma.user.findFirst.mockResolvedValue({ id: 'teacher-1', schoolId, role: 'teacher', isActive: true });
+      mockPrisma.classroom.create.mockResolvedValue({ id: 'cls-1', teacherUserId: 'teacher-1' });
+
+      await classroomsService.create(schoolId, input);
+
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith({
+        where: { id: 'teacher-1', schoolId, role: 'teacher', isActive: true },
+      });
+      expect(mockPrisma.classroom.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ teacherUserId: 'teacher-1' }) }),
+      );
+    });
+
+    it('should throw when teacherUserId does not belong to an active teacher in the school', async () => {
+      const input = {
+        name: 'Class A',
+        capacity: 25,
+        academicYearId: 'ay-1',
+        teacherUserId: 'teacher-bad',
+      };
+
+      mockPrisma.academicYear.findFirst.mockResolvedValue({ id: 'ay-1', schoolId });
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+
+      await expect(classroomsService.create(schoolId, input)).rejects.toMatchObject({
+        statusCode: 400,
+      });
+      expect(mockPrisma.classroom.create).not.toHaveBeenCalled();
     });
   });
 

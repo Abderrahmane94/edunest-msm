@@ -34,6 +34,10 @@ class ClassroomsService {
       throw new ClassroomServiceError('Academic year not found or does not belong to this school', 404);
     }
 
+    if (input.teacherUserId) {
+      await this.assertValidTeacher(input.teacherUserId, schoolId);
+    }
+
     const classroom = await prisma.classroom.create({
       data: {
         schoolId,
@@ -42,6 +46,7 @@ class ClassroomsService {
         capacity: input.capacity,
         roomNumber: input.roomNumber || null,
         level: input.level || null,
+        teacherUserId: input.teacherUserId || null,
       },
       include: {
         teacher: { select: teacherSelect },
@@ -49,6 +54,27 @@ class ClassroomsService {
     });
 
     return classroom;
+  }
+
+  /**
+   * Validates that a teacher belongs to the given school and has the active teacher role.
+   */
+  private async assertValidTeacher(teacherUserId: string, schoolId: string): Promise<void> {
+    const teacher = await prisma.user.findFirst({
+      where: {
+        id: teacherUserId,
+        schoolId,
+        role: 'teacher',
+        isActive: true,
+      },
+    });
+
+    if (!teacher) {
+      throw new ClassroomServiceError(
+        'Teacher not found, does not belong to this school, or is not an active teacher',
+        400,
+      );
+    }
   }
 
   /**
@@ -148,21 +174,7 @@ class ClassroomsService {
 
     // If assigning a teacher (not unassigning)
     if (input.teacherUserId !== null) {
-      const teacher = await prisma.user.findFirst({
-        where: {
-          id: input.teacherUserId,
-          schoolId,
-          role: 'teacher',
-          isActive: true,
-        },
-      });
-
-      if (!teacher) {
-        throw new ClassroomServiceError(
-          'Teacher not found, does not belong to this school, or is not an active teacher',
-          400,
-        );
-      }
+      await this.assertValidTeacher(input.teacherUserId, schoolId);
     }
 
     const updated = await prisma.classroom.update({

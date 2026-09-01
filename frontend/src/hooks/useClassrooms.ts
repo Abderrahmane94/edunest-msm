@@ -99,13 +99,14 @@ export function useDeleteClassroom() {
 export function useCreateClassroom() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { name: string; capacity: number; room_number?: string; level: string; academic_year_id: string }) => {
+    mutationFn: async (data: { name: string; capacity: number; room_number?: string; level: string; academic_year_id: string; teacher_id?: string }) => {
       const res = await apiClient.post('/classrooms', {
         name: data.name,
         capacity: data.capacity,
         roomNumber: data.room_number,
         level: data.level,
         academicYearId: data.academic_year_id,
+        teacherUserId: data.teacher_id || undefined,
       });
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to create classroom');
       return res.data;

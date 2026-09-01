@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { communicationService, CommunicationServiceError } from './communication.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
-import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, UploadDailyReportPhotoInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput, MessagesQuery, DailyReportsQuery, AnnouncementsQuery, EventsQuery } from './communication.schema';
+import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput, MessagesQuery, DailyReportsQuery, AnnouncementsQuery, EventsQuery } from './communication.schema';
 
 export const communicationController = {
   /**
@@ -267,16 +267,21 @@ export const communicationController = {
       const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { id } = req.params;
-      const input = req.body as UploadDailyReportPhotoInput;
+      const files = (req.files as Express.Multer.File[] | undefined) || [];
 
-      const photo = await communicationService.uploadDailyReportPhoto(
+      if (files.length === 0) {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', 'No photos uploaded'));
+        return;
+      }
+
+      const photos = await communicationService.uploadDailyReportPhoto(
         id,
         schoolId,
         userId,
         userRole,
-        input,
+        files,
       );
-      res.status(201).json(successResponse(photo));
+      res.status(201).json(successResponse(photos));
     } catch (error) {
       if (error instanceof CommunicationServiceError) {
         res.status(error.statusCode).json(errorResponse('COMMUNICATION_ERROR', error.message));

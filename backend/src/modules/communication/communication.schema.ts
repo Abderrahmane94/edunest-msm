@@ -34,13 +34,6 @@ export const dailyReportIdParamSchema = z.object({
 });
 
 /**
- * Schema for uploading a photo to a daily report.
- */
-export const uploadDailyReportPhotoSchema = z.object({
-  cloudinaryPublicId: z.string().min(1, 'Cloudinary public ID is required').max(500, 'Cloudinary public ID must not exceed 500 characters'),
-});
-
-/**
  * Schema for daily reports query params (pagination + optional date filter).
  */
 export const dailyReportsQuerySchema = paginationSchema.extend({
@@ -50,7 +43,6 @@ export const dailyReportsQuerySchema = paginationSchema.extend({
 // ─── Daily Reports Type Exports ──────────────────────────────────────────────
 
 export type CreateDailyReportInput = z.infer<typeof createDailyReportSchema>;
-export type UploadDailyReportPhotoInput = z.infer<typeof uploadDailyReportPhotoSchema>;
 export type DailyReportsQuery = z.infer<typeof dailyReportsQuerySchema>;
 
 /**

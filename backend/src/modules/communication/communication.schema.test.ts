@@ -7,7 +7,6 @@ import {
   createDailyReportSchema,
   childIdParamSchema,
   dailyReportIdParamSchema,
-  uploadDailyReportPhotoSchema,
   dailyReportsQuerySchema,
   createAnnouncementSchema,
   announcementIdParamSchema,
@@ -269,27 +268,6 @@ describe('Communication Schemas', () => {
       const result = dailyReportIdParamSchema.safeParse({
         id: 'bad-id',
       });
-      expect(result.success).toBe(false);
-    });
-  });
-
-  describe('uploadDailyReportPhotoSchema', () => {
-    it('should accept valid cloudinaryPublicId', () => {
-      const result = uploadDailyReportPhotoSchema.safeParse({
-        cloudinaryPublicId: 'daily-reports/photo123',
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it('should reject empty cloudinaryPublicId', () => {
-      const result = uploadDailyReportPhotoSchema.safeParse({
-        cloudinaryPublicId: '',
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject missing cloudinaryPublicId', () => {
-      const result = uploadDailyReportPhotoSchema.safeParse({});
       expect(result.success).toBe(false);
     });
   });

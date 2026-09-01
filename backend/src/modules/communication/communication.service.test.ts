@@ -101,6 +101,12 @@ vi.mock('../../services/cloudinary.service', () => ({
       const expiry = type === 'photo' ? 3600 : 86400;
       return `https://res.cloudinary.com/demo/image/authenticated/s--mock--/exp_${expiry}/${publicId}`;
     }),
+    uploadFile: vi.fn(async () => ({
+      publicId: 'daily-reports/photo123',
+      url: 'https://res.cloudinary.com/demo/image/authenticated/daily-reports/photo123',
+      format: 'jpg',
+      bytes: 1024,
+    })),
   },
 }));
 
@@ -934,6 +940,10 @@ describe('CommunicationService', () => {
   });
 
   describe('uploadDailyReportPhoto', () => {
+    const mockFiles = [
+      { buffer: Buffer.from('fake-image'), originalname: 'photo.jpg' } as Express.Multer.File,
+    ];
+
     it('should upload a photo to an existing report', async () => {
       mockPrisma.dailyReport.findFirst.mockResolvedValue({
         id: 'report-1',
@@ -955,12 +965,13 @@ describe('CommunicationService', () => {
         schoolId,
         teacherUserId,
         'teacher',
-        { cloudinaryPublicId: 'daily-reports/photo123' },
+        mockFiles,
       );
 
-      expect(result.id).toBe('photo-1');
-      expect(result.photoUrl).toContain('daily-reports/photo123');
-      expect(result.photoUrl).toContain('exp_3600');
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('photo-1');
+      expect(result[0].photoUrl).toContain('daily-reports/photo123');
+      expect(result[0].photoUrl).toContain('exp_3600');
     });
 
     it('should throw 404 if report not found', async () => {
@@ -972,7 +983,7 @@ describe('CommunicationService', () => {
           schoolId,
           teacherUserId,
           'teacher',
-          { cloudinaryPublicId: 'daily-reports/photo123' },
+          mockFiles,
         ),
       ).rejects.toMatchObject({ statusCode: 404 });
     });
@@ -991,7 +1002,7 @@ describe('CommunicationService', () => {
           schoolId,
           teacherUserId,
           'teacher',
-          { cloudinaryPublicId: 'daily-reports/photo123' },
+          mockFiles,
         ),
       ).rejects.toMatchObject({ statusCode: 403 });
     });

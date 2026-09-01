@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { communicationController } from './communication.controller';
 import { requireTeacherOrAdmin, requireActiveRole, requireAdmin, rbac } from '../../middleware/rbac.middleware';
 import { validate, validateParams, validateQuery } from '../../middleware/validation.middleware';
@@ -11,7 +12,6 @@ import {
   createDailyReportSchema,
   childIdParamSchema,
   dailyReportIdParamSchema,
-  uploadDailyReportPhotoSchema,
   dailyReportsQuerySchema,
   createAnnouncementSchema,
   announcementIdParamSchema,
@@ -22,6 +22,18 @@ import {
   respondConsentSchema,
   eventsQuerySchema,
 } from './communication.schema';
+
+const uploadPhotos = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB per photo
+  fileFilter: (_req, file, cb) => {
+    if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPEG, PNG and WebP images are allowed'));
+    }
+  },
+});
 
 const router = Router();
 
@@ -110,12 +122,12 @@ router.get(
   communicationController.getDailyReport,
 );
 
-// POST /api/communication/daily-reports/:id/photos — Upload photo to report (teacher, admin)
+// POST /api/communication/daily-reports/:id/photos — Upload photos to report (teacher, admin)
 router.post(
   '/daily-reports/:id/photos',
   requireTeacherOrAdmin,
   validateParams(dailyReportIdParamSchema),
-  validate(uploadDailyReportPhotoSchema),
+  uploadPhotos.array('photos', 6),
   communicationController.uploadDailyReportPhoto,
 );
 

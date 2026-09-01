@@ -2,7 +2,7 @@ import prisma from '../../lib/prisma';
 import { socketService } from '../../services/socket.service';
 import { notificationService } from '../../services/notification.service';
 import { cloudinaryService } from '../../services/cloudinary.service';
-import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, UploadDailyReportPhotoInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput } from './communication.schema';
+import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput } from './communication.schema';
 import type {
   ConversationWithParticipants,
   MessageResponse,
@@ -786,7 +786,7 @@ class CommunicationService {
   }
 
   /**
-   * Upload a photo to an existing daily report.
+   * Upload one or more photos to an existing daily report.
    * Only teachers/admins who created the report (or admins in the school) can upload.
    */
   async uploadDailyReportPhoto(
@@ -794,8 +794,8 @@ class CommunicationService {
     schoolId: string,
     userId: string,
     userRole: string,
-    input: UploadDailyReportPhotoInput,
-  ): Promise<DailyReportPhotoResponse> {
+    files: Express.Multer.File[],
+  ): Promise<DailyReportPhotoResponse[]> {
     // Verify the report exists and belongs to this school
     const report = await prisma.dailyReport.findFirst({
       where: { id: reportId, schoolId },
@@ -822,21 +822,33 @@ class CommunicationService {
       }
     }
 
-    // Create the photo record
-    const photo = await prisma.dailyReportPhoto.create({
-      data: {
-        dailyReportId: reportId,
-        cloudinaryPublicId: input.cloudinaryPublicId,
-      },
-    });
+    // Upload each photo to Cloudinary and create its photo record
+    const photos = await Promise.all(
+      files.map(async (file) => {
+        const result = await cloudinaryService.uploadFile(file.buffer, {
+          folder: `schools/${schoolId}/daily-reports`,
+          resourceType: 'image',
+          accessMode: 'authenticated',
+        });
 
-    return {
-      id: photo.id,
-      dailyReportId: photo.dailyReportId,
-      cloudinaryPublicId: photo.cloudinaryPublicId,
-      photoUrl: cloudinaryService.generateSignedUrl(photo.cloudinaryPublicId, 'photo'),
-      createdAt: photo.createdAt,
-    };
+        const photo = await prisma.dailyReportPhoto.create({
+          data: {
+            dailyReportId: reportId,
+            cloudinaryPublicId: result.publicId,
+          },
+        });
+
+        return {
+          id: photo.id,
+          dailyReportId: photo.dailyReportId,
+          cloudinaryPublicId: photo.cloudinaryPublicId,
+          photoUrl: cloudinaryService.generateSignedUrl(photo.cloudinaryPublicId, 'photo'),
+          createdAt: photo.createdAt,
+        };
+      }),
+    );
+
+    return photos;
   }
 
   /**

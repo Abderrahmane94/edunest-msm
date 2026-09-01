@@ -50,12 +50,22 @@ class SoftDeleteService {
     }
 
     // Use softDeleteStorage bypass to update a deleted record
-    return softDeleteStorage.run({ includeDeleted: true }, async () => {
-      return (prisma[model] as any).update({
-        where: { id },
-        data: { deletedAt: null },
+    try {
+      return await softDeleteStorage.run({ includeDeleted: true }, async () => {
+        return (prisma[model] as any).update({
+          where: { id },
+          data: { deletedAt: null },
+        });
       });
-    });
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        throw new SoftDeleteError(
+          `Cannot restore: an active ${model} with the same unique field (e.g. email) already exists`,
+          409,
+        );
+      }
+      throw error;
+    }
   }
 
   /**

@@ -38,6 +38,9 @@ function getErrorCode(error: SoftDeleteError): string {
   if (message.includes('referential integrity')) {
     return 'REFERENTIAL_INTEGRITY';
   }
+  if (message.includes('cannot restore')) {
+    return 'DUPLICATE_UNIQUE_FIELD';
+  }
   if (message.includes('not found')) {
     return 'NOT_FOUND';
   }

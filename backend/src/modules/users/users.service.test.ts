@@ -14,10 +14,7 @@ vi.mock('../../lib/prisma', () => ({
       updateMany: vi.fn(),
       create: vi.fn(),
     },
-  },
-  softDeleteStorage: {
-    run: vi.fn((_ctx: unknown, fn: () => unknown) => fn()),
-    getStore: vi.fn(),
+    $queryRaw: vi.fn(),
   },
 }));
 
@@ -41,6 +38,7 @@ const mockPrisma = prisma as unknown as {
     updateMany: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
   };
+  $queryRaw: ReturnType<typeof vi.fn>;
 };
 
 describe('UsersService', () => {
@@ -53,10 +51,8 @@ describe('UsersService', () => {
 
   describe('invite', () => {
     it('should flag a restorable soft-deleted user instead of sending a fresh invite', async () => {
-      // No active user with this email...
-      mockPrisma.user.findFirst.mockResolvedValueOnce(null);
-      // ...but a soft-deleted one exists in the same school.
-      mockPrisma.user.findFirst.mockResolvedValueOnce({ id: 'deleted-user-1', email, schoolId, deletedAt: new Date() });
+      mockPrisma.user.findFirst.mockResolvedValueOnce(null); // active check
+      mockPrisma.$queryRaw.mockResolvedValueOnce([{ id: 'deleted-user-1' }]); // restorable check
 
       await expect(usersService.invite(email, 'teacher' as any, schoolId)).rejects.toMatchObject({
         statusCode: 409,
@@ -67,7 +63,7 @@ describe('UsersService', () => {
 
     it('should proceed with a normal invite when no user (active or deleted) exists', async () => {
       mockPrisma.user.findFirst.mockResolvedValueOnce(null); // active check
-      mockPrisma.user.findFirst.mockResolvedValueOnce(null); // restorable check
+      mockPrisma.$queryRaw.mockResolvedValueOnce([]); // restorable check
       mockPrisma.school.findUnique.mockResolvedValue({ id: schoolId, name: 'Test School' });
       mockPrisma.invitationToken.updateMany.mockResolvedValue({ count: 0 });
       mockPrisma.invitationToken.create.mockResolvedValue({});
@@ -87,6 +83,7 @@ describe('UsersService', () => {
 
       expect(error).toMatchObject({ message: 'A user with this email already exists', statusCode: 409 });
       expect(error.meta).toBeUndefined();
+      expect(mockPrisma.$queryRaw).not.toHaveBeenCalled();
     });
   });
 
@@ -95,7 +92,7 @@ describe('UsersService', () => {
 
     it('should flag a restorable soft-deleted user instead of creating a duplicate', async () => {
       mockPrisma.user.findFirst.mockResolvedValueOnce(null);
-      mockPrisma.user.findFirst.mockResolvedValueOnce({ id: 'deleted-user-2', email, schoolId, deletedAt: new Date() });
+      mockPrisma.$queryRaw.mockResolvedValueOnce([{ id: 'deleted-user-2' }]);
 
       await expect(usersService.createDirectly(schoolId, input)).rejects.toMatchObject({
         statusCode: 409,
@@ -106,7 +103,7 @@ describe('UsersService', () => {
 
     it('should create the user normally when no soft-deleted record exists', async () => {
       mockPrisma.user.findFirst.mockResolvedValueOnce(null);
-      mockPrisma.user.findFirst.mockResolvedValueOnce(null);
+      mockPrisma.$queryRaw.mockResolvedValueOnce([]);
       mockPrisma.user.create.mockResolvedValue({ id: 'new-user', email, schoolId });
 
       const result = await usersService.createDirectly(schoolId, input);

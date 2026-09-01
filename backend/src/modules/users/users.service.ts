@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
-import prisma, { softDeleteStorage } from '../../lib/prisma';
+import prisma from '../../lib/prisma';
 import { emailService } from '../../services/email.service';
 import type { UserRole, Language } from '@prisma/client';
 import type { CreateUserDirectlyInput } from './users.schema';
@@ -28,11 +28,16 @@ export class UserServiceError extends Error {
  * Looks up a soft-deleted user with this email in this school, so callers can
  * offer "restore" instead of silently creating a disconnected duplicate that
  * loses the original's history (attendance, classrooms, audit logs, etc).
+ * Uses a raw query rather than the tenant/soft-delete query-filter extension's
+ * includeDeleted bypass, since that extension always scopes findFirst reads.
  */
-async function findRestorableUser(email: string, schoolId: string) {
-  return softDeleteStorage.run({ includeDeleted: true }, () =>
-    prisma.user.findFirst({ where: { email, schoolId, deletedAt: { not: null } } }),
-  );
+async function findRestorableUser(email: string, schoolId: string): Promise<{ id: string } | null> {
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id FROM users
+    WHERE email = ${email} AND school_id = ${schoolId} AND deleted_at IS NOT NULL
+    LIMIT 1
+  `;
+  return rows[0] ?? null;
 }
 
 export const usersService = {

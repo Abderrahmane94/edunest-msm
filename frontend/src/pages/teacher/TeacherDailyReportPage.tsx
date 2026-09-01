@@ -1,13 +1,17 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Send, Plus, X, Camera, Minus, Check } from 'lucide-react';
+import { Send, Plus, X, Camera, Minus, Check, Pencil, RotateCcw, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui';
 import { useTeacherClassroom, useClassroomChildren } from '@/hooks/useTeacherClassroom';
+import {
+  useDailyReportsForChild,
+  useUpdateDailyReport,
+  type Mood,
+  type DailyReportSummary,
+} from '@/hooks/useCommunication';
 import { apiClient } from '@/lib/api-client';
-import { useMutation } from '@tanstack/react-query';
-
-type Mood = 'happy' | 'sad' | 'tired' | 'excited' | 'calm';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface MoodOption {
   value: Mood;
@@ -31,6 +35,14 @@ const MOOD_COLORS: Record<Mood, string> = {
   calm: 'border-[var(--color-border-strong)] bg-[var(--color-bg-subtle)]',
 };
 
+const MOOD_EMOJI: Record<Mood, string> = {
+  happy: '😊',
+  sad: '😢',
+  tired: '😴',
+  excited: '🤩',
+  calm: '😌',
+};
+
 interface DailyReportForm {
   child_id: string;
   date: string;
@@ -45,30 +57,95 @@ function getTodayString(): string {
   return new Date().toISOString().split('T')[0];
 }
 
-export function TeacherDailyReportPage() {
-  const { t } = useTranslation();
-
-  // Form state
-  const [form, setForm] = React.useState<DailyReportForm>({
-    child_id: '',
+function getBlankForm(): Omit<DailyReportForm, 'child_id'> {
+  return {
     date: getTodayString(),
     mood: null,
     meals_eaten: 0,
     nap_duration_minutes: 0,
     activities: '',
     general_note: '',
+  };
+}
+
+function formatReportDate(dateStr: string, locale: string): string {
+  try {
+    const date = new Date(`${dateStr}T00:00:00.000Z`);
+    return date.toLocaleDateString(locale === 'ar' ? 'ar-DZ' : 'fr-FR', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC',
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+export function TeacherDailyReportPage() {
+  const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
+
+  // Form state
+  const [form, setForm] = React.useState<DailyReportForm>({
+    child_id: '',
+    ...getBlankForm(),
   });
+  const [editingReportId, setEditingReportId] = React.useState<string | null>(null);
+  const [existingPhotos, setExistingPhotos] = React.useState<DailyReportSummary['photos']>([]);
   const [photos, setPhotos] = React.useState<File[]>([]);
   const [photoPreviewUrls, setPhotoPreviewUrls] = React.useState<string[]>([]);
   const [submitSuccess, setSubmitSuccess] = React.useState(false);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const autoLoadedChildRef = React.useRef<string | null>(null);
 
   // Fetch teacher's assigned classroom
   const { data: classroom, isLoading: classroomLoading } = useTeacherClassroom();
 
   // Fetch children in the classroom
   const { data: children, isLoading: childrenLoading } = useClassroomChildren(classroom?.id);
+
+  // Fetch report history for the selected child (used to display past reports and
+  // to detect whether a report for today already exists, so the form knows
+  // whether to create or edit).
+  const { data: childReports, isLoading: historyLoading } = useDailyReportsForChild(
+    form.child_id || undefined
+  );
+
+  const loadReportIntoForm = React.useCallback((report: DailyReportSummary) => {
+    setForm((prev) => ({
+      child_id: prev.child_id,
+      date: report.date,
+      mood: report.mood,
+      meals_eaten: report.meals_eaten,
+      nap_duration_minutes: report.nap_duration_minutes ?? 0,
+      activities: report.activities,
+      general_note: report.general_note,
+    }));
+    setEditingReportId(report.id);
+    setExistingPhotos(report.photos);
+    setPhotos([]);
+    setPhotoPreviewUrls([]);
+    setSubmitSuccess(false);
+  }, []);
+
+  // Once a child's history has loaded, auto-load today's report into the form
+  // if one already exists (edit mode), otherwise leave the form blank (create mode).
+  React.useEffect(() => {
+    if (!form.child_id || !childReports) return;
+    if (autoLoadedChildRef.current === form.child_id) return;
+    autoLoadedChildRef.current = form.child_id;
+
+    const todayReport = childReports.find((r) => r.date === getTodayString());
+    if (todayReport) {
+      loadReportIntoForm(todayReport);
+    } else {
+      setEditingReportId(null);
+      setExistingPhotos([]);
+    }
+  }, [form.child_id, childReports, loadReportIntoForm]);
 
   // Create daily report mutation
   const createReport = useMutation({
@@ -96,6 +173,9 @@ export function TeacherDailyReportPage() {
       return report;
     },
   });
+
+  // Update daily report mutation (edit an existing report)
+  const updateReport = useUpdateDailyReport();
 
   // Upload photos mutation
   const uploadPhotos = useMutation({
@@ -149,47 +229,80 @@ export function TeacherDailyReportPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Handle form submission
+  // Select a child: reset the form to blank/today, the auto-load effect above
+  // will then populate it if a report already exists for today.
+  const selectChild = React.useCallback((childId: string) => {
+    autoLoadedChildRef.current = null;
+    setForm({ child_id: childId, ...getBlankForm() });
+    setEditingReportId(null);
+    setExistingPhotos([]);
+    setPhotos([]);
+    setPhotoPreviewUrls([]);
+    setSubmitSuccess(false);
+  }, []);
+
+  // Discard the currently loaded report and start a fresh one for today.
+  const startNewReport = React.useCallback(() => {
+    setForm((prev) => ({ child_id: prev.child_id, ...getBlankForm() }));
+    setEditingReportId(null);
+    setExistingPhotos([]);
+    setPhotos([]);
+    setPhotoPreviewUrls([]);
+    setSubmitSuccess(false);
+  }, []);
+
+  // Handle form submission (creates a new report, or updates the one being edited)
   const handleSubmit = React.useCallback(async () => {
     if (!form.child_id || !form.mood) return;
 
     try {
-      const report = await createReport.mutateAsync({
-        child_id: form.child_id,
-        date: form.date,
-        mood: form.mood,
-        meals_eaten: form.meals_eaten,
-        nap_duration_minutes: form.nap_duration_minutes,
-        activities: form.activities,
-        general_note: form.general_note,
-      });
+      let reportId: string;
 
-      // Upload photos if any
-      if (photos.length > 0 && report.id) {
-        await uploadPhotos.mutateAsync({ reportId: report.id, files: photos });
+      if (editingReportId) {
+        const updated = await updateReport.mutateAsync({
+          reportId: editingReportId,
+          data: {
+            mood: form.mood,
+            meals_eaten: form.meals_eaten,
+            nap_duration_minutes: form.nap_duration_minutes,
+            activities: form.activities,
+            general_note: form.general_note,
+          },
+        });
+        reportId = updated.id;
+      } else {
+        const report = await createReport.mutateAsync({
+          child_id: form.child_id,
+          date: form.date,
+          mood: form.mood,
+          meals_eaten: form.meals_eaten,
+          nap_duration_minutes: form.nap_duration_minutes,
+          activities: form.activities,
+          general_note: form.general_note,
+        });
+        reportId = report.id;
+        // Switch into edit mode for the report we just created, so a second
+        // submit (e.g. adding more photos afterwards) updates it instead of
+        // hitting the "one report per child per day" conflict.
+        setEditingReportId(reportId);
       }
 
-      setSubmitSuccess(true);
-
-      // Reset form after short delay
-      setTimeout(() => {
-        setForm({
-          child_id: '',
-          date: getTodayString(),
-          mood: null,
-          meals_eaten: 0,
-          nap_duration_minutes: 0,
-          activities: '',
-          general_note: '',
-        });
+      // Upload photos if any
+      if (photos.length > 0) {
+        await uploadPhotos.mutateAsync({ reportId, files: photos });
+        photoPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
         setPhotos([]);
         setPhotoPreviewUrls([]);
-        setSubmitSuccess(false);
-      }, 2000);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['daily-reports-for-child', form.child_id] });
+
+      setSubmitSuccess(true);
+      setTimeout(() => setSubmitSuccess(false), 2000);
     } catch {
       // Error is handled by mutation state
     }
-  }, [form, photos, createReport, uploadPhotos]);
+  }, [form, photos, photoPreviewUrls, editingReportId, createReport, updateReport, uploadPhotos, queryClient]);
 
   // Increment/decrement helpers
   const incrementMeals = React.useCallback(() => {
@@ -203,8 +316,12 @@ export function TeacherDailyReportPage() {
   }, []);
 
   const isLoading = classroomLoading || childrenLoading;
-  const isSubmitting = createReport.isPending || uploadPhotos.isPending;
+  const isSubmitting = createReport.isPending || updateReport.isPending || uploadPhotos.isPending;
   const canSubmit = form.child_id && form.mood && !isSubmitting;
+  const isEditing = !!editingReportId;
+  const isEditingPastReport = isEditing && form.date !== getTodayString();
+  const submitError = editingReportId ? updateReport.error : createReport.error;
+  const isSubmitError = editingReportId ? updateReport.isError : createReport.isError;
 
   // Get selected child info
   const selectedChild = React.useMemo(
@@ -263,10 +380,7 @@ export function TeacherDailyReportPage() {
                 <button
                   key={child.id}
                   type="button"
-                  onClick={() => {
-                    setForm((prev) => ({ ...prev, child_id: child.id }));
-                    setSubmitSuccess(false);
-                  }}
+                  onClick={() => selectChild(child.id)}
                   className={cn(
                     'flex flex-col items-center gap-2 min-h-[80px] p-3 rounded-xl border-2 transition-all duration-150 active:scale-[0.98]',
                     form.child_id === child.id
@@ -293,6 +407,79 @@ export function TeacherDailyReportPage() {
             )}
           </div>
         </section>
+
+        {/* Report History for the selected child */}
+        {form.child_id && (
+          <section>
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="w-4 h-4 text-text-secondary" aria-hidden="true" />
+              <label className="block text-label font-medium text-text-primary">
+                {t('dailyReport.history', 'Previous Reports')}
+              </label>
+            </div>
+
+            {historyLoading ? (
+              <div className="flex gap-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-12 flex-1 bg-subtle rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : childReports && childReports.length > 0 ? (
+              <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+                {childReports.map((report) => {
+                  const isActive = report.id === editingReportId;
+                  return (
+                    <button
+                      key={report.id}
+                      type="button"
+                      onClick={() => loadReportIntoForm(report)}
+                      className={cn(
+                        'flex items-center gap-3 min-h-[48px] px-3 py-2 rounded-lg border text-start transition-all duration-150 active:scale-[0.99]',
+                        isActive
+                          ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)]'
+                          : 'border-border bg-card hover:bg-hover'
+                      )}
+                      aria-pressed={isActive}
+                    >
+                      <span className="text-xl" role="img" aria-hidden="true">
+                        {MOOD_EMOJI[report.mood]}
+                      </span>
+                      <span className="flex-1 text-caption font-medium text-text-primary capitalize">
+                        {report.date === getTodayString()
+                          ? t('dailyReport.today', "Today")
+                          : formatReportDate(report.date, i18n.language)}
+                      </span>
+                      <Pencil className="w-3.5 h-3.5 text-text-secondary shrink-0" aria-hidden="true" />
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-caption text-text-secondary py-1">
+                {t('dailyReport.noHistory', 'No previous reports for this child')}
+              </p>
+            )}
+          </section>
+        )}
+
+        {/* Editing banner */}
+        {isEditingPastReport && (
+          <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-[var(--color-accent-muted)] text-text-primary">
+            <span className="text-caption font-medium">
+              {t('dailyReport.editingBadge', 'Editing the report from {{date}}', {
+                date: formatReportDate(form.date, i18n.language),
+              })}
+            </span>
+            <button
+              type="button"
+              onClick={startNewReport}
+              className="flex items-center gap-1.5 text-caption font-medium text-[var(--color-accent)] hover:underline shrink-0"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              {t('dailyReport.backToToday', "Back to today's report")}
+            </button>
+          </div>
+        )}
 
         {/* Mood Selector */}
         <section>
@@ -424,6 +611,30 @@ export function TeacherDailyReportPage() {
           />
         </section>
 
+        {/* Existing Photos (already uploaded, read-only) */}
+        {existingPhotos.length > 0 && (
+          <section>
+            <label className="block text-label font-medium text-text-primary mb-2">
+              {t('dailyReport.existingPhotos', 'Already Uploaded')}
+            </label>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {existingPhotos.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="relative aspect-square rounded-lg overflow-hidden border border-border"
+                >
+                  <img
+                    src={photo.url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Photo Upload Grid */}
         <section>
           <label className="block text-label font-medium text-text-primary mb-2">
@@ -485,7 +696,9 @@ export function TeacherDailyReportPage() {
           {submitSuccess ? (
             <div className="flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">
               <Check className="w-5 h-5" />
-              {t('dailyReport.submitSuccess', 'Report sent successfully!')}
+              {isEditing
+                ? t('dailyReport.updateSuccess', 'Report updated successfully!')
+                : t('dailyReport.submitSuccess', 'Report sent successfully!')}
               {selectedChild && (
                 <span className="text-caption opacity-80">
                   — {selectedChild.first_name} {selectedChild.last_name}
@@ -502,18 +715,24 @@ export function TeacherDailyReportPage() {
                 'bg-primary text-primary-foreground hover:bg-primary-hover',
                 !canSubmit && 'opacity-50 cursor-not-allowed active:scale-100'
               )}
-              aria-label={t('dailyReport.sendReport', 'Send Report')}
+              aria-label={isEditing ? t('dailyReport.updateReport', 'Update Report') : t('dailyReport.sendReport', 'Send Report')}
             >
-              <Send className="w-5 h-5" />
+              {isEditing ? <Pencil className="w-5 h-5" /> : <Send className="w-5 h-5" />}
               {isSubmitting
-                ? t('dailyReport.sending', 'Sending...')
-                : t('dailyReport.sendReport', 'Send Report')}
+                ? isEditing
+                  ? t('dailyReport.updating', 'Updating...')
+                  : t('dailyReport.sending', 'Sending...')
+                : isEditing
+                  ? t('dailyReport.updateReport', 'Update Report')
+                  : t('dailyReport.sendReport', 'Send Report')}
             </button>
           )}
 
-          {createReport.isError && (
+          {isSubmitError && (
             <p className="text-caption text-[var(--color-danger)] text-center mt-2">
-              {createReport.error?.message || t('dailyReport.submitError', 'Failed to send report. Please try again.')}
+              {submitError?.message || (isEditing
+                ? t('dailyReport.updateError', 'Failed to update report. Please try again.')
+                : t('dailyReport.submitError', 'Failed to send report. Please try again.'))}
             </p>
           )}
         </div>

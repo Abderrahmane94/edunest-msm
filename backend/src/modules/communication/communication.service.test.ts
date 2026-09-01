@@ -40,6 +40,7 @@ vi.mock('../../lib/prisma', () => ({
       findUnique: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
       count: vi.fn(),
     },
     dailyReportPhoto: {
@@ -151,6 +152,7 @@ const mockPrisma = prisma as unknown as {
     findUnique: ReturnType<typeof vi.fn>;
     findMany: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
     count: ReturnType<typeof vi.fn>;
   };
   dailyReportPhoto: {
@@ -936,6 +938,128 @@ describe('CommunicationService', () => {
       await expect(
         communicationService.getDailyReportById('nonexistent', schoolId, teacherUserId, 'teacher'),
       ).rejects.toMatchObject({ statusCode: 404 });
+    });
+  });
+
+  describe('updateDailyReport', () => {
+    it('should update a report and return the updated fields', async () => {
+      mockPrisma.dailyReport.findFirst.mockResolvedValue({
+        id: 'report-1',
+        schoolId,
+        childId,
+      });
+      mockPrisma.classroomEnrollment.findFirst.mockResolvedValue({
+        id: 'enrollment-1',
+      });
+      mockPrisma.dailyReport.update.mockResolvedValue({
+        id: 'report-1',
+        schoolId,
+        childId,
+        date: new Date('2024-03-15T00:00:00.000Z'),
+        mood: 'calm',
+        mealsEaten: 2,
+        napDurationMinutes: 45,
+        activities: 'Reading',
+        generalNote: null,
+        createdByUserId: teacherUserId,
+        createdAt: new Date(),
+        photos: [],
+        child: { id: childId, firstName: 'Ahmed', lastName: 'Ben Ali' },
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: teacherUserId,
+        firstName: 'Karim',
+        lastName: 'Hadj',
+      });
+      mockPrisma.parentChildLink.findMany.mockResolvedValue([]);
+
+      const result = await communicationService.updateDailyReport(
+        'report-1',
+        schoolId,
+        teacherUserId,
+        'teacher',
+        { mood: 'calm', mealsEaten: 2, napDurationMinutes: 45, activities: 'Reading' },
+      );
+
+      expect(result.mood).toBe('calm');
+      expect(result.mealsEaten).toBe(2);
+      expect(mockPrisma.dailyReport.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'report-1' },
+          data: { mood: 'calm', mealsEaten: 2, napDurationMinutes: 45, activities: 'Reading' },
+        }),
+      );
+    });
+
+    it('should notify linked parents of the update', async () => {
+      mockPrisma.dailyReport.findFirst.mockResolvedValue({
+        id: 'report-1',
+        schoolId,
+        childId,
+      });
+      mockPrisma.classroomEnrollment.findFirst.mockResolvedValue({
+        id: 'enrollment-1',
+      });
+      mockPrisma.dailyReport.update.mockResolvedValue({
+        id: 'report-1',
+        schoolId,
+        childId,
+        date: new Date('2024-03-15T00:00:00.000Z'),
+        mood: 'calm',
+        mealsEaten: 2,
+        napDurationMinutes: 45,
+        activities: 'Reading',
+        generalNote: null,
+        createdByUserId: teacherUserId,
+        createdAt: new Date(),
+        photos: [],
+        child: { id: childId, firstName: 'Ahmed', lastName: 'Ben Ali' },
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: teacherUserId,
+        firstName: 'Karim',
+        lastName: 'Hadj',
+      });
+      mockPrisma.parentChildLink.findMany.mockResolvedValue([{ parentUserId: 'parent-1' }]);
+
+      await communicationService.updateDailyReport(
+        'report-1',
+        schoolId,
+        teacherUserId,
+        'teacher',
+        { mood: 'calm' },
+      );
+
+      expect(socketService.emitToUser).toHaveBeenCalledWith(
+        'parent-1',
+        'report:updated',
+        expect.objectContaining({ id: 'report-1' }),
+      );
+    });
+
+    it('should throw 404 if report not found', async () => {
+      mockPrisma.dailyReport.findFirst.mockResolvedValue(null);
+
+      await expect(
+        communicationService.updateDailyReport('nonexistent', schoolId, teacherUserId, 'teacher', {
+          mood: 'calm',
+        }),
+      ).rejects.toMatchObject({ statusCode: 404 });
+    });
+
+    it('should throw 403 if teacher is not assigned to child classroom', async () => {
+      mockPrisma.dailyReport.findFirst.mockResolvedValue({
+        id: 'report-1',
+        schoolId,
+        childId,
+      });
+      mockPrisma.classroomEnrollment.findFirst.mockResolvedValue(null);
+
+      await expect(
+        communicationService.updateDailyReport('report-1', schoolId, teacherUserId, 'teacher', {
+          mood: 'calm',
+        }),
+      ).rejects.toMatchObject({ statusCode: 403 });
     });
   });
 

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { communicationService, CommunicationServiceError } from './communication.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
-import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput, MessagesQuery, DailyReportsQuery, AnnouncementsQuery, EventsQuery } from './communication.schema';
+import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, UpdateDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput, MessagesQuery, DailyReportsQuery, AnnouncementsQuery, EventsQuery } from './communication.schema';
 
 export const communicationController = {
   /**
@@ -247,6 +247,34 @@ export const communicationController = {
         schoolId,
         userId,
         userRole,
+      );
+      res.status(200).json(successResponse(report));
+    } catch (error) {
+      if (error instanceof CommunicationServiceError) {
+        res.status(error.statusCode).json(errorResponse('COMMUNICATION_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * PATCH /api/communication/daily-reports/:id — Update a daily report
+   */
+  async updateDailyReport(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const userId = req.user!.userId;
+      const userRole = req.user!.role;
+      const { id } = req.params;
+      const input = req.body as UpdateDailyReportInput;
+
+      const report = await communicationService.updateDailyReport(
+        id,
+        schoolId,
+        userId,
+        userRole,
+        input,
       );
       res.status(200).json(successResponse(report));
     } catch (error) {

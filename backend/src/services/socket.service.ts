@@ -10,6 +10,7 @@ export type SocketEvent =
   | 'message:new'
   | 'message:read'
   | 'report:new'
+  | 'report:updated'
   | 'announcement:new'
   | 'notification:new';
 

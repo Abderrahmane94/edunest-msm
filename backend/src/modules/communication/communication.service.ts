@@ -2,7 +2,7 @@ import prisma from '../../lib/prisma';
 import { socketService } from '../../services/socket.service';
 import { notificationService } from '../../services/notification.service';
 import { cloudinaryService } from '../../services/cloudinary.service';
-import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput } from './communication.schema';
+import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, UpdateDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput } from './communication.schema';
 import type {
   ConversationWithParticipants,
   MessageResponse,
@@ -783,6 +783,97 @@ class CommunicationService {
       child: report.child,
       createdBy: creator || undefined,
     };
+  }
+
+  /**
+   * Update the content of an existing daily report.
+   * Only teachers assigned to the child's classroom (or admins) can update.
+   * Emits "report:updated" to all linked parents' user rooms.
+   */
+  async updateDailyReport(
+    reportId: string,
+    schoolId: string,
+    userId: string,
+    userRole: string,
+    input: UpdateDailyReportInput,
+  ): Promise<DailyReportResponse> {
+    const report = await prisma.dailyReport.findFirst({
+      where: { id: reportId, schoolId },
+    });
+
+    if (!report) {
+      throw new CommunicationServiceError('Daily report not found', 404);
+    }
+
+    if (userRole === 'teacher') {
+      const enrollment = await prisma.classroomEnrollment.findFirst({
+        where: {
+          childId: report.childId,
+          classroom: { teacherUserId: userId, schoolId },
+        },
+      });
+
+      if (!enrollment) {
+        throw new CommunicationServiceError(
+          'You can only update reports for children in your classroom',
+          403,
+        );
+      }
+    }
+
+    const updated = await prisma.dailyReport.update({
+      where: { id: reportId },
+      data: {
+        ...(input.mood !== undefined && { mood: input.mood }),
+        ...(input.mealsEaten !== undefined && { mealsEaten: input.mealsEaten }),
+        ...(input.napDurationMinutes !== undefined && { napDurationMinutes: input.napDurationMinutes }),
+        ...(input.activities !== undefined && { activities: input.activities }),
+        ...(input.generalNote !== undefined && { generalNote: input.generalNote }),
+      },
+      include: {
+        photos: true,
+        child: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
+
+    const creator = await prisma.user.findUnique({
+      where: { id: updated.createdByUserId },
+      select: { id: true, firstName: true, lastName: true },
+    });
+
+    const response: DailyReportResponse = {
+      id: updated.id,
+      schoolId: updated.schoolId,
+      childId: updated.childId,
+      date: updated.date,
+      mood: updated.mood,
+      mealsEaten: updated.mealsEaten,
+      napDurationMinutes: updated.napDurationMinutes,
+      activities: updated.activities,
+      generalNote: updated.generalNote,
+      createdByUserId: updated.createdByUserId,
+      createdAt: updated.createdAt,
+      photos: updated.photos.map((photo) => ({
+        id: photo.id,
+        dailyReportId: photo.dailyReportId,
+        cloudinaryPublicId: photo.cloudinaryPublicId,
+        photoUrl: cloudinaryService.generateSignedUrl(photo.cloudinaryPublicId, 'photo'),
+        createdAt: photo.createdAt,
+      })),
+      child: updated.child,
+      createdBy: creator || undefined,
+    };
+
+    const parentLinks = await prisma.parentChildLink.findMany({
+      where: { childId: report.childId },
+      select: { parentUserId: true },
+    });
+
+    for (const link of parentLinks) {
+      socketService.emitToUser(link.parentUserId, 'report:updated', response);
+    }
+
+    return response;
   }
 
   /**

@@ -10,6 +10,7 @@ import {
   messageIdParamSchema,
   messagesQuerySchema,
   createDailyReportSchema,
+  updateDailyReportSchema,
   childIdParamSchema,
   dailyReportIdParamSchema,
   dailyReportsQuerySchema,
@@ -120,6 +121,15 @@ router.get(
   requireActiveRole,
   validateParams(dailyReportIdParamSchema),
   communicationController.getDailyReport,
+);
+
+// PATCH /api/communication/daily-reports/:id — Update daily report (teacher, admin)
+router.patch(
+  '/daily-reports/:id',
+  requireTeacherOrAdmin,
+  validateParams(dailyReportIdParamSchema),
+  validate(updateDailyReportSchema),
+  communicationController.updateDailyReport,
 );
 
 // POST /api/communication/daily-reports/:id/photos — Upload photos to report (teacher, admin)

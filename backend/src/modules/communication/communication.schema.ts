@@ -20,6 +20,22 @@ export const createDailyReportSchema = z.object({
 });
 
 /**
+ * Schema for updating an existing daily report.
+ * All fields optional (partial update); at least one must be provided.
+ */
+export const updateDailyReportSchema = z
+  .object({
+    mood: z.enum(['happy', 'sad', 'tired', 'excited', 'calm'], {
+      errorMap: () => ({ message: 'Mood must be one of: happy, sad, tired, excited, calm' }),
+    }).optional(),
+    mealsEaten: z.number().int().min(0, 'Meals eaten must be a non-negative integer').max(10, 'Meals eaten must not exceed 10').optional(),
+    napDurationMinutes: z.number().int().min(0, 'Nap duration must be a non-negative integer').max(480, 'Nap duration must not exceed 480 minutes').optional().nullable(),
+    activities: z.string().max(2000, 'Activities must not exceed 2000 characters').optional().nullable(),
+    generalNote: z.string().max(2000, 'General note must not exceed 2000 characters').optional().nullable(),
+  })
+  .refine((data) => Object.keys(data).length > 0, { message: 'At least one field must be provided' });
+
+/**
  * Schema for child ID route parameter (for daily reports).
  */
 export const childIdParamSchema = z.object({
@@ -43,6 +59,7 @@ export const dailyReportsQuerySchema = paginationSchema.extend({
 // ─── Daily Reports Type Exports ──────────────────────────────────────────────
 
 export type CreateDailyReportInput = z.infer<typeof createDailyReportSchema>;
+export type UpdateDailyReportInput = z.infer<typeof updateDailyReportSchema>;
 export type DailyReportsQuery = z.infer<typeof dailyReportsQuerySchema>;
 
 /**

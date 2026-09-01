@@ -5,6 +5,7 @@ import {
   conversationIdParamSchema,
   messageIdParamSchema,
   createDailyReportSchema,
+  updateDailyReportSchema,
   childIdParamSchema,
   dailyReportIdParamSchema,
   dailyReportsQuerySchema,
@@ -236,6 +237,44 @@ describe('Communication Schemas', () => {
 
     it('should reject invalid childId', () => {
       const result = createDailyReportSchema.safeParse({ ...validInput, childId: 'not-a-uuid' });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('updateDailyReportSchema', () => {
+    it('should accept a partial update with a single field', () => {
+      const result = updateDailyReportSchema.safeParse({ mood: 'happy' });
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept an update with all fields', () => {
+      const result = updateDailyReportSchema.safeParse({
+        mood: 'calm',
+        mealsEaten: 2,
+        napDurationMinutes: 60,
+        activities: 'Painting',
+        generalNote: 'Had a great day',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject an empty object', () => {
+      const result = updateDailyReportSchema.safeParse({});
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject an invalid mood value', () => {
+      const result = updateDailyReportSchema.safeParse({ mood: 'angry' });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject mealsEaten exceeding 10', () => {
+      const result = updateDailyReportSchema.safeParse({ mealsEaten: 11 });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject napDurationMinutes exceeding 480', () => {
+      const result = updateDailyReportSchema.safeParse({ napDurationMinutes: 500 });
       expect(result.success).toBe(false);
     });
   });

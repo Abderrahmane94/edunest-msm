@@ -227,6 +227,107 @@ export function useEventConsent(eventId?: string) {
   });
 }
 
+// ─── Daily Reports (Teacher history + edit) ──────────────────────────────────
+
+export type Mood = 'happy' | 'sad' | 'tired' | 'excited' | 'calm';
+
+export interface DailyReportPhoto {
+  id: string;
+  url: string;
+}
+
+export interface DailyReportSummary {
+  id: string;
+  child_id: string;
+  date: string;
+  mood: Mood;
+  meals_eaten: number;
+  nap_duration_minutes: number | null;
+  activities: string;
+  general_note: string;
+  photos: DailyReportPhoto[];
+}
+
+function mapDailyReport(raw: Record<string, unknown>): DailyReportSummary {
+  const rawDate = (raw.date ?? '') as string;
+  const rawPhotos = (raw.photos ?? []) as Record<string, unknown>[];
+  return {
+    id: raw.id as string,
+    child_id: (raw.childId ?? raw.child_id) as string,
+    // dates come back as full ISO timestamps (date-only, midnight UTC); keep just the YYYY-MM-DD part
+    date: rawDate.split('T')[0],
+    mood: raw.mood as Mood,
+    meals_eaten: (raw.mealsEaten ?? raw.meals_eaten ?? 0) as number,
+    nap_duration_minutes: (raw.napDurationMinutes ?? raw.nap_duration_minutes ?? null) as number | null,
+    activities: (raw.activities ?? '') as string,
+    general_note: (raw.generalNote ?? raw.general_note ?? '') as string,
+    photos: rawPhotos.map((p) => ({
+      id: p.id as string,
+      url: (p.photoUrl ?? p.url) as string,
+    })),
+  };
+}
+
+/**
+ * Fetches the daily report history for a single child (most recent first).
+ * Used by the teacher's report form to show past reports and let it detect
+ * whether today's report already exists (edit vs create).
+ */
+export function useDailyReportsForChild(childId: string | undefined) {
+  return useQuery({
+    queryKey: ['daily-reports-for-child', childId],
+    queryFn: async () => {
+      const res = await apiClient.get<unknown>(
+        `/communication/daily-reports/child/${childId}?pageSize=30`
+      );
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load reports');
+      const raw = res.data;
+      const list = Array.isArray(raw) ? raw : [];
+      return (list as Record<string, unknown>[]).map(mapDailyReport);
+    },
+    enabled: !!childId,
+  });
+}
+
+/**
+ * Updates the content of an existing daily report (teacher/admin only).
+ */
+export function useUpdateDailyReport() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      reportId,
+      data,
+    }: {
+      reportId: string;
+      data: {
+        mood: Mood;
+        meals_eaten: number;
+        nap_duration_minutes: number;
+        activities: string;
+        general_note: string;
+      };
+    }) => {
+      const body = {
+        mood: data.mood,
+        mealsEaten: data.meals_eaten,
+        napDurationMinutes: data.nap_duration_minutes,
+        activities: data.activities || undefined,
+        generalNote: data.general_note || undefined,
+      };
+      const res = await apiClient.patch<Record<string, unknown>>(
+        `/communication/daily-reports/${reportId}`,
+        body
+      );
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update report');
+      return mapDailyReport(res.data as Record<string, unknown>);
+    },
+    onSuccess: (report) => {
+      queryClient.invalidateQueries({ queryKey: ['daily-reports-for-child', report.child_id] });
+    },
+  });
+}
+
 // ─── Pending Conversations (Admin supervision) ───────────────────────────────
 
 export interface PendingConversation {

@@ -1572,14 +1572,18 @@ class CommunicationService {
       id: r.id,
       child_id: r.childId,
       child_name: `${r.child.firstName} ${r.child.lastName}`,
-      child_photo_url: r.child.photoPublicId || null,
+      child_photo_url: r.child.photoPublicId
+        ? cloudinaryService.generateSignedUrl(r.child.photoPublicId, 'photo')
+        : null,
       date: r.date.toISOString().split('T')[0],
       mood: r.mood,
       meals_eaten: r.mealsEaten,
       nap_duration_minutes: r.napDurationMinutes ?? 0,
       activities: r.activities ?? '',
       general_note: r.generalNote ?? '',
-      photos: r.photos.map((p) => ({ url: p.cloudinaryPublicId })),
+      photos: r.photos.map((p) => ({
+        url: cloudinaryService.generateSignedUrl(p.cloudinaryPublicId, 'photo'),
+      })),
     }));
   }
 }

@@ -1710,4 +1710,61 @@ describe('CommunicationService', () => {
       ).rejects.toMatchObject({ statusCode: 404 });
     });
   });
+
+  describe('getReportsForParent', () => {
+    it('should return signed photo and child photo URLs, not raw public IDs', async () => {
+      mockPrisma.parentChildLink.findMany.mockResolvedValue([{ childId }]);
+      mockPrisma.dailyReport.findMany.mockResolvedValue([
+        {
+          id: 'report-1',
+          childId,
+          date: new Date('2024-03-15T00:00:00.000Z'),
+          mood: 'happy',
+          mealsEaten: 3,
+          napDurationMinutes: 90,
+          activities: 'Painting',
+          generalNote: null,
+          photos: [{ id: 'photo-1', cloudinaryPublicId: 'daily-reports/photo123' }],
+          child: { id: childId, firstName: 'Ahmed', lastName: 'Ben Ali', photoPublicId: 'children/child-1' },
+        },
+      ]);
+
+      const result = await communicationService.getReportsForParent(schoolId, parentUserId);
+
+      expect(result[0].photos[0].url).not.toBe('daily-reports/photo123');
+      expect(result[0].photos[0].url).toContain('daily-reports/photo123');
+      expect(result[0].child_photo_url).not.toBe('children/child-1');
+      expect(result[0].child_photo_url).toContain('children/child-1');
+    });
+
+    it('should return null child_photo_url when the child has no photo', async () => {
+      mockPrisma.parentChildLink.findMany.mockResolvedValue([{ childId }]);
+      mockPrisma.dailyReport.findMany.mockResolvedValue([
+        {
+          id: 'report-1',
+          childId,
+          date: new Date('2024-03-15T00:00:00.000Z'),
+          mood: 'happy',
+          mealsEaten: 3,
+          napDurationMinutes: 90,
+          activities: 'Painting',
+          generalNote: null,
+          photos: [],
+          child: { id: childId, firstName: 'Ahmed', lastName: 'Ben Ali', photoPublicId: null },
+        },
+      ]);
+
+      const result = await communicationService.getReportsForParent(schoolId, parentUserId);
+
+      expect(result[0].child_photo_url).toBeNull();
+    });
+
+    it('should return an empty array when the parent has no linked children', async () => {
+      mockPrisma.parentChildLink.findMany.mockResolvedValue([]);
+
+      const result = await communicationService.getReportsForParent(schoolId, parentUserId);
+
+      expect(result).toEqual([]);
+    });
+  });
 });

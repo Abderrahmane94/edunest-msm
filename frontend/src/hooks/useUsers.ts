@@ -117,9 +117,9 @@ export function useUpdateUser() {
       if (data.last_name !== undefined) body.lastName = data.last_name;
       if (data.role !== undefined) body.role = data.role;
       if (data.preferred_language !== undefined) body.preferredLanguage = data.preferred_language;
-      if (data.phone !== undefined) body.phone = data.phone;
-      if (data.address !== undefined) body.address = data.address;
-      if (data.national_id !== undefined) body.nationalId = data.national_id;
+      if (data.phone?.trim()) body.phone = data.phone.trim();
+      if (data.address?.trim()) body.address = data.address.trim();
+      if (data.national_id?.trim()) body.nationalId = data.national_id.trim();
 
       const res = await apiClient.patch(`/users/${id}`, body);
       if (!res.success) throw new Error(res.error?.message ?? 'Failed to update user');

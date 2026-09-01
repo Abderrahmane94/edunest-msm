@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, ApiRequestError } from '@/lib/api-client';
 
 export interface User {
   id: string;
@@ -153,7 +153,9 @@ export function useInviteUser() {
   return useMutation({
     mutationFn: async (data: { email: string; role: string }) => {
       const res = await apiClient.post<{ message: string }>('/users/invite', data);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to send invitation');
+      if (!res.success) {
+        throw new ApiRequestError(res.error ?? { code: 'UNKNOWN_ERROR', message: 'Failed to send invitation' });
+      }
       return res.data;
     },
   });

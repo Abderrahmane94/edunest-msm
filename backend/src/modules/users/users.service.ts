@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
-import prisma from '../../lib/prisma';
+import prisma, { softDeleteStorage } from '../../lib/prisma';
 import { emailService } from '../../services/email.service';
 import type { UserRole, Language } from '@prisma/client';
 import type { CreateUserDirectlyInput } from './users.schema';
@@ -14,12 +14,25 @@ function getFrontendUrl(): string {
 
 export class UserServiceError extends Error {
   statusCode: number;
+  meta?: Record<string, unknown>;
 
-  constructor(message: string, statusCode: number) {
+  constructor(message: string, statusCode: number, meta?: Record<string, unknown>) {
     super(message);
     this.name = 'UserServiceError';
     this.statusCode = statusCode;
+    this.meta = meta;
   }
+}
+
+/**
+ * Looks up a soft-deleted user with this email in this school, so callers can
+ * offer "restore" instead of silently creating a disconnected duplicate that
+ * loses the original's history (attendance, classrooms, audit logs, etc).
+ */
+async function findRestorableUser(email: string, schoolId: string) {
+  return softDeleteStorage.run({ includeDeleted: true }, () =>
+    prisma.user.findFirst({ where: { email, schoolId, deletedAt: { not: null } } }),
+  );
 }
 
 export const usersService = {
@@ -35,6 +48,15 @@ export const usersService = {
 
     if (existingUser) {
       throw new UserServiceError('A user with this email already exists', 409);
+    }
+
+    const deletedUser = await findRestorableUser(email, schoolId);
+    if (deletedUser) {
+      throw new UserServiceError(
+        'A previously removed user with this email exists in this school',
+        409,
+        { restorable: true, deletedUserId: deletedUser.id },
+      );
     }
 
     // Get school name for the email
@@ -381,6 +403,15 @@ export const usersService = {
     const existing = await prisma.user.findFirst({ where: { email: input.email, schoolId } });
     if (existing) {
       throw new UserServiceError('A user with this email already exists', 409);
+    }
+
+    const deletedUser = await findRestorableUser(input.email, schoolId);
+    if (deletedUser) {
+      throw new UserServiceError(
+        'A previously removed user with this email exists in this school',
+        409,
+        { restorable: true, deletedUserId: deletedUser.id },
+      );
     }
 
     const passwordHash = await bcrypt.hash('edunest26', BCRYPT_SALT_ROUNDS);

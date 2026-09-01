@@ -6,6 +6,8 @@ import {
 } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { useInviteUser } from '@/hooks/useUsers';
+import { useRestoreRecord } from '@/hooks/useTrash';
+import { ApiRequestError } from '@/lib/api-client';
 
 interface InviteByEmailDialogProps {
   open: boolean;
@@ -15,18 +17,21 @@ interface InviteByEmailDialogProps {
 export function InviteByEmailDialog({ open, onOpenChange }: InviteByEmailDialogProps) {
   const { t } = useTranslation();
   const inviteUser = useInviteUser();
+  const restoreRecord = useRestoreRecord();
 
   const emptyForm = { email: '', role: 'teacher' };
   const [form, setForm] = React.useState(emptyForm);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [inviteError, setInviteError] = React.useState<string | null>(null);
   const [isSuccess, setIsSuccess] = React.useState(false);
+  const [restorableUserId, setRestorableUserId] = React.useState<string | null>(null);
 
   function resetForm() {
     setForm(emptyForm);
     setErrors({});
     setInviteError(null);
     setIsSuccess(false);
+    setRestorableUserId(null);
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -50,9 +55,25 @@ export function InviteByEmailDialog({ open, onOpenChange }: InviteByEmailDialogP
     e.preventDefault();
     if (!validate()) return;
     setInviteError(null);
+    setRestorableUserId(null);
     try {
       await inviteUser.mutateAsync({ email: form.email, role: form.role });
       setIsSuccess(true);
+    } catch (err) {
+      if (err instanceof ApiRequestError && err.code === 'RESTORABLE_USER_EXISTS') {
+        setRestorableUserId((err.meta?.deletedUserId as string | undefined) ?? null);
+      }
+      setInviteError(err instanceof Error ? err.message : t('common.error'));
+    }
+  }
+
+  async function handleRestore() {
+    if (!restorableUserId) return;
+    setInviteError(null);
+    try {
+      await restoreRecord.mutateAsync({ entityType: 'users', id: restorableUserId });
+      resetForm();
+      onOpenChange(false);
     } catch (err) {
       setInviteError(err instanceof Error ? err.message : t('common.error'));
     }
@@ -89,7 +110,16 @@ export function InviteByEmailDialog({ open, onOpenChange }: InviteByEmailDialogP
 
             <FormSelect label={t('users.invite_form.role')} name="role" value={form.role} onChange={handleSelect} options={roleOptions} />
 
-            {inviteError && <p className="text-body text-danger mt-3 mb-1">{inviteError}</p>}
+            {restorableUserId ? (
+              <div className="bg-warning/10 border border-warning/30 rounded-lg px-4 py-3 mt-3">
+                <p className="text-body text-foreground mb-3">{t('users.invite_form.restorablePrompt')}</p>
+                <Button type="button" size="sm" onClick={handleRestore} disabled={restoreRecord.isPending}>
+                  {restoreRecord.isPending ? t('common.loading') : t('users.invite_form.restoreButton')}
+                </Button>
+              </div>
+            ) : (
+              inviteError && <p className="text-body text-danger mt-3 mb-1">{inviteError}</p>
+            )}
 
             <DialogFooter>
               <Button type="button" variant="secondary" onClick={() => { resetForm(); onOpenChange(false); }}>

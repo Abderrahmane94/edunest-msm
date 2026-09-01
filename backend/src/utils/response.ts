@@ -27,6 +27,7 @@ export interface ErrorResponse {
     code: string;
     message: string;
     details?: FieldError[];
+    meta?: Record<string, unknown>;
   };
 }
 
@@ -46,13 +47,21 @@ export function successResponse<T>(data: T, meta?: { pagination: PaginationMeta 
 /**
  * Creates a standardized error response object.
  */
-export function errorResponse(code: string, message: string, details?: FieldError[]): ErrorResponse {
+export function errorResponse(
+  code: string,
+  message: string,
+  details?: FieldError[],
+  meta?: Record<string, unknown>,
+): ErrorResponse {
   const response: ErrorResponse = {
     success: false,
     error: { code, message },
   };
   if (details) {
     response.error.details = details;
+  }
+  if (meta) {
+    response.error.meta = meta;
   }
   return response;
 }

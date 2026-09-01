@@ -17,7 +17,8 @@ export const usersController = {
       res.status(200).json(successResponse(result));
     } catch (error) {
       if (error instanceof UserServiceError) {
-        res.status(error.statusCode).json(errorResponse('USER_ERROR', error.message));
+        const code = error.meta?.restorable ? 'RESTORABLE_USER_EXISTS' : 'USER_ERROR';
+        res.status(error.statusCode).json(errorResponse(code, error.message, undefined, error.meta));
         return;
       }
       next(error);
@@ -122,7 +123,8 @@ export const usersController = {
       res.status(201).json(successResponse(user));
     } catch (error) {
       if (error instanceof UserServiceError) {
-        res.status(error.statusCode).json(errorResponse('USER_ERROR', error.message));
+        const code = error.meta?.restorable ? 'RESTORABLE_USER_EXISTS' : 'USER_ERROR';
+        res.status(error.statusCode).json(errorResponse(code, error.message, undefined, error.meta));
         return;
       }
       next(error);

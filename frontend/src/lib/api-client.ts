@@ -4,6 +4,23 @@ interface ApiError {
   code: string;
   message: string;
   details?: { field: string; message: string }[];
+  meta?: Record<string, unknown>;
+}
+
+/**
+ * Thrown by hooks that need callers to branch on the API error code/meta,
+ * not just display a message (e.g. offering to restore a soft-deleted record).
+ */
+export class ApiRequestError extends Error {
+  code: string;
+  meta?: Record<string, unknown>;
+
+  constructor(error: ApiError) {
+    super(error.message);
+    this.name = 'ApiRequestError';
+    this.code = error.code;
+    this.meta = error.meta;
+  }
 }
 
 interface ApiResponse<T> {

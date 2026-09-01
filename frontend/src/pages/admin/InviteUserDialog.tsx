@@ -5,17 +5,20 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button, Input,
 } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, ApiRequestError } from '@/lib/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSchoolsList } from '@/hooks/useSchools';
+import { useRestoreRecord } from '@/hooks/useTrash';
 
 function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string; address?: string; nationalId?: string }) => {
       const res = await apiClient.post('/users', data);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to create user');
+      if (!res.success) {
+        throw new ApiRequestError(res.error ?? { code: 'UNKNOWN_ERROR', message: 'Failed to create user' });
+      }
       return res.data;
     },
     onSuccess: () => {
@@ -35,17 +38,20 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
   const isSuperAdmin = currentUser?.role === 'super_admin';
 
   const createUser = useCreateUser();
+  const restoreRecord = useRestoreRecord();
   const { data: schools } = useSchoolsList();
 
   const emptyForm = { firstName: '', lastName: '', email: '', phone: '', address: '', nationalId: '', role: 'teacher', preferredLanguage: 'fr', schoolId: '' };
   const [form, setForm] = React.useState(emptyForm);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [createError, setCreateError] = React.useState<string | null>(null);
+  const [restorableUserId, setRestorableUserId] = React.useState<string | null>(null);
 
   function resetForm() {
     setForm(emptyForm);
     setErrors({});
     setCreateError(null);
+    setRestorableUserId(null);
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -74,6 +80,7 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
     e.preventDefault();
     if (!validate()) return;
     setCreateError(null);
+    setRestorableUserId(null);
     try {
       const payload: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string; address?: string; nationalId?: string } = {
         firstName: form.firstName,
@@ -87,6 +94,21 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
       if (form.address.trim()) payload.address = form.address.trim();
       if (form.nationalId.trim()) payload.nationalId = form.nationalId.trim();
       await createUser.mutateAsync(payload);
+      resetForm();
+      onOpenChange(false);
+    } catch (err) {
+      if (err instanceof ApiRequestError && err.code === 'RESTORABLE_USER_EXISTS') {
+        setRestorableUserId((err.meta?.deletedUserId as string | undefined) ?? null);
+      }
+      setCreateError(err instanceof Error ? err.message : t('common.error'));
+    }
+  }
+
+  async function handleRestore() {
+    if (!restorableUserId) return;
+    setCreateError(null);
+    try {
+      await restoreRecord.mutateAsync({ entityType: 'users', id: restorableUserId });
       resetForm();
       onOpenChange(false);
     } catch (err) {
@@ -164,7 +186,16 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
             <FormSelect label={t('users.columns.language')} name="preferredLanguage" value={form.preferredLanguage} onChange={handleSelect} options={langOptions} />
           </div>
 
-          {createError && <p className="text-body text-danger mb-4">{createError}</p>}
+          {restorableUserId ? (
+            <div className="bg-warning/10 border border-warning/30 rounded-lg px-4 py-3 mb-4">
+              <p className="text-body text-foreground mb-3">{t('users.create_form.restorablePrompt')}</p>
+              <Button type="button" size="sm" onClick={handleRestore} disabled={restoreRecord.isPending}>
+                {restoreRecord.isPending ? t('common.loading') : t('users.create_form.restoreButton')}
+              </Button>
+            </div>
+          ) : (
+            createError && <p className="text-body text-danger mb-4">{createError}</p>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => { resetForm(); onOpenChange(false); }}>

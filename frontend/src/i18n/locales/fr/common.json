@@ -335,7 +335,10 @@
       "defaultPasswordHint": "Mot de passe par défaut : edunest26 — l'utilisateur devra le changer à sa première connexion.",
       "school": "École",
       "selectSchool": "Sélectionner une école",
-      "schoolRequired": "Veuillez sélectionner une école"
+      "schoolRequired": "Veuillez sélectionner une école",
+      "restorablePrompt": "Un utilisateur supprimé possède déjà cette adresse e-mail. Voulez-vous restaurer son compte au lieu d'en créer un nouveau ?",
+      "restoreButton": "Restaurer l'utilisateur",
+      "restoreSuccess": "Utilisateur restauré avec succès."
     },
     "invite_form": {
       "title": "Inviter un utilisateur",
@@ -358,7 +361,10 @@
       "nationalIdPlaceholder": "Numéro de carte d'identité",
       "role": "Rôle",
       "send": "Envoyer l'invitation",
-      "sent": "Invitation envoyée à {{email}}. Le lien expire dans 48 heures."
+      "sent": "Invitation envoyée à {{email}}. Le lien expire dans 48 heures.",
+      "restorablePrompt": "Un utilisateur supprimé possède déjà cette adresse e-mail. Voulez-vous restaurer son compte au lieu d'envoyer une nouvelle invitation ?",
+      "restoreButton": "Restaurer l'utilisateur",
+      "restoreSuccess": "Utilisateur restauré avec succès."
     }
   },
   "academicYears": {
@@ -1132,8 +1138,20 @@
     "addPhoto": "Ajouter une photo",
     "submit": "Envoyer le rapport",
     "submitting": "Envoi en cours...",
+    "sendReport": "Envoyer le rapport",
+    "sending": "Envoi en cours...",
     "submitSuccess": "Rapport envoyé avec succès",
-    "submitError": "Erreur lors de l'envoi. Veuillez réessayer."
+    "submitError": "Erreur lors de l'envoi. Veuillez réessayer.",
+    "history": "Rapports précédents",
+    "noHistory": "Aucun rapport précédent pour cet enfant",
+    "today": "Aujourd'hui",
+    "editingBadge": "Modification du rapport du {{date}}",
+    "backToToday": "Revenir au rapport d'aujourd'hui",
+    "existingPhotos": "Photos déjà envoyées",
+    "updateReport": "Mettre à jour le rapport",
+    "updating": "Mise à jour...",
+    "updateSuccess": "Rapport mis à jour avec succès",
+    "updateError": "Erreur lors de la mise à jour. Veuillez réessayer."
   },
   "parentFeed": {
     "title": "Rapports quotidiens",

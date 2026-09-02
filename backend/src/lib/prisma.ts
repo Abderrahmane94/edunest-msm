@@ -98,6 +98,7 @@ const MODELS_WITHOUT_SCHOOL_ID = new Set([
   'MedicalNote',
   'DailyReportPhoto',
   'Message',
+  'StaffMessage',
   'ConsentForm',
   'EventClassroom',
   'PaymentAuditLog',

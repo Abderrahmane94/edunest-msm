@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { communicationController } from './communication.controller';
+import { staffMessagingController, staffMessagingUpload } from './staff-messaging.controller';
 import { requireTeacherOrAdmin, requireActiveRole, requireAdmin, rbac } from '../../middleware/rbac.middleware';
 import { validate, validateParams, validateQuery } from '../../middleware/validation.middleware';
 import {
@@ -216,6 +217,59 @@ router.patch(
   validateParams(consentResponseParamSchema),
   validate(respondConsentSchema),
   communicationController.respondToConsent,
+);
+
+// ─── Staff Messaging ─────────────────────────────────────────────────────────
+// Accessible to teachers and admins (not parents)
+
+// GET /api/communication/staff/colleagues — List staff colleagues in the same school
+router.get(
+  '/staff/colleagues',
+  requireTeacherOrAdmin,
+  staffMessagingController.listColleagues,
+);
+
+// POST /api/communication/staff/conversations — Get or create a conversation with a staff member
+router.post(
+  '/staff/conversations',
+  requireTeacherOrAdmin,
+  staffMessagingController.getOrCreateConversation,
+);
+
+// GET /api/communication/staff/conversations — List all staff conversations
+router.get(
+  '/staff/conversations',
+  requireTeacherOrAdmin,
+  staffMessagingController.listConversations,
+);
+
+// GET /api/communication/staff/conversations/:id/messages — Get messages
+router.get(
+  '/staff/conversations/:id/messages',
+  requireTeacherOrAdmin,
+  staffMessagingController.getMessages,
+);
+
+// POST /api/communication/staff/conversations/:id/messages — Send text message
+router.post(
+  '/staff/conversations/:id/messages',
+  requireTeacherOrAdmin,
+  staffMessagingController.sendMessage,
+);
+
+// POST /api/communication/staff/conversations/:id/messages/file — Send file message
+router.post(
+  '/staff/conversations/:id/messages/file',
+  requireTeacherOrAdmin,
+  staffMessagingUpload,
+  staffMessagingController.sendFileMessage,
+);
+
+// PATCH /api/communication/staff/messages/:id/read — Mark as read
+router.patch(
+  '/staff/messages/:id/read',
+  requireTeacherOrAdmin,
+  staffMessagingController.markAsRead,
 );
 
 export default router;

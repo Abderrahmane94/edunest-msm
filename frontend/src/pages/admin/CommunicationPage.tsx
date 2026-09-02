@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Megaphone, Calendar, MapPin, Users, CheckCircle, XCircle, Clock, MessageCircle } from 'lucide-react';
+import { Megaphone, Calendar, MapPin, Users, CheckCircle, XCircle, Clock, MessageCircle, Send, ArrowLeft, Paperclip, Image, FileText, Plus } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
+import { cn } from '@/lib/utils';
 import {
   Button,
   CreateButton,
@@ -14,13 +16,17 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  Avatar,
 } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
+import { MessageBubble } from '@/components/messaging/MessageBubble';
 import { useClassrooms, type Classroom } from '@/hooks/useClassrooms';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSocket } from '@/hooks/useSocket';
 import {
   useAnnouncements,
   useCreateAnnouncement,
@@ -32,8 +38,19 @@ import {
   type SchoolEvent,
   type ConsentEntry,
 } from '@/hooks/useCommunication';
+import {
+  useStaffConversations,
+  useStaffMessages,
+  useSendStaffMessage,
+  useSendStaffFileMessage,
+  useMarkStaffMessageRead,
+  useGetOrCreateStaffConversation,
+  useStaffColleagues,
+  type StaffConversation,
+  type StaffMessage,
+} from '@/hooks/useStaffMessaging';
 
-type TabMode = 'announcements' | 'events' | 'messages';
+type TabMode = 'announcements' | 'events' | 'messages' | 'staff';
 
 export function CommunicationPage() {
   const { t } = useTranslation();
@@ -85,6 +102,14 @@ export function CommunicationPage() {
           <MessageCircle className="w-4 h-4" />
           {t('communication.messages.tab')}
         </Button>
+        <Button
+          variant={activeTab === 'staff' ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={() => setActiveTab('staff')}
+        >
+          <Users className="w-4 h-4" />
+          {t('communication.staffMessages.tab', 'Messagerie staff')}
+        </Button>
       </div>
 
       {/* Tab content */}
@@ -96,6 +121,7 @@ export function CommunicationPage() {
         />
       )}
       {activeTab === 'messages' && <PendingMessagesTab />}
+      {activeTab === 'staff' && <AdminStaffMessagingTab />}
 
       {/* Create Announcement Dialog */}
       <CreateAnnouncementDialog
@@ -783,6 +809,456 @@ function CreateEventDialog({
             </Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ─── Admin Staff Messaging Tab ─── */
+
+function AdminStaffMessagingTab() {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const { on, joinRoom, leaveRoom } = useSocket();
+  const queryClient = useQueryClient();
+
+  const [activeConversationId, setActiveConversationId] = React.useState<string | null>(null);
+  const [messageInput, setMessageInput] = React.useState('');
+  const [showAttachMenu, setShowAttachMenu] = React.useState(false);
+  const [showNewDialog, setShowNewDialog] = React.useState(false);
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const photoInputRef = React.useRef<HTMLInputElement>(null);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const attachMenuRef = React.useRef<HTMLDivElement>(null);
+
+  const { data: conversations = [], isLoading: conversationsLoading } = useStaffConversations();
+  const { data: messages = [], isLoading: messagesLoading } = useStaffMessages(activeConversationId ?? undefined);
+
+  const sendMessage = useSendStaffMessage(activeConversationId ?? undefined);
+  const sendFileMessage = useSendStaffFileMessage(activeConversationId ?? undefined);
+  const markRead = useMarkStaffMessageRead();
+
+  const activeConversation = React.useMemo(
+    () => conversations.find((c) => c.id === activeConversationId),
+    [conversations, activeConversationId],
+  );
+
+  const getOtherParticipant = React.useCallback(
+    (conv: StaffConversation) =>
+      conv.initiator_id === user?.id ? conv.recipient : conv.initiator,
+    [user?.id],
+  );
+
+  const activeOther = activeConversation ? getOtherParticipant(activeConversation) : null;
+
+  // Socket
+  React.useEffect(() => {
+    if (activeConversationId) {
+      joinRoom(`staff_conversation:${activeConversationId}`);
+      return () => leaveRoom(`staff_conversation:${activeConversationId}`);
+    }
+  }, [activeConversationId, joinRoom, leaveRoom]);
+
+  React.useEffect(() => {
+    const unsubNew = on('staff_message:new', (data: unknown) => {
+      const msg = data as { conversationId: string; senderUserId: string; id: string };
+      queryClient.invalidateQueries({ queryKey: ['staff-conversations'] });
+      if (msg.conversationId === activeConversationId) {
+        queryClient.invalidateQueries({ queryKey: ['staff-messages', activeConversationId] });
+        if (msg.senderUserId !== user?.id) markRead.mutate(msg.id);
+      }
+    });
+    const unsubRead = on('staff_message:read', () => {
+      if (activeConversationId)
+        queryClient.invalidateQueries({ queryKey: ['staff-messages', activeConversationId] });
+    });
+    return () => { unsubNew(); unsubRead(); };
+  }, [on, activeConversationId, user?.id, markRead, queryClient]);
+
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const markedReadRef = React.useRef<Set<string>>(new Set());
+  React.useEffect(() => {
+    if (messages.length > 0 && user?.id) {
+      const unread = messages.filter(
+        (m: StaffMessage) =>
+          !m.is_read && m.sender_user_id !== user.id && !markedReadRef.current.has(m.id),
+      );
+      unread.forEach((m: StaffMessage) => {
+        markedReadRef.current.add(m.id);
+        markRead.mutate(m.id);
+      });
+    }
+  }, [messages, user?.id, markRead]);
+
+  React.useEffect(() => { markedReadRef.current.clear(); }, [activeConversationId]);
+
+  React.useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (attachMenuRef.current && !attachMenuRef.current.contains(e.target as Node))
+        setShowAttachMenu(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSend = React.useCallback(() => {
+    const trimmed = messageInput.trim();
+    if (!trimmed || !activeConversationId) return;
+    sendMessage.mutate({ content: trimmed, message_type: 'text' });
+    setMessageInput('');
+  }, [messageInput, activeConversationId, sendMessage]);
+
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+    },
+    [handleSend],
+  );
+
+  const handleFileSelect = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>, messageType: 'photo' | 'document') => {
+      const file = e.target.files?.[0];
+      if (!file || !activeConversationId) return;
+      sendFileMessage.mutate({ file, messageType });
+      setShowAttachMenu(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    },
+    [activeConversationId, sendFileMessage],
+  );
+
+  // Adapt StaffMessage → MessageBubble shape
+  const adaptedMessages = React.useMemo(
+    () =>
+      messages.map((m: StaffMessage) => ({
+        id: m.id,
+        conversation_id: m.conversation_id,
+        sender_user_id: m.sender_user_id,
+        content: m.content,
+        message_type: m.message_type,
+        cloudinary_public_id: m.cloudinary_public_id,
+        file_url: m.file_url,
+        is_read: m.is_read,
+        created_at: m.created_at,
+      })),
+    [messages],
+  );
+
+  return (
+    <div className="bg-card border border-border rounded-lg overflow-hidden" style={{ height: 'calc(100vh - 260px)', minHeight: '480px' }}>
+      <div className="flex h-full">
+        {/* Conversation list */}
+        <aside className={cn(
+          'w-full lg:w-72 lg:shrink-0 border-e border-border flex flex-col',
+          activeConversationId ? 'hidden lg:flex' : 'flex',
+        )}>
+          <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
+            <span className="text-caption font-medium text-text-secondary">
+              {t('communication.staffMessages.title', 'Messagerie enseignants')}
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowNewDialog(true)}
+              className="flex items-center justify-center w-7 h-7 rounded-md bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] transition-colors duration-150"
+              aria-label={t('communication.staffMessages.new', 'Nouvelle conversation')}
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {conversationsLoading ? (
+              <div className="p-3 space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="animate-pulse flex gap-2 p-2">
+                    <div className="w-8 h-8 rounded-full bg-subtle shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3.5 bg-subtle rounded w-3/4" />
+                      <div className="h-3 bg-subtle rounded w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : conversations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-24 p-4 gap-2">
+                <p className="text-caption text-text-secondary text-center">
+                  {t('communication.staffMessages.noConversations', 'Aucune conversation')}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowNewDialog(true)}
+                  className="text-caption text-[var(--color-accent)] hover:underline"
+                >
+                  {t('communication.staffMessages.start', 'Démarrer')}
+                </button>
+              </div>
+            ) : (
+              <ul role="list" className="divide-y divide-border">
+                {conversations.map((conv) => {
+                  const other = getOtherParticipant(conv);
+                  const fullName = `${other.firstName} ${other.lastName}`;
+                  return (
+                    <li key={conv.id}>
+                      <button
+                        type="button"
+                        onClick={() => setActiveConversationId(conv.id)}
+                        className={cn(
+                          'w-full flex items-start gap-2.5 px-3 py-3 text-start transition-colors duration-150',
+                          activeConversationId === conv.id
+                            ? 'bg-[var(--color-accent-muted)]'
+                            : 'hover:bg-hover',
+                        )}
+                      >
+                        <Avatar name={fullName} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-caption font-medium text-text-primary truncate">
+                              {fullName}
+                            </span>
+                            {conv.unread_count > 0 && (
+                              <span className="shrink-0 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-accent)] text-[var(--color-text-inverse)] text-micro font-medium">
+                                {conv.unread_count}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-micro text-text-disabled truncate">
+                            {other.role === 'admin'
+                              ? t('communication.staffMessages.roleAdmin', 'Directeur')
+                              : t('communication.staffMessages.roleTeacher', 'Enseignant')}
+                          </p>
+                          {conv.last_message && (
+                            <p className="text-micro text-text-secondary truncate mt-0.5">
+                              {conv.last_message}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </aside>
+
+        {/* Chat area */}
+        <main className={cn(
+          'flex-1 flex flex-col min-w-0',
+          !activeConversationId ? 'hidden lg:flex' : 'flex',
+        )}>
+          {!activeConversationId ? (
+            <div className="flex-1 flex items-center justify-center p-4">
+              <p className="text-body text-text-secondary">
+                {t('communication.staffMessages.selectPrompt', 'Sélectionnez une conversation')}
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Chat header */}
+              <div className="shrink-0 flex items-center gap-2.5 px-4 py-3 bg-card border-b border-border">
+                <button
+                  type="button"
+                  onClick={() => setActiveConversationId(null)}
+                  className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-hover transition-colors"
+                  aria-label={t('common.back', 'Retour')}
+                >
+                  <ArrowLeft className="w-4 h-4 text-text-primary rtl:rotate-180" />
+                </button>
+                <Avatar
+                  name={activeOther ? `${activeOther.firstName} ${activeOther.lastName}` : ''}
+                  size="sm"
+                />
+                <div className="min-w-0">
+                  <p className="text-body font-medium text-text-primary truncate">
+                    {activeOther ? `${activeOther.firstName} ${activeOther.lastName}` : ''}
+                  </p>
+                  <p className="text-caption text-text-secondary">
+                    {activeOther?.role === 'admin'
+                      ? t('communication.staffMessages.roleAdmin', 'Directeur')
+                      : t('communication.staffMessages.roleTeacher', 'Enseignant')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-2.5" dir="ltr">
+                {messagesLoading ? (
+                  <div className="space-y-2">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className={cn('animate-pulse h-8 rounded-2xl bg-subtle', i % 2 === 0 ? 'w-1/2 ms-auto' : 'w-1/2')} />
+                    ))}
+                  </div>
+                ) : adaptedMessages.length === 0 ? (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-body text-text-secondary">
+                      {t('communication.staffMessages.noMessages', 'Aucun message. Commencez !')}
+                    </p>
+                  </div>
+                ) : (
+                  adaptedMessages.map((msg) => (
+                    <MessageBubble
+                      key={msg.id}
+                      message={msg}
+                      isSent={msg.sender_user_id === user?.id}
+                      i18nNamespace="messages"
+                    />
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input */}
+              <div className="shrink-0 bg-card border-t border-border p-3">
+                <div className="flex items-end gap-2">
+                  <div className="relative" ref={attachMenuRef}>
+                    <button
+                      type="button"
+                      onClick={() => setShowAttachMenu(!showAttachMenu)}
+                      className="flex items-center justify-center min-w-[40px] min-h-[40px] rounded-lg hover:bg-hover text-text-secondary transition-colors"
+                      aria-label={t('messages.attach', 'Joindre')}
+                    >
+                      <Paperclip className="w-4 h-4" />
+                    </button>
+                    {showAttachMenu && (
+                      <div className="absolute bottom-full mb-2 start-0 bg-card border border-border rounded-lg shadow-md p-1 min-w-[150px] z-10">
+                        <button
+                          type="button"
+                          onClick={() => photoInputRef.current?.click()}
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-body text-text-primary hover:bg-hover transition-colors"
+                        >
+                          <Image className="w-4 h-4 text-text-secondary" />
+                          {t('messages.sendPhoto', 'Photo')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-body text-text-primary hover:bg-hover transition-colors"
+                        >
+                          <FileText className="w-4 h-4 text-text-secondary" />
+                          {t('messages.sendDocument', 'Document')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <textarea
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={t('messages.placeholder', 'Écrivez un message...')}
+                    rows={1}
+                    className="flex-1 min-h-[40px] max-h-[100px] bg-subtle border border-border rounded-lg px-3 py-2 text-body text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-[var(--color-accent)] focus:shadow-[0_0_0_3px_rgba(79,70,229,0.12)] transition-all resize-none"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleSend}
+                    disabled={!messageInput.trim() || sendMessage.isPending}
+                    className={cn(
+                      'flex items-center justify-center min-w-[40px] min-h-[40px] rounded-lg transition-all active:scale-[0.98]',
+                      messageInput.trim()
+                        ? 'bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)]'
+                        : 'bg-subtle text-text-disabled cursor-not-allowed',
+                    )}
+                    aria-label={t('messages.send', 'Envoyer')}
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <input ref={photoInputRef} type="file" accept="image/*" onChange={(e) => handleFileSelect(e, 'photo')} className="hidden" aria-hidden="true" />
+              <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" onChange={(e) => handleFileSelect(e, 'document')} className="hidden" aria-hidden="true" />
+            </>
+          )}
+        </main>
+      </div>
+
+      {/* New conversation dialog */}
+      <AdminNewStaffConversationDialog
+        open={showNewDialog}
+        onOpenChange={setShowNewDialog}
+        onConversationCreated={(id) => {
+          setActiveConversationId(id);
+          setShowNewDialog(false);
+        }}
+      />
+    </div>
+  );
+}
+
+function AdminNewStaffConversationDialog({
+  open,
+  onOpenChange,
+  onConversationCreated,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConversationCreated: (id: string) => void;
+}) {
+  const { t } = useTranslation();
+  const { data: colleagues = [], isLoading } = useStaffColleagues();
+  const getOrCreate = useGetOrCreateStaffConversation();
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t('communication.staffMessages.newTitle', 'Nouvelle conversation')}
+          </DialogTitle>
+          <DialogDescription>
+            {t('communication.staffMessages.selectTeacher', 'Sélectionnez un enseignant pour démarrer une conversation')}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4 space-y-2 max-h-[60vh] overflow-y-auto">
+          {isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="animate-pulse h-12 bg-subtle rounded-lg" />
+              ))}
+            </div>
+          ) : colleagues.length > 0 ? (
+            colleagues.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() =>
+                  getOrCreate.mutate(c.id, {
+                    onSuccess: (conv) => onConversationCreated(conv.id),
+                  })
+                }
+                disabled={getOrCreate.isPending}
+                className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-hover hover:border-[var(--color-border-strong)] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+              >
+                <Avatar name={`${c.firstName} ${c.lastName}`} size="sm" />
+                <div className="text-start">
+                  <p className="text-body font-medium text-text-primary">
+                    {c.firstName} {c.lastName}
+                  </p>
+                  <p className="text-caption text-text-secondary">
+                    {c.role === 'admin'
+                      ? t('communication.staffMessages.roleAdmin', 'Directeur')
+                      : t('communication.staffMessages.roleTeacher', 'Enseignant')}
+                  </p>
+                </div>
+              </button>
+            ))
+          ) : (
+            <p className="text-body text-text-secondary text-center py-4">
+              {t('communication.staffMessages.noTeachers', 'Aucun enseignant trouvé')}
+            </p>
+          )}
+          {getOrCreate.isError && (
+            <p className="text-caption text-[var(--color-danger)] text-center mt-2">
+              {getOrCreate.error?.message}
+            </p>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

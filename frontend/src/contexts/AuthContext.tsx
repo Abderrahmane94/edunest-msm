@@ -57,7 +57,9 @@ function extractUserFromToken(token: string): User | null {
   if (!payload) return null;
 
   return {
-    id: payload.sub as string,
+    // The backend JWT stores the user id under `userId` (see auth token payload),
+    // not the standard `sub` claim — read `userId` first, fall back to `sub`.
+    id: (payload.userId ?? payload.sub) as string,
     email: payload.email as string,
     firstName: payload.firstName as string,
     lastName: payload.lastName as string,
@@ -168,8 +170,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setTokens = useCallback((accessToken: string, refreshToken: string) => {
     localStorage.setItem('access_token', accessToken);
     localStorage.setItem('refresh_token', refreshToken);
-    const user = extractUserFromToken(accessToken);
-    setState({ user, isAuthenticated: true, isLoading: false });
+    // Prefer the full user object already in localStorage (it has email/names,
+    // which the JWT payload does not carry); fall back to the token payload.
+    const storedUser = localStorage.getItem('user');
+    let user: User | null = null;
+    if (storedUser) {
+      try {
+        user = JSON.parse(storedUser) as User;
+      } catch {
+        user = null;
+      }
+    }
+    if (!user) {
+      user = extractUserFromToken(accessToken);
+    }
+    setState({ user, isAuthenticated: !!user, isLoading: false });
   }, []);
 
   const clearMustChangePassword = useCallback(() => {

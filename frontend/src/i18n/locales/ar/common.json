@@ -1082,6 +1082,20 @@
       "minutesAgo": "منذ {{count}} دقيقة",
       "hoursAgo": "منذ {{count}} ساعة",
       "daysAgo": "منذ {{count}} يوم"
+    },
+    "staffMessages": {
+      "tab": "مراسلة الطاقم",
+      "title": "مراسلة المعلمين",
+      "new": "محادثة جديدة",
+      "newTitle": "محادثة جديدة",
+      "selectTeacher": "اختر معلماً لبدء محادثة",
+      "noConversations": "لا توجد محادثات",
+      "noMessages": "لا توجد رسائل. ابدأ!",
+      "noTeachers": "لا يوجد معلمون",
+      "start": "بدء",
+      "selectPrompt": "اختر محادثة",
+      "roleTeacher": "معلم",
+      "roleAdmin": "مدير"
     }
   },
   "teacherCommunication": {
@@ -1117,7 +1131,23 @@
     "photoMessage": "صورة",
     "documentMessage": "مستند",
     "read": "مقروءة",
-    "sent": "مُرسلة"
+    "sent": "مُرسلة",
+    "newConversation": "محادثة جديدة",
+    "selectChildForConversation": "اختر طفلاً لبدء محادثة مع ولي أمره",
+    "noChildrenAvailable": "لا يوجد أطفال متاحون",
+    "createError": "فشل إنشاء المحادثة",
+    "tabParents": "أولياء الأمور",
+    "tabColleagues": "الزملاء",
+    "parentConversations": "محادثات الأولياء",
+    "staffConversations": "الزملاء",
+    "newStaffConversation": "محادثة جديدة",
+    "newStaffConversationTitle": "محادثة جديدة",
+    "selectColleague": "اختر زميلاً لبدء محادثة",
+    "noStaffConversations": "لا توجد محادثات مع زميل",
+    "startNewStaffConversation": "بدء محادثة",
+    "noColleagues": "لا يوجد زملاء في هذه المدرسة",
+    "roleTeacher": "معلم",
+    "roleAdmin": "مدير"
   },
   "dailyReport": {
     "title": "التقرير اليومي",

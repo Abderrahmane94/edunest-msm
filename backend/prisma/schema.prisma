@@ -211,24 +211,27 @@ model User {
   deletedAt          DateTime? @map("deleted_at")
   createdAt          DateTime  @default(now()) @map("created_at")
 
-  school               School?              @relation(fields: [schoolId], references: [id])
-  branch               Branch?              @relation(fields: [branchId], references: [id])
-  staffProfile         StaffProfile?
-  parentLinks          ParentChildLink[]
-  notifications        Notification[]
-  sentMessages         Message[]
-  teacherConversations Conversation[]       @relation("TeacherConversations")
-  parentConversations  Conversation[]       @relation("ParentConversations")
-  classrooms           Classroom[]
-  attendanceMarks      AttendanceRecord[]
-  invoicesAsParent     Invoice[]
-  cashPaymentsReceived CashPayment[]
-  auditLogs            PaymentAuditLog[]
-  refreshTokens        RefreshToken[]
-  passwordResetTokens  PasswordResetToken[]
-  employeeSalary       EmployeeSalary?
-  salaryPayments       SalaryPayment[]
-  paymentRecords       PaymentRecord[]      @relation("PaymentRecorder")
+  school                    School?              @relation(fields: [schoolId], references: [id])
+  branch                    Branch?              @relation(fields: [branchId], references: [id])
+  staffProfile              StaffProfile?
+  parentLinks               ParentChildLink[]
+  notifications             Notification[]
+  sentMessages              Message[]
+  teacherConversations      Conversation[]       @relation("TeacherConversations")
+  parentConversations       Conversation[]       @relation("ParentConversations")
+  initiatedStaffConversations StaffConversation[] @relation("StaffConvInitiator")
+  receivedStaffConversations  StaffConversation[] @relation("StaffConvRecipient")
+  sentStaffMessages           StaffMessage[]
+  classrooms                Classroom[]
+  attendanceMarks           AttendanceRecord[]
+  invoicesAsParent          Invoice[]
+  cashPaymentsReceived      CashPayment[]
+  auditLogs                 PaymentAuditLog[]
+  refreshTokens             RefreshToken[]
+  passwordResetTokens       PasswordResetToken[]
+  employeeSalary            EmployeeSalary?
+  salaryPayments            SalaryPayment[]
+  paymentRecords            PaymentRecord[]      @relation("PaymentRecorder")
 
   @@index([deletedAt])
   @@index([email])
@@ -1005,4 +1008,44 @@ model PaymentAuditEntry {
   @@index([branchId, createdAt])
   @@index([paymentRecordId])
   @@map("payment_audit_entries")
+}
+
+// ─── Staff Messaging ─────────────────────────────────────────────────────────
+
+/// Direct conversation between two staff members (teacher↔teacher or admin↔teacher).
+/// School-scoped. A canonical pair is stored with the lower UUID as initiatorId to
+/// avoid duplicates; the service enforces this ordering when creating conversations.
+model StaffConversation {
+  id            String   @id @default(uuid())
+  schoolId      String   @map("school_id")
+  initiatorId   String   @map("initiator_id")
+  recipientId   String   @map("recipient_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  lastMessageAt DateTime @default(now()) @map("last_message_at")
+
+  initiator     User           @relation("StaffConvInitiator", fields: [initiatorId], references: [id])
+  recipient     User           @relation("StaffConvRecipient", fields: [recipientId], references: [id])
+  messages      StaffMessage[]
+
+  @@unique([schoolId, initiatorId, recipientId])
+  @@index([initiatorId])
+  @@index([recipientId])
+  @@map("staff_conversations")
+}
+
+model StaffMessage {
+  id                 String      @id @default(uuid())
+  conversationId     String      @map("conversation_id")
+  senderUserId       String      @map("sender_user_id")
+  content            String?
+  messageType        MessageType @default(text) @map("message_type")
+  cloudinaryPublicId String?     @map("cloudinary_public_id")
+  isRead             Boolean     @default(false) @map("is_read")
+  createdAt          DateTime    @default(now()) @map("created_at")
+
+  conversation StaffConversation @relation(fields: [conversationId], references: [id])
+  sender       User              @relation(fields: [senderUserId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@map("staff_messages")
 }

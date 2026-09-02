@@ -1081,6 +1081,20 @@
       "minutesAgo": "il y a {{count}} min",
       "hoursAgo": "il y a {{count}} h",
       "daysAgo": "il y a {{count}} j"
+    },
+    "staffMessages": {
+      "tab": "Messagerie staff",
+      "title": "Messagerie enseignants",
+      "new": "Nouvelle conversation",
+      "newTitle": "Nouvelle conversation",
+      "selectTeacher": "Sélectionnez un enseignant pour démarrer une conversation",
+      "noConversations": "Aucune conversation",
+      "noMessages": "Aucun message. Commencez !",
+      "noTeachers": "Aucun enseignant trouvé",
+      "start": "Démarrer",
+      "selectPrompt": "Sélectionnez une conversation",
+      "roleTeacher": "Enseignant",
+      "roleAdmin": "Directeur"
     }
   },
   "teacherCommunication": {
@@ -1116,7 +1130,23 @@
     "photoMessage": "Photo",
     "documentMessage": "Document",
     "read": "Lu",
-    "sent": "Envoyé"
+    "sent": "Envoyé",
+    "newConversation": "Nouvelle conversation",
+    "selectChildForConversation": "Sélectionnez un enfant pour démarrer une conversation avec son parent",
+    "noChildrenAvailable": "Aucun enfant disponible",
+    "createError": "Échec de la création de la conversation",
+    "tabParents": "Parents",
+    "tabColleagues": "Collègues",
+    "parentConversations": "Conversations parents",
+    "staffConversations": "Collègues",
+    "newStaffConversation": "Nouvelle conversation",
+    "newStaffConversationTitle": "Nouvelle conversation",
+    "selectColleague": "Sélectionnez un collègue pour démarrer une conversation",
+    "noStaffConversations": "Aucune conversation avec un collègue",
+    "startNewStaffConversation": "Commencer une conversation",
+    "noColleagues": "Aucun collègue trouvé dans cette école",
+    "roleTeacher": "Enseignant",
+    "roleAdmin": "Directeur"
   },
   "dailyReport": {
     "title": "Rapport quotidien",

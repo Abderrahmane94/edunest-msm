@@ -9,6 +9,8 @@ import type { TokenPayload } from '../modules/auth/auth.types';
 export type SocketEvent =
   | 'message:new'
   | 'message:read'
+  | 'staff_message:new'
+  | 'staff_message:read'
   | 'report:new'
   | 'report:updated'
   | 'announcement:new'
@@ -18,6 +20,7 @@ export type RoomPattern =
   | `school:${string}`
   | `classroom:${string}`
   | `conversation:${string}`
+  | `staff_conversation:${string}`
   | `user:${string}`;
 
 export interface ISocketService {

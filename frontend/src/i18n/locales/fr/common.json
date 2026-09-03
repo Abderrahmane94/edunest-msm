@@ -1231,7 +1231,16 @@
     "markAllRead": "Tout marquer comme lu",
     "error": "Impossible de charger les notifications. Veuillez réessayer.",
     "empty": "Aucune notification pour le moment.",
-    "unread": "Non lu"
+    "unread": "Non lu",
+    "loadMore": "Charger les plus anciennes"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unreadCount": "{{count}} non lue(s)",
+    "markAllRead": "Tout marquer comme lu",
+    "error": "Impossible de charger les notifications.",
+    "empty": "Aucune notification pour le moment.",
+    "loadMore": "Charger les plus anciennes"
   },
   "parentAnnouncements": {
     "title": "Annonces et événements",

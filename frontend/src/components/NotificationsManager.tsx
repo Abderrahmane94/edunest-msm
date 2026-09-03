@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/hooks/useSocket';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -20,6 +21,7 @@ interface NotificationEvent {
 export function NotificationsManager() {
   const { isAuthenticated } = useAuth();
   const { socket } = useSocket();
+  const queryClient = useQueryClient();
 
   usePushNotifications();
 
@@ -30,6 +32,9 @@ export function NotificationsManager() {
     if (!isAuthenticated || !socket) return;
 
     const handler = (payload: NotificationEvent | undefined) => {
+      // Refresh the in-app notification center (bell badge + list) in real time.
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+
       if (!payload?.title) return;
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification(payload.title, { body: payload.body, icon: '/icon-192.png' });
@@ -40,7 +45,7 @@ export function NotificationsManager() {
     return () => {
       socket.off('notification:new', handler);
     };
-  }, [isAuthenticated, socket]);
+  }, [isAuthenticated, socket, queryClient]);
 
   return null;
 }

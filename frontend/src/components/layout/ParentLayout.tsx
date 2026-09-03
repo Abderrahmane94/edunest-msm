@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { LogOut, Languages } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { NotificationBell } from '@/components/NotificationBell';
 import { BottomTabBar } from './BottomTabBar';
 import type { NavItem } from './Sidebar';
 
@@ -71,6 +72,7 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
                 {user.firstName}
               </span>
             )}
+            <NotificationBell />
             <button
               type="button"
               onClick={toggleLanguage}

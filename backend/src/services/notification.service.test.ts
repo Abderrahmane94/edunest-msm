@@ -276,6 +276,7 @@ describe('NotificationService', () => {
             parent: {
               id: 'parent-1',
               email: 'primary@test.com',
+              phone: '+213600000001',
               fcmToken: 'fcm-primary',
               preferredLanguage: 'fr',
               firstName: 'Fatima',
@@ -320,7 +321,7 @@ describe('NotificationService', () => {
       // Should send SMS only to primary parent
       expect(smsService.send).toHaveBeenCalledTimes(1);
       expect(smsService.send).toHaveBeenCalledWith({
-        to: 'primary@test.com',
+        to: '+213600000001',
         body: 'Ahmed Ben Ali a été marqué(e) absent(e) le 2024-01-15.',
       });
     });

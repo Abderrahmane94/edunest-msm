@@ -75,6 +75,9 @@ class ApiClient {
       const data = await response.json();
       if (data.success && data.data.accessToken) {
         this.setTokens(data.data.accessToken, data.data.refreshToken || refreshToken);
+        // Notify listeners (e.g. the socket connection) that the access token
+        // changed so they can re-authenticate with the fresh token.
+        window.dispatchEvent(new CustomEvent('auth:token-refreshed'));
         return data.data.accessToken;
       }
 
@@ -129,6 +132,15 @@ class ApiClient {
 
     const data: ApiResponse<T> = await response.json();
     return data;
+  }
+
+  /**
+   * Forces an access-token refresh using the stored refresh token. Returns the
+   * new access token, or null if refresh failed. Used by the socket connection
+   * to recover from an expired token without a full page reload.
+   */
+  async refreshSession(): Promise<string | null> {
+    return this.refreshAccessToken();
   }
 
   async get<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {

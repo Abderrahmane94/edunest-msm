@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { apiClient } from '@/lib/api-client';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
 
@@ -10,6 +11,23 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
 export function useSocket() {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  // Exposed in state (not just a ref) so consumers re-run their listener
+  // effects when the socket instance is replaced on reconnect.
+  const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
+
+  // Bumped whenever the access token changes (login / refresh) so the socket
+  // reconnects with the fresh credential instead of holding a stale one.
+  const [authEpoch, setAuthEpoch] = useState(0);
+
+  useEffect(() => {
+    const bump = () => setAuthEpoch((n) => n + 1);
+    window.addEventListener('auth:token-refreshed', bump);
+    window.addEventListener('auth:login', bump);
+    return () => {
+      window.removeEventListener('auth:token-refreshed', bump);
+      window.removeEventListener('auth:login', bump);
+    };
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -31,14 +49,27 @@ export function useSocket() {
       setIsConnected(false);
     });
 
+    // If the server rejects the token (e.g. it expired), refresh it via a
+    // lightweight API call; the api-client emits `auth:token-refreshed` on
+    // success, which re-runs this effect with the new token.
+    socket.on('connect_error', (err) => {
+      if (err.message.includes('token')) {
+        // Token likely expired — refresh it. On success the api-client emits
+        // `auth:token-refreshed`, which re-runs this effect with a fresh token.
+        apiClient.refreshSession().catch(() => undefined);
+      }
+    });
+
     socketRef.current = socket;
+    setSocketInstance(socket);
 
     return () => {
       socket.disconnect();
       socketRef.current = null;
+      setSocketInstance(null);
       setIsConnected(false);
     };
-  }, []);
+  }, [authEpoch]);
 
   const on = useCallback((event: string, handler: (...args: unknown[]) => void) => {
     socketRef.current?.on(event, handler);
@@ -59,5 +90,5 @@ export function useSocket() {
     socketRef.current?.emit('leave', room);
   }, []);
 
-  return { socket: socketRef.current, isConnected, on, emit, joinRoom, leaveRoom };
+  return { socket: socketInstance, isConnected, on, emit, joinRoom, leaveRoom };
 }

@@ -1,8 +1,24 @@
 /**
- * Push notification service using Firebase Cloud Messaging (FCM).
- * In development mode, push notifications are logged to console instead of being sent.
- * Configure FCM_SERVER_KEY environment variable for production use.
+ * Push notification service using Firebase Cloud Messaging (FCM) HTTP v1.
+ *
+ * Delivery uses the firebase-admin SDK, authenticated with a service-account
+ * JSON supplied via the FIREBASE_SERVICE_ACCOUNT environment variable (paste
+ * the full JSON as a single line). When the credential is absent (typical in
+ * local development), push notifications are logged to the console instead of
+ * being sent, so the rest of the notification pipeline still works.
+ *
+ * Web (browser) push:
+ *   Browsers obtain an FCM registration token via the Firebase JS SDK + a
+ *   service worker (firebase-messaging-sw.js) and send it to the backend
+ *   (PATCH /api/users/:id/fcm-token). FCM then delivers to that token using
+ *   the standard Web Push protocol under the hood.
+ *
+ *   Note on iOS: browser web push only works for a PWA the user has added to
+ *   the Home Screen (iOS 16.4+); a plain Safari tab will not receive push.
  */
+
+import { initializeApp, getApps, getApp, cert, type ServiceAccount } from 'firebase-admin/app';
+import { getMessaging, type Messaging } from 'firebase-admin/messaging';
 
 interface PushNotificationOptions {
   token: string;
@@ -12,51 +28,101 @@ interface PushNotificationOptions {
 }
 
 class PushService {
-  private serverKey: string | undefined;
+  private messaging: Messaging | null = null;
   private isDevelopment: boolean;
 
   constructor() {
-    this.serverKey = process.env.FCM_SERVER_KEY;
     this.isDevelopment = process.env.NODE_ENV !== 'production';
+    this.initialize();
+  }
+
+  /**
+   * Initializes the firebase-admin app from FIREBASE_SERVICE_ACCOUNT.
+   * Fails soft: if the credential is missing or invalid, messaging stays null
+   * and sends are logged instead of dispatched.
+   */
+  private initialize(): void {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!raw) {
+      console.warn(
+        '[PushService] FIREBASE_SERVICE_ACCOUNT is not set — push notifications will be logged, not sent.',
+      );
+      return;
+    }
+
+    try {
+      const serviceAccount = JSON.parse(raw) as ServiceAccount;
+      // Reuse an already-initialized default app if present (avoids duplicate
+      // app errors under hot-reload / repeated imports).
+      const app = getApps().length
+        ? getApp()
+        : initializeApp({ credential: cert(serviceAccount) });
+      this.messaging = getMessaging(app);
+      console.log('[PushService] Firebase Admin initialized — push notifications enabled.');
+    } catch (err) {
+      console.error(
+        '[PushService] Failed to parse FIREBASE_SERVICE_ACCOUNT — push notifications disabled:',
+        err instanceof Error ? err.message : err,
+      );
+    }
+  }
+
+  /**
+   * Whether real push delivery is configured. When false, sends are no-ops
+   * (logged only) so callers never need to branch on configuration.
+   */
+  get isConfigured(): boolean {
+    return this.messaging !== null;
   }
 
   async send(options: PushNotificationOptions): Promise<void> {
-    if (this.isDevelopment || !this.serverKey) {
-      console.log('[PushService] Development mode - push notification not sent:');
-      console.log(`  Token: ${options.token}`);
-      console.log(`  Title: ${options.title}`);
-      console.log(`  Body: ${options.body}`);
-      if (options.data) {
-        console.log(`  Data: ${JSON.stringify(options.data)}`);
+    if (!this.messaging) {
+      if (this.isDevelopment) {
+        console.log('[PushService] Push not configured — notification not sent:');
+        console.log(`  Token: ${options.token.slice(0, 12)}…`);
+        console.log(`  Title: ${options.title}`);
+        console.log(`  Body: ${options.body}`);
       }
       return;
     }
 
-    // Production: send via FCM HTTP v1 API
-    const response = await fetch('https://fcm.googleapis.com/fcm/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `key=${this.serverKey}`,
-      },
-      body: JSON.stringify({
-        to: options.token,
+    try {
+      await this.messaging.send({
+        token: options.token,
         notification: {
           title: options.title,
           body: options.body,
         },
         data: options.data || {},
-      }),
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error('[PushService] Failed to send push notification:', errorBody);
-      throw new Error(`Failed to send push notification: ${response.status}`);
+        webpush: {
+          notification: {
+            title: options.title,
+            body: options.body,
+          },
+        },
+      });
+    } catch (err) {
+      // FCM returns a specific error when a token is no longer valid (app
+      // uninstalled, permission revoked, token rotated). Surface it distinctly
+      // so callers can prune the stored token.
+      const code = (err as { code?: string }).code;
+      if (
+        code === 'messaging/registration-token-not-registered' ||
+        code === 'messaging/invalid-registration-token'
+      ) {
+        throw new PushTokenInvalidError(options.token);
+      }
+      console.error('[PushService] Failed to send push notification:', err);
+      throw err;
     }
   }
 
-  async sendToMany(tokens: string[], title: string, body: string, data?: Record<string, string>): Promise<void> {
+  async sendToMany(
+    tokens: string[],
+    title: string,
+    body: string,
+    data?: Record<string, string>,
+  ): Promise<void> {
     const results = await Promise.allSettled(
       tokens.map((token) => this.send({ token, title, body, data })),
     );
@@ -65,6 +131,19 @@ class PushService {
     if (failures.length > 0) {
       console.warn(`[PushService] ${failures.length}/${tokens.length} push notifications failed`);
     }
+  }
+}
+
+/**
+ * Thrown when FCM reports a token is no longer valid, so callers can clear the
+ * stored fcmToken for that user.
+ */
+export class PushTokenInvalidError extends Error {
+  token: string;
+  constructor(token: string) {
+    super('FCM registration token is no longer valid');
+    this.name = 'PushTokenInvalidError';
+    this.token = token;
   }
 }
 

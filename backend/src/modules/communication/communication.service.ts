@@ -397,9 +397,34 @@ class CommunicationService {
       );
     }
 
-    // Emit "message:new" event to the conversation room
+    // Emit "message:new" event to the conversation room (live chat view).
     const room = `conversation:${conversation.id}`;
     socketService.emitToRoom(room, 'message:new', response);
+
+    // Notify the other participant so they're alerted even when the chat isn't
+    // open (push + in-app notification via the notification pipeline).
+    const recipientUserId =
+      userId === conversation.teacherUserId ? conversation.parentUserId : conversation.teacherUserId;
+    const senderName = `${message.sender.firstName} ${message.sender.lastName}`.trim();
+    const preview =
+      input.messageType === 'text'
+        ? (input.content || '').slice(0, 200)
+        : input.messageType === 'photo'
+          ? '📷 Photo'
+          : '📎 Document';
+    notificationService
+      .notify({
+        userId: recipientUserId,
+        title: senderName || 'New message',
+        body: preview,
+        type: 'message_new',
+        referenceId: conversation.id,
+        referenceType: 'conversation',
+        channels: ['push'],
+      })
+      .catch((err) => {
+        console.error('[CommunicationService] Failed to notify message recipient:', err);
+      });
 
     return response;
   }

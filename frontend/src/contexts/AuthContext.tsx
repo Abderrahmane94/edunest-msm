@@ -151,6 +151,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     localStorage.setItem('user', JSON.stringify(user));
 
+    // Let the socket connection pick up the new token immediately.
+    window.dispatchEvent(new CustomEvent('auth:login'));
+
     setState({ user, isAuthenticated: true, isLoading: false });
     return { status: 'success' };
   }, []);
@@ -164,12 +167,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
+    // Clear the cached push token so the next user re-registers their own.
+    localStorage.removeItem('fcm_token');
     setState({ user: null, isAuthenticated: false, isLoading: false });
   }, []);
 
   const setTokens = useCallback((accessToken: string, refreshToken: string) => {
     localStorage.setItem('access_token', accessToken);
     localStorage.setItem('refresh_token', refreshToken);
+    window.dispatchEvent(new CustomEvent('auth:token-refreshed'));
     // Prefer the full user object already in localStorage (it has email/names,
     // which the JWT payload does not carry); fall back to the token payload.
     const storedUser = localStorage.getItem('user');

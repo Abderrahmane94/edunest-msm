@@ -1,5 +1,6 @@
 import prisma from '../../lib/prisma';
 import { socketService } from '../../services/socket.service';
+import { notificationService } from '../../services/notification.service';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { CommunicationServiceError } from './communication.service';
 
@@ -251,8 +252,33 @@ class StaffMessagingService {
 
     const response = this._toMessageResponse(message);
 
-    // Emit to conversation room
+    // Emit to conversation room (live chat view).
     socketService.emitToRoom(`staff_conversation:${conversation.id}`, 'staff_message:new', response);
+
+    // Notify the other participant so they're alerted even when the chat isn't
+    // open (push + in-app notification via the notification pipeline).
+    const recipientUserId =
+      userId === conversation.initiatorId ? conversation.recipientId : conversation.initiatorId;
+    const senderName = `${message.sender.firstName} ${message.sender.lastName}`.trim();
+    const preview =
+      messageType === 'text'
+        ? (content || '').slice(0, 200)
+        : messageType === 'photo'
+          ? '📷 Photo'
+          : '📎 Document';
+    notificationService
+      .notify({
+        userId: recipientUserId,
+        title: senderName || 'New message',
+        body: preview,
+        type: 'message_new',
+        referenceId: conversation.id,
+        referenceType: 'staff_conversation',
+        channels: ['push'],
+      })
+      .catch((err) => {
+        console.error('[StaffMessagingService] Failed to notify message recipient:', err);
+      });
 
     return response;
   }

@@ -11,7 +11,7 @@
  */
 
 import prisma from '../lib/prisma';
-import { pushService } from './push.service';
+import { pushService, PushTokenInvalidError } from './push.service';
 import { emailService } from './email.service';
 import { smsService } from './sms.service';
 import { socketService } from './socket.service';
@@ -106,17 +106,29 @@ class NotificationService implements INotificationService {
     const deliveryPromises: Promise<void>[] = [];
 
     if (channels.includes('push') && user.fcmToken) {
+      const staleToken = user.fcmToken;
       deliveryPromises.push(
-        pushService.send({
-          token: user.fcmToken,
-          title,
-          body,
-          data: {
-            type,
-            ...(referenceId && { referenceId }),
-            ...(referenceType && { referenceType }),
-          },
-        }),
+        pushService
+          .send({
+            token: staleToken,
+            title,
+            body,
+            data: {
+              type,
+              ...(referenceId && { referenceId }),
+              ...(referenceType && { referenceType }),
+            },
+          })
+          .catch(async (err) => {
+            // Drop tokens FCM reports as no longer valid so we stop retrying them.
+            if (err instanceof PushTokenInvalidError) {
+              await prisma.user
+                .updateMany({ where: { id: userId, fcmToken: staleToken }, data: { fcmToken: null } })
+                .catch(() => undefined);
+              return;
+            }
+            throw err;
+          }),
       );
     }
 
@@ -225,7 +237,7 @@ class NotificationService implements INotificationService {
       );
 
       // Persist notification
-      await prisma.notification.create({
+      const notification = await prisma.notification.create({
         data: {
           userId: parent.id,
           type: 'absence_alert',
@@ -235,6 +247,10 @@ class NotificationService implements INotificationService {
           referenceType: 'attendance_record',
         },
       });
+
+      // Emit "notification:new" for real-time in-app delivery (was missing —
+      // parents viewing the app got no live notification for absences).
+      socketService.emitToUser(parent.id, 'notification:new', notification);
 
       // Push notification (if FCM token available)
       if (parent.fcmToken) {

@@ -236,7 +236,9 @@ See `.env.example` for the full list. Required for production:
 | `CLOUDINARY_*` | Cloudinary credentials for file uploads |
 | `RESEND_API_KEY` | Resend email service key |
 | `TWILIO_*` | Twilio SMS credentials |
-| `FIREBASE_SERVICE_ACCOUNT` | Firebase FCM service account JSON |
+| `FIREBASE_SERVICE_ACCOUNT` | Firebase FCM service account JSON (backend push sender) |
+| `VITE_FIREBASE_*` | Firebase web app config for browser push (frontend) |
+| `VITE_FIREBASE_VAPID_KEY` | FCM "Web Push certificate" key (frontend) |
 
 ## Contributing
 

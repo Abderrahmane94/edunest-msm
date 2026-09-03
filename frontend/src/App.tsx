@@ -3,6 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/query-client';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { useDirection } from '@/hooks/useDirection';
+import { NotificationsManager } from '@/components/NotificationsManager';
 import { routes } from '@/router';
 import '@/i18n';
 
@@ -22,6 +23,7 @@ function App() {
       <BrowserRouter>
         <AuthProvider>
           <DirectionManager>
+            <NotificationsManager />
             <AppRoutes />
           </DirectionManager>
         </AuthProvider>

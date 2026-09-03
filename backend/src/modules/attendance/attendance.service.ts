@@ -164,6 +164,18 @@ class AttendanceService {
       },
     });
 
+    // Notify parents when a record becomes 'absent' (e.g. corrected from
+    // present/late to absent). Only fire on a transition INTO absent to avoid
+    // re-notifying on unrelated edits (like adding a note to an absent record).
+    if (updated.status === 'absent' && record.status !== 'absent') {
+      const dateStr = updated.date.toISOString().slice(0, 10);
+      notificationService
+        .dispatchAbsenceNotifications(updated.childId, updated.id, dateStr)
+        .catch((err) => {
+          console.error('[AttendanceService] Error dispatching absence notification on update:', err);
+        });
+    }
+
     return updated;
   }
 

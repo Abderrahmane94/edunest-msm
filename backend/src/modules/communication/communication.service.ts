@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
 import { socketService } from '../../services/socket.service';
 import { notificationService } from '../../services/notification.service';
@@ -1092,30 +1093,100 @@ class CommunicationService {
   }
 
   /**
-   * List announcements for the current user's school.
-   * Supports optional classroomId filter.
-   * All active users in the school can view announcements.
+   * Resolve the classroom IDs whose announcements a user is allowed to see.
+   * Returns the literal 'all' for admins/super admins (no classroom restriction),
+   * or an array of classroom IDs for teachers (assigned classrooms) and parents
+   * (classrooms their children are enrolled in). Other roles get an empty array,
+   * limiting them to school-wide announcements only.
+   */
+  private async getVisibleClassroomIds(
+    schoolId: string,
+    userId: string,
+    role: string,
+  ): Promise<'all' | string[]> {
+    if (role === 'admin' || role === 'super_admin') {
+      return 'all';
+    }
+
+    if (role === 'teacher') {
+      const classrooms = await prisma.classroom.findMany({
+        where: { schoolId, teacherUserId: userId },
+        select: { id: true },
+      });
+      return classrooms.map((c) => c.id);
+    }
+
+    if (role === 'parent') {
+      const links = await prisma.parentChildLink.findMany({
+        where: { parentUserId: userId },
+        select: { childId: true },
+      });
+      const childIds = links.map((l) => l.childId);
+      if (childIds.length === 0) return [];
+
+      const enrollments = await prisma.classroomEnrollment.findMany({
+        where: { childId: { in: childIds }, classroom: { schoolId } },
+        select: { classroomId: true },
+      });
+      return [...new Set(enrollments.map((e) => e.classroomId))];
+    }
+
+    return [];
+  }
+
+  /**
+   * List announcements visible to the current user.
+   *
+   * Visibility is scoped by role so that classroom-specific announcements only
+   * reach users related to that classroom:
+   * - admin / super_admin: all announcements in the school.
+   * - teacher: school-wide announcements plus announcements for classrooms they
+   *   are assigned to.
+   * - parent: school-wide announcements plus announcements for classrooms their
+   *   children are enrolled in.
+   *
+   * An optional classroomId narrows the result further, but a user can never see
+   * announcements for a classroom they are not related to.
    */
   async listAnnouncements(
     schoolId: string,
+    userId: string,
+    role: string,
     page: number,
     pageSize: number,
     classroomId?: string,
   ): Promise<{ announcements: AnnouncementResponse[]; total: number }> {
+    // Build the set of classroom IDs this user is allowed to see announcements for.
+    const allowedClassroomIds = await this.getVisibleClassroomIds(schoolId, userId, role);
+
+    // Determine which classroom-scoped announcements to include.
+    let classroomFilter: Prisma.AnnouncementWhereInput;
+    if (allowedClassroomIds === 'all') {
+      // Admins/super admins see every announcement in the school.
+      classroomFilter = classroomId ? { OR: [{ classroomId }, { classroomId: null }] } : {};
+    } else {
+      // Non-admins see school-wide announcements (classroomId: null) plus those
+      // for their own classrooms — optionally narrowed to a single classroom.
+      const scopedIds = classroomId
+        ? allowedClassroomIds.filter((id) => id === classroomId)
+        : allowedClassroomIds;
+      classroomFilter = { OR: [{ classroomId: null }, { classroomId: { in: scopedIds } }] };
+    }
+
+    const where: Prisma.AnnouncementWhereInput = {
+      schoolId,
+      publishedAt: { not: null },
+      ...classroomFilter,
+    };
+
     const [announcements, total] = await Promise.all([
       prisma.announcement.findMany({
-        where: classroomId
-          ? { schoolId, publishedAt: { not: null }, OR: [{ classroomId }, { classroomId: null }] }
-          : { schoolId, publishedAt: { not: null } },
+        where,
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { publishedAt: 'desc' },
       }),
-      prisma.announcement.count({
-        where: classroomId
-          ? { schoolId, publishedAt: { not: null }, OR: [{ classroomId }, { classroomId: null }] }
-          : { schoolId, publishedAt: { not: null } },
-      }),
+      prisma.announcement.count({ where }),
     ]);
 
     // Get creator info for all announcements
@@ -1142,12 +1213,15 @@ class CommunicationService {
   }
 
   /**
-   * Get a single announcement by ID.
-   * All active users in the school can view announcements.
+   * Get a single announcement by ID, scoped to what the requesting user may see.
+   * School-wide announcements are visible to everyone in the school; classroom
+   * announcements are only visible to admins and users related to that classroom.
    */
   async getAnnouncementById(
     announcementId: string,
     schoolId: string,
+    userId: string,
+    role: string,
   ): Promise<AnnouncementResponse> {
     const announcement = await prisma.announcement.findFirst({
       where: { id: announcementId, schoolId },
@@ -1155,6 +1229,15 @@ class CommunicationService {
 
     if (!announcement) {
       throw new CommunicationServiceError('Announcement not found', 404);
+    }
+
+    // Enforce classroom-level visibility for non-admin users.
+    if (announcement.classroomId) {
+      const allowedClassroomIds = await this.getVisibleClassroomIds(schoolId, userId, role);
+      if (allowedClassroomIds !== 'all' && !allowedClassroomIds.includes(announcement.classroomId)) {
+        // Do not reveal existence of announcements the user cannot access.
+        throw new CommunicationServiceError('Announcement not found', 404);
+      }
     }
 
     // Get creator info

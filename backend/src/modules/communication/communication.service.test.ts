@@ -91,6 +91,7 @@ vi.mock('../../services/socket.service', () => ({
 // Mock notification service
 vi.mock('../../services/notification.service', () => ({
   notificationService: {
+    notify: vi.fn().mockResolvedValue(undefined),
     notifyMany: vi.fn().mockResolvedValue(undefined),
   },
 }));
@@ -1288,7 +1289,7 @@ describe('CommunicationService', () => {
         { id: 'admin-1', firstName: 'Admin', lastName: 'User' },
       ]);
 
-      const result = await communicationService.listAnnouncements(schoolId, 1, 20);
+      const result = await communicationService.listAnnouncements(schoolId, 'admin-1', 'admin', 1, 20);
 
       expect(result.announcements).toHaveLength(1);
       expect(result.total).toBe(1);
@@ -1296,20 +1297,57 @@ describe('CommunicationService', () => {
       expect(result.announcements[0].createdBy?.firstName).toBe('Admin');
     });
 
-    it('should filter by classroomId and include school-wide announcements', async () => {
+    it('should let an admin filter by classroomId and include school-wide announcements', async () => {
       const classroomId = 'classroom-1';
 
       mockPrisma.announcement.findMany.mockResolvedValue([]);
       mockPrisma.announcement.count.mockResolvedValue(0);
       mockPrisma.user.findMany.mockResolvedValue([]);
 
-      await communicationService.listAnnouncements(schoolId, 1, 20, classroomId);
+      await communicationService.listAnnouncements(schoolId, 'admin-1', 'admin', 1, 20, classroomId);
 
       expect(mockPrisma.announcement.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             schoolId,
             OR: [{ classroomId }, { classroomId: null }],
+          }),
+        }),
+      );
+    });
+
+    it('should scope a parent to school-wide announcements plus their children\'s classrooms', async () => {
+      mockPrisma.parentChildLink.findMany.mockResolvedValue([{ childId: 'child-1' }]);
+      mockPrisma.classroomEnrollment.findMany.mockResolvedValue([{ classroomId: 'classroom-1' }]);
+      mockPrisma.announcement.findMany.mockResolvedValue([]);
+      mockPrisma.announcement.count.mockResolvedValue(0);
+      mockPrisma.user.findMany.mockResolvedValue([]);
+
+      await communicationService.listAnnouncements(schoolId, 'parent-1', 'parent', 1, 20);
+
+      expect(mockPrisma.announcement.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            schoolId,
+            OR: [{ classroomId: null }, { classroomId: { in: ['classroom-1'] } }],
+          }),
+        }),
+      );
+    });
+
+    it('should scope a teacher to school-wide announcements plus their assigned classrooms', async () => {
+      mockPrisma.classroom.findMany.mockResolvedValue([{ id: 'classroom-2' }]);
+      mockPrisma.announcement.findMany.mockResolvedValue([]);
+      mockPrisma.announcement.count.mockResolvedValue(0);
+      mockPrisma.user.findMany.mockResolvedValue([]);
+
+      await communicationService.listAnnouncements(schoolId, 'teacher-1', 'teacher', 1, 20);
+
+      expect(mockPrisma.announcement.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            schoolId,
+            OR: [{ classroomId: null }, { classroomId: { in: ['classroom-2'] } }],
           }),
         }),
       );
@@ -1334,7 +1372,7 @@ describe('CommunicationService', () => {
         lastName: 'User',
       });
 
-      const result = await communicationService.getAnnouncementById('ann-1', schoolId);
+      const result = await communicationService.getAnnouncementById('ann-1', schoolId, 'admin-1', 'admin');
 
       expect(result.id).toBe('ann-1');
       expect(result.title).toBe('Test Announcement');
@@ -1345,7 +1383,26 @@ describe('CommunicationService', () => {
       mockPrisma.announcement.findFirst.mockResolvedValue(null);
 
       await expect(
-        communicationService.getAnnouncementById('nonexistent', schoolId),
+        communicationService.getAnnouncementById('nonexistent', schoolId, 'admin-1', 'admin'),
+      ).rejects.toMatchObject({ statusCode: 404 });
+    });
+
+    it('should throw 404 when a parent requests a classroom announcement they cannot access', async () => {
+      mockPrisma.announcement.findFirst.mockResolvedValue({
+        id: 'ann-9',
+        schoolId,
+        classroomId: 'other-classroom',
+        title: 'Not yours',
+        content: 'Private to another classroom',
+        createdByUserId: 'admin-1',
+        publishedAt: new Date(),
+        createdAt: new Date(),
+      });
+      mockPrisma.parentChildLink.findMany.mockResolvedValue([{ childId: 'child-1' }]);
+      mockPrisma.classroomEnrollment.findMany.mockResolvedValue([{ classroomId: 'classroom-1' }]);
+
+      await expect(
+        communicationService.getAnnouncementById('ann-9', schoolId, 'parent-1', 'parent'),
       ).rejects.toMatchObject({ statusCode: 404 });
     });
   });

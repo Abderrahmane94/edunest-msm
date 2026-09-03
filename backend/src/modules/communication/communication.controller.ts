@@ -351,10 +351,14 @@ export const communicationController = {
   async listAnnouncements(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const schoolId = req.user!.schoolId!;
+      const userId = req.user!.userId;
+      const role = req.user!.role;
       const { page, pageSize, classroomId } = req.query as unknown as AnnouncementsQuery;
 
       const { announcements, total } = await communicationService.listAnnouncements(
         schoolId,
+        userId,
+        role,
         page,
         pageSize,
         classroomId,
@@ -375,9 +379,11 @@ export const communicationController = {
   async getAnnouncement(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const schoolId = req.user!.schoolId!;
+      const userId = req.user!.userId;
+      const role = req.user!.role;
       const { id } = req.params;
 
-      const announcement = await communicationService.getAnnouncementById(id, schoolId);
+      const announcement = await communicationService.getAnnouncementById(id, schoolId, userId, role);
       res.status(200).json(successResponse(announcement));
     } catch (error) {
       if (error instanceof CommunicationServiceError) {

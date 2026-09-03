@@ -27,7 +27,19 @@ vi.mock('../../lib/prisma', () => ({
   },
 }));
 
+// Mock notification service (absence dispatch is fire-and-forget)
+vi.mock('../../services/notification.service', () => ({
+  notificationService: {
+    dispatchAbsenceNotifications: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 import prisma from '../../lib/prisma';
+import { notificationService } from '../../services/notification.service';
+
+const mockNotificationService = notificationService as unknown as {
+  dispatchAbsenceNotifications: ReturnType<typeof vi.fn>;
+};
 
 const mockPrisma = prisma as unknown as {
   classroom: {
@@ -259,6 +271,96 @@ describe('AttendanceService', () => {
       const result = await attendanceService.update(recordId, schoolId, userId, 'admin', updateInput);
 
       expect(result).toEqual(updatedRecord);
+    });
+
+    it('should dispatch absence notifications when a record is updated to absent', async () => {
+      const existingRecord = {
+        id: recordId,
+        schoolId,
+        childId: 'child-1',
+        classroomId,
+        status: 'present',
+        classroom: { teacherUserId: userId },
+      };
+      const updatedRecord = {
+        id: recordId,
+        schoolId,
+        childId: 'child-1',
+        classroomId,
+        date: new Date('2024-03-15'),
+        status: 'absent',
+        markedByUserId: userId,
+        note: null,
+        createdAt: new Date(),
+        child: { id: 'child-1', firstName: 'Ahmed', lastName: 'Ali' },
+        markedBy: { id: userId, firstName: 'Teacher', lastName: 'One' },
+      };
+
+      mockPrisma.attendanceRecord.findFirst.mockResolvedValue(existingRecord);
+      mockPrisma.attendanceRecord.update.mockResolvedValue(updatedRecord);
+
+      await attendanceService.update(recordId, schoolId, userId, 'teacher', { status: 'absent' });
+
+      expect(mockNotificationService.dispatchAbsenceNotifications).toHaveBeenCalledWith(
+        'child-1',
+        recordId,
+        '2024-03-15',
+      );
+    });
+
+    it('should NOT dispatch absence notifications when updating to a non-absent status', async () => {
+      const existingRecord = {
+        id: recordId,
+        schoolId,
+        childId: 'child-1',
+        classroomId,
+        status: 'present',
+        classroom: { teacherUserId: userId },
+      };
+      const updatedRecord = {
+        ...existingRecord,
+        date: new Date('2024-03-15'),
+        status: 'late',
+        note: null,
+        child: { id: 'child-1', firstName: 'Ahmed', lastName: 'Ali' },
+        markedBy: { id: userId, firstName: 'Teacher', lastName: 'One' },
+      };
+
+      mockPrisma.attendanceRecord.findFirst.mockResolvedValue(existingRecord);
+      mockPrisma.attendanceRecord.update.mockResolvedValue(updatedRecord);
+
+      await attendanceService.update(recordId, schoolId, userId, 'teacher', { status: 'late' });
+
+      expect(mockNotificationService.dispatchAbsenceNotifications).not.toHaveBeenCalled();
+    });
+
+    it('should NOT re-dispatch when an already-absent record is edited', async () => {
+      const existingRecord = {
+        id: recordId,
+        schoolId,
+        childId: 'child-1',
+        classroomId,
+        status: 'absent',
+        classroom: { teacherUserId: userId },
+      };
+      const updatedRecord = {
+        ...existingRecord,
+        date: new Date('2024-03-15'),
+        status: 'absent',
+        note: 'Sick note added',
+        child: { id: 'child-1', firstName: 'Ahmed', lastName: 'Ali' },
+        markedBy: { id: userId, firstName: 'Teacher', lastName: 'One' },
+      };
+
+      mockPrisma.attendanceRecord.findFirst.mockResolvedValue(existingRecord);
+      mockPrisma.attendanceRecord.update.mockResolvedValue(updatedRecord);
+
+      await attendanceService.update(recordId, schoolId, userId, 'teacher', {
+        status: 'absent',
+        note: 'Sick note added',
+      });
+
+      expect(mockNotificationService.dispatchAbsenceNotifications).not.toHaveBeenCalled();
     });
   });
 

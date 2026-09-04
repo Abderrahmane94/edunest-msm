@@ -160,7 +160,7 @@ function PlanFormDialog({
           <FormField label={t('billing.plans.description')} htmlFor="p-desc">
             <Input id="p-desc" value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} placeholder={t('billing.plans.descriptionPlaceholder')} />
           </FormField>
-          <div className="grid grid-cols-2 gap-x-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormField label={t('billing.plans.priceMonthly')} htmlFor="p-monthly" required>
               <Input id="p-monthly" type="number" min="0" value={form.priceMonthly} onChange={(e) => setForm(p => ({ ...p, priceMonthly: e.target.value }))} placeholder="2000" />
             </FormField>
@@ -302,7 +302,7 @@ function AssignPlanDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
           <FormSelect label={t('billing.subscriptions.school')} name="schoolId" value={form.schoolId} onChange={(e) => setForm(p => ({ ...p, schoolId: e.target.value }))} options={schoolOptions} placeholder={t('billing.subscriptions.selectSchool')} />
           <FormSelect label={t('billing.subscriptions.plan')} name="planId" value={form.planId} onChange={(e) => setForm(p => ({ ...p, planId: e.target.value }))} options={planOptions} placeholder={t('billing.subscriptions.selectPlan')} />
           <FormSelect label={t('billing.subscriptions.billingCycle')} name="billingCycle" value={form.billingCycle} onChange={(e) => setForm(p => ({ ...p, billingCycle: e.target.value }))} options={cycleOptions} />
-          <div className="grid grid-cols-2 gap-x-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormField label={t('billing.subscriptions.startDate')} htmlFor="s-start" required>
               <Input id="s-start" type="date" value={form.startDate} onChange={(e) => setForm(p => ({ ...p, startDate: e.target.value }))} />
             </FormField>
@@ -756,7 +756,7 @@ function EditPaymentDialog({ payment, onClose }: { payment: SchoolPaymentRecord;
           <FormField label={t('billing.payments.amount')} htmlFor="ep-amount" required>
             <Input id="ep-amount" type="number" min="0" value={form.amount} onChange={(e) => setForm(p => ({ ...p, amount: e.target.value }))} />
           </FormField>
-          <div className="grid grid-cols-2 gap-x-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormField label={t('billing.payments.periodStart')} htmlFor="ep-start" required>
               <Input id="ep-start" type="date" value={form.periodStart} onChange={(e) => setForm(p => ({ ...p, periodStart: e.target.value }))} />
             </FormField>

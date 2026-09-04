@@ -486,7 +486,7 @@ export function TeacherDailyReportPage() {
           <label className="block text-label font-medium text-text-primary mb-2">
             {t('dailyReport.mood', 'Mood')}
           </label>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {MOOD_OPTIONS.map((option) => (
               <button
                 key={option.value}

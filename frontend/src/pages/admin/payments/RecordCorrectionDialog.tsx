@@ -376,7 +376,8 @@ export function RecordCorrectionDialog({ open, onOpenChange, branchId }: Props) 
                 </h3>
               </div>
 
-              <div className="border border-border rounded-lg overflow-hidden">
+              <div className="border border-border rounded-lg overflow-x-auto">
+              <div className="min-w-[420px]">
                 {/* Header */}
                 <div className="grid grid-cols-4 gap-2 px-3 py-2 bg-subtle text-caption font-medium text-text-secondary">
                   <span>
@@ -452,6 +453,7 @@ export function RecordCorrectionDialog({ open, onOpenChange, branchId }: Props) 
                     -{formatDZD(totalCorrection, i18n.language)}
                   </span>
                 </div>
+              </div>
               </div>
 
               {errors.allocations && (

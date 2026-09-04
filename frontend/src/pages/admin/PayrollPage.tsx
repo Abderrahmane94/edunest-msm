@@ -315,7 +315,7 @@ function RecordPaymentDialog({
             </select>
           </FormField>
 
-          <div className="grid grid-cols-2 gap-x-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormField label={t('payroll.recordDialog.month')} htmlFor="rp-month" required>
               <select
                 id="rp-month"
@@ -388,7 +388,7 @@ function RecordPaymentDialog({
             </FormField>
           )}
 
-          <div className="grid grid-cols-2 gap-x-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormField label={t('payroll.recordDialog.bonuses')} htmlFor="rp-bonuses">
               <Input
                 id="rp-bonuses"

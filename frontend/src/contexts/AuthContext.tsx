@@ -1,5 +1,6 @@
 import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { queryClient } from '@/lib/query-client';
 
 interface User {
   id: string;
@@ -99,6 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Listen for forced logout events (e.g., from API client on refresh failure)
   useEffect(() => {
     const handleLogout = () => {
+      // Clear cached server data and stale local session artifacts.
+      queryClient.clear();
+      localStorage.removeItem('fcm_token');
       setState({ user: null, isAuthenticated: false, isLoading: false });
     };
     window.addEventListener('auth:logout', handleLogout);
@@ -151,6 +155,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     localStorage.setItem('user', JSON.stringify(user));
 
+    // Start the new session from a clean cache so no prior user's data leaks in
+    // (covers forced-logout paths that bypass logout()).
+    queryClient.clear();
+
     // Let the socket connection pick up the new token immediately.
     window.dispatchEvent(new CustomEvent('auth:login'));
 
@@ -169,6 +177,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
     // Clear the cached push token so the next user re-registers their own.
     localStorage.removeItem('fcm_token');
+    // Wipe all cached server data so the next user never sees the previous
+    // user's notifications, dashboards, lists, etc.
+    queryClient.clear();
     setState({ user: null, isAuthenticated: false, isLoading: false });
   }, []);
 

@@ -162,7 +162,7 @@ export function NotificationBell() {
                         <div
                           className={cn(
                             'shrink-0 w-9 h-9 rounded-full flex items-center justify-center',
-                            notificationIconColor(n.type),
+                            n.is_read ? 'bg-subtle text-text-disabled' : notificationIconColor(n.type),
                           )}
                           aria-hidden="true"
                         >

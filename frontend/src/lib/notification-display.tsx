@@ -75,22 +75,44 @@ export function notificationLink(
   role: 'super_admin' | 'admin' | 'teacher' | 'parent',
 ): string | null {
   const base = role === 'parent' ? '/parent' : role === 'teacher' ? '/teacher' : '/admin';
+  const isAdmin = role === 'admin' || role === 'super_admin';
 
   switch (n.type) {
     case 'message_new':
-      return role === 'parent' ? `${base}/messages` : `${base}/messages`;
+      if (isAdmin) {
+        // Admins have no standalone /admin/messages route — both parent/teacher
+        // chats and staff chats live as tabs inside the communication page.
+        return n.reference_type === 'staff_conversation'
+          ? `${base}/communication?tab=staff`
+          : `${base}/communication?tab=messages`;
+      }
+      return `${base}/messages`;
     case 'absence_alert':
-      return role === 'parent' ? `${base}/attendance` : `${base}/attendance`;
+      return `${base}/attendance`;
     case 'invoice_sent':
     case 'payment_received':
     case 'payment_overdue':
       return role === 'parent' ? `${base}/invoices` : `${base}/payments`;
     case 'announcement':
+      if (isAdmin) {
+        return n.reference_id
+          ? `${base}/communication/announcements/${n.reference_id}`
+          : `${base}/communication`;
+      }
       return `${base}/announcements`;
     case 'daily_report':
+      // No admin-facing daily report view exists yet.
+      if (isAdmin) return null;
       return role === 'parent' ? `${base}` : `${base}/daily-reports`;
     case 'event_consent':
-      return role === 'parent' ? `${base}/announcements` : `${base}/events`;
+      if (isAdmin) {
+        return n.reference_id
+          ? `${base}/communication/events/${n.reference_id}`
+          : `${base}/communication`;
+      }
+      // Teachers have no dedicated events route either — fall back to
+      // announcements, same as parents.
+      return `${base}/announcements`;
     default:
       return null;
   }

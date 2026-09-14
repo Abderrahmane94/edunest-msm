@@ -136,7 +136,9 @@ function NotificationItem({ notification }: { notification: AppNotification }) {
   const markRead = useMarkNotificationRead();
 
   const Icon = notificationIcon(notification.type);
-  const iconColorClass = notificationIconColor(notification.type);
+  const iconColorClass = notification.is_read
+    ? 'bg-subtle text-text-disabled'
+    : notificationIconColor(notification.type);
 
   const handleClick = React.useCallback(() => {
     if (!notification.is_read) markRead.mutate(notification.id);

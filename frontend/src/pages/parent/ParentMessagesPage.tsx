@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Send,
@@ -28,10 +29,20 @@ export function ParentMessagesPage() {
   const { user } = useAuth();
   const { on, joinRoom, leaveRoom } = useSocket();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const conversationIdParam = searchParams.get('conversationId');
 
-  const [activeConversationId, setActiveConversationId] = React.useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = React.useState<string | null>(
+    conversationIdParam,
+  );
   const [messageInput, setMessageInput] = React.useState('');
   const [showAttachMenu, setShowAttachMenu] = React.useState(false);
+
+  // Re-select when navigating here again (e.g. from another notification)
+  // while this page is already mounted.
+  React.useEffect(() => {
+    if (conversationIdParam) setActiveConversationId(conversationIdParam);
+  }, [conversationIdParam]);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const photoInputRef = React.useRef<HTMLInputElement>(null);

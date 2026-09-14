@@ -57,7 +57,11 @@ function buildNotificationUrl(data) {
           ? `${base}/communication?tab=staff${referenceId ? `&conversationId=${referenceId}` : ''}`
           : `${base}/communication?tab=messages`;
       }
-      return `${base}/messages`;
+      if (role === 'teacher') {
+        const tab = referenceType === 'staff_conversation' ? 'staff' : 'parents';
+        return `${base}/messages?tab=${tab}${referenceId ? `&conversationId=${referenceId}` : ''}`;
+      }
+      return `${base}/messages${referenceId ? `?conversationId=${referenceId}` : ''}`;
     case 'absence_alert':
       return `${base}/attendance`;
     case 'invoice_sent':

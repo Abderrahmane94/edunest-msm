@@ -86,7 +86,12 @@ export function notificationLink(
           ? `${base}/communication?tab=staff${n.reference_id ? `&conversationId=${n.reference_id}` : ''}`
           : `${base}/communication?tab=messages`;
       }
-      return `${base}/messages`;
+      if (role === 'teacher') {
+        // Teacher messages page has a parents tab and a staff tab.
+        const tab = n.reference_type === 'staff_conversation' ? 'staff' : 'parents';
+        return `${base}/messages?tab=${tab}${n.reference_id ? `&conversationId=${n.reference_id}` : ''}`;
+      }
+      return `${base}/messages${n.reference_id ? `?conversationId=${n.reference_id}` : ''}`;
     case 'absence_alert':
       return `${base}/attendance`;
     case 'invoice_sent':

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Send,
@@ -45,7 +46,19 @@ type TabMode = 'parents' | 'staff';
 
 export function TeacherMessagesPage() {
   const { t } = useTranslation();
-  const [tab, setTab] = React.useState<TabMode>('parents');
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const initialTab: TabMode = tabParam === 'staff' ? 'staff' : 'parents';
+  const conversationId = searchParams.get('conversationId') ?? undefined;
+  const [tab, setTab] = React.useState<TabMode>(initialTab);
+
+  // Re-sync when navigating here again (e.g. from another notification)
+  // while this page is already mounted.
+  React.useEffect(() => {
+    if (tabParam === 'staff' || tabParam === 'parents') {
+      setTab(tabParam);
+    }
+  }, [tabParam]);
 
   return (
     <div className="h-screen flex flex-col bg-page">
@@ -86,20 +99,26 @@ export function TeacherMessagesPage() {
       </header>
 
       {/* Tab content */}
-      {tab === 'parents' ? <ParentMessagingPanel /> : <StaffMessagingPanel />}
+      {tab === 'parents' ? (
+        <ParentMessagingPanel key={conversationId ?? 'parents-default'} initialConversationId={conversationId} />
+      ) : (
+        <StaffMessagingPanel key={conversationId ?? 'staff-default'} initialConversationId={conversationId} />
+      )}
     </div>
   );
 }
 
 // ─── Parent messaging panel (existing logic, extracted) ──────────────────────
 
-function ParentMessagingPanel() {
+function ParentMessagingPanel({ initialConversationId }: { initialConversationId?: string }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { on, joinRoom, leaveRoom } = useSocket();
   const queryClient = useQueryClient();
 
-  const [activeConversationId, setActiveConversationId] = React.useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = React.useState<string | null>(
+    initialConversationId ?? null,
+  );
   const [messageInput, setMessageInput] = React.useState('');
   const [showAttachMenu, setShowAttachMenu] = React.useState(false);
   const [showNewConversationDialog, setShowNewConversationDialog] = React.useState(false);
@@ -330,13 +349,15 @@ function ParentMessagingPanel() {
 
 // ─── Staff messaging panel ────────────────────────────────────────────────────
 
-function StaffMessagingPanel() {
+function StaffMessagingPanel({ initialConversationId }: { initialConversationId?: string }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { on, joinRoom, leaveRoom } = useSocket();
   const queryClient = useQueryClient();
 
-  const [activeConversationId, setActiveConversationId] = React.useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = React.useState<string | null>(
+    initialConversationId ?? null,
+  );
   const [messageInput, setMessageInput] = React.useState('');
   const [showAttachMenu, setShowAttachMenu] = React.useState(false);
   const [showNewDialog, setShowNewDialog] = React.useState(false);

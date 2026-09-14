@@ -25,8 +25,35 @@ export interface ReconciliationReport {
 
 /**
  * Fetch reconciliation report for a branch within a date range.
- * API: GET /api/payments/branches/:branchId/reconciliation?rangeStart=...&rangeEnd=...
+ * API: GET /api/payments/branches/:branchId/reconciliation?startDate=...&endDate=...
+ *
+ * Query param names must match the backend contract exactly (see
+ * payments.controller.ts#getReconciliationReport, which requires `startDate`/
+ * `endDate` and 400s otherwise) — this previously drifted to `rangeStart`/
+ * `rangeEnd` and silently broke the reconciliation tab in production.
  */
+export async function fetchReconciliationReport(
+  branchId: string,
+  rangeStart: string,
+  rangeEnd: string
+): Promise<ReconciliationReport> {
+  const params = new URLSearchParams();
+  params.set('startDate', rangeStart);
+  params.set('endDate', rangeEnd);
+
+  const res = await apiClient.get<unknown>(
+    `/payments/branches/${branchId}/reconciliation?${params.toString()}`
+  );
+
+  if (!res.success) {
+    throw new Error(
+      res.error?.message ?? 'Failed to fetch reconciliation report'
+    );
+  }
+
+  return mapReconciliationReport(res.data as Record<string, unknown>);
+}
+
 export function useReconciliation(
   branchId: string,
   rangeStart: string,
@@ -34,24 +61,7 @@ export function useReconciliation(
 ) {
   return useQuery({
     queryKey: ['reconciliation', branchId, rangeStart, rangeEnd],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      params.set('rangeStart', rangeStart);
-      params.set('rangeEnd', rangeEnd);
-
-      const res = await apiClient.get<unknown>(
-        `/payments/branches/${branchId}/reconciliation?${params.toString()}`
-      );
-
-      if (!res.success) {
-        throw new Error(
-          res.error?.message ?? 'Failed to fetch reconciliation report'
-        );
-      }
-
-      const raw = res.data as Record<string, unknown>;
-      return mapReconciliationReport(raw);
-    },
+    queryFn: () => fetchReconciliationReport(branchId, rangeStart, rangeEnd),
     enabled: !!branchId && !!rangeStart && !!rangeEnd,
   });
 }

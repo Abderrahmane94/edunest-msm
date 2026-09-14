@@ -59,6 +59,7 @@ export function CommunicationPage() {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const initialTab: TabMode = VALID_TABS.includes(tabParam as TabMode) ? (tabParam as TabMode) : 'announcements';
+  const initialConversationId = searchParams.get('conversationId') ?? undefined;
   const [activeTab, setActiveTab] = React.useState<TabMode>(initialTab);
   const [showAnnouncementDialog, setShowAnnouncementDialog] = React.useState(false);
   const [showEventDialog, setShowEventDialog] = React.useState(false);
@@ -126,7 +127,7 @@ export function CommunicationPage() {
         />
       )}
       {activeTab === 'messages' && <PendingMessagesTab />}
-      {activeTab === 'staff' && <AdminStaffMessagingTab />}
+      {activeTab === 'staff' && <AdminStaffMessagingTab initialConversationId={initialConversationId} />}
 
       {/* Create Announcement Dialog */}
       <CreateAnnouncementDialog
@@ -821,13 +822,15 @@ function CreateEventDialog({
 
 /* ─── Admin Staff Messaging Tab ─── */
 
-function AdminStaffMessagingTab() {
+function AdminStaffMessagingTab({ initialConversationId }: { initialConversationId?: string }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { on, joinRoom, leaveRoom } = useSocket();
   const queryClient = useQueryClient();
 
-  const [activeConversationId, setActiveConversationId] = React.useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = React.useState<string | null>(
+    initialConversationId ?? null,
+  );
   const [messageInput, setMessageInput] = React.useState('');
   const [showAttachMenu, setShowAttachMenu] = React.useState(false);
   const [showNewDialog, setShowNewDialog] = React.useState(false);

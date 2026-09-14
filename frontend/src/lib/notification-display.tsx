@@ -83,7 +83,7 @@ export function notificationLink(
         // Admins have no standalone /admin/messages route — both parent/teacher
         // chats and staff chats live as tabs inside the communication page.
         return n.reference_type === 'staff_conversation'
-          ? `${base}/communication?tab=staff`
+          ? `${base}/communication?tab=staff${n.reference_id ? `&conversationId=${n.reference_id}` : ''}`
           : `${base}/communication?tab=messages`;
       }
       return `${base}/messages`;

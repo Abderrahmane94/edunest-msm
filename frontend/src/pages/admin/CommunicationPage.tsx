@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Megaphone, Calendar, MapPin, Users, CheckCircle, XCircle, Clock, MessageCircle, Send, ArrowLeft, Paperclip, Image, FileText, Plus } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
@@ -52,9 +52,14 @@ import {
 
 type TabMode = 'announcements' | 'events' | 'messages' | 'staff';
 
+const VALID_TABS: TabMode[] = ['announcements', 'events', 'messages', 'staff'];
+
 export function CommunicationPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = React.useState<TabMode>('announcements');
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const initialTab: TabMode = VALID_TABS.includes(tabParam as TabMode) ? (tabParam as TabMode) : 'announcements';
+  const [activeTab, setActiveTab] = React.useState<TabMode>(initialTab);
   const [showAnnouncementDialog, setShowAnnouncementDialog] = React.useState(false);
   const [showEventDialog, setShowEventDialog] = React.useState(false);
   const [selectedEventId, setSelectedEventId] = React.useState<string | undefined>(undefined);

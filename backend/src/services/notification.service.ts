@@ -94,6 +94,7 @@ class NotificationService implements INotificationService {
         fcmToken: true,
         preferredLanguage: true,
         firstName: true,
+        role: true,
       },
     });
 
@@ -115,6 +116,7 @@ class NotificationService implements INotificationService {
             body,
             data: {
               type,
+              role: user.role,
               ...(referenceId && { referenceId }),
               ...(referenceType && { referenceType }),
             },

@@ -65,6 +65,15 @@ export function CommunicationPage() {
   const [showEventDialog, setShowEventDialog] = React.useState(false);
   const [selectedEventId, setSelectedEventId] = React.useState<string | undefined>(undefined);
 
+  // Re-sync the active tab when the URL's ?tab= changes (e.g. navigating here
+  // again from a notification while this page is already mounted) without
+  // fighting manual tab clicks, which don't touch the URL.
+  React.useEffect(() => {
+    if (tabParam && VALID_TABS.includes(tabParam as TabMode)) {
+      setActiveTab(tabParam as TabMode);
+    }
+  }, [tabParam]);
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page header */}
@@ -127,7 +136,12 @@ export function CommunicationPage() {
         />
       )}
       {activeTab === 'messages' && <PendingMessagesTab />}
-      {activeTab === 'staff' && <AdminStaffMessagingTab initialConversationId={initialConversationId} />}
+      {activeTab === 'staff' && (
+        <AdminStaffMessagingTab
+          key={initialConversationId ?? 'staff-default'}
+          initialConversationId={initialConversationId}
+        />
+      )}
 
       {/* Create Announcement Dialog */}
       <CreateAnnouncementDialog

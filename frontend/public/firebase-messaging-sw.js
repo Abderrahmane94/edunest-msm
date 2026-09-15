@@ -67,7 +67,9 @@ function buildNotificationUrl(data) {
     case 'invoice_sent':
     case 'payment_received':
     case 'payment_overdue':
-      return role === 'parent' ? `${base}/invoices` : `${base}/payments`;
+      // Teachers have no payments view; these are only ever sent to parents
+      // (and, in principle, admins/super_admins).
+      return role === 'teacher' ? base : `${base}/payments`;
     case 'announcement':
       if (isAdmin) {
         return referenceId ? `${base}/communication/announcements/${referenceId}` : `${base}/communication`;

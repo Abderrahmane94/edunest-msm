@@ -7,14 +7,14 @@
     "title": "Tableau de bord",
     "enrollment": "Enfants inscrits",
     "attendanceRate": "Taux de présence",
-    "outstandingInvoices": "Factures impayées",
+    "outstandingPayments": "Paiements en retard",
     "unreadMessages": "Messages en attente",
     "admin": {
       "overview": "Vue d'ensemble",
       "welcome": "Bonjour, {{name}} 👋",
       "activeChildren": "Enfants actifs",
       "last30Days": "30 derniers jours",
-      "sentOrOverdue": "Envoyées ou en retard",
+      "sentOrOverdue": "Échéance dépassée",
       "pendingReply": "En attente de réponse"
     },
     "platform": {
@@ -1618,6 +1618,36 @@
         "amountDue": "Montant dû pour la période en cours (DZD)",
         "amountDueHelper": "Optionnel — ajuster le montant de la période en cours",
         "confirm": "Confirmer le retrait"
+      },
+      "discounts": {
+        "title": "Remises",
+        "description": "{{count}} remise(s) appliquée(s)",
+        "empty": "Aucune remise",
+        "add": "Ajouter une remise",
+        "noExpiry": "Sans expiration",
+        "columns": {
+          "type": "Type",
+          "percentage": "Pourcentage",
+          "validity": "Validité",
+          "description": "Description"
+        },
+        "types": {
+          "scholarship": "Bourse",
+          "sibling": "Fratrie",
+          "staff": "Personnel",
+          "custom": "Personnalisé"
+        },
+        "form": {
+          "title": "Ajouter une remise",
+          "type": "Type",
+          "percentage": "Pourcentage (%)",
+          "description": "Description (optionnel)",
+          "validFrom": "Valide à partir du",
+          "validTo": "Valide jusqu'au (optionnel)",
+          "submit": "Ajouter"
+        },
+        "delete": "Supprimer",
+        "confirmDelete": "Confirmer la suppression ?"
       }
     },
     "records": {

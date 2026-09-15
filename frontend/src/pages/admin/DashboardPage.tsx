@@ -68,8 +68,8 @@ function AdminDashboard() {
           sub={t('dashboard.admin.last30Days')}
         />
         <StatCard
-          label={t('dashboard.outstandingInvoices')}
-          value={stats?.outstandingInvoices ?? 0}
+          label={t('dashboard.outstandingPayments')}
+          value={stats?.outstandingPayments ?? 0}
           icon={<FileText className="w-5 h-5 text-warning" />}
           accent="bg-warning-muted"
           sub={t('dashboard.admin.sentOrOverdue')}

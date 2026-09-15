@@ -7,14 +7,14 @@
     "title": "لوحة التحكم",
     "enrollment": "الأطفال المسجلون",
     "attendanceRate": "نسبة الحضور",
-    "outstandingInvoices": "الفواتير المستحقة",
+    "outstandingPayments": "المدفوعات المتأخرة",
     "unreadMessages": "رسائل في الانتظار",
     "admin": {
       "overview": "نظرة عامة",
       "welcome": "مرحباً، {{name}} 👋",
       "activeChildren": "أطفال نشطون",
       "last30Days": "آخر 30 يوماً",
-      "sentOrOverdue": "مرسلة أو متأخرة",
+      "sentOrOverdue": "تجاوزت الموعد",
       "pendingReply": "في انتظار الرد"
     },
     "platform": {
@@ -1619,6 +1619,36 @@
         "amountDue": "المبلغ المستحق للفترة الحالية (د.ج)",
         "amountDueHelper": "اختياري - تعديل مبلغ الفترة الجارية",
         "confirm": "تأكيد الانسحاب"
+      },
+      "discounts": {
+        "title": "الخصومات",
+        "description": "{{count}} خصم مطبق",
+        "empty": "لا توجد خصومات",
+        "add": "إضافة خصم",
+        "noExpiry": "بدون تاريخ انتهاء",
+        "columns": {
+          "type": "النوع",
+          "percentage": "النسبة",
+          "validity": "الصلاحية",
+          "description": "الوصف"
+        },
+        "types": {
+          "scholarship": "منحة دراسية",
+          "sibling": "إخوة",
+          "staff": "طاقم العمل",
+          "custom": "مخصص"
+        },
+        "form": {
+          "title": "إضافة خصم",
+          "type": "النوع",
+          "percentage": "النسبة (%)",
+          "description": "الوصف (اختياري)",
+          "validFrom": "صالح ابتداءً من",
+          "validTo": "صالح حتى (اختياري)",
+          "submit": "إضافة"
+        },
+        "delete": "حذف",
+        "confirmDelete": "تأكيد الحذف؟"
       }
     },
     "records": {

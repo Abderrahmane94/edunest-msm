@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, UserX, Calendar } from 'lucide-react';
+import { ArrowLeft, UserX, Calendar, Plus, Trash2, Percent } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
 import {
   Button,
@@ -14,12 +14,19 @@ import {
   DialogFooter,
   Input,
 } from '@/components/ui';
-import { FormField } from '@/components/forms';
+import { FormField, FormSelect } from '@/components/forms';
 import {
   useEnrollmentDetail,
   useWithdrawEnrollment,
   type BillingPeriod,
 } from '@/hooks/useEnrollments';
+import {
+  useDiscounts,
+  useCreateDiscount,
+  useDeleteDiscount,
+  type Discount,
+  type DiscountType,
+} from '@/hooks/useDiscounts';
 
 // ─── Period Status Badge ───────────────────────────────────────────────────────
 
@@ -200,6 +207,265 @@ function WithdrawalDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ─── Discounts ──────────────────────────────────────────────────────────────
+
+const DISCOUNT_TYPE_KEYS: DiscountType[] = ['scholarship', 'sibling', 'staff', 'custom'];
+
+function AddDiscountDialog({
+  open,
+  onOpenChange,
+  enrollmentId,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  enrollmentId: string;
+}) {
+  const { t } = useTranslation();
+  const createDiscount = useCreateDiscount(enrollmentId);
+
+  const [type, setType] = React.useState<DiscountType>('scholarship');
+  const [percentage, setPercentage] = React.useState('');
+  const [description, setDescription] = React.useState('');
+  const [validFrom, setValidFrom] = React.useState(new Date().toISOString().slice(0, 10));
+  const [validTo, setValidTo] = React.useState('');
+
+  function resetForm() {
+    setType('scholarship');
+    setPercentage('');
+    setDescription('');
+    setValidFrom(new Date().toISOString().slice(0, 10));
+    setValidTo('');
+  }
+
+  function handleClose(isOpen: boolean) {
+    if (!isOpen) resetForm();
+    onOpenChange(isOpen);
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!percentage || !validFrom) return;
+
+    createDiscount.mutate(
+      {
+        type,
+        percentage: Number(percentage),
+        description: description.trim() || null,
+        validFrom,
+        validTo: validTo || null,
+      },
+      { onSuccess: () => handleClose(false) },
+    );
+  }
+
+  const typeOptions = DISCOUNT_TYPE_KEYS.map((key) => ({
+    value: key,
+    label: t(`payments.enrollmentDetail.discounts.types.${key}`),
+  }));
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Percent className="w-5 h-5 text-primary" />
+            {t('payments.enrollmentDetail.discounts.form.title')}
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <FormSelect
+            label={t('payments.enrollmentDetail.discounts.form.type')}
+            name="discount-type"
+            value={type}
+            onChange={(e) => setType(e.target.value as DiscountType)}
+            options={typeOptions}
+          />
+
+          <FormField label={t('payments.enrollmentDetail.discounts.form.percentage')} htmlFor="discount-percentage" required>
+            <Input
+              id="discount-percentage"
+              name="discount-percentage"
+              type="number"
+              min="0.01"
+              max="100"
+              step="0.01"
+              value={percentage}
+              onChange={(e) => setPercentage(e.target.value)}
+              placeholder="0.00"
+            />
+          </FormField>
+
+          <FormField label={t('payments.enrollmentDetail.discounts.form.description')} htmlFor="discount-description">
+            <Input
+              id="discount-description"
+              name="discount-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </FormField>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label={t('payments.enrollmentDetail.discounts.form.validFrom')} htmlFor="discount-valid-from" required>
+              <input
+                id="discount-valid-from"
+                type="date"
+                value={validFrom}
+                onChange={(e) => setValidFrom(e.target.value)}
+                className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground focus:outline-none focus:border-primary focus:shadow-focus-ring transition-all duration-150"
+              />
+            </FormField>
+
+            <FormField label={t('payments.enrollmentDetail.discounts.form.validTo')} htmlFor="discount-valid-to">
+              <input
+                id="discount-valid-to"
+                type="date"
+                value={validTo}
+                onChange={(e) => setValidTo(e.target.value)}
+                className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground focus:outline-none focus:border-primary focus:shadow-focus-ring transition-all duration-150"
+              />
+            </FormField>
+          </div>
+
+          {createDiscount.isError && (
+            <p className="text-body text-danger mt-1">
+              {createDiscount.error instanceof Error ? createDiscount.error.message : t('common.error')}
+            </p>
+          )}
+
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => handleClose(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button type="submit" variant="primary" disabled={!percentage || !validFrom || createDiscount.isPending}>
+              {createDiscount.isPending ? t('common.loading') : t('payments.enrollmentDetail.discounts.form.submit')}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DiscountRow({ discount, enrollmentId }: { discount: Discount; enrollmentId: string }) {
+  const { t } = useTranslation();
+  const deleteDiscount = useDeleteDiscount(enrollmentId);
+  const [confirming, setConfirming] = React.useState(false);
+
+  return (
+    <tr className="border-b border-border last:border-b-0 hover:bg-hover">
+      <td className="px-4 py-3">
+        <span className="text-body font-medium text-foreground">
+          {t(`payments.enrollmentDetail.discounts.types.${discount.type}`)}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <span className="text-body font-medium text-foreground" dir="ltr">
+          {Number(discount.percentage)}%
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <span className="text-body text-text-secondary" dir="ltr">
+          {formatDate(discount.validFrom)} —{' '}
+          {discount.validTo ? formatDate(discount.validTo) : t('payments.enrollmentDetail.discounts.noExpiry')}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <span className="text-body text-text-secondary truncate max-w-[200px] block">
+          {discount.description || '—'}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-end">
+        {confirming ? (
+          <div className="flex items-center gap-2 justify-end">
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => deleteDiscount.mutate(discount.id)}
+              disabled={deleteDiscount.isPending}
+            >
+              {deleteDiscount.isPending ? t('common.loading') : t('payments.enrollmentDetail.discounts.delete')}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setConfirming(false)}>
+              {t('common.cancel')}
+            </Button>
+          </div>
+        ) : (
+          <Button variant="ghost" size="sm" onClick={() => setConfirming(true)} aria-label={t('payments.enrollmentDetail.discounts.delete')}>
+            <Trash2 className="w-4 h-4 text-danger" />
+          </Button>
+        )}
+      </td>
+    </tr>
+  );
+}
+
+function DiscountsSection({ enrollmentId }: { enrollmentId: string }) {
+  const { t } = useTranslation();
+  const { data: discounts, isLoading } = useDiscounts(enrollmentId);
+  const [showAddDialog, setShowAddDialog] = React.useState(false);
+
+  return (
+    <div className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="p-4 border-b border-border flex items-center justify-between">
+        <div>
+          <h2 className="text-section-title font-semibold text-text-heading">
+            {t('payments.enrollmentDetail.discounts.title')}
+          </h2>
+          <p className="text-caption text-text-secondary mt-1">
+            {t('payments.enrollmentDetail.discounts.description', { count: discounts?.length ?? 0 })}
+          </p>
+        </div>
+        <Button variant="secondary" size="sm" onClick={() => setShowAddDialog(true)}>
+          <Plus className="w-4 h-4" />
+          {t('payments.enrollmentDetail.discounts.add')}
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="p-6 space-y-3">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="h-10 bg-hover rounded-md animate-pulse" />
+          ))}
+        </div>
+      ) : !discounts || discounts.length === 0 ? (
+        <div className="p-6 text-center">
+          <p className="text-body text-text-secondary">{t('payments.enrollmentDetail.discounts.empty')}</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border bg-subtle">
+                <th className="px-4 py-3 text-start text-caption font-medium text-text-secondary">
+                  {t('payments.enrollmentDetail.discounts.columns.type')}
+                </th>
+                <th className="px-4 py-3 text-start text-caption font-medium text-text-secondary">
+                  {t('payments.enrollmentDetail.discounts.columns.percentage')}
+                </th>
+                <th className="px-4 py-3 text-start text-caption font-medium text-text-secondary">
+                  {t('payments.enrollmentDetail.discounts.columns.validity')}
+                </th>
+                <th className="px-4 py-3 text-start text-caption font-medium text-text-secondary">
+                  {t('payments.enrollmentDetail.discounts.columns.description')}
+                </th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {discounts.map((discount) => (
+                <DiscountRow key={discount.id} discount={discount} enrollmentId={enrollmentId} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <AddDiscountDialog open={showAddDialog} onOpenChange={setShowAddDialog} enrollmentId={enrollmentId} />
+    </div>
   );
 }
 
@@ -501,6 +767,9 @@ export function EnrollmentDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Discounts */}
+      <DiscountsSection enrollmentId={enrollmentId!} />
 
       {/* Withdrawal Dialog */}
       <WithdrawalDialog

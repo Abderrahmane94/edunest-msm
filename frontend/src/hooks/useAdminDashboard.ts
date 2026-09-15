@@ -4,7 +4,7 @@ import { apiClient } from '@/lib/api-client';
 interface DashboardStats {
   enrollmentCount: number;
   attendanceRate: number;
-  outstandingInvoices: number;
+  outstandingPayments: number;
   unreadMessages: number;
 }
 
@@ -24,7 +24,7 @@ export function useAdminDashboard() {
       return res.data ?? {
         enrollmentCount: 0,
         attendanceRate: 0,
-        outstandingInvoices: 0,
+        outstandingPayments: 0,
         unreadMessages: 0,
       };
     },

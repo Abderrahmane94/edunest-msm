@@ -1,9 +1,10 @@
+import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
 
 interface DashboardStats {
   enrollmentCount: number;
   attendanceRate: number;
-  outstandingInvoices: number;
+  outstandingPayments: number;
   unreadMessages: number;
 }
 
@@ -65,13 +66,28 @@ class AdminService {
       attendanceRate = Math.round((presentOrLate / recentAttendance.length) * 100 * 100) / 100;
     }
 
-    // 3. Outstanding invoices: sent or overdue invoices
-    const outstandingInvoices = await prisma.invoice.count({
+    // 3. Outstanding payments: non-cancelled billing periods past their due
+    // date that aren't fully paid yet (status is derived, not stored — see
+    // billing-period.service.ts).
+    const overduePeriods = await prisma.billingPeriod.findMany({
       where: {
-        schoolId,
-        status: { in: ['sent', 'overdue'] },
+        enrollment: { branch: { schoolId } },
+        cancelledAt: null,
+        dueDate: { lt: new Date() },
+      },
+      select: {
+        amountDue: true,
+        paymentAllocations: { select: { amount: true } },
       },
     });
+
+    const outstandingPayments = overduePeriods.filter((period) => {
+      const totalPaid = period.paymentAllocations.reduce(
+        (sum, alloc) => sum.add(alloc.amount),
+        new Prisma.Decimal(0),
+      );
+      return totalPaid.lt(period.amountDue);
+    }).length;
 
     // 4. Unread messages: conversations where parent is waiting 3+ hours for teacher reply
     const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
@@ -103,7 +119,7 @@ class AdminService {
     return {
       enrollmentCount,
       attendanceRate,
-      outstandingInvoices,
+      outstandingPayments,
       unreadMessages,
     };
   }

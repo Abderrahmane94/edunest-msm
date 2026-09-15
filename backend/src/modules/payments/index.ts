@@ -4,6 +4,8 @@ import branchCalendarRoutes from './branch-calendar.routes';
 import branchFeeRoutes from './branch-fee.routes';
 import enrollmentRoutes from './enrollment.routes';
 import paymentsRoutes from './payments.routes';
+import discountRoutes from './discount.routes';
+import expenseRoutes from './expense.routes';
 import parentPortalRoutes from './parent-portal.routes';
 import { paymentTenancyMiddleware } from './tenant-scope.middleware';
 
@@ -24,8 +26,14 @@ router.use(branchFeeRoutes);
 // Enrollment management
 router.use(enrollmentRoutes);
 
+// Per-enrollment discounts
+router.use(discountRoutes);
+
 // Payment recording, late dashboard, reconciliation
 router.use(paymentsRoutes);
+
+// School expense tracking
+router.use(expenseRoutes);
 
 // Parent portal (read-only)
 router.use('/parent', parentPortalRoutes);

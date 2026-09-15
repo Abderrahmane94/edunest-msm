@@ -83,15 +83,6 @@ enum ConsentStatus {
   declined
 }
 
-enum InvoiceStatus {
-  draft
-  sent
-  paid
-  partial
-  overdue
-  cancelled
-}
-
 // ─── Payment Management Enums ────────────────────────────────────────────────
 
 enum BillingCycleType {
@@ -115,18 +106,6 @@ enum PaymentChannel {
   cash
   ccp
   baridimob
-}
-
-enum PaymentMethod {
-  online
-  cash
-}
-
-enum FeeFrequency {
-  monthly
-  quarterly
-  annual
-  one_time
 }
 
 enum DiscountType {
@@ -178,8 +157,6 @@ model School {
   academicYears AcademicYear[]
   classrooms    Classroom[]
   children      Child[]
-  feeStructures FeeStructure[]
-  invoices      Invoice[]
   expenses      Expense[]
   subscription  SchoolSubscription?
   branches      Branch[]
@@ -224,14 +201,12 @@ model User {
   sentStaffMessages           StaffMessage[]
   classrooms                Classroom[]
   attendanceMarks           AttendanceRecord[]
-  invoicesAsParent          Invoice[]
-  cashPaymentsReceived      CashPayment[]
-  auditLogs                 PaymentAuditLog[]
   refreshTokens             RefreshToken[]
   passwordResetTokens       PasswordResetToken[]
   employeeSalary            EmployeeSalary?
   salaryPayments            SalaryPayment[]
   paymentRecords            PaymentRecord[]      @relation("PaymentRecorder")
+  discountsCreated          Discount[]
 
   @@index([deletedAt])
   @@index([email])
@@ -268,7 +243,6 @@ model AcademicYear {
   school          School           @relation(fields: [schoolId], references: [id])
   classrooms      Classroom[]
   children        Child[]
-  feeStructures   FeeStructure[]
   branchCalendars BranchCalendar[]
   enrollments     Enrollment[]
 
@@ -339,8 +313,6 @@ model Child {
   medicalNotes       MedicalNote[]
   attendanceRecords  AttendanceRecord[]
   dailyReports       DailyReport[]
-  invoices           Invoice[]
-  discounts          Discount[]
   consentForms       ConsentForm[]
   paymentEnrollments Enrollment[]
   paymentRecords     PaymentRecord[]
@@ -542,106 +514,6 @@ model ConsentForm {
 
   @@unique([eventId, childId])
   @@map("consent_forms")
-}
-
-model FeeStructure {
-  id             String       @id @default(uuid())
-  schoolId       String       @map("school_id")
-  academicYearId String       @map("academic_year_id")
-  name           String
-  amount         Decimal      @db.Decimal(10, 2)
-  currency       String       @default("DZD")
-  frequency      FeeFrequency
-  level          String?
-  description    String?
-  createdAt      DateTime     @default(now()) @map("created_at")
-
-  school       School       @relation(fields: [schoolId], references: [id])
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
-  invoices     Invoice[]
-
-  @@map("fee_structures")
-}
-
-model Invoice {
-  id                 String         @id @default(uuid())
-  schoolId           String         @map("school_id")
-  childId            String         @map("child_id")
-  parentUserId       String         @map("parent_user_id")
-  feeStructureId     String         @map("fee_structure_id")
-  amount             Decimal        @db.Decimal(10, 2)
-  discountAmount     Decimal        @default(0) @map("discount_amount") @db.Decimal(10, 2)
-  finalAmount        Decimal        @map("final_amount") @db.Decimal(10, 2)
-  remainingAmount    Decimal?       @map("remaining_amount") @db.Decimal(10, 2)
-  currency           String         @default("DZD")
-  dueDate            DateTime       @map("due_date") @db.Date
-  status             InvoiceStatus  @default(draft)
-  paymentMethod      PaymentMethod? @map("payment_method")
-  chargilyCheckoutId String?        @map("chargily_checkout_id")
-  chargilyPaymentUrl String?        @map("chargily_payment_url")
-  issuedAt           DateTime?      @map("issued_at")
-  paidAt             DateTime?      @map("paid_at")
-  createdAt          DateTime       @default(now()) @map("created_at")
-
-  school       School            @relation(fields: [schoolId], references: [id])
-  child        Child             @relation(fields: [childId], references: [id])
-  parent       User              @relation(fields: [parentUserId], references: [id])
-  feeStructure FeeStructure      @relation(fields: [feeStructureId], references: [id])
-  auditLogs    PaymentAuditLog[]
-  cashPayments CashPayment[]
-
-  @@index([schoolId, status])
-  @@index([parentUserId])
-  @@index([dueDate, status])
-  @@map("invoices")
-}
-
-model CashPayment {
-  id         String   @id @default(uuid())
-  invoiceId  String   @map("invoice_id")
-  schoolId   String   @map("school_id")
-  amount     Decimal  @db.Decimal(10, 2)
-  receivedBy String   @map("received_by")
-  receivedAt DateTime @map("received_at")
-  note       String?
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  invoice  Invoice @relation(fields: [invoiceId], references: [id])
-  receiver User    @relation(fields: [receivedBy], references: [id])
-
-  @@map("cash_payments")
-}
-
-model PaymentAuditLog {
-  id             String   @id @default(uuid())
-  invoiceId      String   @map("invoice_id")
-  action         String
-  performedBy    String   @map("performed_by")
-  previousStatus String?  @map("previous_status")
-  newStatus      String   @map("new_status")
-  metadata       Json?
-  createdAt      DateTime @default(now()) @map("created_at")
-
-  invoice Invoice @relation(fields: [invoiceId], references: [id])
-  user    User    @relation(fields: [performedBy], references: [id])
-
-  @@map("payment_audit_logs")
-}
-
-model Discount {
-  id          String       @id @default(uuid())
-  childId     String       @map("child_id")
-  schoolId    String       @map("school_id")
-  type        DiscountType
-  percentage  Decimal      @db.Decimal(5, 2)
-  description String?
-  validFrom   DateTime     @map("valid_from") @db.Date
-  validTo     DateTime?    @map("valid_to") @db.Date
-  createdAt   DateTime     @default(now()) @map("created_at")
-
-  child Child @relation(fields: [childId], references: [id])
-
-  @@map("discounts")
 }
 
 model Expense {
@@ -923,11 +795,30 @@ model Enrollment {
   branch         Branch          @relation(fields: [branchId], references: [id])
   academicYear   AcademicYear    @relation(fields: [academicYearId], references: [id])
   billingPeriods BillingPeriod[]
+  discounts      Discount[]
 
   @@unique([childId, academicYearId])
   @@index([branchId, academicYearId])
   @@index([childId])
   @@map("enrollments")
+}
+
+model Discount {
+  id              String       @id @default(uuid())
+  enrollmentId    String       @map("enrollment_id")
+  type            DiscountType
+  percentage      Decimal      @db.Decimal(5, 2)
+  description     String?
+  validFrom       DateTime     @map("valid_from") @db.Date
+  validTo         DateTime?    @map("valid_to") @db.Date
+  createdByUserId String       @map("created_by_user_id")
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+  createdBy  User       @relation(fields: [createdByUserId], references: [id])
+
+  @@index([enrollmentId])
+  @@map("discounts")
 }
 
 model BillingPeriod {

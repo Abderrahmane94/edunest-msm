@@ -28,10 +28,6 @@ import {
   CommunicationPage,
   AnnouncementDetailPage,
   EventDetailPage,
-  FinancePage,
-  FeeStructureDetailPage,
-  InvoiceDetailPage,
-  ExpenseDetailPage,
   TrashPage,
   TimetablePage,
   PayrollPage,
@@ -41,7 +37,7 @@ import {
   EnrollmentDetailPage,
 } from '@/pages/admin/payments';
 import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage, TeacherAnnouncementsPage, TeacherChildrenPage } from '@/pages/teacher';
-import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentInvoicesPage, ParentAnnouncementsPage, ParentPaymentsPage } from '@/pages/parent';
+import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentAnnouncementsPage, ParentPaymentsPage } from '@/pages/parent';
 import { AdminLayout, ParentLayout } from '@/components/layout';
 import type { NavItem } from '@/components/layout';
 import { useSchool } from '@/hooks/useSchool';
@@ -59,7 +55,6 @@ import {
   CalendarDays,
   FileText,
   Bell,
-  Receipt,
   LogOut,
   Building2,
   Languages,
@@ -153,7 +148,6 @@ function getAdminNavItems(role: string): NavItem[] {
     { label: 'nav.children',      href: '/admin/children', icon: Baby },
     { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck },
     { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle },
-    { label: 'nav.finance',       href: '/admin/finance', icon: Wallet },
     { label: 'nav.payments',      href: '/admin/payments', icon: CreditCard },
     { label: 'nav.payroll',       href: '/admin/payroll', icon: Banknote },
     { label: 'nav.trash',         href: '/admin/trash', icon: Trash2 },
@@ -174,7 +168,6 @@ const parentNavItems: NavItem[] = [
   { label: 'nav.attendance', href: '/parent/attendance', icon: CalendarDays },
   { label: 'nav.messages', href: '/parent/messages', icon: MessageCircle },
   { label: 'nav.announcements', href: '/parent/announcements', icon: Megaphone },
-  { label: 'nav.invoices', href: '/parent/invoices', icon: Receipt },
   { label: 'nav.payments', href: '/parent/payments', icon: Wallet },
   { label: 'nav.notifications', href: '/parent/notifications', icon: Bell },
 ];
@@ -356,11 +349,7 @@ export const routes: RouteObject[] = [
               { path: 'communication', element: <CommunicationPage /> },
               { path: 'communication/announcements/:announcementId', element: <AnnouncementDetailPage /> },
               { path: 'communication/events/:eventId', element: <EventDetailPage /> },
-              { path: 'finance', element: <FinancePage /> },
               { path: 'billing', element: <BillingPage /> },
-              { path: 'finance/fees/:feeId', element: <FeeStructureDetailPage /> },
-              { path: 'finance/invoices/:invoiceId', element: <InvoiceDetailPage /> },
-              { path: 'finance/expenses/:expenseId', element: <ExpenseDetailPage /> },
               { path: 'payroll', element: <PayrollPage /> },
               { path: 'payments', element: <PaymentManagementPage /> },
               { path: 'payments/enrollments/:enrollmentId', element: <EnrollmentDetailPage /> },
@@ -402,7 +391,6 @@ export const routes: RouteObject[] = [
               { path: 'attendance', element: <ParentAttendancePage /> },
               { path: 'messages', element: <ParentMessagesPage /> },
               { path: 'announcements', element: <ParentAnnouncementsPage /> },
-              { path: 'invoices', element: <ParentInvoicesPage /> },
               { path: 'payments', element: <ParentPaymentsPage /> },
               { path: 'notifications', element: <ParentNotificationsPage /> },
             ],

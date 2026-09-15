@@ -6,7 +6,7 @@
  *
  * Channel selection:
  * - Push (FCM): All notifications — requires user's fcm_token
- * - Email (Resend): Absence alerts, invoice sent/overdue, announcements
+ * - Email (Resend): Absence alerts, payment received/overdue, announcements
  * - SMS (Twilio): Critical only — absence alerts, overdue payment reminders (primary parent only)
  */
 

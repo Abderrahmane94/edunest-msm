@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { CreditCard, UserPlus, Receipt, Clock, BarChart2, Settings } from 'lucide-react';
+import { CreditCard, UserPlus, Receipt, Clock, BarChart2, Settings, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { BranchConfigPage } from './BranchConfigPage';
 import { BranchCalendarPage } from './BranchCalendarPage';
@@ -10,8 +10,9 @@ import { EnrollmentsPage } from './EnrollmentsPage';
 import { PaymentsPage } from './PaymentsPage';
 import { LateDashboardPage } from './LateDashboardPage';
 import { ReconciliationPage } from './ReconciliationPage';
+import { ExpensesTab } from './ExpensesTab';
 
-type PaymentTab = 'enrollments' | 'records' | 'late' | 'reconciliation' | 'config';
+type PaymentTab = 'enrollments' | 'records' | 'late' | 'reconciliation' | 'expenses' | 'config';
 
 export function PaymentManagementPage() {
   const { t } = useTranslation();
@@ -30,6 +31,7 @@ export function PaymentManagementPage() {
     { key: 'records', label: t('nav.paymentsRecords'), icon: <Receipt className="w-4 h-4" /> },
     { key: 'late', label: t('nav.paymentsLate'), icon: <Clock className="w-4 h-4" /> },
     { key: 'reconciliation', label: t('nav.paymentsRecon'), icon: <BarChart2 className="w-4 h-4" /> },
+    { key: 'expenses', label: t('finance.tabs.expenses', 'Dépenses'), icon: <Wallet className="w-4 h-4" /> },
     { key: 'config', label: t('payments.branchConfig.title', 'Configuration'), icon: <Settings className="w-4 h-4" /> },
   ];
 
@@ -63,6 +65,7 @@ export function PaymentManagementPage() {
       {activeTab === 'records' && <PaymentsPage />}
       {activeTab === 'late' && <LateDashboardPage />}
       {activeTab === 'reconciliation' && <ReconciliationPage />}
+      {activeTab === 'expenses' && <ExpensesTab />}
       {activeTab === 'config' && <ConfigTab />}
     </div>
   );
@@ -85,5 +88,5 @@ function ConfigTab() {
 }
 
 function isValidTab(tab: string): tab is PaymentTab {
-  return ['enrollments', 'records', 'late', 'reconciliation', 'config'].includes(tab);
+  return ['enrollments', 'records', 'late', 'reconciliation', 'expenses', 'config'].includes(tab);
 }

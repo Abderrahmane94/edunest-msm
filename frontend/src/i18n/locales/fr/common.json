@@ -1476,10 +1476,13 @@
       "selectBranch": "Branche",
       "empty": "Aucun frais configuré",
       "confirmDelete": "Supprimer le frais « {{name}} » ? Les périodes de facturation existantes ne seront pas affectées.",
+      "oneShot": "Ponctuel",
       "fields": {
         "name": "Nom du frais",
         "namePlaceholder": "Ex: Frais de transport, Tenue scolaire...",
-        "amount": "Montant (DZD)"
+        "amount": "Montant (DZD)",
+        "recurring": "Frais récurrent (cyclique)",
+        "recurringHelper": "Activez pour facturer ce frais selon un cycle (mensuel, trimestriel...) au lieu d'une seule fois."
       },
       "errors": {
         "nameRequired": "Le nom est requis (1-100 caractères)",
@@ -1563,8 +1566,14 @@
         "academicYear": "Année scolaire",
         "selectAcademicYear": "Sélectionner une année",
         "startDate": "Date de début",
+        "baseFee": "Frais de base",
+        "selectBaseFee": "Sélectionner un frais récurrent",
+        "baseFeeRequired": "Veuillez sélectionner un frais de base",
+        "noRecurringFees": "Aucun frais récurrent configuré — créez-en un dans l'onglet Frais.",
         "recurringFee": "Frais récurrents (DZD)",
         "recurringFeeHelper": "Optionnel — utilise le défaut de la branche si vide",
+        "recurringFeeOverride": "Montant personnalisé (DZD)",
+        "recurringFeeOverrideHelper": "Optionnel — remplace le montant du frais sélectionné pour cet enfant",
         "registrationFee": "Frais d'inscription (DZD)",
         "registrationFeeHelper": "Optionnel — frais unique à l'inscription",
         "firstPeriodAmount": "Montant première période (DZD)",

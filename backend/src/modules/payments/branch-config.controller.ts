@@ -12,10 +12,6 @@ import prisma from '../../lib/prisma';
  */
 function normalizeBranchConfigBody(body: Record<string, unknown>): Record<string, unknown> {
   const mapping: Record<string, string> = {
-    billingCycle: 'billing_cycle',
-    billingDueDay: 'billing_due_day',
-    gracePeriodDays: 'grace_period_days',
-    defaultRecurringFee: 'default_recurring_fee',
     notificationSetting: 'notification_setting',
   };
   const result: Record<string, unknown> = { ...body };
@@ -283,13 +279,8 @@ export const branchConfigController = {
         return;
       }
 
-      const result = await branchConfigService.updateConfig(validatedBranch, parsed.data);
-      res.status(200).json(
-        successResponse({
-          ...result.config,
-          unchangedPeriodsCount: result.unchangedPeriodsCount,
-        }),
-      );
+      const config = await branchConfigService.updateConfig(validatedBranch, parsed.data);
+      res.status(200).json(successResponse(config));
     } catch (error) {
       if (error instanceof BranchConfigServiceError) {
         res.status(error.statusCode).json(errorResponse(error.code, error.message));

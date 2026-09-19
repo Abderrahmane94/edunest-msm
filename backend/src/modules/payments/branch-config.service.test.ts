@@ -15,188 +15,41 @@ vi.mock('../../lib/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
-    billingPeriod: {
-      count: vi.fn().mockResolvedValue(0),
-    },
   },
 }));
 
 // --- Schema Validation Tests ---
+// Billing cycle/due-day/grace-period/default-fee now live on BranchFee —
+// BranchBillingConfig only carries the payment-overdue notification toggle.
 
 describe('createBranchConfigSchema', () => {
-  const validPayload = {
-    billing_cycle: 'monthly',
-    billing_due_day: 15,
-    grace_period_days: 5,
-    default_recurring_fee: 100.00,
-  };
-
-  describe('billing_cycle enum validation', () => {
-    it('accepts "monthly"', () => {
-      const result = createBranchConfigSchema.safeParse(validPayload);
-      expect(result.success).toBe(true);
-    });
-
-    it('accepts "trimester"', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        billing_cycle: 'trimester',
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it('accepts "custom"', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        billing_cycle: 'custom',
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it('rejects invalid billing_cycle value', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        billing_cycle: 'weekly',
-      });
-      expect(result.success).toBe(false);
-    });
+  it('accepts an empty object (notification_setting defaults to disabled)', () => {
+    const result = createBranchConfigSchema.safeParse({});
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.notification_setting).toBe('disabled');
+    }
   });
 
-  describe('billing_due_day range', () => {
-    it('rejects 0 (below minimum)', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        billing_due_day: 0,
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('rejects 29 (above maximum)', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        billing_due_day: 29,
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('accepts 1 (minimum)', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        billing_due_day: 1,
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it('accepts 28 (maximum)', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        billing_due_day: 28,
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it('rejects non-integer value', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        billing_due_day: 15.5,
-      });
-      expect(result.success).toBe(false);
-    });
+  it('accepts notification_setting "enabled"', () => {
+    const result = createBranchConfigSchema.safeParse({ notification_setting: 'enabled' });
+    expect(result.success).toBe(true);
   });
 
-  describe('grace_period_days default and range', () => {
-    it('defaults to 5 when omitted', () => {
-      const { grace_period_days, ...withoutGrace } = validPayload;
-      const result = createBranchConfigSchema.safeParse(withoutGrace);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.grace_period_days).toBe(5);
-      }
-    });
-
-    it('rejects -1 (below minimum)', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        grace_period_days: -1,
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('rejects 61 (above maximum)', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        grace_period_days: 61,
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('accepts 0 (minimum)', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        grace_period_days: 0,
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it('accepts 60 (maximum)', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        grace_period_days: 60,
-      });
-      expect(result.success).toBe(true);
-    });
-  });
-
-  describe('default_recurring_fee precision', () => {
-    it('rejects 3 decimal places (100.123)', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        default_recurring_fee: 100.123,
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('accepts 2 decimal places (100.12)', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        default_recurring_fee: 100.12,
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it('rejects negative amount', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        default_recurring_fee: -1,
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('rejects amount exceeding 9999999.99', () => {
-      const result = createBranchConfigSchema.safeParse({
-        ...validPayload,
-        default_recurring_fee: 10000000,
-      });
-      expect(result.success).toBe(false);
-    });
+  it('rejects an invalid notification_setting value', () => {
+    const result = createBranchConfigSchema.safeParse({ notification_setting: 'sometimes' });
+    expect(result.success).toBe(false);
   });
 });
 
 describe('updateBranchConfigSchema', () => {
-  it('accepts empty object (all fields optional)', () => {
+  it('accepts empty object (field is optional)', () => {
     const result = updateBranchConfigSchema.safeParse({});
     expect(result.success).toBe(true);
   });
 
-  it('validates billing_due_day range when provided', () => {
-    const result = updateBranchConfigSchema.safeParse({ billing_due_day: 0 });
-    expect(result.success).toBe(false);
-  });
-
-  it('validates fee precision when provided', () => {
-    const result = updateBranchConfigSchema.safeParse({
-      default_recurring_fee: 100.123,
-    });
+  it('rejects an invalid notification_setting value', () => {
+    const result = updateBranchConfigSchema.safeParse({ notification_setting: 'maybe' });
     expect(result.success).toBe(false);
   });
 });
@@ -214,12 +67,7 @@ describe('branchConfigController authorization', () => {
         isSuperAdmin,
       } : undefined,
       params: { branchId: 'branch-123' },
-      body: {
-        billing_cycle: 'monthly',
-        billing_due_day: 15,
-        grace_period_days: 5,
-        default_recurring_fee: 100.00,
-      },
+      body: { notification_setting: 'enabled' },
     };
   }
 

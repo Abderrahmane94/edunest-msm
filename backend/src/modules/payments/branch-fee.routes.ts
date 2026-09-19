@@ -35,8 +35,14 @@ router.get('/branches/:branchId/fees', async (req, res) => {
 router.post('/branches/:branchId/fees', async (req, res) => {
   try {
     const { branchId } = req.params;
-    const { name, amount } = req.body;
-    const fee = await branchFeeService.create(branchId, { name, amount: Number(amount) });
+    const { name, amount, billingCycle, billingDueDay, gracePeriodDays } = req.body;
+    const fee = await branchFeeService.create(branchId, {
+      name,
+      amount: Number(amount),
+      billingCycle: billingCycle ?? null,
+      billingDueDay: billingDueDay !== undefined && billingDueDay !== null ? Number(billingDueDay) : null,
+      gracePeriodDays: gracePeriodDays !== undefined && gracePeriodDays !== null ? Number(gracePeriodDays) : null,
+    });
     res.status(201).json({ success: true, data: fee });
   } catch (error) {
     if (error instanceof BranchFeeServiceError) {
@@ -60,11 +66,15 @@ router.post('/branches/:branchId/fees', async (req, res) => {
 router.put('/branches/:branchId/fees/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, amount, isActive } = req.body;
+    const { name, amount, isActive, billingCycle, billingDueDay, gracePeriodDays } = req.body;
     const fee = await branchFeeService.update(id, {
       name,
       amount: amount !== undefined ? Number(amount) : undefined,
       isActive,
+      billingCycle,
+      billingDueDay: billingDueDay !== undefined && billingDueDay !== null ? Number(billingDueDay) : billingDueDay,
+      gracePeriodDays:
+        gracePeriodDays !== undefined && gracePeriodDays !== null ? Number(gracePeriodDays) : gracePeriodDays,
     });
     res.json({ success: true, data: fee });
   } catch (error) {

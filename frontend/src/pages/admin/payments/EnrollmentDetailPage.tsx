@@ -608,10 +608,10 @@ export function EnrollmentDetailPage() {
           </div>
           <div>
             <span className="text-caption text-text-secondary block">
-              {t('payments.enrollments.form.branch')}
+              {t('payments.enrollments.form.baseFee')}
             </span>
             <span className="text-body font-medium text-foreground">
-              {enrollment.branch?.name ?? '—'}
+              {enrollment.baseFee?.name ?? '—'}
             </span>
           </div>
           <div>

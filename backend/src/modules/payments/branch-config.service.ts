@@ -39,10 +39,6 @@ class BranchConfigService {
     const config = await prisma.branchBillingConfig.create({
       data: {
         branchId,
-        billingCycle: data.billing_cycle,
-        billingDueDay: data.billing_due_day,
-        gracePeriodDays: data.grace_period_days,
-        defaultRecurringFee: data.default_recurring_fee,
         notificationSetting: data.notification_setting ?? 'disabled',
       },
     });
@@ -52,7 +48,6 @@ class BranchConfigService {
 
   /**
    * Update billing configuration for a branch.
-   * Returns updated config along with count of already-generated billing periods left unchanged.
    */
   async updateConfig(branchId: string, data: UpdateBranchConfigInput) {
     const existing = await prisma.branchBillingConfig.findUnique({
@@ -67,21 +62,12 @@ class BranchConfigService {
     }
 
     const updateData: Record<string, unknown> = {};
-    if (data.billing_cycle !== undefined) updateData.billingCycle = data.billing_cycle;
-    if (data.billing_due_day !== undefined) updateData.billingDueDay = data.billing_due_day;
-    if (data.grace_period_days !== undefined) updateData.gracePeriodDays = data.grace_period_days;
-    if (data.default_recurring_fee !== undefined) updateData.defaultRecurringFee = data.default_recurring_fee;
     if (data.notification_setting !== undefined) updateData.notificationSetting = data.notification_setting;
 
-    const config = await prisma.branchBillingConfig.update({
+    return prisma.branchBillingConfig.update({
       where: { branchId },
       data: updateData,
     });
-
-    // Count already-generated billing periods left unchanged
-    const unchangedCount = await this.countGeneratedPeriodsForBranch(branchId);
-
-    return { config, unchangedPeriodsCount: unchangedCount };
   }
 
   /**
@@ -94,22 +80,6 @@ class BranchConfigService {
     });
 
     return config;
-  }
-
-  /**
-   * Count already-generated billing periods for all enrollments of a branch.
-   * This is the count of periods left unchanged when config is updated (Req 6.7).
-   */
-  private async countGeneratedPeriodsForBranch(branchId: string): Promise<number> {
-    const count = await prisma.billingPeriod.count({
-      where: {
-        enrollment: {
-          branchId,
-        },
-      },
-    });
-
-    return count;
   }
 }
 

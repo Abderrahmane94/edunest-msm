@@ -150,7 +150,7 @@ class DiscountService {
   ): Promise<void> {
     const enrollment = await tx.enrollment.findUnique({
       where: { id: enrollmentId },
-      select: { recurringFee: true },
+      select: { recurringFee: true, baseFeeId: true },
     });
     if (!enrollment) return;
 
@@ -160,6 +160,10 @@ class DiscountService {
           enrollmentId,
           isRegistrationPeriod: false,
           cancelledAt: null,
+          // Only the base recurring fee's own periods are discountable — a
+          // one-off/extra fee applied on top (a different branchFeeId)
+          // should never be swept into a tuition discount.
+          OR: [{ branchFeeId: null }, { branchFeeId: enrollment.baseFeeId }],
         },
         include: {
           paymentAllocations: { select: { amount: true } },

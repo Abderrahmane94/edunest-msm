@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
 import { generatePeriodsForEnrollment } from './billing-period.service';
+import { fetchCalendarRows } from './billing-cycle.util';
 import type { CreateEnrollmentSchemaInput } from './payments.schema';
 import type { EnrollmentGenerationResult } from './payments.types';
 
@@ -28,29 +29,43 @@ class EnrollmentService {
     input: CreateEnrollmentSchemaInput,
     _userId: string,
   ): Promise<EnrollmentGenerationResult> {
-    const { childId, branchId, academicYearId, startDate, registrationFee } = input;
+    const { childId, branchId, academicYearId, startDate, registrationFee, baseFeeId } = input;
     let { recurringFee, firstPeriodAmountDue } = input;
 
     return await prisma.$transaction(async (tx) => {
-      // (a) Validate branch exists and has billing config
-      const branch = await tx.branch.findUnique({
-        where: { id: branchId },
-        include: { billingConfig: true },
-      });
+      // (a) Validate branch exists
+      const branch = await tx.branch.findUnique({ where: { id: branchId } });
 
       if (!branch) {
         throw new EnrollmentServiceError('Branch not found', 404, 'NOT_FOUND');
       }
 
-      if (!branch.billingConfig) {
+      // (a2) Validate the base fee: must exist, belong to this branch, be
+      // active, and be recurring (billingCycle set) — a one-shot fee can't
+      // be an enrollment's base fee.
+      const baseFee = await tx.branchFee.findUnique({ where: { id: baseFeeId } });
+
+      if (!baseFee || baseFee.branchId !== branchId) {
+        throw new EnrollmentServiceError('Base fee not found', 404, 'NOT_FOUND');
+      }
+
+      if (!baseFee.isActive) {
+        throw new EnrollmentServiceError('Base fee is not active', 400, 'VALIDATION_ERROR');
+      }
+
+      if (!baseFee.billingCycle) {
         throw new EnrollmentServiceError(
-          'Branch has no billing configuration. Please configure billing before creating enrollments.',
-          422,
-          'GENERATION_FAILED',
+          'Base fee must be a recurring fee (have a billing cycle configured)',
+          400,
+          'VALIDATION_ERROR',
         );
       }
 
-      const config = branch.billingConfig;
+      const config = {
+        billingCycle: baseFee.billingCycle,
+        billingDueDay: baseFee.billingDueDay!,
+        gracePeriodDays: baseFee.gracePeriodDays!,
+      };
 
       // (b) Validate academic year exists
       const academicYear = await tx.academicYear.findUnique({
@@ -92,9 +107,10 @@ class EnrollmentService {
         );
       }
 
-      // (d) Default recurring_fee to branch config when not supplied
+      // (d) Default recurring_fee to the base fee's amount when not supplied
+      // (an explicit recurringFee overrides it per-child, e.g. for a discount)
       if (recurringFee === undefined || recurringFee === null) {
-        recurringFee = Number(config.defaultRecurringFee);
+        recurringFee = Number(baseFee.amount);
       }
 
       const recurringFeeDecimal = new Prisma.Decimal(recurringFee);
@@ -144,20 +160,7 @@ class EnrollmentService {
       }
 
       // (f) Fetch BranchCalendar rows if billingCycle is trimester/custom
-      let calendarRows: Array<{ periodStart: Date; periodEnd: Date; dueDate: Date }> = [];
-
-      if (config.billingCycle === 'trimester' || config.billingCycle === 'custom') {
-        const rows = await tx.branchCalendar.findMany({
-          where: { branchId, academicYearId },
-          orderBy: { periodStart: 'asc' },
-        });
-
-        calendarRows = rows.map((r) => ({
-          periodStart: new Date(r.periodStart),
-          periodEnd: new Date(r.periodEnd),
-          dueDate: new Date(r.dueDate),
-        }));
-      }
+      const calendarRows = await fetchCalendarRows(tx, branchId, academicYearId, config.billingCycle);
 
       // (g) Call generatePeriodsForEnrollment with all params
       // We use a placeholder enrollmentId — we'll create the enrollment first to get its ID
@@ -166,6 +169,7 @@ class EnrollmentService {
           childId,
           branchId,
           academicYearId,
+          baseFeeId,
           startDate: enrollStart,
           status: 'active',
           registrationFee: registrationFee !== undefined && registrationFee !== null
@@ -193,7 +197,8 @@ class EnrollmentService {
         calendarRows,
       });
 
-      // (i) Insert all generated billing periods
+      // (i) Insert all generated billing periods, tagged with the base fee so
+      // discount recalculation and "already applied" checks can recognize them.
       if (generationResult.periods.length > 0) {
         await tx.billingPeriod.createMany({
           data: generationResult.periods.map((p) => ({
@@ -204,6 +209,7 @@ class EnrollmentService {
             graceEndDate: p.graceEndDate,
             amountDue: p.amountDue,
             isRegistrationPeriod: p.isRegistrationPeriod,
+            branchFeeId: p.isRegistrationPeriod ? null : baseFeeId,
             cancelledAt: null,
           })),
         });
@@ -282,6 +288,7 @@ class EnrollmentService {
         child: { select: { id: true, firstName: true, lastName: true } },
         academicYear: { select: { id: true, name: true, startDate: true, endDate: true } },
         branch: { select: { id: true, name: true } },
+        baseFee: { select: { id: true, name: true } },
         billingPeriods: {
           orderBy: { periodStart: 'asc' },
         },

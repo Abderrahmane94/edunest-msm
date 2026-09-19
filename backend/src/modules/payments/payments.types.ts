@@ -4,10 +4,6 @@ import { Prisma } from '@prisma/client';
 
 export interface BranchBillingConfig {
   branchId: string;
-  billingCycle: 'monthly' | 'trimester' | 'custom';
-  billingDueDay: number; // 1-28
-  gracePeriodDays: number; // 0-60, default 5
-  defaultRecurringFee: Prisma.Decimal; // 0.00 - 9,999,999.99
   notificationSetting: 'enabled' | 'disabled';
 }
 
@@ -18,7 +14,7 @@ export interface CreateEnrollmentInput {
   branchId: string;
   academicYearId: string;
   startDate: Date;
-  recurringFee?: Prisma.Decimal; // defaults to branch config
+  recurringFee?: Prisma.Decimal; // defaults to the base fee's amount
   registrationFee?: Prisma.Decimal | null;
   firstPeriodAmountDue?: Prisma.Decimal; // mid-cycle override
 }

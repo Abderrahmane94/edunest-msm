@@ -27,40 +27,10 @@ const decimalAmount = (min: number, max: number) =>
 // --- Branch Billing Configuration ---
 
 export const createBranchConfigSchema = z.object({
-  billing_cycle: z.enum(['monthly', 'trimester', 'custom'], {
-    required_error: 'Billing cycle is required',
-    invalid_type_error: 'Must be one of: monthly, trimester, custom',
-  }),
-  billing_due_day: z
-    .number({ required_error: 'Billing due day is required' })
-    .int('Must be a whole number')
-    .min(1, 'Must be between 1 and 28')
-    .max(28, 'Must be between 1 and 28'),
-  grace_period_days: z
-    .number()
-    .int('Must be a whole number')
-    .min(0, 'Must be between 0 and 60')
-    .max(60, 'Must be between 0 and 60')
-    .default(5),
-  default_recurring_fee: decimalAmount(0, 9999999.99),
   notification_setting: z.enum(['enabled', 'disabled']).default('disabled'),
 });
 
 export const updateBranchConfigSchema = z.object({
-  billing_cycle: z.enum(['monthly', 'trimester', 'custom']).optional(),
-  billing_due_day: z
-    .number()
-    .int('Must be a whole number')
-    .min(1, 'Must be between 1 and 28')
-    .max(28, 'Must be between 1 and 28')
-    .optional(),
-  grace_period_days: z
-    .number()
-    .int('Must be a whole number')
-    .min(0, 'Must be between 0 and 60')
-    .max(60, 'Must be between 0 and 60')
-    .optional(),
-  default_recurring_fee: decimalAmount(0, 9999999.99).optional(),
   notification_setting: z.enum(['enabled', 'disabled']).optional(),
 });
 
@@ -91,7 +61,11 @@ export const createEnrollmentSchema = z.object({
   childId: z.string().uuid('Invalid child ID'),
   branchId: z.string().uuid('Invalid branch ID'),
   academicYearId: z.string().uuid('Invalid academic year ID'),
+  // The recurring BranchFee this enrollment's base periods are generated
+  // from — its billingCycle/billingDueDay/gracePeriodDays drive generation.
+  baseFeeId: z.string().uuid('Invalid base fee ID'),
   startDate: z.coerce.date({ required_error: 'Start date is required' }),
+  // Optional per-child override of the base fee's amount.
   recurringFee: decimalAmount(0, 9999999.99).optional(),
   registrationFee: decimalAmount(0, 9999999.99).nullish(),
   firstPeriodAmountDue: decimalAmount(0, 9999999.99).optional(),

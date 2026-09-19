@@ -3,26 +3,38 @@ import { apiClient } from '@/lib/api-client';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
+export type BillingCycle = 'monthly' | 'trimester' | 'custom';
+
 export interface BranchFee {
   id: string;
   branchId: string;
   name: string;
   amount: string;
   isActive: boolean;
+  /** null = one-shot fee (charged once when applied); set = recurring fee. */
+  billingCycle: BillingCycle | null;
+  billingDueDay: number | null;
+  gracePeriodDays: number | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface CreateBranchFeeInput {
-  name: string;
-  amount: number;
+export interface FeeCycleFields {
+  billingCycle?: BillingCycle | null;
+  billingDueDay?: number | null;
+  gracePeriodDays?: number | null;
 }
 
-export interface UpdateBranchFeeInput {
+export type CreateBranchFeeInput = {
+  name: string;
+  amount: number;
+} & FeeCycleFields;
+
+export type UpdateBranchFeeInput = {
   name?: string;
   amount?: number;
   isActive?: boolean;
-}
+} & FeeCycleFields;
 
 // ─── Hooks ─────────────────────────────────────────────────────────────────────
 

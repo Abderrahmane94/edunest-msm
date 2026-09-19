@@ -1430,8 +1430,8 @@
   "payments": {
     "branchConfig": {
       "title": "Configuration de facturation",
-      "description": "Configurer les paramètres de facturation de la branche",
-      "noBranch": "Aucune branche trouvée. Veuillez d'abord créer une branche.",
+      "description": "Configurer les notifications de paiement",
+      "noBranch": "Chargement de la configuration…",
       "sectionBilling": "Paramètres du cycle de facturation",
       "sectionNotifications": "Notifications",
       "billingCycle": "Cycle de facturation",
@@ -1468,12 +1468,11 @@
       "defaultFeeMax": "Les frais par défaut ne doivent pas dépasser 9 999 999,99 DZD"
     },
     "fees": {
-      "title": "Frais de branche",
+      "title": "Frais",
       "create": "Nouveau frais",
       "createTitle": "Créer un frais",
       "editTitle": "Modifier le frais",
-      "dialogDescription": "Configurez un frais ponctuel applicable aux inscriptions",
-      "selectBranch": "Branche",
+      "dialogDescription": "Configurez un frais ponctuel ou récurrent applicable aux inscriptions",
       "empty": "Aucun frais configuré",
       "confirmDelete": "Supprimer le frais « {{name}} » ? Les périodes de facturation existantes ne seront pas affectées.",
       "oneShot": "Ponctuel",
@@ -1482,7 +1481,9 @@
         "namePlaceholder": "Ex: Frais de transport, Tenue scolaire...",
         "amount": "Montant (DZD)",
         "recurring": "Frais récurrent (cyclique)",
-        "recurringHelper": "Activez pour facturer ce frais selon un cycle (mensuel, trimestriel...) au lieu d'une seule fois."
+        "recurringHelper": "Activez pour facturer ce frais selon un cycle (mensuel, trimestriel...) au lieu d'une seule fois.",
+        "customCycleHint": "Les cycles trimestriel et personnalisé nécessitent de définir les dates de chaque période dans le calendrier ci-dessous.",
+        "goToCalendar": "Aller au calendrier des périodes ↓"
       },
       "errors": {
         "nameRequired": "Le nom est requis (1-100 caractères)",
@@ -1510,19 +1511,16 @@
       }
     },
     "branchCalendar": {
-      "title": "Calendrier académique",
-      "description": "Gérer les périodes de facturation académiques",
+      "title": "Périodes personnalisées / trimestrielles",
+      "description": "Définissez les dates de chaque période pour les frais utilisant un cycle trimestriel ou personnalisé.",
       "addEntry": "Ajouter une période",
-      "selectBranch": "Branche",
-      "selectBranchPlaceholder": "Sélectionner une branche",
       "selectYear": "Année scolaire",
       "selectYearPlaceholder": "Sélectionner une année",
-      "noBranch": "Aucune branche trouvée. Veuillez d'abord créer une branche.",
-      "selectPrompt": "Sélectionnez une branche et une année scolaire pour voir les entrées du calendrier.",
-      "noEntries": "Aucune entrée de calendrier trouvée pour cette branche et cette année.",
+      "selectPrompt": "Sélectionnez une année scolaire pour voir les entrées du calendrier.",
+      "noEntries": "Aucune période définie pour cette année. Ajoutez-en une pour pouvoir utiliser un cycle trimestriel ou personnalisé.",
       "createEntry": "Nouvelle entrée de calendrier",
       "editEntry": "Modifier l'entrée du calendrier",
-      "createDescription": "Définir une nouvelle période de facturation pour cette branche.",
+      "createDescription": "Définir une nouvelle période de facturation pour cette année scolaire.",
       "editDescription": "Mettre à jour les détails de la période ci-dessous.",
       "deleteTitle": "Supprimer l'entrée du calendrier",
       "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer \"{{label}}\" ? Cette action est irréversible.",
@@ -1558,11 +1556,9 @@
       },
       "form": {
         "title": "Nouvelle inscription",
-        "description": "Créer une nouvelle inscription pour un enfant dans une branche",
+        "description": "Créer une nouvelle inscription pour un enfant",
         "child": "Enfant",
         "selectChild": "Sélectionner un enfant",
-        "branch": "Branche",
-        "selectBranch": "Sélectionner une branche",
         "academicYear": "Année scolaire",
         "selectAcademicYear": "Sélectionner une année",
         "startDate": "Date de début",
@@ -1570,8 +1566,6 @@
         "selectBaseFee": "Sélectionner un frais récurrent",
         "baseFeeRequired": "Veuillez sélectionner un frais de base",
         "noRecurringFees": "Aucun frais récurrent configuré — créez-en un dans l'onglet Frais.",
-        "recurringFee": "Frais récurrents (DZD)",
-        "recurringFeeHelper": "Optionnel — utilise le défaut de la branche si vide",
         "recurringFeeOverride": "Montant personnalisé (DZD)",
         "recurringFeeOverrideHelper": "Optionnel — remplace le montant du frais sélectionné pour cet enfant",
         "registrationFee": "Frais d'inscription (DZD)",
@@ -1580,7 +1574,6 @@
         "firstPeriodAmountHelper": "Optionnel — pour inscription en cours de cycle",
         "feeValidation": "Doit être entre 0,00 et 9 999 999,99 avec max 2 décimales",
         "childRequired": "Veuillez sélectionner un enfant",
-        "branchRequired": "Veuillez sélectionner une branche",
         "academicYearRequired": "Veuillez sélectionner une année scolaire",
         "startDateRequired": "Veuillez spécifier la date de début"
       },

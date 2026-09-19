@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, Edit2, DollarSign, Users } from 'lucide-react';
+import { Trash2, Edit2, DollarSign, Users, CalendarDays } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -243,6 +243,33 @@ function FeeDialog({
                   onChange={(e) => setGracePeriodDays(e.target.value)}
                 />
               </FormField>
+            </div>
+          )}
+
+          {isRecurring && (billingCycle === 'trimester' || billingCycle === 'custom') && (
+            <div className="flex items-start gap-3 bg-accent-muted rounded-lg p-3">
+              <CalendarDays className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-caption text-foreground">
+                  {t('payments.fees.fields.customCycleHint')}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onOpenChange(false);
+                    // The calendar lives further down this same Configuration
+                    // tab — scroll to it instead of navigating away.
+                    setTimeout(() => {
+                      document
+                        .getElementById('billing-calendar-section')
+                        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                  }}
+                  className="text-caption font-medium text-accent hover:underline mt-1"
+                >
+                  {t('payments.fees.fields.goToCalendar')}
+                </button>
+              </div>
             </div>
           )}
 

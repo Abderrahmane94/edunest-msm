@@ -12,8 +12,10 @@ export interface Enrollment {
   recurringFee: string;
   withdrawalDate: string | null;
   createdAt: string;
+  baseFeeId?: string | null;
   child?: { id: string; firstName: string; lastName: string };
   branch?: { id: string; name: string };
+  baseFee?: { id: string; name: string } | null;
   academicYear?: { id: string; name: string };
 }
 
@@ -29,7 +31,10 @@ export interface CreateEnrollmentInput {
   childId: string;
   branchId: string;
   academicYearId: string;
+  /** The recurring fee this enrollment's base periods are generated from. */
+  baseFeeId: string;
   startDate: string;
+  /** Optional per-child override of the selected base fee's amount. */
   recurringFee?: number;
   registrationFee?: number | null;
   firstPeriodAmountDue?: number;
@@ -44,6 +49,7 @@ interface EnrollmentsParams {
 function mapEnrollment(raw: Record<string, unknown>): Enrollment {
   const child = raw.child as Record<string, unknown> | undefined;
   const branch = raw.branch as Record<string, unknown> | undefined;
+  const baseFee = raw.baseFee as Record<string, unknown> | null | undefined;
   const academicYear = raw.academicYear as Record<string, unknown> | undefined;
 
   return {
@@ -51,6 +57,7 @@ function mapEnrollment(raw: Record<string, unknown>): Enrollment {
     childId: (raw.childId ?? raw.child_id) as string,
     branchId: (raw.branchId ?? raw.branch_id) as string,
     academicYearId: (raw.academicYearId ?? raw.academic_year_id) as string,
+    baseFeeId: (raw.baseFeeId ?? raw.base_fee_id ?? null) as string | null,
     startDate: (raw.startDate ?? raw.start_date) as string,
     status: (raw.status as Enrollment['status']) ?? 'active',
     registrationFee: (raw.registrationFee ?? raw.registration_fee ?? null) as string | null,
@@ -67,6 +74,7 @@ function mapEnrollment(raw: Record<string, unknown>): Enrollment {
     branch: branch
       ? { id: branch.id as string, name: branch.name as string }
       : undefined,
+    baseFee: baseFee ? { id: baseFee.id as string, name: baseFee.name as string } : null,
     academicYear: academicYear
       ? { id: academicYear.id as string, name: academicYear.name as string }
       : undefined,
@@ -118,6 +126,7 @@ export function useCreateEnrollment() {
         childId: data.childId,
         branchId: data.branchId,
         academicYearId: data.academicYearId,
+        baseFeeId: data.baseFeeId,
         startDate: data.startDate,
         recurringFee: data.recurringFee,
         registrationFee: data.registrationFee,

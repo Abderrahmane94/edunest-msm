@@ -181,32 +181,32 @@ model User {
   isActive           Boolean   @default(true) @map("is_active")
   mustChangePassword Boolean   @default(false) @map("must_change_password")
   fcmToken           String?   @map("fcm_token")
-  phone               String?  @map("phone")
+  phone              String?   @map("phone")
   address            String?
   nationalId         String?   @map("national_id")
   preferredLanguage  Language  @default(fr) @map("preferred_language")
   deletedAt          DateTime? @map("deleted_at")
   createdAt          DateTime  @default(now()) @map("created_at")
 
-  school                    School?              @relation(fields: [schoolId], references: [id])
-  branch                    Branch?              @relation(fields: [branchId], references: [id])
-  staffProfile              StaffProfile?
-  parentLinks               ParentChildLink[]
-  notifications             Notification[]
-  sentMessages              Message[]
-  teacherConversations      Conversation[]       @relation("TeacherConversations")
-  parentConversations       Conversation[]       @relation("ParentConversations")
-  initiatedStaffConversations StaffConversation[] @relation("StaffConvInitiator")
-  receivedStaffConversations  StaffConversation[] @relation("StaffConvRecipient")
+  school                      School?              @relation(fields: [schoolId], references: [id])
+  branch                      Branch?              @relation(fields: [branchId], references: [id])
+  staffProfile                StaffProfile?
+  parentLinks                 ParentChildLink[]
+  notifications               Notification[]
+  sentMessages                Message[]
+  teacherConversations        Conversation[]       @relation("TeacherConversations")
+  parentConversations         Conversation[]       @relation("ParentConversations")
+  initiatedStaffConversations StaffConversation[]  @relation("StaffConvInitiator")
+  receivedStaffConversations  StaffConversation[]  @relation("StaffConvRecipient")
   sentStaffMessages           StaffMessage[]
-  classrooms                Classroom[]
-  attendanceMarks           AttendanceRecord[]
-  refreshTokens             RefreshToken[]
-  passwordResetTokens       PasswordResetToken[]
-  employeeSalary            EmployeeSalary?
-  salaryPayments            SalaryPayment[]
-  paymentRecords            PaymentRecord[]      @relation("PaymentRecorder")
-  discountsCreated          Discount[]
+  classrooms                  Classroom[]
+  attendanceMarks             AttendanceRecord[]
+  refreshTokens               RefreshToken[]
+  passwordResetTokens         PasswordResetToken[]
+  employeeSalary              EmployeeSalary?
+  salaryPayments              SalaryPayment[]
+  paymentRecords              PaymentRecord[]      @relation("PaymentRecorder")
+  discountsCreated            Discount[]
 
   @@index([deletedAt])
   @@index([email])
@@ -729,16 +729,25 @@ model Branch {
 }
 
 model BranchFee {
-  id        String    @id @default(uuid())
-  branchId  String    @map("branch_id")
-  name      String
-  amount    Decimal   @db.Decimal(10, 2)
-  isActive  Boolean   @default(true) @map("is_active")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  id              String            @id @default(uuid())
+  branchId        String            @map("branch_id")
+  name            String
+  amount          Decimal           @db.Decimal(10, 2)
+  isActive        Boolean           @default(true) @map("is_active")
+  // Cyclic billing is an option a fee can carry: null billingCycle means a
+  // one-shot ad-hoc fee (charged once, immediately, when applied); a set
+  // billingCycle makes it recurring, generating a full cycle of billing
+  // periods (like an enrollment's base fee) when applied. billingDueDay and
+  // gracePeriodDays are required together with billingCycle.
+  billingCycle    BillingCycleType? @map("billing_cycle")
+  billingDueDay   Int?              @map("billing_due_day")
+  gracePeriodDays Int?              @map("grace_period_days")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
 
-  branch         Branch          @relation(fields: [branchId], references: [id])
-  billingPeriods BillingPeriod[]
+  branch             Branch          @relation(fields: [branchId], references: [id])
+  billingPeriods     BillingPeriod[]
+  baseForEnrollments Enrollment[]    @relation("EnrollmentBaseFee")
 
   @@index([branchId])
   @@map("branch_fees")
@@ -747,10 +756,6 @@ model BranchFee {
 model BranchBillingConfig {
   id                  String                  @id @default(uuid())
   branchId            String                  @unique @map("branch_id")
-  billingCycle        BillingCycleType        @map("billing_cycle")
-  billingDueDay       Int                     @map("billing_due_day")
-  gracePeriodDays     Int                     @default(5) @map("grace_period_days")
-  defaultRecurringFee Decimal                 @map("default_recurring_fee") @db.Decimal(10, 2)
   notificationSetting NotificationSettingType @default(disabled) @map("notification_setting")
   createdAt           DateTime                @default(now()) @map("created_at")
   updatedAt           DateTime                @updatedAt @map("updated_at")
@@ -783,6 +788,10 @@ model Enrollment {
   childId         String           @map("child_id")
   branchId        String           @map("branch_id")
   academicYearId  String           @map("academic_year_id")
+  // The recurring BranchFee this enrollment's base billing periods were
+  // generated from (cycle/due-day/grace-period come from that fee). Nullable
+  // for enrollments created before fees carried a billing cycle.
+  baseFeeId       String?          @map("base_fee_id")
   startDate       DateTime         @map("start_date") @db.Date
   status          EnrollmentStatus @default(active)
   registrationFee Decimal?         @map("registration_fee") @db.Decimal(10, 2)
@@ -794,12 +803,14 @@ model Enrollment {
   child          Child           @relation(fields: [childId], references: [id])
   branch         Branch          @relation(fields: [branchId], references: [id])
   academicYear   AcademicYear    @relation(fields: [academicYearId], references: [id])
+  baseFee        BranchFee?      @relation("EnrollmentBaseFee", fields: [baseFeeId], references: [id])
   billingPeriods BillingPeriod[]
   discounts      Discount[]
 
   @@unique([childId, academicYearId])
   @@index([branchId, academicYearId])
   @@index([childId])
+  @@index([baseFeeId])
   @@map("enrollments")
 }
 
@@ -914,9 +925,9 @@ model StaffConversation {
   createdAt     DateTime @default(now()) @map("created_at")
   lastMessageAt DateTime @default(now()) @map("last_message_at")
 
-  initiator     User           @relation("StaffConvInitiator", fields: [initiatorId], references: [id])
-  recipient     User           @relation("StaffConvRecipient", fields: [recipientId], references: [id])
-  messages      StaffMessage[]
+  initiator User           @relation("StaffConvInitiator", fields: [initiatorId], references: [id])
+  recipient User           @relation("StaffConvRecipient", fields: [recipientId], references: [id])
+  messages  StaffMessage[]
 
   @@unique([schoolId, initiatorId, recipientId])
   @@index([initiatorId])

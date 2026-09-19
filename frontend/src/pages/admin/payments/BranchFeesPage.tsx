@@ -26,6 +26,7 @@ import {
   useDeleteBranchFee,
   useAssignFee,
   type BranchFee,
+  type BillingCycle,
   type AssignFeeResult,
 } from '@/hooks/useBranchFees';
 
@@ -48,15 +49,27 @@ function FeeDialog({
 
   const [name, setName] = React.useState('');
   const [amount, setAmount] = React.useState('');
+  const [isRecurring, setIsRecurring] = React.useState(false);
+  const [billingCycle, setBillingCycle] = React.useState<BillingCycle>('monthly');
+  const [billingDueDay, setBillingDueDay] = React.useState('1');
+  const [gracePeriodDays, setGracePeriodDays] = React.useState('5');
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   React.useEffect(() => {
     if (editingFee) {
       setName(editingFee.name);
       setAmount(editingFee.amount);
+      setIsRecurring(!!editingFee.billingCycle);
+      setBillingCycle(editingFee.billingCycle ?? 'monthly');
+      setBillingDueDay(String(editingFee.billingDueDay ?? 1));
+      setGracePeriodDays(String(editingFee.gracePeriodDays ?? 5));
     } else {
       setName('');
       setAmount('');
+      setIsRecurring(false);
+      setBillingCycle('monthly');
+      setBillingDueDay('1');
+      setGracePeriodDays('5');
     }
     setErrors({});
   }, [editingFee, open]);
@@ -70,6 +83,16 @@ function FeeDialog({
     if (isNaN(num) || num < 0 || num > 9_999_999.99) {
       newErrors.amount = t('payments.fees.errors.amountInvalid');
     }
+    if (isRecurring) {
+      const dueDay = Number(billingDueDay);
+      if (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 28) {
+        newErrors.billingDueDay = t('payments.branchConfig.billingDueDayHelper');
+      }
+      const grace = Number(gracePeriodDays);
+      if (!Number.isInteger(grace) || grace < 0 || grace > 60) {
+        newErrors.gracePeriodDays = t('payments.branchConfig.gracePeriodHelper');
+      }
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -78,17 +101,27 @@ function FeeDialog({
     e.preventDefault();
     if (!validate()) return;
 
+    const cycleFields = isRecurring
+      ? {
+          billingCycle,
+          billingDueDay: Number(billingDueDay),
+          gracePeriodDays: Number(gracePeriodDays),
+        }
+      : { billingCycle: null, billingDueDay: null, gracePeriodDays: null };
+
     try {
       if (editingFee) {
         await updateFee.mutateAsync({
           id: editingFee.id,
           name: name.trim(),
           amount: Number(amount),
+          ...cycleFields,
         });
       } else {
         await createFee.mutateAsync({
           name: name.trim(),
           amount: Number(amount),
+          ...cycleFields,
         });
       }
       onOpenChange(false);
@@ -98,6 +131,12 @@ function FeeDialog({
   }
 
   const isPending = createFee.isPending || updateFee.isPending;
+
+  const billingCycleOptions = [
+    { value: 'monthly', label: t('payments.branchConfig.cycleMonthly') },
+    { value: 'trimester', label: t('payments.branchConfig.cycleTrimester') },
+    { value: 'custom', label: t('payments.branchConfig.cycleCustom') },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,6 +185,66 @@ function FeeDialog({
               placeholder="0.00"
             />
           </FormField>
+
+          <div className="flex items-center gap-2 py-1">
+            <input
+              id="fee-recurring"
+              type="checkbox"
+              checked={isRecurring}
+              onChange={(e) => setIsRecurring(e.target.checked)}
+              className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+            />
+            <label htmlFor="fee-recurring" className="text-body text-foreground cursor-pointer">
+              {t('payments.fees.fields.recurring')}
+            </label>
+          </div>
+          <p className="text-caption text-text-secondary -mt-2">
+            {t('payments.fees.fields.recurringHelper')}
+          </p>
+
+          {isRecurring && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 bg-subtle rounded-lg p-3">
+              <FormSelect
+                label={t('payments.branchConfig.billingCycle')}
+                name="fee-billing-cycle"
+                value={billingCycle}
+                onChange={(e) => setBillingCycle(e.target.value as BillingCycle)}
+                options={billingCycleOptions}
+              />
+
+              <FormField
+                label={t('payments.branchConfig.billingDueDay')}
+                htmlFor="fee-billing-due-day"
+                error={errors.billingDueDay}
+              >
+                <Input
+                  id="fee-billing-due-day"
+                  type="number"
+                  min={1}
+                  max={28}
+                  step={1}
+                  value={billingDueDay}
+                  onChange={(e) => setBillingDueDay(e.target.value)}
+                />
+              </FormField>
+
+              <FormField
+                label={t('payments.branchConfig.gracePeriodDays')}
+                htmlFor="fee-grace-period"
+                error={errors.gracePeriodDays}
+              >
+                <Input
+                  id="fee-grace-period"
+                  type="number"
+                  min={0}
+                  max={60}
+                  step={1}
+                  value={gracePeriodDays}
+                  onChange={(e) => setGracePeriodDays(e.target.value)}
+                />
+              </FormField>
+            </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
@@ -423,6 +522,18 @@ export default function BranchFeesPage() {
           {formatDZD(Number(fee.amount), i18n.language)}
         </span>
       ),
+    },
+    {
+      key: 'cycle',
+      header: t('payments.fees.fields.recurring'),
+      render: (fee) =>
+        fee.billingCycle ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-accent-muted text-accent text-caption font-medium">
+            {t(`payments.branchConfig.cycle${fee.billingCycle.charAt(0).toUpperCase()}${fee.billingCycle.slice(1)}`)}
+          </span>
+        ) : (
+          <span className="text-caption text-text-disabled">{t('payments.fees.oneShot')}</span>
+        ),
     },
     {
       key: 'actions',

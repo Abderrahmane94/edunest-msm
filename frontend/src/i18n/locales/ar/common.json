@@ -1477,10 +1477,13 @@
       "selectBranch": "الفرع",
       "empty": "لا توجد رسوم مُعدّة",
       "confirmDelete": "حذف الرسم « {{name}} »؟ لن تتأثر فترات الفوترة الموجودة.",
+      "oneShot": "لمرة واحدة",
       "fields": {
         "name": "اسم الرسم",
         "namePlaceholder": "مثال: رسوم النقل، اللباس المدرسي...",
-        "amount": "المبلغ (د.ج)"
+        "amount": "المبلغ (د.ج)",
+        "recurring": "رسم دوري (متكرر)",
+        "recurringHelper": "فعّل هذا الخيار لفوترة هذا الرسم وفق دورة (شهرية، فصلية...) بدلاً من مرة واحدة."
       },
       "errors": {
         "nameRequired": "الاسم مطلوب (1-100 حرف)",
@@ -1564,8 +1567,14 @@
         "academicYear": "السنة الدراسية",
         "selectAcademicYear": "اختر سنة دراسية",
         "startDate": "تاريخ البدء",
+        "baseFee": "الرسم الأساسي",
+        "selectBaseFee": "اختر رسماً دورياً",
+        "baseFeeRequired": "يرجى اختيار رسم أساسي",
+        "noRecurringFees": "لا يوجد رسم دوري مُعدّ — أنشئ واحداً من علامة تبويب الرسوم.",
         "recurringFee": "الرسوم الشهرية (د.ج)",
         "recurringFeeHelper": "اختياري - إذا ترك فارغاً سيستخدم الإعداد الافتراضي للفرع",
+        "recurringFeeOverride": "مبلغ مخصص (د.ج)",
+        "recurringFeeOverrideHelper": "اختياري - يستبدل مبلغ الرسم المختار لهذا الطفل",
         "registrationFee": "رسوم التسجيل (د.ج)",
         "registrationFeeHelper": "اختياري - رسوم تسجيل لمرة واحدة",
         "firstPeriodAmount": "مبلغ الفترة الأولى (د.ج)",

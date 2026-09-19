@@ -27,6 +27,7 @@ import {
 import { useChildren } from '@/hooks/useChildren';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
+import { useBranchFees } from '@/hooks/useBranchFees';
 
 // ─── Fee Validation ────────────────────────────────────────────────────────────
 
@@ -58,10 +59,13 @@ function CreateEnrollmentDialog({
   const { data: childrenData } = useChildren({ pageSize: 100 });
   const { branchId: defaultBranchId } = useDefaultBranch();
   const { data: academicYears } = useAcademicYears();
+  const { data: fees } = useBranchFees(defaultBranchId);
+  const recurringFees = React.useMemo(() => (fees ?? []).filter((f) => !!f.billingCycle), [fees]);
 
   const [formData, setFormData] = React.useState({
     childId: '',
     academicYearId: '',
+    baseFeeId: '',
     startDate: '',
     recurringFee: '',
     registrationFee: '',
@@ -75,6 +79,7 @@ function CreateEnrollmentDialog({
     setFormData({
       childId: '',
       academicYearId: '',
+      baseFeeId: '',
       startDate: '',
       recurringFee: '',
       registrationFee: '',
@@ -112,6 +117,9 @@ function CreateEnrollmentDialog({
     if (!formData.startDate) {
       newErrors.startDate = t('payments.enrollments.form.startDateRequired');
     }
+    if (!formData.baseFeeId) {
+      newErrors.baseFeeId = t('payments.enrollments.form.baseFeeRequired');
+    }
 
     if (formData.recurringFee && !isValidFee(formData.recurringFee)) {
       newErrors.recurringFee = t('payments.enrollments.form.feeValidation');
@@ -136,6 +144,7 @@ function CreateEnrollmentDialog({
         childId: formData.childId,
         branchId: defaultBranchId,
         academicYearId: formData.academicYearId,
+        baseFeeId: formData.baseFeeId,
         startDate: formData.startDate,
         recurringFee: formData.recurringFee
           ? Number(formData.recurringFee)
@@ -166,6 +175,11 @@ function CreateEnrollmentDialog({
   const academicYearOptions = (academicYears ?? []).map((y) => ({
     value: y.id,
     label: y.name,
+  }));
+
+  const baseFeeOptions = recurringFees.map((f) => ({
+    value: f.id,
+    label: `${f.name} (${formatDZD(Number(f.amount), i18n.language)})`,
   }));
 
   // After successful creation, show result
@@ -255,6 +269,21 @@ function CreateEnrollmentDialog({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+            <FormSelect
+              label={t('payments.enrollments.form.baseFee')}
+              name="baseFeeId"
+              value={formData.baseFeeId}
+              onChange={handleSelectChange}
+              options={baseFeeOptions}
+              placeholder={t('payments.enrollments.form.selectBaseFee')}
+              error={errors.baseFeeId}
+              helperText={
+                recurringFees.length === 0
+                  ? t('payments.enrollments.form.noRecurringFees')
+                  : undefined
+              }
+            />
+
             <FormField
               label={t('payments.enrollments.form.startDate')}
               htmlFor="enrollment-start-date"
@@ -273,10 +302,10 @@ function CreateEnrollmentDialog({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormField
-              label={t('payments.enrollments.form.recurringFee')}
+              label={t('payments.enrollments.form.recurringFeeOverride')}
               htmlFor="enrollment-recurring-fee"
               error={errors.recurringFee}
-              helperText={t('payments.enrollments.form.recurringFeeHelper')}
+              helperText={t('payments.enrollments.form.recurringFeeOverrideHelper')}
             >
               <Input
                 id="enrollment-recurring-fee"

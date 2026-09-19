@@ -4,20 +4,12 @@ import { apiClient } from '@/lib/api-client';
 export interface BranchBillingConfig {
   id: string;
   branchId: string;
-  billingCycle: 'monthly' | 'trimester' | 'custom';
-  billingDueDay: number;
-  gracePeriodDays: number;
-  defaultRecurringFee: string; // Decimal string from API
   notificationSetting: 'enabled' | 'disabled';
   createdAt: string;
   updatedAt: string;
 }
 
 export interface BranchBillingConfigInput {
-  billingCycle: 'monthly' | 'trimester' | 'custom';
-  billingDueDay: number;
-  gracePeriodDays: number;
-  defaultRecurringFee: number;
   notificationSetting: 'enabled' | 'disabled';
 }
 

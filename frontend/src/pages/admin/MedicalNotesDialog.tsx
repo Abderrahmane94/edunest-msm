@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button, Input, StatusBadge,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Button, Input, StatusBadge,
 } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { cn } from '@/lib/utils';
@@ -29,14 +29,17 @@ export function severityBadgeVariant(severity: MedicalNoteSeverity): 'present' |
   return 'present';
 }
 
-interface MedicalNotesDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface MedicalNotesManagerProps {
   childId: string;
   childName: string;
 }
 
-export function MedicalNotesDialog({ open, onOpenChange, childId, childName }: MedicalNotesDialogProps) {
+/**
+ * List + inline add/edit form for a child's medical notes. Each mutation
+ * saves immediately (no outer form submit) — used both as the body of the
+ * standalone MedicalNotesDialog and as a step in the child creation wizard.
+ */
+export function MedicalNotesManager({ childId, childName }: MedicalNotesManagerProps) {
   const { t } = useTranslation();
   const { data: notes = [], isLoading: notesLoading } = useMedicalNotes(childId);
   const addNote = useAddMedicalNote();
@@ -129,162 +132,180 @@ export function MedicalNotesDialog({ open, onOpenChange, childId, childName }: M
   );
 
   return (
+    <>
+      <p className="text-body text-text-secondary mt-1 mb-4">
+        {t('children.medicalNotes.description', { name: childName })}
+      </p>
+
+      {notesLoading && (
+        <p className="text-caption text-text-secondary mb-4">{t('common.loading')}</p>
+      )}
+
+      {!notesLoading && notes.length === 0 && (
+        <p className="text-body text-text-secondary mb-4">{t('children.medicalNotes.noNotes')}</p>
+      )}
+
+      {notes.length > 0 && (
+        <div className="space-y-2 mb-4">
+          {notes.map((note) => (
+            editingId === note.id ? (
+              <div key={note.id} className="p-3 bg-subtle rounded-md space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                  <FormSelect
+                    label={t('children.medicalNotes.type')}
+                    name={`mn-edit-type-${note.id}`}
+                    value={editForm.type}
+                    onChange={(e) => setEditForm((p) => ({ ...p, type: e.target.value as MedicalNoteType }))}
+                    options={typeOptions}
+                  />
+                  <FormSelect
+                    label={t('children.medicalNotes.severity')}
+                    name={`mn-edit-severity-${note.id}`}
+                    value={editForm.severity}
+                    onChange={(e) => setEditForm((p) => ({ ...p, severity: e.target.value as MedicalNoteSeverity }))}
+                    options={severityOptions}
+                  />
+                </div>
+                <FormField label={t('children.medicalNotes.noteTitle')} htmlFor={`mn-edit-title-${note.id}`} error={editErrors.title} required>
+                  <Input
+                    id={`mn-edit-title-${note.id}`}
+                    value={editForm.title}
+                    onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+                    placeholder={t('children.medicalNotes.noteTitlePlaceholder')}
+                  />
+                </FormField>
+                <FormField label={t('children.medicalNotes.details')} htmlFor={`mn-edit-details-${note.id}`}>
+                  <textarea
+                    id={`mn-edit-details-${note.id}`}
+                    value={editForm.details}
+                    onChange={(e) => setEditForm((p) => ({ ...p, details: e.target.value }))}
+                    rows={2}
+                    className={textareaClass}
+                  />
+                </FormField>
+                {editError && <p className="text-body text-danger">{editError}</p>}
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="secondary" size="sm" onClick={() => handleSaveEdit(note.id)} disabled={updateNote.isPending}>
+                    <Check className="w-4 h-4" />
+                    {t('children.medicalNotes.save')}
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={cancelEdit}>
+                    <X className="w-4 h-4" />
+                    {t('common.cancel')}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div key={note.id} className="flex items-center justify-between p-3 bg-subtle rounded-md">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-body font-medium text-foreground">{note.title}</p>
+                    <StatusBadge variant={severityBadgeVariant(note.severity)}>
+                      {t(`children.medicalNotes.severities.${note.severity}`)}
+                    </StatusBadge>
+                  </div>
+                  <p className="text-caption text-text-secondary">
+                    {t(`children.medicalNotes.types.${note.type}`)}
+                    {note.details && <span> • {note.details}</span>}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="secondary" size="sm" onClick={() => startEdit(note)}>
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleRemoveNote(note.id)}
+                    disabled={removeNote.isPending}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )
+          ))}
+        </div>
+      )}
+
+      <div className="border border-border rounded-lg p-4 space-y-3">
+        <p className="text-label font-medium text-foreground">
+          {t('children.medicalNotes.addNew')}
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+          <FormSelect
+            label={t('children.medicalNotes.type')}
+            name="type"
+            value={newNote.type}
+            onChange={(e) => setNewNote((p) => ({ ...p, type: e.target.value as MedicalNoteType }))}
+            options={typeOptions}
+          />
+          <FormSelect
+            label={t('children.medicalNotes.severity')}
+            name="severity"
+            value={newNote.severity}
+            onChange={(e) => setNewNote((p) => ({ ...p, severity: e.target.value as MedicalNoteSeverity }))}
+            options={severityOptions}
+          />
+        </div>
+
+        <FormField
+          label={t('children.medicalNotes.noteTitle')}
+          htmlFor="mn-title"
+          error={errors.title}
+          required
+        >
+          <Input
+            id="mn-title"
+            name="title"
+            value={newNote.title}
+            onChange={(e) => { setNewNote((p) => ({ ...p, title: e.target.value })); setErrors((p) => ({ ...p, title: '' })); }}
+            placeholder={t('children.medicalNotes.noteTitlePlaceholder')}
+          />
+        </FormField>
+
+        <FormField label={t('children.medicalNotes.details')} htmlFor="mn-details">
+          <textarea
+            id="mn-details"
+            value={newNote.details}
+            onChange={(e) => setNewNote((p) => ({ ...p, details: e.target.value }))}
+            rows={2}
+            placeholder={t('children.medicalNotes.detailsPlaceholder')}
+            className={textareaClass}
+          />
+        </FormField>
+
+        {submitError && <p className="text-body text-danger">{submitError}</p>}
+
+        <Button type="button" variant="secondary" size="sm" onClick={handleAddNote} disabled={addNote.isPending}>
+          <Plus className="w-4 h-4" />
+          {addNote.isPending ? t('common.loading') : t('children.medicalNotes.add')}
+        </Button>
+      </div>
+    </>
+  );
+}
+
+interface MedicalNotesDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  childId: string;
+  childName: string;
+}
+
+export function MedicalNotesDialog({ open, onOpenChange, childId, childName }: MedicalNotesDialogProps) {
+  const { t } = useTranslation();
+
+  return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[560px]">
         <DialogHeader>
           <DialogTitle>{t('children.medicalNotes.title')}</DialogTitle>
-          <DialogDescription>
-            {t('children.medicalNotes.description', { name: childName })}
-          </DialogDescription>
         </DialogHeader>
 
-        {notesLoading && (
-          <p className="text-caption text-text-secondary mb-4">{t('common.loading')}</p>
-        )}
-
-        {!notesLoading && notes.length === 0 && (
-          <p className="text-body text-text-secondary mb-4">{t('children.medicalNotes.noNotes')}</p>
-        )}
-
-        {notes.length > 0 && (
-          <div className="space-y-2 mb-4">
-            {notes.map((note) => (
-              editingId === note.id ? (
-                <div key={note.id} className="p-3 bg-subtle rounded-md space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                    <FormSelect
-                      label={t('children.medicalNotes.type')}
-                      name={`mn-edit-type-${note.id}`}
-                      value={editForm.type}
-                      onChange={(e) => setEditForm((p) => ({ ...p, type: e.target.value as MedicalNoteType }))}
-                      options={typeOptions}
-                    />
-                    <FormSelect
-                      label={t('children.medicalNotes.severity')}
-                      name={`mn-edit-severity-${note.id}`}
-                      value={editForm.severity}
-                      onChange={(e) => setEditForm((p) => ({ ...p, severity: e.target.value as MedicalNoteSeverity }))}
-                      options={severityOptions}
-                    />
-                  </div>
-                  <FormField label={t('children.medicalNotes.noteTitle')} htmlFor={`mn-edit-title-${note.id}`} error={editErrors.title} required>
-                    <Input
-                      id={`mn-edit-title-${note.id}`}
-                      value={editForm.title}
-                      onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
-                      placeholder={t('children.medicalNotes.noteTitlePlaceholder')}
-                    />
-                  </FormField>
-                  <FormField label={t('children.medicalNotes.details')} htmlFor={`mn-edit-details-${note.id}`}>
-                    <textarea
-                      id={`mn-edit-details-${note.id}`}
-                      value={editForm.details}
-                      onChange={(e) => setEditForm((p) => ({ ...p, details: e.target.value }))}
-                      rows={2}
-                      className={textareaClass}
-                    />
-                  </FormField>
-                  {editError && <p className="text-body text-danger">{editError}</p>}
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="secondary" size="sm" onClick={() => handleSaveEdit(note.id)} disabled={updateNote.isPending}>
-                      <Check className="w-4 h-4" />
-                      {t('children.medicalNotes.save')}
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={cancelEdit}>
-                      <X className="w-4 h-4" />
-                      {t('common.cancel')}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div key={note.id} className="flex items-center justify-between p-3 bg-subtle rounded-md">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-body font-medium text-foreground">{note.title}</p>
-                      <StatusBadge variant={severityBadgeVariant(note.severity)}>
-                        {t(`children.medicalNotes.severities.${note.severity}`)}
-                      </StatusBadge>
-                    </div>
-                    <p className="text-caption text-text-secondary">
-                      {t(`children.medicalNotes.types.${note.type}`)}
-                      {note.details && <span> • {note.details}</span>}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="secondary" size="sm" onClick={() => startEdit(note)}>
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleRemoveNote(note.id)}
-                      disabled={removeNote.isPending}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              )
-            ))}
-          </div>
-        )}
-
-        <div className="border border-border rounded-lg p-4 space-y-3">
-          <p className="text-label font-medium text-foreground">
-            {t('children.medicalNotes.addNew')}
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-            <FormSelect
-              label={t('children.medicalNotes.type')}
-              name="type"
-              value={newNote.type}
-              onChange={(e) => setNewNote((p) => ({ ...p, type: e.target.value as MedicalNoteType }))}
-              options={typeOptions}
-            />
-            <FormSelect
-              label={t('children.medicalNotes.severity')}
-              name="severity"
-              value={newNote.severity}
-              onChange={(e) => setNewNote((p) => ({ ...p, severity: e.target.value as MedicalNoteSeverity }))}
-              options={severityOptions}
-            />
-          </div>
-
-          <FormField
-            label={t('children.medicalNotes.noteTitle')}
-            htmlFor="mn-title"
-            error={errors.title}
-            required
-          >
-            <Input
-              id="mn-title"
-              name="title"
-              value={newNote.title}
-              onChange={(e) => { setNewNote((p) => ({ ...p, title: e.target.value })); setErrors((p) => ({ ...p, title: '' })); }}
-              placeholder={t('children.medicalNotes.noteTitlePlaceholder')}
-            />
-          </FormField>
-
-          <FormField label={t('children.medicalNotes.details')} htmlFor="mn-details">
-            <textarea
-              id="mn-details"
-              value={newNote.details}
-              onChange={(e) => setNewNote((p) => ({ ...p, details: e.target.value }))}
-              rows={2}
-              placeholder={t('children.medicalNotes.detailsPlaceholder')}
-              className={textareaClass}
-            />
-          </FormField>
-
-          {submitError && <p className="text-body text-danger">{submitError}</p>}
-
-          <Button type="button" variant="secondary" size="sm" onClick={handleAddNote} disabled={addNote.isPending}>
-            <Plus className="w-4 h-4" />
-            {addNote.isPending ? t('common.loading') : t('children.medicalNotes.add')}
-          </Button>
-        </div>
+        <MedicalNotesManager childId={childId} childName={childName} />
 
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)}>

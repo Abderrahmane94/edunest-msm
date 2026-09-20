@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSchoolsList } from '@/hooks/useSchools';
 import { useRestoreRecord } from '@/hooks/useTrash';
 
-function useCreateUser() {
+export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string; address?: string; nationalId?: string }) => {

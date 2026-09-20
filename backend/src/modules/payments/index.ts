@@ -3,6 +3,7 @@ import branchConfigRoutes from './branch-config.routes';
 import branchCalendarRoutes from './branch-calendar.routes';
 import branchFeeRoutes from './branch-fee.routes';
 import branchFeePeriodRoutes from './branch-fee-period.routes';
+import branchFeeClassroomRoutes from './branch-fee-classroom.routes';
 import enrollmentRoutes from './enrollment.routes';
 import paymentsRoutes from './payments.routes';
 import discountRoutes from './discount.routes';
@@ -26,6 +27,9 @@ router.use(branchFeeRoutes);
 
 // Per-fee period assignments (which calendar periods a fee bills against)
 router.use(branchFeePeriodRoutes);
+
+// Per-fee classroom links (which classrooms a fee applies to)
+router.use(branchFeeClassroomRoutes);
 
 // Enrollment management
 router.use(enrollmentRoutes);

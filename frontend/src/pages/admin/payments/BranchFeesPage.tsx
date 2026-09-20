@@ -21,6 +21,7 @@ import { useChildren } from '@/hooks/useChildren';
 import { useClassrooms } from '@/hooks/useClassrooms';
 import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
 import { useFeePeriods, useSetFeePeriods } from '@/hooks/useBranchFeePeriods';
+import { useFeeClassrooms, useSetFeeClassrooms } from '@/hooks/useBranchFeeClassrooms';
 import {
   useBranchFees,
   useCreateBranchFee,
@@ -64,6 +65,23 @@ function FeeDialog({
 
   function togglePeriod(id: string) {
     setSelectedPeriodIds((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
+  }
+
+  const {
+    data: feeClassrooms,
+    isLoading: feeClassroomsLoading,
+    isError: feeClassroomsError,
+    error: feeClassroomsErrorObj,
+  } = useFeeClassrooms(editingFee?.id);
+  const setFeeClassrooms = useSetFeeClassrooms(editingFee?.id);
+  const [selectedClassroomIds, setSelectedClassroomIds] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    setSelectedClassroomIds((feeClassrooms ?? []).filter((c) => c.isLinked).map((c) => c.id));
+  }, [feeClassrooms]);
+
+  function toggleClassroom(id: string) {
+    setSelectedClassroomIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
   }
 
   const [name, setName] = React.useState('');
@@ -139,6 +157,7 @@ function FeeDialog({
         if (periodsSectionActive && periodsYearId) {
           await setFeePeriods.mutateAsync({ academicYearId: periodsYearId, periodIds: selectedPeriodIds });
         }
+        await setFeeClassrooms.mutateAsync(selectedClassroomIds);
       } else {
         await createFee.mutateAsync({
           name: name.trim(),
@@ -160,7 +179,9 @@ function FeeDialog({
     createFee.isPending ||
     updateFee.isPending ||
     setFeePeriods.isPending ||
-    (periodsSectionActive && feePeriodsLoading);
+    setFeeClassrooms.isPending ||
+    (periodsSectionActive && feePeriodsLoading) ||
+    (!!editingFee && feeClassroomsLoading);
 
   const billingCycleOptions = [
     { value: 'monthly', label: t('payments.branchConfig.cycleMonthly') },
@@ -329,6 +350,48 @@ function FeeDialog({
             </div>
           )}
 
+          <div className="rounded-lg border border-border p-3 space-y-3">
+            <p className="text-caption font-medium text-foreground">
+              {t('payments.fees.fields.classes')}
+            </p>
+            <p className="text-caption text-text-secondary -mt-2">
+              {t('payments.fees.fields.classesHint')}
+            </p>
+
+            {!editingFee ? (
+              <p className="text-caption text-text-secondary">
+                {t('payments.fees.fields.saveClassesFirst')}
+              </p>
+            ) : feeClassroomsLoading ? (
+              <div className="animate-pulse h-16 bg-subtle rounded-md" />
+            ) : feeClassroomsError ? (
+              <p className="text-caption text-danger">
+                {feeClassroomsErrorObj instanceof Error ? feeClassroomsErrorObj.message : t('common.error')}
+              </p>
+            ) : !feeClassrooms || feeClassrooms.length === 0 ? (
+              <p className="text-caption text-text-secondary">
+                {t('payments.fees.fields.noClassroomsAvailable')}
+              </p>
+            ) : (
+              <div className="border border-border rounded-md divide-y divide-border max-h-48 overflow-y-auto">
+                {feeClassrooms.map((classroom) => (
+                  <label
+                    key={classroom.id}
+                    className="flex items-center gap-2 p-2 cursor-pointer hover:bg-hover"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedClassroomIds.includes(classroom.id)}
+                      onChange={() => toggleClassroom(classroom.id)}
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                    />
+                    <span className="text-caption text-foreground">{classroom.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
           {errors.form && (
             <p className="text-body text-danger">{errors.form}</p>
           )}
@@ -380,6 +443,9 @@ function ViewFeeDialog({
     showPeriods ? periodsYearId || undefined : undefined,
   );
   const assignedPeriods = (feePeriods ?? []).filter((p) => p.isAssigned);
+
+  const { data: feeClassrooms, isLoading: feeClassroomsLoading } = useFeeClassrooms(fee?.id);
+  const linkedClassrooms = (feeClassrooms ?? []).filter((c) => c.isLinked);
 
   if (!fee) return null;
 
@@ -434,6 +500,25 @@ function ViewFeeDialog({
             )}
           </div>
         )}
+
+        <div className="space-y-3 pt-1 border-t border-border">
+          <p className="text-caption font-medium text-foreground pt-2">
+            {t('payments.fees.view.classesTitle')}
+          </p>
+          {feeClassroomsLoading ? (
+            <div className="animate-pulse h-12 bg-subtle rounded-md" />
+          ) : linkedClassrooms.length === 0 ? (
+            <p className="text-caption text-text-secondary">{t('payments.fees.view.noLinkedClassrooms')}</p>
+          ) : (
+            <ul className="border border-border rounded-md divide-y divide-border max-h-48 overflow-y-auto">
+              {linkedClassrooms.map((classroom) => (
+                <li key={classroom.id} className="p-2 text-caption text-foreground">
+                  {classroom.name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)}>{t('common.close')}</Button>

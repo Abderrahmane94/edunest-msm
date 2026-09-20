@@ -306,6 +306,45 @@ export async function validatePaymentRecordAccess(
 }
 
 /**
+ * Validates that a classroom belongs to the requesting user's school.
+ * Classrooms have no branch of their own (schoolId only), so this checks
+ * school ownership alone — no branch indirection needed.
+ *
+ * @returns true if access is allowed, or false if an error response was sent
+ */
+export async function validateClassroomAccess(
+  classroomId: string,
+  req: Request,
+  res: Response,
+): Promise<boolean> {
+  const scope = req.tenantScope;
+  if (!scope) {
+    res.status(403).json(
+      errorResponse('FORBIDDEN', 'Tenant scope not resolved'),
+    );
+    return false;
+  }
+
+  if (scope.isSuperAdmin) {
+    return true;
+  }
+
+  const classroom = await prisma.classroom.findUnique({
+    where: { id: classroomId },
+    select: { schoolId: true },
+  });
+
+  if (!classroom || classroom.schoolId !== scope.schoolId) {
+    res.status(403).json(
+      errorResponse('FORBIDDEN', 'Access denied: resource does not belong to your school'),
+    );
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * Resolves the branchId(s) the user is allowed to query for list endpoints.
  *
  * If the user is branch-scoped, forces their own branchId regardless of what's in the request.

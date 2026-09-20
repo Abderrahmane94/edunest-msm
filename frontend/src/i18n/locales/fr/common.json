@@ -589,6 +589,40 @@
       "save": "Enregistrer",
       "noNotes": "Aucune note médicale pour le moment.",
       "highSeverityWarning": "Note médicale à sévérité élevée"
+    },
+    "wizard": {
+      "title": "Inscrire un enfant",
+      "stepIndicator": "Étape {{current}}/{{total}} — {{label}}",
+      "steps": {
+        "basics": "Informations de base",
+        "parent": "Parent",
+        "emergency": "Contacts d'urgence",
+        "medical": "Notes médicales",
+        "classroom": "Classe",
+        "fees": "Frais et paiement"
+      },
+      "next": "Suivant",
+      "back": "Précédent",
+      "finish": "Terminer",
+      "parent": {
+        "description": "Liez un parent existant à cet enfant, ou créez-en un nouveau. Vous pouvez aussi passer cette étape et le faire plus tard.",
+        "selectExisting": "Parent existant",
+        "createNew": "Créer un nouveau parent",
+        "newParentIncomplete": "Veuillez renseigner le prénom, le nom et l'email du nouveau parent, ou laisser les champs vides pour passer cette étape."
+      },
+      "classroom": {
+        "description": "Choisissez la classe dans laquelle inscrire cet enfant, ou passez cette étape pour l'assigner plus tard.",
+        "selectPlaceholder": "Sélectionner une classe"
+      },
+      "fees": {
+        "description": "Choisissez le frais de base (récurrent) de cet enfant et, si besoin, des frais ponctuels supplémentaires. Laissez vide pour ne pas inscrire l'enfant à la facturation maintenant.",
+        "extraFees": "Frais ponctuels supplémentaires",
+        "skipEnrollment": "Passer (pas de facturation pour le moment)",
+        "paymentPrompt": "Montant total dû : {{amount}}. Souhaitez-vous encaisser un paiement maintenant ?",
+        "payFull": "Payer tout maintenant",
+        "payPartial": "Payer un montant",
+        "payLater": "Payer plus tard"
+      }
     }
   },
   "staff": {
@@ -1482,7 +1516,11 @@
         "recurringHelper": "Activez pour facturer ce frais selon un cycle (mensuel, personnalisé...) au lieu d'une seule fois.",
         "customCycleHint": "Le cycle personnalisé facture ce frais sur les périodes que vous lui assignez ci-dessous (créées dans la section Calendrier).",
         "savePeriodsFirst": "Enregistrez d'abord ce frais — vous pourrez ensuite lui assigner des périodes.",
-        "noPeriodsAvailable": "Aucune période créée pour l'année scolaire active. Ajoutez-en dans la section Calendrier ci-dessous."
+        "noPeriodsAvailable": "Aucune période créée pour l'année scolaire active. Ajoutez-en dans la section Calendrier ci-dessous.",
+        "classes": "Classes",
+        "classesHint": "Liez ce frais à une ou plusieurs classes (ex: tenue scolaire spécifique à une classe). Sans classe liée, ce frais est général et s'applique à toutes les classes.",
+        "saveClassesFirst": "Enregistrez d'abord ce frais — vous pourrez ensuite lui lier des classes.",
+        "noClassroomsAvailable": "Aucune classe créée pour cette école."
       },
       "errors": {
         "nameRequired": "Le nom est requis (1-100 caractères)",
@@ -1491,7 +1529,9 @@
       "view": {
         "button": "Voir",
         "title": "Détails du frais « {{name}} »",
-        "noAssignedPeriods": "Aucune période assignée à ce frais pour cette année."
+        "noAssignedPeriods": "Aucune période assignée à ce frais pour cette année.",
+        "classesTitle": "Classes liées",
+        "noLinkedClassrooms": "Ce frais est général — il s'applique à toutes les classes."
       },
       "assign": {
         "button": "Assigner",

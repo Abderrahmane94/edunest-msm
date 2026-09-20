@@ -30,6 +30,7 @@ import {
 } from '@/hooks/usePayments';
 import { RecordCorrectionDialog } from './RecordCorrectionDialog';
 import { ReceiptView } from './ReceiptView';
+import { suggestAllocations as suggestAllocationsUtil } from '@/lib/paymentAllocation';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -123,44 +124,9 @@ function RecordPaymentDialog({
    */
   function suggestAllocations() {
     const amount = Number(totalAmount);
-    if (!amount || amount <= 0 || sortedPeriodsByPriority.length === 0) return;
-
-    let remaining = amount;
-    const suggested: AllocationRow[] = [];
-
-    for (const period of sortedPeriodsByPriority) {
-      if (remaining <= 0) break;
-
-      const outstanding = Number(period.outstanding ?? period.amountDue);
-      if (outstanding <= 0) continue;
-
-      const allocAmount = Math.min(remaining, outstanding);
-      // Round to 2 decimal places
-      const rounded = Math.round(allocAmount * 100) / 100;
-
-      if (rounded >= 0.01) {
-        suggested.push({
-          id: crypto.randomUUID(),
-          billingPeriodId: period.id,
-          amount: rounded.toFixed(2),
-        });
-        remaining = Math.round((remaining - rounded) * 100) / 100;
-      }
-    }
-
-    // If we still have remaining amount but no more periods, add it to the last allocation
-    // (the user can manually adjust)
-    if (remaining > 0 && suggested.length > 0) {
-      const last = suggested[suggested.length - 1];
-      const newAmount = Number(last.amount) + remaining;
-      suggested[suggested.length - 1] = {
-        ...last,
-        amount: newAmount.toFixed(2),
-      };
-    }
-
+    const suggested = suggestAllocationsUtil(availablePeriods, amount);
     if (suggested.length > 0) {
-      setAllocations(suggested);
+      setAllocations(suggested.map((s) => ({ id: crypto.randomUUID(), ...s })));
     }
   }
 

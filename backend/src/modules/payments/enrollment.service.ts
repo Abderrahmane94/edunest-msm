@@ -160,7 +160,7 @@ class EnrollmentService {
       }
 
       // (f) Fetch BranchCalendar rows if billingCycle is trimester/custom
-      const calendarRows = await fetchCalendarRows(tx, branchId, academicYearId, config.billingCycle);
+      const calendarRows = await fetchCalendarRows(tx, baseFeeId, academicYearId, config.billingCycle);
 
       // (g) Call generatePeriodsForEnrollment with all params
       // We use a placeholder enrollmentId — we'll create the enrollment first to get its ID

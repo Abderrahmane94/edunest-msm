@@ -10,6 +10,7 @@ export interface Branch {
 export interface BranchCalendarEntry {
   id: string;
   branchId: string;
+  branchFeeId: string;
   academicYearId: string;
   label: string;
   periodStart: string;
@@ -50,14 +51,14 @@ export function useBranches() {
   });
 }
 
-// ─── Branch Calendar ──────────────────────────────────────────────────────────
+// ─── Fee Calendar (periods belong to one specific recurring fee) ──────────────
 
-export function useBranchCalendar(branchId: string | undefined, academicYearId: string | undefined) {
+export function useBranchCalendar(branchFeeId: string | undefined, academicYearId: string | undefined) {
   return useQuery({
-    queryKey: ['branch-calendar', branchId, academicYearId],
+    queryKey: ['branch-calendar', branchFeeId, academicYearId],
     queryFn: async () => {
       const res = await apiClient.get<unknown>(
-        `/payments/branches/${branchId}/calendar?academicYearId=${academicYearId}`,
+        `/payments/fees/${branchFeeId}/calendar?academicYearId=${academicYearId}`,
       );
       const raw = res.data;
       if (Array.isArray(raw)) {
@@ -65,15 +66,15 @@ export function useBranchCalendar(branchId: string | undefined, academicYearId: 
       }
       return [];
     },
-    enabled: !!branchId && !!academicYearId,
+    enabled: !!branchFeeId && !!academicYearId,
   });
 }
 
 export function useCreateBranchCalendar() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ branchId, ...data }: CreateBranchCalendarInput & { branchId: string }) => {
-      const res = await apiClient.post(`/payments/branches/${branchId}/calendar`, {
+    mutationFn: async ({ branchFeeId, ...data }: CreateBranchCalendarInput & { branchFeeId: string }) => {
+      const res = await apiClient.post(`/payments/fees/${branchFeeId}/calendar`, {
         label: data.label,
         period_start: data.period_start,
         period_end: data.period_end,
@@ -95,11 +96,11 @@ export function useUpdateBranchCalendar() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({
-      branchId,
+      branchFeeId,
       id,
       ...data
-    }: UpdateBranchCalendarInput & { branchId: string; id: string }) => {
-      const res = await apiClient.put(`/payments/branches/${branchId}/calendar/${id}`, {
+    }: UpdateBranchCalendarInput & { branchFeeId: string; id: string }) => {
+      const res = await apiClient.put(`/payments/fees/${branchFeeId}/calendar/${id}`, {
         label: data.label,
         period_start: data.period_start,
         period_end: data.period_end,
@@ -119,8 +120,8 @@ export function useUpdateBranchCalendar() {
 export function useDeleteBranchCalendar() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ branchId, id }: { branchId: string; id: string }) => {
-      const res = await apiClient.delete(`/payments/branches/${branchId}/calendar/${id}`);
+    mutationFn: async ({ branchFeeId, id }: { branchFeeId: string; id: string }) => {
+      const res = await apiClient.delete(`/payments/fees/${branchFeeId}/calendar/${id}`);
       if (!res.success) {
         throw new Error(res.error?.message ?? 'Failed to delete calendar entry');
       }

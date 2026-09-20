@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { CalendarDays, Plus, Pencil, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,6 +18,7 @@ import { FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui/Input';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
+import { useBranchFees } from '@/hooks/useBranchFees';
 import {
   useBranchCalendar,
   useCreateBranchCalendar,
@@ -55,13 +57,20 @@ type CalendarFormValues = z.infer<typeof calendarFormSchema>;
 
 export function BranchCalendarPage() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
 
   // Data fetching
   const { branchId: selectedBranchId } = useDefaultBranch();
   const { data: academicYears } = useAcademicYears();
+  const { data: fees } = useBranchFees(selectedBranchId);
+  const recurringFees = React.useMemo(
+    () => (fees ?? []).filter((f) => f.billingCycle === 'trimester' || f.billingCycle === 'custom'),
+    [fees],
+  );
 
   // Selection state
   const [selectedAcademicYearId, setSelectedAcademicYearId] = React.useState<string>('');
+  const [selectedFeeId, setSelectedFeeId] = React.useState<string>('');
 
   // Dialog state
   const [formOpen, setFormOpen] = React.useState(false);
@@ -77,9 +86,27 @@ export function BranchCalendarPage() {
     }
   }, [academicYears, selectedAcademicYearId]);
 
+  // Re-sync whenever ?feeId= appears or changes (e.g. deep-linked again from
+  // the Fees dialog while this page is already mounted), regardless of
+  // whether a fee is already selected.
+  const feeIdFromUrl = searchParams.get('feeId');
+  React.useEffect(() => {
+    if (feeIdFromUrl && recurringFees.some((f) => f.id === feeIdFromUrl)) {
+      setSelectedFeeId(feeIdFromUrl);
+    }
+  }, [feeIdFromUrl, recurringFees]);
+
+  // Default to the first recurring fee when nothing is selected and no
+  // ?feeId= was requested.
+  React.useEffect(() => {
+    if (!selectedFeeId && !feeIdFromUrl && recurringFees.length > 0) {
+      setSelectedFeeId(recurringFees[0].id);
+    }
+  }, [selectedFeeId, feeIdFromUrl, recurringFees]);
+
   // Calendar data
   const { data: calendarEntries, isLoading: entriesLoading } = useBranchCalendar(
-    selectedBranchId || undefined,
+    selectedFeeId || undefined,
     selectedAcademicYearId || undefined,
   );
 
@@ -124,7 +151,7 @@ export function BranchCalendarPage() {
   async function onSubmit(data: CalendarFormValues) {
     if (editingEntry) {
       await updateMutation.mutateAsync({
-        branchId: selectedBranchId,
+        branchFeeId: selectedFeeId,
         id: editingEntry.id,
         label: data.label,
         period_start: data.period_start,
@@ -133,7 +160,7 @@ export function BranchCalendarPage() {
       });
     } else {
       await createMutation.mutateAsync({
-        branchId: selectedBranchId,
+        branchFeeId: selectedFeeId,
         label: data.label,
         period_start: data.period_start,
         period_end: data.period_end,
@@ -147,7 +174,7 @@ export function BranchCalendarPage() {
   async function handleConfirmDelete() {
     if (!deletingEntry) return;
     await deleteMutation.mutateAsync({
-      branchId: selectedBranchId,
+      branchFeeId: selectedFeeId,
       id: deletingEntry.id,
     });
     setDeleteOpen(false);
@@ -210,8 +237,9 @@ export function BranchCalendarPage() {
     },
   ];
 
-  const isReady = selectedBranchId && selectedAcademicYearId;
+  const isReady = !!selectedFeeId && !!selectedAcademicYearId;
   const isMutating = createMutation.isPending || updateMutation.isPending;
+  const feeOptions = recurringFees.map((f) => ({ value: f.id, label: f.name }));
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -240,6 +268,16 @@ export function BranchCalendarPage() {
       <div className="flex flex-wrap gap-4">
         <div className="w-full sm:w-64">
           <FormSelect
+            label={t('payments.branchCalendar.selectFee', 'Frais')}
+            name="fee"
+            value={selectedFeeId}
+            onChange={(e) => setSelectedFeeId(e.target.value)}
+            options={feeOptions}
+            placeholder={t('payments.branchCalendar.selectFeePlaceholder', 'Sélectionner un frais')}
+          />
+        </div>
+        <div className="w-full sm:w-64">
+          <FormSelect
             label={t('payments.branchCalendar.selectYear', 'Academic Year')}
             name="academicYear"
             value={selectedAcademicYearId}
@@ -251,8 +289,10 @@ export function BranchCalendarPage() {
       </div>
 
       {/* Content */}
-      {!isReady ? (
-        <EmptyState message={t('payments.branchCalendar.selectPrompt', 'Select an academic year to view calendar entries.')} />
+      {recurringFees.length === 0 ? (
+        <EmptyState message={t('payments.branchCalendar.noRecurringFees')} />
+      ) : !isReady ? (
+        <EmptyState message={t('payments.branchCalendar.selectPrompt', 'Select a fee and academic year to view calendar entries.')} />
       ) : entriesLoading ? (
         <LoadingSkeleton />
       ) : (
@@ -260,7 +300,7 @@ export function BranchCalendarPage() {
           columns={columns}
           data={calendarEntries ?? []}
           keyExtractor={(row) => row.id}
-          emptyMessage={t('payments.branchCalendar.noEntries', 'No calendar entries found for this branch and year.')}
+          emptyMessage={t('payments.branchCalendar.noEntries', 'No calendar entries found for this fee and year.')}
         />
       )}
 
@@ -276,7 +316,7 @@ export function BranchCalendarPage() {
             <DialogDescription>
               {editingEntry
                 ? t('payments.branchCalendar.editDescription', 'Update the period details below.')
-                : t('payments.branchCalendar.createDescription', 'Define a new billing period for this branch.')}
+                : t('payments.branchCalendar.createDescription', 'Define a new billing period for this fee.')}
             </DialogDescription>
           </DialogHeader>
 

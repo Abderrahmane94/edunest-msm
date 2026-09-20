@@ -4,7 +4,7 @@ import { createBranchCalendarSchema } from './payments.schema';
 // Mock Prisma before importing the service
 vi.mock('../../lib/prisma', () => ({
   default: {
-    branch: { findFirst: vi.fn() },
+    branchFee: { findFirst: vi.fn() },
     academicYear: { findFirst: vi.fn() },
     branchCalendar: {
       findFirst: vi.fn(),
@@ -147,6 +147,7 @@ describe('Branch Calendar Validation', () => {
 
   describe('Service: overlap detection', () => {
     const branchId = 'branch-uuid-1';
+    const branchFeeId = 'fee-uuid-1';
     const academicYearId = 'ay-uuid-1';
 
     beforeEach(() => {
@@ -154,10 +155,11 @@ describe('Branch Calendar Validation', () => {
     });
 
     it('should throw CONFLICT error when an overlapping entry exists', async () => {
-      // Setup: branch and academic year exist
-      mockedPrisma.branch.findFirst.mockResolvedValue({
-        id: branchId,
-        name: 'Main Branch',
+      // Setup: fee and academic year exist
+      mockedPrisma.branchFee.findFirst.mockResolvedValue({
+        id: branchFeeId,
+        branchId,
+        name: 'Tuition',
       } as never);
       mockedPrisma.academicYear.findFirst.mockResolvedValue({
         id: academicYearId,
@@ -167,6 +169,7 @@ describe('Branch Calendar Validation', () => {
       mockedPrisma.branchCalendar.findFirst.mockResolvedValue({
         id: 'existing-entry-id',
         branchId,
+        branchFeeId,
         academicYearId,
         label: 'Existing Trimester',
         periodStart: new Date('2025-01-01'),
@@ -175,7 +178,7 @@ describe('Branch Calendar Validation', () => {
       } as never);
 
       await expect(
-        branchCalendarService.create(branchId, academicYearId, {
+        branchCalendarService.create(branchFeeId, academicYearId, {
           label: 'Overlapping Trimester',
           period_start: new Date('2025-02-01'),
           period_end: new Date('2025-04-30'),
@@ -184,7 +187,7 @@ describe('Branch Calendar Validation', () => {
       ).rejects.toThrow(BranchCalendarServiceError);
 
       try {
-        await branchCalendarService.create(branchId, academicYearId, {
+        await branchCalendarService.create(branchFeeId, academicYearId, {
           label: 'Overlapping Trimester',
           period_start: new Date('2025-02-01'),
           period_end: new Date('2025-04-30'),
@@ -200,10 +203,11 @@ describe('Branch Calendar Validation', () => {
     });
 
     it('should succeed when no overlapping entry exists', async () => {
-      // Setup: branch and academic year exist
-      mockedPrisma.branch.findFirst.mockResolvedValue({
-        id: branchId,
-        name: 'Main Branch',
+      // Setup: fee and academic year exist
+      mockedPrisma.branchFee.findFirst.mockResolvedValue({
+        id: branchFeeId,
+        branchId,
+        name: 'Tuition',
       } as never);
       mockedPrisma.academicYear.findFirst.mockResolvedValue({
         id: academicYearId,
@@ -216,6 +220,7 @@ describe('Branch Calendar Validation', () => {
       const createdEntry = {
         id: 'new-entry-id',
         branchId,
+        branchFeeId,
         academicYearId,
         label: 'Trimester 2',
         periodStart: new Date('2025-04-01'),
@@ -226,7 +231,7 @@ describe('Branch Calendar Validation', () => {
       };
       mockedPrisma.branchCalendar.create.mockResolvedValue(createdEntry as never);
 
-      const result = await branchCalendarService.create(branchId, academicYearId, {
+      const result = await branchCalendarService.create(branchFeeId, academicYearId, {
         label: 'Trimester 2',
         period_start: new Date('2025-04-01'),
         period_end: new Date('2025-06-30'),
@@ -237,6 +242,7 @@ describe('Branch Calendar Validation', () => {
       expect(mockedPrisma.branchCalendar.create).toHaveBeenCalledWith({
         data: {
           branchId,
+          branchFeeId,
           academicYearId,
           label: 'Trimester 2',
           periodStart: new Date('2025-04-01'),
@@ -246,11 +252,11 @@ describe('Branch Calendar Validation', () => {
       });
     });
 
-    it('should throw NOT_FOUND when branch does not exist', async () => {
-      mockedPrisma.branch.findFirst.mockResolvedValue(null as never);
+    it('should throw NOT_FOUND when the fee does not exist', async () => {
+      mockedPrisma.branchFee.findFirst.mockResolvedValue(null as never);
 
       await expect(
-        branchCalendarService.create(branchId, academicYearId, {
+        branchCalendarService.create(branchFeeId, academicYearId, {
           label: 'Trimester 1',
           period_start: new Date('2025-01-01'),
           period_end: new Date('2025-03-31'),
@@ -259,7 +265,7 @@ describe('Branch Calendar Validation', () => {
       ).rejects.toThrow(BranchCalendarServiceError);
 
       try {
-        await branchCalendarService.create(branchId, academicYearId, {
+        await branchCalendarService.create(branchFeeId, academicYearId, {
           label: 'Trimester 1',
           period_start: new Date('2025-01-01'),
           period_end: new Date('2025-03-31'),
@@ -273,14 +279,15 @@ describe('Branch Calendar Validation', () => {
     });
 
     it('should throw NOT_FOUND when academic year does not exist', async () => {
-      mockedPrisma.branch.findFirst.mockResolvedValue({
-        id: branchId,
-        name: 'Main Branch',
+      mockedPrisma.branchFee.findFirst.mockResolvedValue({
+        id: branchFeeId,
+        branchId,
+        name: 'Tuition',
       } as never);
       mockedPrisma.academicYear.findFirst.mockResolvedValue(null as never);
 
       await expect(
-        branchCalendarService.create(branchId, academicYearId, {
+        branchCalendarService.create(branchFeeId, academicYearId, {
           label: 'Trimester 1',
           period_start: new Date('2025-01-01'),
           period_end: new Date('2025-03-31'),
@@ -289,7 +296,7 @@ describe('Branch Calendar Validation', () => {
       ).rejects.toThrow(BranchCalendarServiceError);
 
       try {
-        await branchCalendarService.create(branchId, academicYearId, {
+        await branchCalendarService.create(branchFeeId, academicYearId, {
           label: 'Trimester 1',
           period_start: new Date('2025-01-01'),
           period_end: new Date('2025-03-31'),

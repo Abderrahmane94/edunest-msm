@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
-import { Trash2, Edit2, DollarSign, Users, CalendarDays } from 'lucide-react';
+import { Trash2, Edit2, DollarSign, Users, CalendarDays, Check } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -21,7 +20,7 @@ import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import { useChildren } from '@/hooks/useChildren';
 import { useClassrooms } from '@/hooks/useClassrooms';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
-import { useBranchCalendar } from '@/hooks/useBranchCalendar';
+import { useFeePeriods, useSetFeePeriods } from '@/hooks/useBranchFeePeriods';
 import {
   useBranchFees,
   useCreateBranchFee,
@@ -47,7 +46,6 @@ function FeeDialog({
   editingFee: BranchFee | null;
 }) {
   const { t } = useTranslation();
-  const [, setSearchParams] = useSearchParams();
   const createFee = useCreateBranchFee(branchId);
   const updateFee = useUpdateBranchFee(branchId);
   const { data: academicYears } = useAcademicYears();
@@ -55,7 +53,34 @@ function FeeDialog({
     () => academicYears?.find((y) => y.is_active) ?? academicYears?.[0],
     [academicYears],
   );
-  const { data: calendarEntries } = useBranchCalendar(editingFee?.id, activeAcademicYear?.id);
+  const [periodsYearId, setPeriodsYearId] = React.useState<string>('');
+  React.useEffect(() => {
+    if (!periodsYearId && activeAcademicYear) setPeriodsYearId(activeAcademicYear.id);
+  }, [activeAcademicYear, periodsYearId]);
+
+  const { data: feePeriods, isLoading: feePeriodsLoading } = useFeePeriods(
+    editingFee?.id,
+    periodsYearId || undefined,
+  );
+  const setFeePeriods = useSetFeePeriods(editingFee?.id);
+  const [selectedPeriodIds, setSelectedPeriodIds] = React.useState<string[]>([]);
+  const [periodsSaved, setPeriodsSaved] = React.useState(false);
+
+  React.useEffect(() => {
+    setSelectedPeriodIds((feePeriods ?? []).filter((p) => p.isAssigned).map((p) => p.id));
+    setPeriodsSaved(false);
+  }, [feePeriods]);
+
+  function togglePeriod(id: string) {
+    setSelectedPeriodIds((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
+    setPeriodsSaved(false);
+  }
+
+  async function handleSavePeriods() {
+    if (!periodsYearId) return;
+    await setFeePeriods.mutateAsync({ academicYearId: periodsYearId, periodIds: selectedPeriodIds });
+    setPeriodsSaved(true);
+  }
 
   const [name, setName] = React.useState('');
   const [amount, setAmount] = React.useState('');
@@ -260,62 +285,80 @@ function FeeDialog({
           )}
 
           {isRecurring && (billingCycle === 'trimester' || billingCycle === 'custom') && (
-            <div
-              className={`flex items-start gap-3 rounded-lg p-3 ${
-                editingFee && calendarEntries && calendarEntries.length > 0 ? 'bg-success-muted' : 'bg-accent-muted'
-              }`}
-            >
-              <CalendarDays
-                className={`w-4 h-4 shrink-0 mt-0.5 ${
-                  editingFee && calendarEntries && calendarEntries.length > 0 ? 'text-success' : 'text-accent'
-                }`}
-              />
-              <div className="flex-1 min-w-0">
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <div className="flex items-start gap-3">
+                <CalendarDays className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                 <p className="text-caption text-foreground">
                   {t('payments.fees.fields.customCycleHint')}
                 </p>
-
-                {!editingFee ? (
-                  <p className="text-caption font-medium text-foreground mt-1">
-                    {t('payments.fees.fields.savePeriodsFirst')}
-                  </p>
-                ) : (
-                  <>
-                    {activeAcademicYear && (
-                      <p className="text-caption font-medium text-foreground mt-1">
-                        {calendarEntries && calendarEntries.length > 0
-                          ? t('payments.fees.fields.periodsConfigured', {
-                              count: calendarEntries.length,
-                              year: activeAcademicYear.name,
-                              labels: calendarEntries.map((e) => e.label).join(', '),
-                            })
-                          : t('payments.fees.fields.noPeriodsConfigured', { year: activeAcademicYear.name })}
-                      </p>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearchParams((prev) => {
-                          const next = new URLSearchParams(prev);
-                          next.set('feeId', editingFee.id);
-                          return next;
-                        });
-                        onOpenChange(false);
-                        // The calendar lives further down this same Configuration
-                        // tab — scroll to it instead of navigating away.
-                        setTimeout(() => {
-                          document
-                            .getElementById('billing-calendar-section')
-                            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 100);
-                      }}
-                      className="text-caption font-medium text-accent hover:underline mt-1"
-                    >
-                      {t('payments.fees.fields.goToCalendar')}
-                    </button>
-                  </>
-                )}
               </div>
+
+              {!editingFee ? (
+                <p className="text-caption text-text-secondary ps-7">
+                  {t('payments.fees.fields.savePeriodsFirst')}
+                </p>
+              ) : (
+                <div className="ps-7 space-y-3">
+                  <FormSelect
+                    label={t('payments.fees.fields.periodsYear')}
+                    name="fee-periods-year"
+                    value={periodsYearId}
+                    onChange={(e) => setPeriodsYearId(e.target.value)}
+                    options={(academicYears ?? []).map((y) => ({ value: y.id, label: y.name }))}
+                  />
+
+                  {feePeriodsLoading ? (
+                    <div className="animate-pulse h-16 bg-subtle rounded-md" />
+                  ) : !feePeriods || feePeriods.length === 0 ? (
+                    <p className="text-caption text-text-secondary">
+                      {t('payments.fees.fields.noPeriodsAvailable')}
+                    </p>
+                  ) : (
+                    <div className="border border-border rounded-md divide-y divide-border max-h-48 overflow-y-auto">
+                      {feePeriods.map((period) => (
+                        <label
+                          key={period.id}
+                          className="flex items-center gap-2 p-2 cursor-pointer hover:bg-hover"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedPeriodIds.includes(period.id)}
+                            onChange={() => togglePeriod(period.id)}
+                            className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                          />
+                          <span className="text-caption text-foreground">
+                            {period.label}
+                            <span className="text-text-disabled ms-1">
+                              ({new Date(period.periodStart).toLocaleDateString()} –{' '}
+                              {new Date(period.periodEnd).toLocaleDateString()})
+                            </span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleSavePeriods}
+                      disabled={setFeePeriods.isPending || !feePeriods || feePeriods.length === 0}
+                    >
+                      {setFeePeriods.isPending
+                        ? t('common.loading')
+                        : t('payments.fees.fields.savePeriods')}
+                    </Button>
+                    {periodsSaved && (
+                      <span className="flex items-center gap-1 text-caption text-success">
+                        <Check className="w-3.5 h-3.5" />
+                        {t('common.saved', 'Enregistré')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

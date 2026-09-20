@@ -2,6 +2,7 @@ import { Router } from 'express';
 import branchConfigRoutes from './branch-config.routes';
 import branchCalendarRoutes from './branch-calendar.routes';
 import branchFeeRoutes from './branch-fee.routes';
+import branchFeePeriodRoutes from './branch-fee-period.routes';
 import enrollmentRoutes from './enrollment.routes';
 import paymentsRoutes from './payments.routes';
 import discountRoutes from './discount.routes';
@@ -22,6 +23,9 @@ router.use(branchCalendarRoutes);
 
 // Branch fee configuration
 router.use(branchFeeRoutes);
+
+// Per-fee period assignments (which calendar periods a fee bills against)
+router.use(branchFeePeriodRoutes);
 
 // Enrollment management
 router.use(enrollmentRoutes);

@@ -15,14 +15,16 @@ export class BranchCalendarServiceError extends Error {
 
 class BranchCalendarService {
   /**
-   * Create a new BranchCalendar entry for a fee + academic year.
-   * Validates no overlapping date ranges exist within that fee's calendar.
+   * Create a new BranchCalendar entry for a branch + academic year.
+   * Validates no overlapping date ranges exist. Periods are reusable
+   * building blocks — assigning them to fees is a separate step
+   * (see BranchFeePeriodService).
    */
-  async create(branchFeeId: string, academicYearId: string, data: CreateBranchCalendarInput) {
-    // Verify the fee exists
-    const fee = await prisma.branchFee.findFirst({ where: { id: branchFeeId } });
-    if (!fee) {
-      throw new BranchCalendarServiceError('Fee not found', 404, 'NOT_FOUND');
+  async create(branchId: string, academicYearId: string, data: CreateBranchCalendarInput) {
+    // Verify the branch exists
+    const branch = await prisma.branch.findFirst({ where: { id: branchId } });
+    if (!branch) {
+      throw new BranchCalendarServiceError('Branch not found', 404, 'NOT_FOUND');
     }
 
     // Verify the academic year exists
@@ -31,13 +33,12 @@ class BranchCalendarService {
       throw new BranchCalendarServiceError('Academic year not found', 404, 'NOT_FOUND');
     }
 
-    // Check for overlapping date ranges within this fee's calendar
-    await this.checkOverlap(branchFeeId, academicYearId, data.period_start, data.period_end);
+    // Check for overlapping date ranges
+    await this.checkOverlap(branchId, academicYearId, data.period_start, data.period_end);
 
     const entry = await prisma.branchCalendar.create({
       data: {
-        branchId: fee.branchId,
-        branchFeeId,
+        branchId,
         academicYearId,
         label: data.label,
         periodStart: data.period_start,
@@ -53,9 +54,9 @@ class BranchCalendarService {
    * Update an existing BranchCalendar entry.
    * Validates ownership and no overlapping date ranges.
    */
-  async update(id: string, branchFeeId: string, data: CreateBranchCalendarInput) {
+  async update(id: string, branchId: string, data: CreateBranchCalendarInput) {
     const existing = await prisma.branchCalendar.findFirst({
-      where: { id, branchFeeId },
+      where: { id, branchId },
     });
 
     if (!existing) {
@@ -64,7 +65,7 @@ class BranchCalendarService {
 
     // Check for overlapping date ranges (excluding the current entry)
     await this.checkOverlap(
-      existing.branchFeeId,
+      existing.branchId,
       existing.academicYearId,
       data.period_start,
       data.period_end,
@@ -86,11 +87,12 @@ class BranchCalendarService {
 
   /**
    * Delete a BranchCalendar entry.
-   * Validates ownership (entry belongs to the specified fee).
+   * Validates ownership (entry belongs to the specified branch). Any fee
+   * assignments referencing it are removed automatically (cascade).
    */
-  async delete(id: string, branchFeeId: string) {
+  async delete(id: string, branchId: string) {
     const existing = await prisma.branchCalendar.findFirst({
-      where: { id, branchFeeId },
+      where: { id, branchId },
     });
 
     if (!existing) {
@@ -101,12 +103,12 @@ class BranchCalendarService {
   }
 
   /**
-   * List all BranchCalendar entries for a fee + academic year,
+   * List all BranchCalendar entries for a branch + academic year,
    * ordered by period_start ascending.
    */
-  async list(branchFeeId: string, academicYearId: string) {
+  async list(branchId: string, academicYearId: string) {
     const entries = await prisma.branchCalendar.findMany({
-      where: { branchFeeId, academicYearId },
+      where: { branchId, academicYearId },
       orderBy: { periodStart: 'asc' },
     });
 
@@ -115,12 +117,12 @@ class BranchCalendarService {
 
   /**
    * Check if a new/updated date range overlaps with existing entries
-   * for the same fee + academic year.
+   * for the same branch + academic year.
    *
    * Overlap condition: existing.period_start <= new.period_end AND existing.period_end >= new.period_start
    */
   private async checkOverlap(
-    branchFeeId: string,
+    branchId: string,
     academicYearId: string,
     periodStart: Date,
     periodEnd: Date,
@@ -128,7 +130,7 @@ class BranchCalendarService {
   ) {
     const overlapping = await prisma.branchCalendar.findFirst({
       where: {
-        branchFeeId,
+        branchId,
         academicYearId,
         ...(excludeId ? { id: { not: excludeId } } : {}),
         periodStart: { lte: periodEnd },

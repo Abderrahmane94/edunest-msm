@@ -2,21 +2,21 @@ import { Request, Response, NextFunction } from 'express';
 import { branchCalendarService, BranchCalendarServiceError } from './branch-calendar.service';
 import { createBranchCalendarSchema } from './payments.schema';
 import { successResponse, errorResponse } from '../../utils/response';
-import { validateBranchFeeAccess } from './tenant-scope.middleware';
+import { validateBranchAccess } from './tenant-scope.middleware';
 import { ZodError } from 'zod';
 
 export const branchCalendarController = {
   /**
-   * POST /api/payments/fees/:branchFeeId/calendar
-   * Create a new BranchCalendar entry for this fee.
+   * POST /api/payments/branches/:branchId/calendar
+   * Create a new BranchCalendar entry.
    * Requires academicYearId in the request body.
    */
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { branchFeeId } = req.params;
+      const { branchId } = req.params;
 
-      // Validate fee access via its branch (Req 20.1, 20.4, 20.6)
-      const validatedBranch = await validateBranchFeeAccess(branchFeeId, req, res);
+      // Validate branch access (Req 20.1, 20.4, 20.6)
+      const validatedBranch = await validateBranchAccess(branchId, req, res);
       if (!validatedBranch) return;
 
       const { academicYearId, ...calendarData } = req.body;
@@ -31,7 +31,7 @@ export const branchCalendarController = {
       }
 
       const parsed = createBranchCalendarSchema.parse(calendarData);
-      const entry = await branchCalendarService.create(branchFeeId, academicYearId, parsed);
+      const entry = await branchCalendarService.create(validatedBranch, academicYearId, parsed);
       res.status(201).json(successResponse(entry));
     } catch (error) {
       if (error instanceof ZodError) {
@@ -62,19 +62,19 @@ export const branchCalendarController = {
   },
 
   /**
-   * PUT /api/payments/fees/:branchFeeId/calendar/:id
+   * PUT /api/payments/branches/:branchId/calendar/:id
    * Update an existing BranchCalendar entry.
    */
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { branchFeeId, id } = req.params;
+      const { branchId, id } = req.params;
 
-      // Validate fee access via its branch (Req 20.1, 20.4, 20.6)
-      const validatedBranch = await validateBranchFeeAccess(branchFeeId, req, res);
+      // Validate branch access (Req 20.1, 20.4, 20.6)
+      const validatedBranch = await validateBranchAccess(branchId, req, res);
       if (!validatedBranch) return;
 
       const parsed = createBranchCalendarSchema.parse(req.body);
-      const entry = await branchCalendarService.update(id, branchFeeId, parsed);
+      const entry = await branchCalendarService.update(id, validatedBranch, parsed);
       res.status(200).json(successResponse(entry));
     } catch (error) {
       if (error instanceof ZodError) {
@@ -105,18 +105,18 @@ export const branchCalendarController = {
   },
 
   /**
-   * DELETE /api/payments/fees/:branchFeeId/calendar/:id
+   * DELETE /api/payments/branches/:branchId/calendar/:id
    * Delete a BranchCalendar entry.
    */
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { branchFeeId, id } = req.params;
+      const { branchId, id } = req.params;
 
-      // Validate fee access via its branch (Req 20.1, 20.4, 20.6)
-      const validatedBranch = await validateBranchFeeAccess(branchFeeId, req, res);
+      // Validate branch access (Req 20.1, 20.4, 20.6)
+      const validatedBranch = await validateBranchAccess(branchId, req, res);
       if (!validatedBranch) return;
 
-      await branchCalendarService.delete(id, branchFeeId);
+      await branchCalendarService.delete(id, validatedBranch);
       res.status(200).json(successResponse({ message: 'Calendar entry deleted successfully' }));
     } catch (error) {
       if (error instanceof BranchCalendarServiceError) {
@@ -139,16 +139,16 @@ export const branchCalendarController = {
   },
 
   /**
-   * GET /api/payments/fees/:branchFeeId/calendar
-   * List all BranchCalendar entries for a fee + academic year.
+   * GET /api/payments/branches/:branchId/calendar
+   * List all BranchCalendar entries for a branch + academic year.
    * Requires academicYearId as a query parameter.
    */
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { branchFeeId } = req.params;
+      const { branchId } = req.params;
 
-      // Validate fee access via its branch (Req 20.1, 20.4, 20.6)
-      const validatedBranch = await validateBranchFeeAccess(branchFeeId, req, res);
+      // Validate branch access (Req 20.1, 20.4, 20.6)
+      const validatedBranch = await validateBranchAccess(branchId, req, res);
       if (!validatedBranch) return;
 
       const academicYearId = req.query.academicYearId as string;
@@ -162,7 +162,7 @@ export const branchCalendarController = {
         return;
       }
 
-      const entries = await branchCalendarService.list(branchFeeId, academicYearId);
+      const entries = await branchCalendarService.list(validatedBranch, academicYearId);
       res.status(200).json(successResponse(entries));
     } catch (error) {
       if (error instanceof BranchCalendarServiceError) {

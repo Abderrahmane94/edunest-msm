@@ -1483,6 +1483,8 @@
         "recurring": "Frais récurrent (cyclique)",
         "recurringHelper": "Activez pour facturer ce frais selon un cycle (mensuel, trimestriel...) au lieu d'une seule fois.",
         "customCycleHint": "Les cycles trimestriel et personnalisé nécessitent de définir les dates de chaque période dans le calendrier ci-dessous.",
+        "periodsConfigured": "✓ {{count}} période(s) configurée(s) pour {{year}} : {{labels}}",
+        "noPeriodsConfigured": "Aucune période configurée pour {{year}} pour l'instant.",
         "goToCalendar": "Aller au calendrier des périodes ↓"
       },
       "errors": {

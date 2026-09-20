@@ -157,8 +157,11 @@ function CreateEnrollmentDialog({
           : undefined,
       });
       setGenerationResult(result);
-    } catch {
-      // Error handled by React Query
+    } catch (err) {
+      setErrors((prev) => ({
+        ...prev,
+        form: err instanceof Error ? err.message : t('common.error'),
+      }));
     }
   }
 

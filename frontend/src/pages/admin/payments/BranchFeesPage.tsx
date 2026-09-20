@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, Edit2, Eye, DollarSign, Users, CalendarDays, Check } from 'lucide-react';
+import { Trash2, Edit2, Eye, DollarSign, Users, CalendarDays } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -64,22 +64,13 @@ function FeeDialog({
   );
   const setFeePeriods = useSetFeePeriods(editingFee?.id);
   const [selectedPeriodIds, setSelectedPeriodIds] = React.useState<string[]>([]);
-  const [periodsSaved, setPeriodsSaved] = React.useState(false);
 
   React.useEffect(() => {
     setSelectedPeriodIds((feePeriods ?? []).filter((p) => p.isAssigned).map((p) => p.id));
-    setPeriodsSaved(false);
   }, [feePeriods]);
 
   function togglePeriod(id: string) {
     setSelectedPeriodIds((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
-    setPeriodsSaved(false);
-  }
-
-  async function handleSavePeriods() {
-    if (!periodsYearId) return;
-    await setFeePeriods.mutateAsync({ academicYearId: periodsYearId, periodIds: selectedPeriodIds });
-    setPeriodsSaved(true);
   }
 
   const [name, setName] = React.useState('');
@@ -152,6 +143,9 @@ function FeeDialog({
           amount: Number(amount),
           ...cycleFields,
         });
+        if (periodsSectionActive && periodsYearId) {
+          await setFeePeriods.mutateAsync({ academicYearId: periodsYearId, periodIds: selectedPeriodIds });
+        }
       } else {
         await createFee.mutateAsync({
           name: name.trim(),
@@ -168,7 +162,12 @@ function FeeDialog({
     }
   }
 
-  const isPending = createFee.isPending || updateFee.isPending;
+  const periodsSectionActive = !!editingFee && isRecurring && (billingCycle === 'trimester' || billingCycle === 'custom');
+  const isPending =
+    createFee.isPending ||
+    updateFee.isPending ||
+    setFeePeriods.isPending ||
+    (periodsSectionActive && feePeriodsLoading);
 
   const billingCycleOptions = [
     { value: 'monthly', label: t('payments.branchConfig.cycleMonthly') },
@@ -341,26 +340,6 @@ function FeeDialog({
                       ))}
                     </div>
                   )}
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={handleSavePeriods}
-                      disabled={setFeePeriods.isPending || !feePeriods || feePeriods.length === 0}
-                    >
-                      {setFeePeriods.isPending
-                        ? t('common.loading')
-                        : t('payments.fees.fields.savePeriods')}
-                    </Button>
-                    {periodsSaved && (
-                      <span className="flex items-center gap-1 text-caption text-success">
-                        <Check className="w-3.5 h-3.5" />
-                        {t('common.saved', 'Enregistré')}
-                      </span>
-                    )}
-                  </div>
                 </div>
               )}
             </div>

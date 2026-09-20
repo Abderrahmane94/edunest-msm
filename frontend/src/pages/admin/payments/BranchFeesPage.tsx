@@ -58,7 +58,7 @@ function FeeDialog({
     if (!periodsYearId && activeAcademicYear) setPeriodsYearId(activeAcademicYear.id);
   }, [activeAcademicYear, periodsYearId]);
 
-  const { data: feePeriods, isLoading: feePeriodsLoading } = useFeePeriods(
+  const { data: feePeriods, isLoading: feePeriodsLoading, isError: feePeriodsError, error: feePeriodsErrorObj } = useFeePeriods(
     editingFee?.id,
     periodsYearId || undefined,
   );
@@ -309,6 +309,10 @@ function FeeDialog({
 
                   {feePeriodsLoading ? (
                     <div className="animate-pulse h-16 bg-subtle rounded-md" />
+                  ) : feePeriodsError ? (
+                    <p className="text-caption text-danger">
+                      {feePeriodsErrorObj instanceof Error ? feePeriodsErrorObj.message : t('common.error')}
+                    </p>
                   ) : !feePeriods || feePeriods.length === 0 ? (
                     <p className="text-caption text-text-secondary">
                       {t('payments.fees.fields.noPeriodsAvailable')}

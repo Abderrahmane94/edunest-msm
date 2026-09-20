@@ -71,6 +71,48 @@ describe('DiscountService.recalculatePeriods (via create)', () => {
     expect(firstUpdateAmount.toString()).toBe('8000'); // 20% off 10000
   });
 
+  it('prorates the first (partial) period by days covered before applying the discount', async () => {
+    mockPrisma.enrollment.findUnique.mockResolvedValue({
+      recurringFee: new Prisma.Decimal(10000),
+      baseFeeId: null,
+      startDate: new Date('2026-01-15'),
+    });
+    mockPrisma.billingPeriod.findMany.mockResolvedValue([
+      {
+        id: 'period-first-partial',
+        periodStart: new Date('2026-01-01'),
+        periodEnd: new Date('2026-01-31'),
+        amountDue: new Prisma.Decimal(10000),
+        paymentAllocations: [],
+      },
+      {
+        id: 'period-full',
+        periodStart: new Date('2026-02-01'),
+        periodEnd: new Date('2026-02-28'),
+        amountDue: new Prisma.Decimal(10000),
+        paymentAllocations: [],
+      },
+    ]);
+
+    await discountService.create('enr-1', {
+      type: 'scholarship',
+      percentage: 20,
+      validFrom: '2026-01-01',
+    }, 'user-1');
+
+    const calls = mockPrisma.billingPeriod.update.mock.calls as Array<
+      [{ where: { id: string }; data: { amountDue: Prisma.Decimal } }]
+    >;
+    const firstPeriodUpdate = calls.find((c) => c[0].where.id === 'period-first-partial')!;
+    const fullPeriodUpdate = calls.find((c) => c[0].where.id === 'period-full')!;
+
+    // Jan has 31 days; Jan 15-31 covers 17 of them: 10000 * 17/31 = 5483.87,
+    // then 20% off: 5483.87 * 0.8 = 4387.096 -> 4387.10
+    expect(firstPeriodUpdate[0].data.amountDue.toString()).toBe('4387.1');
+    // Full second period: 10000 * 0.8 = 8000
+    expect(fullPeriodUpdate[0].data.amountDue.toString()).toBe('8000');
+  });
+
   it('does not touch a period that already has a payment allocation', async () => {
     mockPrisma.enrollment.findUnique.mockResolvedValue({
       recurringFee: new Prisma.Decimal(10000),

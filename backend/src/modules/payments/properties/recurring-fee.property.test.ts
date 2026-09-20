@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
 import { Prisma } from '@prisma/client';
-import { generatePeriodsForEnrollment } from '../billing-period.service';
+import { generatePeriodsForEnrollment, prorateAmount } from '../billing-period.service';
 import type { GeneratePeriodsInput } from '../billing-period.service';
 
 /**
@@ -10,7 +10,9 @@ import type { GeneratePeriodsInput } from '../billing-period.service';
  * For any enrollment and any generated billing period where is_registration_period
  * is false and no first-period override was stated, amount_due SHALL equal the
  * enrollment's recurring_fee value at generation time, expressed with exactly two
- * decimal places.
+ * decimal places — except for the first period when the enrollment starts after
+ * that period's start (a mid-period enrollment), which is automatically prorated
+ * by the fraction of days actually covered.
  *
  * **Validates: Requirements 3.6, 4.8, 4.9**
  */
@@ -76,9 +78,14 @@ describe('Property 4: Recurring Fee as Amount Source', () => {
 
           expect(recurringPeriods.length).toBeGreaterThan(0);
 
-          for (const period of recurringPeriods) {
-            // amountDue should equal recurringFee exactly
-            expect(period.amountDue.equals(recurringFee)).toBe(true);
+          for (let i = 0; i < recurringPeriods.length; i++) {
+            const period = recurringPeriods[i];
+            const isProratedFirstPeriod = i === 0 && startDate > period.periodStart;
+            const expectedAmount = isProratedFirstPeriod
+              ? prorateAmount(recurringFee, period.periodStart, period.periodEnd, startDate)
+              : recurringFee;
+
+            expect(period.amountDue.equals(expectedAmount)).toBe(true);
             // Verify 2 decimal places
             const decimalPlaces = period.amountDue.decimalPlaces();
             expect(decimalPlaces).toBeLessThanOrEqual(2);
@@ -246,9 +253,16 @@ describe('Property 4: Recurring Fee as Amount Source', () => {
           // Registration period uses registrationFee, NOT recurringFee
           expect(regPeriods[0].amountDue.equals(registrationFee)).toBe(true);
 
-          // All non-registration periods use recurringFee
-          for (const period of recurringPeriods) {
-            expect(period.amountDue.equals(recurringFee)).toBe(true);
+          // All non-registration periods use recurringFee, except the first
+          // one when the enrollment starts mid-period (automatic proration)
+          for (let i = 0; i < recurringPeriods.length; i++) {
+            const period = recurringPeriods[i];
+            const isProratedFirstPeriod = i === 0 && startDate > period.periodStart;
+            const expectedAmount = isProratedFirstPeriod
+              ? prorateAmount(recurringFee, period.periodStart, period.periodEnd, startDate)
+              : recurringFee;
+
+            expect(period.amountDue.equals(expectedAmount)).toBe(true);
             const decimalPlaces = period.amountDue.decimalPlaces();
             expect(decimalPlaces).toBeLessThanOrEqual(2);
           }

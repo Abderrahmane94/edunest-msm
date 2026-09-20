@@ -1570,7 +1570,7 @@
         "registrationFee": "Frais d'inscription (DZD)",
         "registrationFeeHelper": "Optionnel — frais unique à l'inscription",
         "firstPeriodAmount": "Montant première période (DZD)",
-        "firstPeriodAmountHelper": "Optionnel — pour inscription en cours de cycle",
+        "firstPeriodAmountHelper": "Optionnel — le premier mois partiel est calculé au prorata automatiquement ; remplissez ce champ seulement pour imposer un autre montant.",
         "feeValidation": "Doit être entre 0,00 et 9 999 999,99 avec max 2 décimales",
         "childRequired": "Veuillez sélectionner un enfant",
         "noActiveAcademicYear": "Aucune année scolaire active n'est configurée — configurez-en une avant de créer une inscription.",

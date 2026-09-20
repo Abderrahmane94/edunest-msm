@@ -13,6 +13,7 @@ export interface GeneratePeriodsInput {
   gracePeriodDays: number;
   recurringFee: Prisma.Decimal;
   registrationFee: Prisma.Decimal | null;
+  /** Explicit override for the first (possibly partial) period's amount — bypasses automatic proration. */
   firstPeriodAmountDue?: Prisma.Decimal;
   calendarRows: Array<{ periodStart: Date; periodEnd: Date }>;
 }
@@ -62,6 +63,32 @@ function firstDayOfMonth(year: number, month: number): Date {
 }
 
 /**
+ * Counts calendar days between two dates, inclusive of both endpoints.
+ * Uses UTC components so DST transitions never shift the count.
+ */
+function daysBetweenInclusive(start: Date, end: Date): number {
+  const utcStart = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+  const utcEnd = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+  return Math.round((utcEnd - utcStart) / 86400000) + 1;
+}
+
+/**
+ * Prorates a period's amount by the fraction of it actually covered,
+ * starting from `effectiveStart` through `periodEnd`, rounded to 2 decimals.
+ * Used for a mid-period enrollment start (a partial first month/period).
+ */
+export function prorateAmount(
+  fullAmount: Prisma.Decimal,
+  periodStart: Date,
+  periodEnd: Date,
+  effectiveStart: Date
+): Prisma.Decimal {
+  const totalDays = daysBetweenInclusive(periodStart, periodEnd);
+  const coveredDays = daysBetweenInclusive(effectiveStart, periodEnd);
+  return fullAmount.times(coveredDays).dividedBy(totalDays).toDecimalPlaces(2);
+}
+
+/**
  * Resolves a due date from the fee's configured day-of-month, anchored to
  * the month a period starts in.
  */
@@ -79,10 +106,12 @@ function dueDateForPeriod(periodStart: Date, billingDueDay: number): Date {
  *
  * Generation rules:
  * - Monthly: one period per calendar month from startDate's month through academicYearEndDate's month
- * - Trimester: uses calendarRows filtered by periodEnd >= startDate, requires exactly 3 rows
  * - Custom: uses calendarRows filtered by periodEnd >= startDate, requires >= 1 row
  * - Registration period: generated when registrationFee is non-null
- * - First period override: applied when firstPeriodAmountDue is provided AND startDate > first period's periodStart
+ * - First period proration: when startDate falls after the first recurring period's
+ *   periodStart (a mid-period enrollment), that period's amount is automatically
+ *   prorated by the fraction of days actually covered — unless firstPeriodAmountDue
+ *   is explicitly provided, which takes precedence over the automatic proration.
  */
 export function generatePeriodsForEnrollment(input: GeneratePeriodsInput): GenerationResult {
   const {
@@ -111,15 +140,15 @@ export function generatePeriodsForEnrollment(input: GeneratePeriodsInput): Gener
     calendarRows
   );
 
-  // Apply first-period amount override for mid-cycle enrollment
-  if (
-    firstPeriodAmountDue !== undefined &&
-    recurringPeriods.length > 0 &&
-    startDate > recurringPeriods[0].periodStart
-  ) {
+  // Mid-cycle enrollment: automatically prorate the first recurring period by
+  // days actually covered, unless an explicit override is provided.
+  if (recurringPeriods.length > 0 && startDate > recurringPeriods[0].periodStart) {
     recurringPeriods[0] = {
       ...recurringPeriods[0],
-      amountDue: firstPeriodAmountDue,
+      amountDue:
+        firstPeriodAmountDue !== undefined
+          ? firstPeriodAmountDue
+          : prorateAmount(recurringFee, recurringPeriods[0].periodStart, recurringPeriods[0].periodEnd, startDate),
     };
   }
 

@@ -580,7 +580,7 @@ describe('generatePeriodsForEnrollment', () => {
       expect(result.periods[0].amountDue.toString()).toBe('6000');
     });
 
-    it('does NOT apply override when firstPeriodAmountDue is not provided', () => {
+    it('automatically prorates the first period by days covered when firstPeriodAmountDue is not provided', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-5',
         startDate: new Date(2024, 0, 15),
@@ -597,7 +597,11 @@ describe('generatePeriodsForEnrollment', () => {
 
       const result = generatePeriodsForEnrollment(input);
 
-      expect(result.periods[0].amountDue.toString()).toBe('6000');
+      // January has 31 days; Jan 15 through Jan 31 covers 17 of them.
+      // 6000 * 17 / 31 = 3290.32...
+      expect(result.periods[0].amountDue.toString()).toBe('3290.32');
+      // Later periods are unaffected and use the full recurring fee.
+      expect(result.periods[1].amountDue.toString()).toBe('6000');
     });
   });
 
@@ -625,8 +629,9 @@ describe('generatePeriodsForEnrollment', () => {
       expect(result.earliestPeriodStart).toEqual(new Date(2024, 0, 1));
       // Last month is March, last day = Mar 31
       expect(result.latestPeriodEnd).toEqual(new Date(2024, 2, 31));
-      // Total: 1000 + 5000 + 5000 + 5000 = 16000
-      expect(result.totalAmountDue.toString()).toBe('16000');
+      // January is prorated (22 of 31 days covered from Jan 10): 5000 * 22/31 = 3548.39
+      // Total: 1000 (registration) + 3548.39 (Jan, prorated) + 5000 (Feb) + 5000 (Mar) = 14548.39
+      expect(result.totalAmountDue.toString()).toBe('14548.39');
     });
 
     it('returns earliest/latest including registration period', () => {

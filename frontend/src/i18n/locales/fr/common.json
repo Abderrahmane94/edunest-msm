@@ -1485,8 +1485,7 @@
         "customCycleHint": "Les cycles trimestriel et personnalisé facturent ce frais sur les périodes que vous lui assignez ci-dessous (créées dans la section Calendrier).",
         "savePeriodsFirst": "Enregistrez d'abord ce frais — vous pourrez ensuite lui assigner des périodes.",
         "periodsYear": "Année scolaire",
-        "noPeriodsAvailable": "Aucune période créée pour cette année. Ajoutez-en dans la section Calendrier ci-dessous.",
-        "savePeriods": "Enregistrer les périodes"
+        "noPeriodsAvailable": "Aucune période créée pour cette année. Ajoutez-en dans la section Calendrier ci-dessous."
       },
       "errors": {
         "nameRequired": "Le nom est requis (1-100 caractères)",

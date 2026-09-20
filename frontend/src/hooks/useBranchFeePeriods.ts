@@ -17,6 +17,9 @@ export function useFeePeriods(branchFeeId: string | undefined, academicYearId: s
       const res = await apiClient.get<{ periods: FeePeriod[] }>(
         `/payments/fees/${branchFeeId}/periods?academicYearId=${academicYearId}`,
       );
+      if (!res.success) {
+        throw new Error(res.error?.message ?? 'Failed to load periods');
+      }
       return res.data?.periods ?? [];
     },
     enabled: !!branchFeeId && !!academicYearId,

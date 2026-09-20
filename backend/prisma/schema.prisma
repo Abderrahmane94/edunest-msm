@@ -267,6 +267,8 @@ model Classroom {
   enrollments       ClassroomEnrollment[]
   attendanceRecords AttendanceRecord[]
   eventLinks        EventClassroom[]
+  // Fees explicitly linked to this classroom (see BranchFeeClassroom).
+  feeAssignments    BranchFeeClassroom[]
 
   @@index([deletedAt])
   @@map("classrooms")
@@ -744,10 +746,11 @@ model BranchFee {
   createdAt       DateTime          @default(now()) @map("created_at")
   updatedAt       DateTime          @updatedAt @map("updated_at")
 
-  branch             Branch            @relation(fields: [branchId], references: [id])
-  billingPeriods     BillingPeriod[]
-  baseForEnrollments Enrollment[]      @relation("EnrollmentBaseFee")
-  periodAssignments  BranchFeePeriod[]
+  branch               Branch               @relation(fields: [branchId], references: [id])
+  billingPeriods       BillingPeriod[]
+  baseForEnrollments   Enrollment[]         @relation("EnrollmentBaseFee")
+  periodAssignments    BranchFeePeriod[]
+  classroomAssignments BranchFeeClassroom[]
 
   @@index([branchId])
   @@map("branch_fees")
@@ -802,6 +805,26 @@ model BranchFeePeriod {
   @@unique([branchFeeId, branchCalendarId])
   @@index([branchCalendarId])
   @@map("branch_fee_periods")
+}
+
+/**
+ * Many-to-many link between a BranchFee and a Classroom: lets a fee declare
+ * which classrooms it applies to (e.g. a class-specific uniform fee), purely
+ * as metadata — it does not itself apply the fee to anyone. A fee with no
+ * classroom links is a general fee that applies everywhere.
+ */
+model BranchFeeClassroom {
+  id          String   @id @default(uuid())
+  branchFeeId String   @map("branch_fee_id")
+  classroomId String   @map("classroom_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  branchFee BranchFee @relation(fields: [branchFeeId], references: [id], onDelete: Cascade)
+  classroom Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+
+  @@unique([branchFeeId, classroomId])
+  @@index([classroomId])
+  @@map("branch_fee_classrooms")
 }
 
 model Enrollment {

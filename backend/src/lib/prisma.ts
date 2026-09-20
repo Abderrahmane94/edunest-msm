@@ -109,6 +109,7 @@ const MODELS_WITHOUT_SCHOOL_ID = new Set([
   'BranchCalendar',
   'BranchFee',
   'BranchFeePeriod',
+  'BranchFeeClassroom',
   'Enrollment',
   'BillingPeriod',
   'PaymentRecord',

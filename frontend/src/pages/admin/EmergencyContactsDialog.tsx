@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button, Input, StatusBadge,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Button, Input, StatusBadge,
 } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import {
@@ -30,14 +30,18 @@ const emptyForm: ContactFormState = {
   name: '', relationshipOption: 'mother', relationshipOther: '', phone: '', address: '', national_id: '', is_authorized_pickup: false,
 };
 
-interface EmergencyContactsDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface EmergencyContactsManagerProps {
   childId: string;
   childName: string;
 }
 
-export function EmergencyContactsDialog({ open, onOpenChange, childId, childName }: EmergencyContactsDialogProps) {
+/**
+ * List + inline add/edit form for a child's emergency contacts. Each
+ * mutation saves immediately (no outer form submit) — used both as the body
+ * of the standalone EmergencyContactsDialog and as a step in the child
+ * creation wizard.
+ */
+export function EmergencyContactsManager({ childId, childName }: EmergencyContactsManagerProps) {
   const { t } = useTranslation();
   const { data: contacts = [], isLoading: contactsLoading } = useEmergencyContacts(childId);
   const addContact = useAddEmergencyContact();
@@ -161,246 +165,264 @@ export function EmergencyContactsDialog({ open, onOpenChange, childId, childName
   const hasAuthorizedPickup = contacts.some((c) => c.is_authorized_pickup);
 
   return (
+    <>
+      <p className="text-body text-text-secondary mt-1 mb-4">
+        {t('children.emergencyContacts.description', { name: childName })}
+      </p>
+
+      {contactsLoading && (
+        <p className="text-caption text-text-secondary mb-4">{t('common.loading')}</p>
+      )}
+
+      {!contactsLoading && contacts.length === 0 && (
+        <p className="text-body text-text-secondary mb-4">{t('children.emergencyContacts.noContacts')}</p>
+      )}
+
+      {!contactsLoading && contacts.length > 0 && !hasAuthorizedPickup && (
+        <div className="mb-4">
+          <StatusBadge variant="absent">{t('children.emergencyContacts.noPickupContact')}</StatusBadge>
+        </div>
+      )}
+
+      {contacts.length > 0 && (
+        <div className="space-y-2 mb-4">
+          {contacts.map((contact) => (
+            editingId === contact.id ? (
+              <div key={contact.id} className="p-3 bg-subtle rounded-md space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                  <FormField label={t('children.emergencyContacts.name')} htmlFor={`ec-edit-name-${contact.id}`} error={editErrors.name} required>
+                    <Input
+                      id={`ec-edit-name-${contact.id}`}
+                      value={editForm.name}
+                      onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
+                    />
+                  </FormField>
+                  <FormSelect
+                    label={t('children.emergencyContacts.relationship')}
+                    name={`ec-edit-rel-${contact.id}`}
+                    value={editForm.relationshipOption}
+                    onChange={(e) => setEditForm((p) => ({ ...p, relationshipOption: e.target.value }))}
+                    options={relationshipOptions}
+                  />
+                </div>
+                {editForm.relationshipOption === 'other' && (
+                  <FormField label={t('children.emergencyContacts.relationshipOther')} htmlFor={`ec-edit-rel-other-${contact.id}`} error={editErrors.relationship} required>
+                    <Input
+                      id={`ec-edit-rel-other-${contact.id}`}
+                      value={editForm.relationshipOther}
+                      onChange={(e) => setEditForm((p) => ({ ...p, relationshipOther: e.target.value }))}
+                      placeholder={t('children.emergencyContacts.relationshipOtherPlaceholder')}
+                    />
+                  </FormField>
+                )}
+                <FormField label={t('children.emergencyContacts.phone')} htmlFor={`ec-edit-phone-${contact.id}`} error={editErrors.phone} required>
+                  <Input
+                    id={`ec-edit-phone-${contact.id}`}
+                    type="tel"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))}
+                  />
+                </FormField>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                  <FormField label={t('children.emergencyContacts.address')} htmlFor={`ec-edit-address-${contact.id}`}>
+                    <Input
+                      id={`ec-edit-address-${contact.id}`}
+                      value={editForm.address}
+                      onChange={(e) => setEditForm((p) => ({ ...p, address: e.target.value }))}
+                    />
+                  </FormField>
+                  <FormField label={t('children.emergencyContacts.nationalId')} htmlFor={`ec-edit-national-id-${contact.id}`}>
+                    <Input
+                      id={`ec-edit-national-id-${contact.id}`}
+                      value={editForm.national_id}
+                      onChange={(e) => setEditForm((p) => ({ ...p, national_id: e.target.value }))}
+                    />
+                  </FormField>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editForm.is_authorized_pickup}
+                    onChange={(e) => setEditForm((p) => ({ ...p, is_authorized_pickup: e.target.checked }))}
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <span className="text-body text-foreground">{t('children.emergencyContacts.authorizedPickup')}</span>
+                </label>
+                {editError && <p className="text-body text-danger">{editError}</p>}
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="secondary" size="sm" onClick={() => handleSaveEdit(contact.id)} disabled={updateContact.isPending}>
+                    <Check className="w-4 h-4" />
+                    {t('children.emergencyContacts.save')}
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={cancelEdit}>
+                    <X className="w-4 h-4" />
+                    {t('common.cancel')}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div key={contact.id} className="flex items-center justify-between p-3 bg-subtle rounded-md">
+                <div>
+                  <p className="text-body font-medium text-foreground">{contact.name}</p>
+                  <p className="text-caption text-text-secondary">
+                    {contact.relationship} • {contact.phone}
+                  </p>
+                  {(contact.address || contact.national_id) && (
+                    <p className="text-caption text-text-secondary">
+                      {contact.address && <span>{contact.address}</span>}
+                      {contact.address && contact.national_id && <span> • </span>}
+                      {contact.national_id && <span dir="ltr">{contact.national_id}</span>}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {contact.is_authorized_pickup && (
+                    <StatusBadge variant="present">
+                      {t('children.emergencyContacts.authorizedPickup')}
+                    </StatusBadge>
+                  )}
+                  <Button type="button" variant="secondary" size="sm" onClick={() => startEdit(contact)}>
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleRemoveContact(contact.id)}
+                    disabled={removeContact.isPending}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )
+          ))}
+        </div>
+      )}
+
+      <div className="border border-border rounded-lg p-4 space-y-3">
+        <p className="text-label font-medium text-foreground">
+          {t('children.emergencyContacts.addNew')}
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+          <FormField
+            label={t('children.emergencyContacts.name')}
+            htmlFor="ec-name"
+            error={errors.name}
+            required
+          >
+            <Input
+              id="ec-name"
+              name="name"
+              value={newContact.name}
+              onChange={(e) => { setNewContact((p) => ({ ...p, name: e.target.value })); setErrors((p) => ({ ...p, name: '' })); }}
+              placeholder={t('children.emergencyContacts.namePlaceholder')}
+            />
+          </FormField>
+
+          <FormSelect
+            label={t('children.emergencyContacts.relationship')}
+            name="relationshipOption"
+            value={newContact.relationshipOption}
+            onChange={(e) => setNewContact((p) => ({ ...p, relationshipOption: e.target.value }))}
+            options={relationshipOptions}
+          />
+        </div>
+
+        {newContact.relationshipOption === 'other' && (
+          <FormField
+            label={t('children.emergencyContacts.relationshipOther')}
+            htmlFor="ec-relationship-other"
+            error={errors.relationship}
+            required
+          >
+            <Input
+              id="ec-relationship-other"
+              value={newContact.relationshipOther}
+              onChange={(e) => { setNewContact((p) => ({ ...p, relationshipOther: e.target.value })); setErrors((p) => ({ ...p, relationship: '' })); }}
+              placeholder={t('children.emergencyContacts.relationshipOtherPlaceholder')}
+            />
+          </FormField>
+        )}
+
+        <FormField
+          label={t('children.emergencyContacts.phone')}
+          htmlFor="ec-phone"
+          error={errors.phone}
+          required
+        >
+          <Input
+            id="ec-phone"
+            name="phone"
+            type="tel"
+            value={newContact.phone}
+            onChange={(e) => { setNewContact((p) => ({ ...p, phone: e.target.value })); setErrors((p) => ({ ...p, phone: '' })); }}
+            placeholder="+213 XX XX XX XX"
+          />
+        </FormField>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+          <FormField label={t('children.emergencyContacts.address')} htmlFor="ec-address">
+            <Input
+              id="ec-address"
+              value={newContact.address}
+              onChange={(e) => setNewContact((p) => ({ ...p, address: e.target.value }))}
+              placeholder={t('children.emergencyContacts.addressPlaceholder')}
+            />
+          </FormField>
+          <FormField label={t('children.emergencyContacts.nationalId')} htmlFor="ec-national-id">
+            <Input
+              id="ec-national-id"
+              value={newContact.national_id}
+              onChange={(e) => setNewContact((p) => ({ ...p, national_id: e.target.value }))}
+              placeholder={t('children.emergencyContacts.nationalIdPlaceholder')}
+            />
+          </FormField>
+        </div>
+
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            name="is_authorized_pickup"
+            checked={newContact.is_authorized_pickup}
+            onChange={(e) => setNewContact((p) => ({ ...p, is_authorized_pickup: e.target.checked }))}
+            className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+          />
+          <span className="text-body text-foreground">
+            {t('children.emergencyContacts.authorizedPickup')}
+          </span>
+        </label>
+
+        {submitError && <p className="text-body text-danger">{submitError}</p>}
+
+        <Button type="button" variant="secondary" size="sm" onClick={handleAddContact} disabled={addContact.isPending}>
+          <Plus className="w-4 h-4" />
+          {addContact.isPending ? t('common.loading') : t('children.emergencyContacts.add')}
+        </Button>
+      </div>
+    </>
+  );
+}
+
+interface EmergencyContactsDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  childId: string;
+  childName: string;
+}
+
+export function EmergencyContactsDialog({ open, onOpenChange, childId, childName }: EmergencyContactsDialogProps) {
+  const { t } = useTranslation();
+
+  return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[560px]">
         <DialogHeader>
           <DialogTitle>{t('children.emergencyContacts.title')}</DialogTitle>
-          <DialogDescription>
-            {t('children.emergencyContacts.description', { name: childName })}
-          </DialogDescription>
         </DialogHeader>
 
-        {contactsLoading && (
-          <p className="text-caption text-text-secondary mb-4">{t('common.loading')}</p>
-        )}
-
-        {!contactsLoading && contacts.length === 0 && (
-          <p className="text-body text-text-secondary mb-4">{t('children.emergencyContacts.noContacts')}</p>
-        )}
-
-        {!contactsLoading && contacts.length > 0 && !hasAuthorizedPickup && (
-          <div className="mb-4">
-            <StatusBadge variant="absent">{t('children.emergencyContacts.noPickupContact')}</StatusBadge>
-          </div>
-        )}
-
-        {contacts.length > 0 && (
-          <div className="space-y-2 mb-4">
-            {contacts.map((contact) => (
-              editingId === contact.id ? (
-                <div key={contact.id} className="p-3 bg-subtle rounded-md space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                    <FormField label={t('children.emergencyContacts.name')} htmlFor={`ec-edit-name-${contact.id}`} error={editErrors.name} required>
-                      <Input
-                        id={`ec-edit-name-${contact.id}`}
-                        value={editForm.name}
-                        onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
-                      />
-                    </FormField>
-                    <FormSelect
-                      label={t('children.emergencyContacts.relationship')}
-                      name={`ec-edit-rel-${contact.id}`}
-                      value={editForm.relationshipOption}
-                      onChange={(e) => setEditForm((p) => ({ ...p, relationshipOption: e.target.value }))}
-                      options={relationshipOptions}
-                    />
-                  </div>
-                  {editForm.relationshipOption === 'other' && (
-                    <FormField label={t('children.emergencyContacts.relationshipOther')} htmlFor={`ec-edit-rel-other-${contact.id}`} error={editErrors.relationship} required>
-                      <Input
-                        id={`ec-edit-rel-other-${contact.id}`}
-                        value={editForm.relationshipOther}
-                        onChange={(e) => setEditForm((p) => ({ ...p, relationshipOther: e.target.value }))}
-                        placeholder={t('children.emergencyContacts.relationshipOtherPlaceholder')}
-                      />
-                    </FormField>
-                  )}
-                  <FormField label={t('children.emergencyContacts.phone')} htmlFor={`ec-edit-phone-${contact.id}`} error={editErrors.phone} required>
-                    <Input
-                      id={`ec-edit-phone-${contact.id}`}
-                      type="tel"
-                      value={editForm.phone}
-                      onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))}
-                    />
-                  </FormField>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                    <FormField label={t('children.emergencyContacts.address')} htmlFor={`ec-edit-address-${contact.id}`}>
-                      <Input
-                        id={`ec-edit-address-${contact.id}`}
-                        value={editForm.address}
-                        onChange={(e) => setEditForm((p) => ({ ...p, address: e.target.value }))}
-                      />
-                    </FormField>
-                    <FormField label={t('children.emergencyContacts.nationalId')} htmlFor={`ec-edit-national-id-${contact.id}`}>
-                      <Input
-                        id={`ec-edit-national-id-${contact.id}`}
-                        value={editForm.national_id}
-                        onChange={(e) => setEditForm((p) => ({ ...p, national_id: e.target.value }))}
-                      />
-                    </FormField>
-                  </div>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={editForm.is_authorized_pickup}
-                      onChange={(e) => setEditForm((p) => ({ ...p, is_authorized_pickup: e.target.checked }))}
-                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                    />
-                    <span className="text-body text-foreground">{t('children.emergencyContacts.authorizedPickup')}</span>
-                  </label>
-                  {editError && <p className="text-body text-danger">{editError}</p>}
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="secondary" size="sm" onClick={() => handleSaveEdit(contact.id)} disabled={updateContact.isPending}>
-                      <Check className="w-4 h-4" />
-                      {t('children.emergencyContacts.save')}
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={cancelEdit}>
-                      <X className="w-4 h-4" />
-                      {t('common.cancel')}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div key={contact.id} className="flex items-center justify-between p-3 bg-subtle rounded-md">
-                  <div>
-                    <p className="text-body font-medium text-foreground">{contact.name}</p>
-                    <p className="text-caption text-text-secondary">
-                      {contact.relationship} • {contact.phone}
-                    </p>
-                    {(contact.address || contact.national_id) && (
-                      <p className="text-caption text-text-secondary">
-                        {contact.address && <span>{contact.address}</span>}
-                        {contact.address && contact.national_id && <span> • </span>}
-                        {contact.national_id && <span dir="ltr">{contact.national_id}</span>}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {contact.is_authorized_pickup && (
-                      <StatusBadge variant="present">
-                        {t('children.emergencyContacts.authorizedPickup')}
-                      </StatusBadge>
-                    )}
-                    <Button type="button" variant="secondary" size="sm" onClick={() => startEdit(contact)}>
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleRemoveContact(contact.id)}
-                      disabled={removeContact.isPending}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              )
-            ))}
-          </div>
-        )}
-
-        <div className="border border-border rounded-lg p-4 space-y-3">
-          <p className="text-label font-medium text-foreground">
-            {t('children.emergencyContacts.addNew')}
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-            <FormField
-              label={t('children.emergencyContacts.name')}
-              htmlFor="ec-name"
-              error={errors.name}
-              required
-            >
-              <Input
-                id="ec-name"
-                name="name"
-                value={newContact.name}
-                onChange={(e) => { setNewContact((p) => ({ ...p, name: e.target.value })); setErrors((p) => ({ ...p, name: '' })); }}
-                placeholder={t('children.emergencyContacts.namePlaceholder')}
-              />
-            </FormField>
-
-            <FormSelect
-              label={t('children.emergencyContacts.relationship')}
-              name="relationshipOption"
-              value={newContact.relationshipOption}
-              onChange={(e) => setNewContact((p) => ({ ...p, relationshipOption: e.target.value }))}
-              options={relationshipOptions}
-            />
-          </div>
-
-          {newContact.relationshipOption === 'other' && (
-            <FormField
-              label={t('children.emergencyContacts.relationshipOther')}
-              htmlFor="ec-relationship-other"
-              error={errors.relationship}
-              required
-            >
-              <Input
-                id="ec-relationship-other"
-                value={newContact.relationshipOther}
-                onChange={(e) => { setNewContact((p) => ({ ...p, relationshipOther: e.target.value })); setErrors((p) => ({ ...p, relationship: '' })); }}
-                placeholder={t('children.emergencyContacts.relationshipOtherPlaceholder')}
-              />
-            </FormField>
-          )}
-
-          <FormField
-            label={t('children.emergencyContacts.phone')}
-            htmlFor="ec-phone"
-            error={errors.phone}
-            required
-          >
-            <Input
-              id="ec-phone"
-              name="phone"
-              type="tel"
-              value={newContact.phone}
-              onChange={(e) => { setNewContact((p) => ({ ...p, phone: e.target.value })); setErrors((p) => ({ ...p, phone: '' })); }}
-              placeholder="+213 XX XX XX XX"
-            />
-          </FormField>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-            <FormField label={t('children.emergencyContacts.address')} htmlFor="ec-address">
-              <Input
-                id="ec-address"
-                value={newContact.address}
-                onChange={(e) => setNewContact((p) => ({ ...p, address: e.target.value }))}
-                placeholder={t('children.emergencyContacts.addressPlaceholder')}
-              />
-            </FormField>
-            <FormField label={t('children.emergencyContacts.nationalId')} htmlFor="ec-national-id">
-              <Input
-                id="ec-national-id"
-                value={newContact.national_id}
-                onChange={(e) => setNewContact((p) => ({ ...p, national_id: e.target.value }))}
-                placeholder={t('children.emergencyContacts.nationalIdPlaceholder')}
-              />
-            </FormField>
-          </div>
-
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              name="is_authorized_pickup"
-              checked={newContact.is_authorized_pickup}
-              onChange={(e) => setNewContact((p) => ({ ...p, is_authorized_pickup: e.target.checked }))}
-              className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-            />
-            <span className="text-body text-foreground">
-              {t('children.emergencyContacts.authorizedPickup')}
-            </span>
-          </label>
-
-          {submitError && <p className="text-body text-danger">{submitError}</p>}
-
-          <Button type="button" variant="secondary" size="sm" onClick={handleAddContact} disabled={addContact.isPending}>
-            <Plus className="w-4 h-4" />
-            {addContact.isPending ? t('common.loading') : t('children.emergencyContacts.add')}
-          </Button>
-        </div>
+        <EmergencyContactsManager childId={childId} childName={childName} />
 
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)}>

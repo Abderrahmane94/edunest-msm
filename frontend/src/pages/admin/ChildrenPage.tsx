@@ -14,18 +14,17 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  Input,
 } from '@/components/ui';
 import type { Column } from '@/components/ui';
-import { FormField, FormSelect } from '@/components/forms';
+import { FormSelect } from '@/components/forms';
 import {
-  useChildren, useCreateChild, useLinkParent, useMedicalNotes,
-  type Child, type BloodType,
+  useChildren, useLinkParent, useMedicalNotes,
+  type Child,
 } from '@/hooks/useChildren';
-import { useAcademicYears } from '@/hooks/useAcademicYears';
 import { useUsers } from '@/hooks/useUsers';
 import { EmergencyContactsDialog } from './EmergencyContactsDialog';
 import { MedicalNotesDialog } from './MedicalNotesDialog';
+import { CreateChildWizard } from './CreateChildWizard';
 
 /** Minimal shape needed by dialogs that only display/reference a child's identity. */
 type ChildRef = Pick<Child, 'id' | 'first_name' | 'last_name'>;
@@ -50,260 +49,6 @@ function HighSeverityMedicalWarning({ childId }: { childId: string }) {
     <StatusBadge variant="absent" title={t('children.medicalNotes.highSeverityWarning')}>
       {t('children.medicalNotes.highSeverityWarning')}
     </StatusBadge>
-  );
-}
-
-function CreateChildDialog({
-  open,
-  onOpenChange,
-  onCreated,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreated?: (child: ChildRef) => void;
-}) {
-  const { t } = useTranslation();
-  const createChild = useCreateChild();
-  const { data: academicYears } = useAcademicYears();
-  const activeYear = (academicYears ?? []).find((y) => y.is_active);
-  const today = new Date().toISOString().split('T')[0];
-  const emptyForm = {
-    first_name: '',
-    last_name: '',
-    date_of_birth: '',
-    gender: 'male',
-    enrollment_date: today,
-    national_id: '',
-    address: '',
-    place_of_birth: '',
-    blood_type: '' as BloodType | '',
-  };
-  const [formData, setFormData] = React.useState(emptyForm);
-  const [errors, setErrors] = React.useState<Record<string, string>>({});
-
-  function resetForm() {
-    setFormData({ ...emptyForm, enrollment_date: today });
-    setErrors({});
-  }
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-  }
-
-  function handleSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  }
-
-  function validate(): boolean {
-    const newErrors: Record<string, string> = {};
-    if (!formData.first_name.trim()) {
-      newErrors.first_name = t('children.form.firstNameRequired');
-    }
-    if (!formData.last_name.trim()) {
-      newErrors.last_name = t('children.form.lastNameRequired');
-    }
-    if (!formData.date_of_birth) {
-      newErrors.date_of_birth = t('children.form.dobRequired');
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!validate()) return;
-
-    if (!activeYear) {
-      setErrors({ form: t('children.form.noActiveYear') });
-      return;
-    }
-
-    const { first_name, last_name } = formData;
-
-    try {
-      const result = await createChild.mutateAsync({
-        first_name,
-        last_name,
-        date_of_birth: formData.date_of_birth,
-        gender: formData.gender,
-        enrollment_date: formData.enrollment_date,
-        academic_year_id: activeYear.id,
-        national_id: formData.national_id.trim() || undefined,
-        address: formData.address.trim() || undefined,
-        place_of_birth: formData.place_of_birth.trim() || undefined,
-        blood_type: formData.blood_type || undefined,
-      });
-      resetForm();
-      onOpenChange(false);
-      const newId = (result as { id?: string } | undefined)?.id;
-      if (newId) onCreated?.({ id: newId, first_name, last_name });
-    } catch {
-      // Error handled by React Query
-    }
-  }
-
-  function handleClose(isOpen: boolean) {
-    if (!isOpen) resetForm();
-    onOpenChange(isOpen);
-  }
-
-  const genderOptions = [
-    { value: 'male', label: t('children.form.male') },
-    { value: 'female', label: t('children.form.female') },
-  ];
-
-  const bloodTypeOptions = [
-    { value: 'a_positive', label: t('children.form.bloodTypes.a_positive') },
-    { value: 'a_negative', label: t('children.form.bloodTypes.a_negative') },
-    { value: 'b_positive', label: t('children.form.bloodTypes.b_positive') },
-    { value: 'b_negative', label: t('children.form.bloodTypes.b_negative') },
-    { value: 'ab_positive', label: t('children.form.bloodTypes.ab_positive') },
-    { value: 'ab_negative', label: t('children.form.bloodTypes.ab_negative') },
-    { value: 'o_positive', label: t('children.form.bloodTypes.o_positive') },
-    { value: 'o_negative', label: t('children.form.bloodTypes.o_negative') },
-  ];
-
-  return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('children.form.title')}</DialogTitle>
-          <DialogDescription>{t('children.form.description')}</DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-            <FormField
-              label={t('children.form.firstName')}
-              htmlFor="child-first-name"
-              error={errors.first_name}
-              required
-            >
-              <Input
-                id="child-first-name"
-                name="first_name"
-                value={formData.first_name}
-                onChange={handleChange}
-                placeholder={t('children.form.firstNamePlaceholder')}
-              />
-            </FormField>
-
-            <FormField
-              label={t('children.form.lastName')}
-              htmlFor="child-last-name"
-              error={errors.last_name}
-              required
-            >
-              <Input
-                id="child-last-name"
-                name="last_name"
-                value={formData.last_name}
-                onChange={handleChange}
-                placeholder={t('children.form.lastNamePlaceholder')}
-              />
-            </FormField>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-            <FormField
-              label={t('children.form.dateOfBirth')}
-              htmlFor="child-dob"
-              error={errors.date_of_birth}
-              required
-            >
-              <Input
-                id="child-dob"
-                name="date_of_birth"
-                type="date"
-                value={formData.date_of_birth}
-                onChange={handleChange}
-              />
-            </FormField>
-
-            <FormSelect
-              label={t('children.form.gender')}
-              name="gender"
-              value={formData.gender}
-              onChange={handleSelectChange}
-              options={genderOptions}
-            />
-          </div>
-
-          <FormField
-            label={t('children.form.enrollmentDate')}
-            htmlFor="child-enrollment-date"
-            required
-          >
-            <Input
-              id="child-enrollment-date"
-              name="enrollment_date"
-              type="date"
-              value={formData.enrollment_date}
-              onChange={handleChange}
-            />
-          </FormField>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-            <FormField label={t('children.form.nationalId')} htmlFor="child-national-id">
-              <Input
-                id="child-national-id"
-                name="national_id"
-                value={formData.national_id}
-                onChange={handleChange}
-                placeholder={t('children.form.nationalIdPlaceholder')}
-              />
-            </FormField>
-
-            <FormField label={t('children.form.placeOfBirth')} htmlFor="child-place-of-birth">
-              <Input
-                id="child-place-of-birth"
-                name="place_of_birth"
-                value={formData.place_of_birth}
-                onChange={handleChange}
-                placeholder={t('children.form.placeOfBirthPlaceholder')}
-              />
-            </FormField>
-          </div>
-
-          <FormField label={t('children.form.address')} htmlFor="child-address">
-            <Input
-              id="child-address"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder={t('children.form.addressPlaceholder')}
-            />
-          </FormField>
-
-          <FormSelect
-            label={t('children.form.bloodType')}
-            name="blood_type"
-            value={formData.blood_type}
-            onChange={handleSelectChange}
-            options={bloodTypeOptions}
-            placeholder={t('children.form.selectBloodType')}
-          />
-
-          {errors.form && (
-            <p className="text-body text-danger mt-1">{errors.form}</p>
-          )}
-
-          <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => handleClose(false)}>
-              {t('common.cancel')}
-            </Button>
-            <Button type="submit" disabled={createChild.isPending}>
-              {createChild.isPending ? t('common.loading') : t('common.create')}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -586,13 +331,9 @@ export function ChildrenPage() {
         emptyMessage={t('children.noChildren')}
       />
 
-      <CreateChildDialog
+      <CreateChildWizard
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
-        onCreated={(child) => {
-          setSelectedChild(child);
-          setEmergencyDialogOpen(true);
-        }}
       />
 
       <LinkParentDialog

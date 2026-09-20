@@ -392,9 +392,9 @@ describe('generatePeriodsForEnrollment', () => {
 
   describe('trimester billing cycle', () => {
     const calendarRows = [
-      { periodStart: new Date(2024, 8, 1), periodEnd: new Date(2024, 11, 31), dueDate: new Date(2024, 8, 10) },
-      { periodStart: new Date(2025, 0, 1), periodEnd: new Date(2025, 3, 30), dueDate: new Date(2025, 0, 10) },
-      { periodStart: new Date(2025, 4, 1), periodEnd: new Date(2025, 5, 30), dueDate: new Date(2025, 4, 10) },
+      { periodStart: new Date(2024, 8, 1), periodEnd: new Date(2024, 11, 31) },
+      { periodStart: new Date(2025, 0, 1), periodEnd: new Date(2025, 3, 30) },
+      { periodStart: new Date(2025, 4, 1), periodEnd: new Date(2025, 5, 30) },
     ];
 
     it('generates 3 periods from calendar rows', () => {
@@ -459,7 +459,7 @@ describe('generatePeriodsForEnrollment', () => {
     it('throws error when more than 3 rows', () => {
       const fourRows = [
         ...calendarRows,
-        { periodStart: new Date(2025, 6, 1), periodEnd: new Date(2025, 7, 31), dueDate: new Date(2025, 6, 10) },
+        { periodStart: new Date(2025, 6, 1), periodEnd: new Date(2025, 7, 31) },
       ];
 
       const input: GeneratePeriodsInput = {
@@ -483,8 +483,8 @@ describe('generatePeriodsForEnrollment', () => {
   describe('custom billing cycle', () => {
     it('generates periods from calendar rows', () => {
       const rows = [
-        { periodStart: new Date(2024, 8, 1), periodEnd: new Date(2024, 9, 31), dueDate: new Date(2024, 8, 15) },
-        { periodStart: new Date(2024, 10, 1), periodEnd: new Date(2025, 0, 31), dueDate: new Date(2024, 10, 15) },
+        { periodStart: new Date(2024, 8, 1), periodEnd: new Date(2024, 9, 31) },
+        { periodStart: new Date(2024, 10, 1), periodEnd: new Date(2025, 0, 31) },
       ];
 
       const input: GeneratePeriodsInput = {
@@ -520,7 +520,7 @@ describe('generatePeriodsForEnrollment', () => {
         recurringFee: dec('8000.00'),
         registrationFee: null,
         calendarRows: [
-          { periodStart: new Date(2024, 8, 1), periodEnd: new Date(2025, 5, 30), dueDate: new Date(2024, 8, 15) },
+          { periodStart: new Date(2024, 8, 1), periodEnd: new Date(2025, 5, 30) },
         ],
       };
 
@@ -529,7 +529,7 @@ describe('generatePeriodsForEnrollment', () => {
 
     it('accepts 1 or more rows for custom cycle', () => {
       const rows = [
-        { periodStart: new Date(2024, 8, 1), periodEnd: new Date(2025, 5, 30), dueDate: new Date(2024, 8, 15) },
+        { periodStart: new Date(2024, 8, 1), periodEnd: new Date(2025, 5, 30) },
       ];
 
       const input: GeneratePeriodsInput = {
@@ -720,9 +720,9 @@ describe('generatePeriodsForEnrollment', () => {
 
     it('returns earliest/latest including registration period', () => {
       const rows = [
-        { periodStart: new Date(2024, 8, 15), periodEnd: new Date(2024, 11, 31), dueDate: new Date(2024, 8, 20) },
-        { periodStart: new Date(2025, 0, 1), periodEnd: new Date(2025, 3, 30), dueDate: new Date(2025, 0, 10) },
-        { periodStart: new Date(2025, 4, 1), periodEnd: new Date(2025, 5, 30), dueDate: new Date(2025, 4, 10) },
+        { periodStart: new Date(2024, 8, 15), periodEnd: new Date(2024, 11, 31) },
+        { periodStart: new Date(2025, 0, 1), periodEnd: new Date(2025, 3, 30) },
+        { periodStart: new Date(2025, 4, 1), periodEnd: new Date(2025, 5, 30) },
       ];
 
       const input: GeneratePeriodsInput = {

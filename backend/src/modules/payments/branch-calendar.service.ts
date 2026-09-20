@@ -43,7 +43,6 @@ class BranchCalendarService {
         label: data.label,
         periodStart: data.period_start,
         periodEnd: data.period_end,
-        dueDate: data.due_date,
       },
     });
 
@@ -78,7 +77,6 @@ class BranchCalendarService {
         label: data.label,
         periodStart: data.period_start,
         periodEnd: data.period_end,
-        dueDate: data.due_date,
       },
     });
 

@@ -1492,6 +1492,11 @@
         "nameRequired": "Le nom est requis (1-100 caractères)",
         "amountInvalid": "Le montant doit être entre 0.00 et 9 999 999.99 DZD"
       },
+      "view": {
+        "button": "Voir",
+        "title": "Détails du frais « {{name}} »",
+        "noAssignedPeriods": "Aucune période assignée à ce frais pour cette année."
+      },
       "assign": {
         "button": "Assigner",
         "title": "Assigner « {{name}} »",
@@ -1530,15 +1535,13 @@
       "columns": {
         "label": "Libellé",
         "periodStart": "Début de période",
-        "periodEnd": "Fin de période",
-        "dueDate": "Date d'échéance"
+        "periodEnd": "Fin de période"
       },
       "fields": {
         "label": "Libellé",
         "labelPlaceholder": "ex. Trimestre 1",
         "periodStart": "Début de période",
-        "periodEnd": "Fin de période",
-        "dueDate": "Date d'échéance"
+        "periodEnd": "Fin de période"
       }
     },
     "enrollments": {

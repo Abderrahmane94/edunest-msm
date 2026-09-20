@@ -44,15 +44,10 @@ export const createBranchCalendarSchema = z
       .max(100, 'Label must be at most 100 characters'),
     period_start: z.coerce.date({ required_error: 'Period start is required' }),
     period_end: z.coerce.date({ required_error: 'Period end is required' }),
-    due_date: z.coerce.date({ required_error: 'Due date is required' }),
   })
   .refine((data) => data.period_end >= data.period_start, {
     message: 'Period end must be on or after period start',
     path: ['period_end'],
-  })
-  .refine((data) => data.due_date >= data.period_start, {
-    message: 'Due date must be on or after period start',
-    path: ['due_date'],
   });
 
 // --- Enrollment ---

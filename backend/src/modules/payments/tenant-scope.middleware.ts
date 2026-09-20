@@ -190,6 +190,65 @@ export async function validateEnrollmentAccess(
 }
 
 /**
+ * Validates that a branch fee belongs to the requesting user's scope.
+ * Checks both school and branch ownership.
+ *
+ * @returns the fee's branchId if valid, or null if an error response was sent
+ */
+export async function validateBranchFeeAccess(
+  branchFeeId: string,
+  req: Request,
+  res: Response,
+): Promise<string | null> {
+  const scope = req.tenantScope;
+  if (!scope) {
+    res.status(403).json(
+      errorResponse('FORBIDDEN', 'Tenant scope not resolved'),
+    );
+    return null;
+  }
+
+  // Super_admin bypasses all scoping
+  if (scope.isSuperAdmin) {
+    const fee = await prisma.branchFee.findUnique({
+      where: { id: branchFeeId },
+      select: { branchId: true },
+    });
+    if (!fee) {
+      return null; // Let the service handle 404
+    }
+    return fee.branchId;
+  }
+
+  // Find the fee and check its branch's school
+  const fee = await prisma.branchFee.findUnique({
+    where: { id: branchFeeId },
+    select: {
+      branchId: true,
+      branch: { select: { schoolId: true } },
+    },
+  });
+
+  if (!fee || fee.branch.schoolId !== scope.schoolId) {
+    // Same error whether the fee exists or not (Req 20.7)
+    res.status(403).json(
+      errorResponse('FORBIDDEN', 'Access denied: resource does not belong to your school'),
+    );
+    return null;
+  }
+
+  // Branch-scoped staff: fee's branch must match (Req 20.6)
+  if (scope.branchId && fee.branchId !== scope.branchId) {
+    res.status(403).json(
+      errorResponse('FORBIDDEN', 'Access denied: resource does not belong to your branch'),
+    );
+    return null;
+  }
+
+  return fee.branchId;
+}
+
+/**
  * Validates that a payment record belongs to the requesting user's scope.
  *
  * @returns the payment record's branchId if valid, or null if an error response was sent

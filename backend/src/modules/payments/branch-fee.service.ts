@@ -454,7 +454,7 @@ class BranchFeeService {
     const ayEnd = new Date(enrollment.academicYear.endDate);
     const billingCycle = fee.billingCycle as BillingCycle;
 
-    const calendarRows = await fetchCalendarRows(tx, fee.branchId, enrollment.academicYearId, billingCycle);
+    const calendarRows = await fetchCalendarRows(tx, fee.id, enrollment.academicYearId, billingCycle);
 
     let generationResult;
     try {

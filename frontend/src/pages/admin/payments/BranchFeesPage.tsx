@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { Trash2, Edit2, DollarSign, Users, CalendarDays } from 'lucide-react';
 import {
   Button,
@@ -46,6 +47,7 @@ function FeeDialog({
   editingFee: BranchFee | null;
 }) {
   const { t } = useTranslation();
+  const [, setSearchParams] = useSearchParams();
   const createFee = useCreateBranchFee(branchId);
   const updateFee = useUpdateBranchFee(branchId);
   const { data: academicYears } = useAcademicYears();
@@ -53,7 +55,7 @@ function FeeDialog({
     () => academicYears?.find((y) => y.is_active) ?? academicYears?.[0],
     [academicYears],
   );
-  const { data: calendarEntries } = useBranchCalendar(branchId, activeAcademicYear?.id);
+  const { data: calendarEntries } = useBranchCalendar(editingFee?.id, activeAcademicYear?.id);
 
   const [name, setName] = React.useState('');
   const [amount, setAmount] = React.useState('');
@@ -260,45 +262,59 @@ function FeeDialog({
           {isRecurring && (billingCycle === 'trimester' || billingCycle === 'custom') && (
             <div
               className={`flex items-start gap-3 rounded-lg p-3 ${
-                calendarEntries && calendarEntries.length > 0 ? 'bg-success-muted' : 'bg-accent-muted'
+                editingFee && calendarEntries && calendarEntries.length > 0 ? 'bg-success-muted' : 'bg-accent-muted'
               }`}
             >
               <CalendarDays
                 className={`w-4 h-4 shrink-0 mt-0.5 ${
-                  calendarEntries && calendarEntries.length > 0 ? 'text-success' : 'text-accent'
+                  editingFee && calendarEntries && calendarEntries.length > 0 ? 'text-success' : 'text-accent'
                 }`}
               />
               <div className="flex-1 min-w-0">
                 <p className="text-caption text-foreground">
                   {t('payments.fees.fields.customCycleHint')}
                 </p>
-                {activeAcademicYear && (
+
+                {!editingFee ? (
                   <p className="text-caption font-medium text-foreground mt-1">
-                    {calendarEntries && calendarEntries.length > 0
-                      ? t('payments.fees.fields.periodsConfigured', {
-                          count: calendarEntries.length,
-                          year: activeAcademicYear.name,
-                          labels: calendarEntries.map((e) => e.label).join(', '),
-                        })
-                      : t('payments.fees.fields.noPeriodsConfigured', { year: activeAcademicYear.name })}
+                    {t('payments.fees.fields.savePeriodsFirst')}
                   </p>
+                ) : (
+                  <>
+                    {activeAcademicYear && (
+                      <p className="text-caption font-medium text-foreground mt-1">
+                        {calendarEntries && calendarEntries.length > 0
+                          ? t('payments.fees.fields.periodsConfigured', {
+                              count: calendarEntries.length,
+                              year: activeAcademicYear.name,
+                              labels: calendarEntries.map((e) => e.label).join(', '),
+                            })
+                          : t('payments.fees.fields.noPeriodsConfigured', { year: activeAcademicYear.name })}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchParams((prev) => {
+                          const next = new URLSearchParams(prev);
+                          next.set('feeId', editingFee.id);
+                          return next;
+                        });
+                        onOpenChange(false);
+                        // The calendar lives further down this same Configuration
+                        // tab — scroll to it instead of navigating away.
+                        setTimeout(() => {
+                          document
+                            .getElementById('billing-calendar-section')
+                            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 100);
+                      }}
+                      className="text-caption font-medium text-accent hover:underline mt-1"
+                    >
+                      {t('payments.fees.fields.goToCalendar')}
+                    </button>
+                  </>
                 )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    onOpenChange(false);
-                    // The calendar lives further down this same Configuration
-                    // tab — scroll to it instead of navigating away.
-                    setTimeout(() => {
-                      document
-                        .getElementById('billing-calendar-section')
-                        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                  }}
-                  className="text-caption font-medium text-accent hover:underline mt-1"
-                >
-                  {t('payments.fees.fields.goToCalendar')}
-                </button>
               </div>
             </div>
           )}

@@ -108,11 +108,13 @@ const MODELS_WITHOUT_SCHOOL_ID = new Set([
   'BranchBillingConfig',
   'BranchCalendar',
   'BranchFee',
+  'BranchFeePeriod',
   'Enrollment',
   'BillingPeriod',
   'PaymentRecord',
   'PaymentAllocation',
   'PaymentAuditEntry',
+  'Discount',
 ]);
 
 function applyQueryFilters(

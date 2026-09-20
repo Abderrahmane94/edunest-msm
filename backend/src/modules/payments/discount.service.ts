@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
+import { prorateAmount } from './billing-period.service';
 import type { CreateDiscountInput, UpdateDiscountInput } from './discount.schema';
 
 /** The interactive-transaction client type actually produced by our tenant/soft-delete-extended `prisma`. */
@@ -138,7 +139,10 @@ class DiscountService {
    * every discount whose validity window covers that period's start date
    * (capped at 100%). Always derives from enrollment.recurringFee — the
    * pre-discount base — never from a period's current (possibly already
-   * discounted) amount_due, so repeated edits stay consistent.
+   * discounted) amount_due, so repeated edits stay consistent. The first
+   * period is re-prorated by days covered (enrollment.startDate through its
+   * periodEnd) before the discount is applied, matching the automatic
+   * proration done at generation time.
    *
    * Periods with any payment allocation are left untouched: once money has
    * changed hands, the amount owed for that period is a settled fact, not
@@ -150,9 +154,10 @@ class DiscountService {
   ): Promise<void> {
     const enrollment = await tx.enrollment.findUnique({
       where: { id: enrollmentId },
-      select: { recurringFee: true, baseFeeId: true },
+      select: { recurringFee: true, baseFeeId: true, startDate: true },
     });
     if (!enrollment) return;
+    const enrollmentStart = new Date(enrollment.startDate);
 
     const [periods, discounts] = await Promise.all([
       tx.billingPeriod.findMany({
@@ -179,11 +184,17 @@ class DiscountService {
       );
       if (!totalPaid.equals(0)) continue;
 
-      const newAmountDue = computeDiscountedAmountDue(
-        enrollment.recurringFee,
-        new Date(period.periodStart),
-        discounts,
-      );
+      const periodStart = new Date(period.periodStart);
+      const periodEnd = new Date(period.periodEnd);
+      // The first (possibly partial) period is prorated by days actually
+      // covered before the discount percentage is applied, mirroring the
+      // automatic proration done at generation time.
+      const baseFee =
+        enrollmentStart > periodStart
+          ? prorateAmount(enrollment.recurringFee, periodStart, periodEnd, enrollmentStart)
+          : enrollment.recurringFee;
+
+      const newAmountDue = computeDiscountedAmountDue(baseFee, periodStart, discounts);
 
       if (!newAmountDue.equals(period.amountDue)) {
         await tx.billingPeriod.update({

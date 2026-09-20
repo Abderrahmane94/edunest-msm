@@ -89,7 +89,7 @@ describe('Property 4: Recurring Fee as Amount Source', () => {
     );
   });
 
-  it('all non-registration periods have amountDue equal to recurringFee (trimester, no override)', () => {
+  it('all non-registration periods have amountDue equal to recurringFee (custom cycle, no override)', () => {
     fc.assert(
       fc.property(
         arbRecurringFee(),
@@ -119,7 +119,7 @@ describe('Property 4: Recurring Fee as Amount Source', () => {
             startDate: new Date(year, 0, 1),
             academicYearStartDate: new Date(year, 0, 1),
             academicYearEndDate: new Date(year, 11, 31),
-            billingCycle: 'trimester',
+            billingCycle: 'custom',
             billingDueDay: 10,
             gracePeriodDays,
             recurringFee,

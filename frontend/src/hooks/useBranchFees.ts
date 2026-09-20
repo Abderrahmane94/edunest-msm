@@ -3,7 +3,7 @@ import { apiClient } from '@/lib/api-client';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
-export type BillingCycle = 'monthly' | 'trimester' | 'custom';
+export type BillingCycle = 'monthly' | 'custom';
 
 export interface BranchFee {
   id: string;

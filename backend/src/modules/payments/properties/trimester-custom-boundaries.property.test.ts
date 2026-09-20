@@ -5,10 +5,10 @@ import { generatePeriodsForEnrollment } from '../billing-period.service';
 import type { GeneratePeriodsInput } from '../billing-period.service';
 
 /**
- * Property 17: Trimester/Custom Period Boundaries From Calendar
+ * Property 17: Custom Cycle Period Boundaries From Calendar
  *
- * For any enrollment at a branch with `trimester` or `custom` billing cycle,
- * the generated billing periods' `period_start` and `period_end` values SHALL
+ * For any enrollment at a branch with a `custom` billing cycle, the
+ * generated billing periods' `period_start` and `period_end` values SHALL
  * match exactly the corresponding BranchCalendar rows (for rows whose
  * `period_end` >= enrollment `start_date`), taken in ascending `period_start`
  * order with no date transformation. `due_date` is not stored on the
@@ -46,84 +46,6 @@ function arbDateOnly(minYear = 2020, maxYear = 2029) {
  */
 function expectedDueDate(periodStart: Date, billingDueDay: number): Date {
   return new Date(periodStart.getFullYear(), periodStart.getMonth(), billingDueDay);
-}
-
-/**
- * Generates a calendar row with period_start <= period_end.
- */
-function arbCalendarRow() {
-  return arbDateOnly().chain((periodStart) => {
-    // period_end is same day or up to 120 days after period_start
-    return fc.integer({ min: 0, max: 120 }).map((endOffset) => {
-      const periodEnd = new Date(periodStart.getTime());
-      periodEnd.setDate(periodEnd.getDate() + endOffset);
-      return { periodStart, periodEnd };
-    });
-  });
-}
-
-/**
- * Generates exactly 3 calendar rows for trimester cycle where all rows have
- * period_end >= the enrollment start_date. Rows are generated in non-overlapping
- * ascending order.
- */
-function arbTrimesterInput() {
-  return fc
-    .tuple(
-      arbDateOnly(2020, 2025),
-      fc.integer({ min: 0, max: 60 }),
-      fc.integer({ min: 1, max: 28 }),
-      fc.integer({ min: 1, max: 999999999 }).map((v) => new Prisma.Decimal(v).div(100))
-    )
-    .chain(([startDate, gracePeriodDays, billingDueDay, recurringFee]) => {
-      // Generate 3 non-overlapping calendar rows all with periodEnd >= startDate
-      return fc
-        .tuple(
-          fc.integer({ min: 30, max: 120 }),
-          fc.integer({ min: 30, max: 120 }),
-          fc.integer({ min: 30, max: 120 }),
-          fc.integer({ min: 0, max: 10 }),
-          fc.integer({ min: 0, max: 10 })
-        )
-        .map(([len1, len2, len3, gap1, gap2]) => {
-          // First row starts at or before startDate
-          const row1Start = new Date(startDate.getTime());
-          row1Start.setDate(row1Start.getDate() - Math.floor(len1 / 2));
-          const row1End = new Date(row1Start.getTime());
-          row1End.setDate(row1End.getDate() + len1);
-
-          const row2Start = new Date(row1End.getTime());
-          row2Start.setDate(row2Start.getDate() + gap1 + 1);
-          const row2End = new Date(row2Start.getTime());
-          row2End.setDate(row2End.getDate() + len2);
-
-          const row3Start = new Date(row2End.getTime());
-          row3Start.setDate(row3Start.getDate() + gap2 + 1);
-          const row3End = new Date(row3Start.getTime());
-          row3End.setDate(row3End.getDate() + len3);
-
-          const calendarRows = [
-            { periodStart: row1Start, periodEnd: row1End },
-            { periodStart: row2Start, periodEnd: row2End },
-            { periodStart: row3Start, periodEnd: row3End },
-          ];
-
-          // Ensure all rows have periodEnd >= startDate (by construction row1End >= startDate)
-          // We already ensured row1Start <= startDate and row1End = row1Start + len1 >= startDate
-          const academicYearEndDate = new Date(row3End.getTime());
-          academicYearEndDate.setDate(academicYearEndDate.getDate() + 30);
-
-          return {
-            startDate,
-            academicYearStartDate: startDate,
-            academicYearEndDate,
-            gracePeriodDays,
-            billingDueDay,
-            recurringFee,
-            calendarRows,
-          };
-        });
-    });
 }
 
 /**
@@ -183,82 +105,7 @@ function arbCustomInput() {
     });
 }
 
-describe('Property 17: Trimester/Custom Period Boundaries From Calendar', () => {
-  describe('Trimester billing cycle', () => {
-    it('generates exactly 3 periods matching 3 calendar rows', () => {
-      fc.assert(
-        fc.property(
-          arbTrimesterInput(),
-          ({ startDate, academicYearEndDate, gracePeriodDays, billingDueDay, recurringFee, calendarRows }) => {
-            const input: GeneratePeriodsInput = {
-              enrollmentId: 'test-enr-trimester',
-              startDate,
-              academicYearStartDate: startDate,
-              academicYearEndDate,
-              billingCycle: 'trimester',
-              billingDueDay,
-              gracePeriodDays,
-              recurringFee,
-              registrationFee: null,
-              calendarRows,
-            };
-
-            const result = generatePeriodsForEnrollment(input);
-            const recurringPeriods = result.periods.filter((p) => !p.isRegistrationPeriod);
-
-            // Trimester must generate exactly 3 recurring periods
-            expect(recurringPeriods.length).toBe(3);
-          }
-        ),
-        { numRuns: 500 }
-      );
-    });
-
-    it('period_start and period_end copied unchanged from BranchCalendar rows in ascending order; due_date derived from billing_due_day', () => {
-      fc.assert(
-        fc.property(
-          arbTrimesterInput(),
-          ({ startDate, academicYearEndDate, gracePeriodDays, billingDueDay, recurringFee, calendarRows }) => {
-            const input: GeneratePeriodsInput = {
-              enrollmentId: 'test-enr-trimester',
-              startDate,
-              academicYearStartDate: startDate,
-              academicYearEndDate,
-              billingCycle: 'trimester',
-              billingDueDay,
-              gracePeriodDays,
-              recurringFee,
-              registrationFee: null,
-              calendarRows,
-            };
-
-            const result = generatePeriodsForEnrollment(input);
-            const recurringPeriods = result.periods.filter((p) => !p.isRegistrationPeriod);
-
-            // Filter and sort calendar rows the same way the service does
-            const filteredRows = calendarRows
-              .filter((row) => row.periodEnd >= startDate)
-              .sort((a, b) => a.periodStart.getTime() - b.periodStart.getTime());
-
-            expect(recurringPeriods.length).toBe(filteredRows.length);
-
-            for (let i = 0; i < recurringPeriods.length; i++) {
-              expect(datesEqual(recurringPeriods[i].periodStart, filteredRows[i].periodStart)).toBe(true);
-              expect(datesEqual(recurringPeriods[i].periodEnd, filteredRows[i].periodEnd)).toBe(true);
-              expect(
-                datesEqual(
-                  recurringPeriods[i].dueDate,
-                  expectedDueDate(filteredRows[i].periodStart, billingDueDay)
-                )
-              ).toBe(true);
-            }
-          }
-        ),
-        { numRuns: 500 }
-      );
-    });
-  });
-
+describe('Property 17: Custom Cycle Period Boundaries From Calendar', () => {
   describe('Custom billing cycle', () => {
     it('generates periods matching calendar rows whose period_end >= enrollment start_date', () => {
       fc.assert(

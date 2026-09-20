@@ -144,7 +144,7 @@ describe('Property 6: Amount Snapshot Immutability', () => {
     );
   });
 
-  it('trimester periods generated with config1 calendar rows are unchanged when calendar rows change — period_start, period_end, due_date are snapshots', () => {
+  it('custom-cycle periods generated with config1 calendar rows are unchanged when calendar rows change — period_start, period_end, due_date are snapshots', () => {
     fc.assert(
       fc.property(
         arbFee(),
@@ -200,7 +200,7 @@ describe('Property 6: Amount Snapshot Immutability', () => {
             startDate,
             academicYearStartDate: startDate,
             academicYearEndDate: endDate,
-            billingCycle: 'trimester',
+            billingCycle: 'custom',
             billingDueDay: 10,
             gracePeriodDays: gracePeriodDays1,
             recurringFee: recurringFee1,
@@ -225,7 +225,7 @@ describe('Property 6: Amount Snapshot Immutability', () => {
             startDate: new Date(year, 0, 15),
             academicYearStartDate: new Date(year, 0, 1),
             academicYearEndDate: endDate,
-            billingCycle: 'trimester',
+            billingCycle: 'custom',
             billingDueDay: 20,
             gracePeriodDays: gracePeriodDays2,
             recurringFee: recurringFee2,

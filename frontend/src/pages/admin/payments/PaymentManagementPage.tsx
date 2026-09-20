@@ -81,7 +81,7 @@ function ConfigTab() {
       {/* Fees */}
       <BranchFeesPage />
 
-      {/* Calendar — periods for trimester/custom cycle fees */}
+      {/* Calendar — periods for custom cycle fees */}
       <div id="billing-calendar-section">
         <BranchCalendarPage />
       </div>

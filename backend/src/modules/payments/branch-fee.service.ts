@@ -3,7 +3,7 @@ import prisma from '../../lib/prisma';
 import { generatePeriodsForEnrollment } from './billing-period.service';
 import { fetchCalendarRows } from './billing-cycle.util';
 
-type BillingCycle = 'monthly' | 'trimester' | 'custom';
+type BillingCycle = 'monthly' | 'custom';
 
 export interface FeeCycleInput {
   billingCycle?: BillingCycle | null;
@@ -43,9 +43,9 @@ function validateCycleFields(input: FeeCycleInput): void {
     );
   }
 
-  if (!['monthly', 'trimester', 'custom'].includes(billingCycle as string)) {
+  if (!['monthly', 'custom'].includes(billingCycle as string)) {
     throw new BranchFeeServiceError(
-      'billingCycle must be one of: monthly, trimester, custom',
+      'billingCycle must be one of: monthly, custom',
       400,
       'VALIDATION_ERROR',
     );
@@ -472,7 +472,7 @@ class BranchFeeService {
       });
     } catch (err) {
       // Surface calendar-configuration failures (e.g. missing/short custom
-      // or trimester periods) as a proper 422 instead of a generic 500.
+      // periods) as a proper 422 instead of a generic 500.
       throw new BranchFeeServiceError(
         err instanceof Error ? err.message : 'Failed to generate billing periods',
         422,

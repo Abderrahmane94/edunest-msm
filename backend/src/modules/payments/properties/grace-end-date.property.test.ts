@@ -166,7 +166,7 @@ describe('Property 3: Grace End Date Invariant', () => {
     );
   });
 
-  it('grace_end_date equals due_date + grace_period_days for trimester/custom periods', () => {
+  it('grace_end_date equals due_date + grace_period_days for custom-cycle periods', () => {
     fc.assert(
       fc.property(
         fc.integer({ min: 0, max: 60 }),
@@ -205,8 +205,8 @@ describe('Property 3: Grace End Date Invariant', () => {
             startDate: new Date(calData.year, 0, 1),
             academicYearStartDate: new Date(calData.year, 0, 1),
             academicYearEndDate: new Date(calData.year, 11, 31),
-            billingCycle: 'trimester',
-            billingDueDay: 10, // not used for trimester
+            billingCycle: 'custom',
+            billingDueDay: 10,
             gracePeriodDays,
             recurringFee,
             registrationFee: null,

@@ -25,7 +25,7 @@ import {
   type EnrollmentGenerationResult,
 } from '@/hooks/useEnrollments';
 import { useChildren } from '@/hooks/useChildren';
-import { useAcademicYears } from '@/hooks/useAcademicYears';
+import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import { useBranchFees } from '@/hooks/useBranchFees';
 
@@ -58,7 +58,7 @@ function CreateEnrollmentDialog({
   const createEnrollment = useCreateEnrollment();
   const { data: childrenData } = useChildren({ pageSize: 100 });
   const { branchId: defaultBranchId } = useDefaultBranch();
-  const { data: academicYears } = useAcademicYears();
+  const { data: activeAcademicYear } = useActiveAcademicYear();
   const { data: fees } = useBranchFees(defaultBranchId);
   const recurringFees = React.useMemo(() => (fees ?? []).filter((f) => !!f.billingCycle), [fees]);
 
@@ -74,6 +74,13 @@ function CreateEnrollmentDialog({
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [generationResult, setGenerationResult] =
     React.useState<EnrollmentGenerationResult | null>(null);
+
+  // Always enroll into the school's active academic year — no need to ask.
+  React.useEffect(() => {
+    if (open && activeAcademicYear) {
+      setFormData((prev) => ({ ...prev, academicYearId: activeAcademicYear.id }));
+    }
+  }, [open, activeAcademicYear]);
 
   function resetForm() {
     setFormData({
@@ -112,7 +119,7 @@ function CreateEnrollmentDialog({
       newErrors.childId = t('payments.enrollments.form.childRequired');
     }
     if (!formData.academicYearId) {
-      newErrors.academicYearId = t('payments.enrollments.form.academicYearRequired');
+      newErrors.form = t('payments.enrollments.form.noActiveAcademicYear');
     }
     if (!formData.startDate) {
       newErrors.startDate = t('payments.enrollments.form.startDateRequired');
@@ -173,11 +180,6 @@ function CreateEnrollmentDialog({
   const childOptions = (childrenData?.children ?? []).map((c) => ({
     value: c.id,
     label: `${c.first_name} ${c.last_name}`,
-  }));
-
-  const academicYearOptions = (academicYears ?? []).map((y) => ({
-    value: y.id,
-    label: y.name,
   }));
 
   const baseFeeOptions = recurringFees.map((f) => ({
@@ -249,27 +251,15 @@ function CreateEnrollmentDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-            <FormSelect
-              label={t('payments.enrollments.form.child')}
-              name="childId"
-              value={formData.childId}
-              onChange={handleSelectChange}
-              options={childOptions}
-              placeholder={t('payments.enrollments.form.selectChild')}
-              error={errors.childId}
-            />
-
-            <FormSelect
-              label={t('payments.enrollments.form.academicYear')}
-              name="academicYearId"
-              value={formData.academicYearId}
-              onChange={handleSelectChange}
-              options={academicYearOptions}
-              placeholder={t('payments.enrollments.form.selectAcademicYear')}
-              error={errors.academicYearId}
-            />
-          </div>
+          <FormSelect
+            label={t('payments.enrollments.form.child')}
+            name="childId"
+            value={formData.childId}
+            onChange={handleSelectChange}
+            options={childOptions}
+            placeholder={t('payments.enrollments.form.selectChild')}
+            error={errors.childId}
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormSelect

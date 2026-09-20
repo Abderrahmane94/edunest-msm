@@ -19,7 +19,7 @@ import { formatDZD } from '@/lib/formatters';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import { useChildren } from '@/hooks/useChildren';
 import { useClassrooms } from '@/hooks/useClassrooms';
-import { useAcademicYears } from '@/hooks/useAcademicYears';
+import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
 import { useFeePeriods, useSetFeePeriods } from '@/hooks/useBranchFeePeriods';
 import {
   useBranchFees,
@@ -48,15 +48,8 @@ function FeeDialog({
   const { t } = useTranslation();
   const createFee = useCreateBranchFee(branchId);
   const updateFee = useUpdateBranchFee(branchId);
-  const { data: academicYears } = useAcademicYears();
-  const activeAcademicYear = React.useMemo(
-    () => academicYears?.find((y) => y.is_active) ?? academicYears?.[0],
-    [academicYears],
-  );
-  const [periodsYearId, setPeriodsYearId] = React.useState<string>('');
-  React.useEffect(() => {
-    if (!periodsYearId && activeAcademicYear) setPeriodsYearId(activeAcademicYear.id);
-  }, [activeAcademicYear, periodsYearId]);
+  const { data: activeAcademicYear } = useActiveAcademicYear();
+  const periodsYearId = activeAcademicYear?.id ?? '';
 
   const { data: feePeriods, isLoading: feePeriodsLoading, isError: feePeriodsError, error: feePeriodsErrorObj } = useFeePeriods(
     editingFee?.id,
@@ -298,14 +291,6 @@ function FeeDialog({
                 </p>
               ) : (
                 <div className="ps-7 space-y-3">
-                  <FormSelect
-                    label={t('payments.fees.fields.periodsYear')}
-                    name="fee-periods-year"
-                    value={periodsYearId}
-                    onChange={(e) => setPeriodsYearId(e.target.value)}
-                    options={(academicYears ?? []).map((y) => ({ value: y.id, label: y.name }))}
-                  />
-
                   {feePeriodsLoading ? (
                     <div className="animate-pulse h-16 bg-subtle rounded-md" />
                   ) : feePeriodsError ? (
@@ -386,16 +371,8 @@ function ViewFeeDialog({
   fee: BranchFee | null;
 }) {
   const { t, i18n } = useTranslation();
-  const { data: academicYears } = useAcademicYears();
-  const activeAcademicYear = React.useMemo(
-    () => academicYears?.find((y) => y.is_active) ?? academicYears?.[0],
-    [academicYears],
-  );
-  const [periodsYearId, setPeriodsYearId] = React.useState<string>('');
-
-  React.useEffect(() => {
-    if (open && activeAcademicYear) setPeriodsYearId(activeAcademicYear.id);
-  }, [open, activeAcademicYear]);
+  const { data: activeAcademicYear } = useActiveAcademicYear();
+  const periodsYearId = activeAcademicYear?.id ?? '';
 
   const showPeriods = !!fee?.billingCycle && (fee.billingCycle === 'trimester' || fee.billingCycle === 'custom');
 
@@ -439,14 +416,6 @@ function ViewFeeDialog({
 
         {showPeriods && (
           <div className="space-y-3 pt-1">
-            <FormSelect
-              label={t('payments.fees.fields.periodsYear')}
-              name="view-fee-periods-year"
-              value={periodsYearId}
-              onChange={(e) => setPeriodsYearId(e.target.value)}
-              options={(academicYears ?? []).map((y) => ({ value: y.id, label: y.name }))}
-            />
-
             {feePeriodsLoading ? (
               <div className="animate-pulse h-12 bg-subtle rounded-md" />
             ) : assignedPeriods.length === 0 ? (

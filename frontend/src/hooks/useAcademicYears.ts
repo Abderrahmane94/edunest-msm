@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
@@ -36,6 +37,20 @@ export function useAcademicYears() {
       return [];
     },
   });
+}
+
+/**
+ * Resolves the school's currently active academic year (falling back to the
+ * first one if none is flagged active) so payments screens can use it
+ * automatically instead of asking the user to pick a year every time.
+ */
+export function useActiveAcademicYear() {
+  const query = useAcademicYears();
+  const activeYear = useMemo(
+    () => query.data?.find((y) => y.is_active) ?? query.data?.[0],
+    [query.data],
+  );
+  return { ...query, data: activeYear };
 }
 
 export function useAcademicYear(id: string) {

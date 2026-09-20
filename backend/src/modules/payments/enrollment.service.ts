@@ -179,23 +179,34 @@ class EnrollmentService {
         },
       });
 
-      const generationResult = generatePeriodsForEnrollment({
-        enrollmentId: enrollment.id,
-        startDate: enrollStart,
-        academicYearStartDate: ayStart,
-        academicYearEndDate: ayEnd,
-        billingCycle: config.billingCycle as 'monthly' | 'trimester' | 'custom',
-        billingDueDay: config.billingDueDay,
-        gracePeriodDays: config.gracePeriodDays,
-        recurringFee: recurringFeeDecimal,
-        registrationFee: registrationFee !== undefined && registrationFee !== null
-          ? new Prisma.Decimal(registrationFee)
-          : null,
-        firstPeriodAmountDue: firstPeriodAmountDue !== undefined
-          ? new Prisma.Decimal(firstPeriodAmountDue)
-          : undefined,
-        calendarRows,
-      });
+      let generationResult;
+      try {
+        generationResult = generatePeriodsForEnrollment({
+          enrollmentId: enrollment.id,
+          startDate: enrollStart,
+          academicYearStartDate: ayStart,
+          academicYearEndDate: ayEnd,
+          billingCycle: config.billingCycle as 'monthly' | 'trimester' | 'custom',
+          billingDueDay: config.billingDueDay,
+          gracePeriodDays: config.gracePeriodDays,
+          recurringFee: recurringFeeDecimal,
+          registrationFee: registrationFee !== undefined && registrationFee !== null
+            ? new Prisma.Decimal(registrationFee)
+            : null,
+          firstPeriodAmountDue: firstPeriodAmountDue !== undefined
+            ? new Prisma.Decimal(firstPeriodAmountDue)
+            : undefined,
+          calendarRows,
+        });
+      } catch (err) {
+        // Surface calendar-configuration failures (e.g. missing/short custom
+        // or trimester periods) as a proper 422 instead of a generic 500.
+        throw new EnrollmentServiceError(
+          err instanceof Error ? err.message : 'Failed to generate billing periods',
+          422,
+          'GENERATION_FAILED',
+        );
+      }
 
       // (i) Insert all generated billing periods, tagged with the base fee so
       // discount recalculation and "already applied" checks can recognize them.

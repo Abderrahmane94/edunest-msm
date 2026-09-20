@@ -125,8 +125,11 @@ function FeeDialog({
         });
       }
       onOpenChange(false);
-    } catch {
-      // handled by react-query
+    } catch (err) {
+      setErrors((prev) => ({
+        ...prev,
+        form: err instanceof Error ? err.message : t('common.error'),
+      }));
     }
   }
 
@@ -273,6 +276,10 @@ function FeeDialog({
             </div>
           )}
 
+          {errors.form && (
+            <p className="text-body text-danger">{errors.form}</p>
+          )}
+
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
               {t('common.cancel')}
@@ -310,6 +317,7 @@ function AssignFeeDialog({
   const [selectedClassroomIds, setSelectedClassroomIds] = React.useState<string[]>([]);
   const [childSearch, setChildSearch] = React.useState('');
   const [result, setResult] = React.useState<AssignFeeResult | null>(null);
+  const [assignError, setAssignError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (open) {
@@ -318,11 +326,13 @@ function AssignFeeDialog({
       setSelectedClassroomIds([]);
       setChildSearch('');
       setResult(null);
+      setAssignError(null);
     }
   }, [open]);
 
   async function handleAssign() {
     if (!fee) return;
+    setAssignError(null);
 
     try {
       const res = await assignFee.mutateAsync({
@@ -332,8 +342,8 @@ function AssignFeeDialog({
         classroomIds: targetType === 'classrooms' ? selectedClassroomIds : undefined,
       });
       setResult(res);
-    } catch {
-      // handled by react-query
+    } catch (err) {
+      setAssignError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 
@@ -482,6 +492,10 @@ function AssignFeeDialog({
             <p className="text-body text-text-secondary bg-subtle rounded-lg p-3">
               {t('payments.fees.assign.schoolConfirmation')}
             </p>
+          )}
+
+          {assignError && (
+            <p className="text-body text-danger">{assignError}</p>
           )}
         </div>
 

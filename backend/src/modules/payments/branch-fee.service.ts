@@ -456,18 +456,29 @@ class BranchFeeService {
 
     const calendarRows = await fetchCalendarRows(tx, fee.branchId, enrollment.academicYearId, billingCycle);
 
-    const generationResult = generatePeriodsForEnrollment({
-      enrollmentId: enrollment.id,
-      startDate: today > ayStart ? today : ayStart,
-      academicYearStartDate: ayStart,
-      academicYearEndDate: ayEnd,
-      billingCycle,
-      billingDueDay: fee.billingDueDay!,
-      gracePeriodDays: fee.gracePeriodDays!,
-      recurringFee: fee.amount,
-      registrationFee: null,
-      calendarRows,
-    });
+    let generationResult;
+    try {
+      generationResult = generatePeriodsForEnrollment({
+        enrollmentId: enrollment.id,
+        startDate: today > ayStart ? today : ayStart,
+        academicYearStartDate: ayStart,
+        academicYearEndDate: ayEnd,
+        billingCycle,
+        billingDueDay: fee.billingDueDay!,
+        gracePeriodDays: fee.gracePeriodDays!,
+        recurringFee: fee.amount,
+        registrationFee: null,
+        calendarRows,
+      });
+    } catch (err) {
+      // Surface calendar-configuration failures (e.g. missing/short custom
+      // or trimester periods) as a proper 422 instead of a generic 500.
+      throw new BranchFeeServiceError(
+        err instanceof Error ? err.message : 'Failed to generate billing periods',
+        422,
+        'GENERATION_FAILED',
+      );
+    }
 
     if (generationResult.periods.length > 0) {
       await tx.billingPeriod.createMany({

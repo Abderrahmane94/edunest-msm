@@ -390,95 +390,6 @@ describe('generatePeriodsForEnrollment', () => {
     });
   });
 
-  describe('trimester billing cycle', () => {
-    const calendarRows = [
-      { periodStart: new Date(2024, 8, 1), periodEnd: new Date(2024, 11, 31) },
-      { periodStart: new Date(2025, 0, 1), periodEnd: new Date(2025, 3, 30) },
-      { periodStart: new Date(2025, 4, 1), periodEnd: new Date(2025, 5, 30) },
-    ];
-
-    it('generates 3 periods from calendar rows', () => {
-      const input: GeneratePeriodsInput = {
-        enrollmentId: 'enr-2',
-        startDate: new Date(2024, 8, 1), // Sep 1
-        academicYearStartDate: new Date(2024, 8, 1),
-        academicYearEndDate: new Date(2025, 5, 30),
-        billingCycle: 'trimester',
-        billingDueDay: 10,
-        gracePeriodDays: 5,
-        recurringFee: dec('15000.00'),
-        registrationFee: null,
-        calendarRows,
-      };
-
-      const result = generatePeriodsForEnrollment(input);
-
-      expect(result.periodsCreated).toBe(3);
-      expect(result.periods[0].periodStart).toEqual(new Date(2024, 8, 1));
-      expect(result.periods[0].periodEnd).toEqual(new Date(2024, 11, 31));
-      expect(result.periods[0].dueDate).toEqual(new Date(2024, 8, 10));
-    });
-
-    it('filters rows by periodEnd >= startDate', () => {
-      // Start date after first period ends
-      const input: GeneratePeriodsInput = {
-        enrollmentId: 'enr-2',
-        startDate: new Date(2025, 0, 5), // Jan 5, 2025 — first row's periodEnd (Dec 31) is before this
-        academicYearStartDate: new Date(2025, 0, 5),
-        academicYearEndDate: new Date(2025, 5, 30),
-        billingCycle: 'trimester',
-        billingDueDay: 10,
-        gracePeriodDays: 5,
-        recurringFee: dec('15000.00'),
-        registrationFee: null,
-        calendarRows,
-      };
-
-      // After filtering, only 2 rows remain — trimester requires exactly 3
-      expect(() => generatePeriodsForEnrollment(input)).toThrow(/exactly 3/);
-    });
-
-    it('throws error when fewer than 3 rows after filtering', () => {
-      const input: GeneratePeriodsInput = {
-        enrollmentId: 'enr-2',
-        startDate: new Date(2025, 4, 1),
-        academicYearStartDate: new Date(2025, 4, 1),
-        academicYearStartDate: new Date(2025, 4, 1),
-        academicYearEndDate: new Date(2025, 5, 30),
-        billingCycle: 'trimester',
-        billingDueDay: 10,
-        gracePeriodDays: 5,
-        recurringFee: dec('15000.00'),
-        registrationFee: null,
-        calendarRows,
-      };
-
-      expect(() => generatePeriodsForEnrollment(input)).toThrow(/exactly 3/);
-    });
-
-    it('throws error when more than 3 rows', () => {
-      const fourRows = [
-        ...calendarRows,
-        { periodStart: new Date(2025, 6, 1), periodEnd: new Date(2025, 7, 31) },
-      ];
-
-      const input: GeneratePeriodsInput = {
-        enrollmentId: 'enr-2',
-        startDate: new Date(2024, 8, 1),
-        academicYearStartDate: new Date(2024, 8, 1),
-        academicYearStartDate: new Date(2024, 8, 1),
-        academicYearEndDate: new Date(2025, 7, 31),
-        billingCycle: 'trimester',
-        billingDueDay: 10,
-        gracePeriodDays: 5,
-        recurringFee: dec('15000.00'),
-        registrationFee: null,
-        calendarRows: fourRows,
-      };
-
-      expect(() => generatePeriodsForEnrollment(input)).toThrow(/exactly 3/);
-    });
-  });
 
   describe('custom billing cycle', () => {
     it('generates periods from calendar rows', () => {
@@ -730,7 +641,7 @@ describe('generatePeriodsForEnrollment', () => {
         startDate: new Date(2024, 8, 10), // Sep 10 — before first period_start of Sep 15
         academicYearStartDate: new Date(2024, 8, 10),
         academicYearEndDate: new Date(2025, 5, 30),
-        billingCycle: 'trimester',
+        billingCycle: 'custom',
         billingDueDay: 10,
         gracePeriodDays: 5,
         recurringFee: dec('10000.00'),
@@ -740,7 +651,7 @@ describe('generatePeriodsForEnrollment', () => {
 
       const result = generatePeriodsForEnrollment(input);
 
-      // Registration period starts on Sep 10, which is earlier than first trimester's Sep 15
+      // Registration period starts on Sep 10, which is earlier than the first custom period's Sep 15
       expect(result.earliestPeriodStart).toEqual(new Date(2024, 8, 10));
       expect(result.latestPeriodEnd).toEqual(new Date(2025, 5, 30));
     });

@@ -155,7 +155,7 @@ function FeeDialog({
     }
   }
 
-  const periodsSectionActive = !!editingFee && isRecurring && (billingCycle === 'trimester' || billingCycle === 'custom');
+  const periodsSectionActive = !!editingFee && isRecurring && billingCycle === 'custom';
   const isPending =
     createFee.isPending ||
     updateFee.isPending ||
@@ -164,7 +164,6 @@ function FeeDialog({
 
   const billingCycleOptions = [
     { value: 'monthly', label: t('payments.branchConfig.cycleMonthly') },
-    { value: 'trimester', label: t('payments.branchConfig.cycleTrimester') },
     { value: 'custom', label: t('payments.branchConfig.cycleCustom') },
   ];
 
@@ -276,7 +275,7 @@ function FeeDialog({
             </div>
           )}
 
-          {isRecurring && (billingCycle === 'trimester' || billingCycle === 'custom') && (
+          {isRecurring && billingCycle === 'custom' && (
             <div className="rounded-lg border border-border p-3 space-y-3">
               <div className="flex items-start gap-3">
                 <CalendarDays className="w-4 h-4 text-accent shrink-0 mt-0.5" />
@@ -374,7 +373,7 @@ function ViewFeeDialog({
   const { data: activeAcademicYear } = useActiveAcademicYear();
   const periodsYearId = activeAcademicYear?.id ?? '';
 
-  const showPeriods = !!fee?.billingCycle && (fee.billingCycle === 'trimester' || fee.billingCycle === 'custom');
+  const showPeriods = fee?.billingCycle === 'custom';
 
   const { data: feePeriods, isLoading: feePeriodsLoading } = useFeePeriods(
     showPeriods ? fee?.id : undefined,

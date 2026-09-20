@@ -1436,7 +1436,6 @@
       "sectionNotifications": "Notifications",
       "billingCycle": "Cycle de facturation",
       "cycleMonthly": "Mensuel",
-      "cycleTrimester": "Trimestriel",
       "cycleCustom": "Personnalisé",
       "billingDueDay": "Jour d'échéance",
       "billingDueDayHelper": "Jour du mois (1-28)",
@@ -1481,8 +1480,8 @@
         "namePlaceholder": "Ex: Frais de transport, Tenue scolaire...",
         "amount": "Montant (DZD)",
         "recurring": "Frais récurrent (cyclique)",
-        "recurringHelper": "Activez pour facturer ce frais selon un cycle (mensuel, trimestriel...) au lieu d'une seule fois.",
-        "customCycleHint": "Les cycles trimestriel et personnalisé facturent ce frais sur les périodes que vous lui assignez ci-dessous (créées dans la section Calendrier).",
+        "recurringHelper": "Activez pour facturer ce frais selon un cycle (mensuel, personnalisé...) au lieu d'une seule fois.",
+        "customCycleHint": "Le cycle personnalisé facture ce frais sur les périodes que vous lui assignez ci-dessous (créées dans la section Calendrier).",
         "savePeriodsFirst": "Enregistrez d'abord ce frais — vous pourrez ensuite lui assigner des périodes.",
         "noPeriodsAvailable": "Aucune période créée pour l'année scolaire active. Ajoutez-en dans la section Calendrier ci-dessous."
       },
@@ -1518,7 +1517,7 @@
     },
     "branchCalendar": {
       "title": "Périodes (calendrier)",
-      "description": "Créez vos périodes ici, puis assignez-en une ou plusieurs à chaque frais trimestriel ou personnalisé depuis sa fiche.",
+      "description": "Créez vos périodes ici, puis assignez-en une ou plusieurs à chaque frais à cycle personnalisé depuis sa fiche.",
       "addEntry": "Ajouter une période",
       "noActiveYear": "Aucune année scolaire active n'est configurée.",
       "noEntries": "Aucune période définie pour cette année.",

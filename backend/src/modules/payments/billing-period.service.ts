@@ -8,7 +8,7 @@ export interface GeneratePeriodsInput {
   startDate: Date;
   academicYearStartDate: Date;
   academicYearEndDate: Date;
-  billingCycle: 'monthly' | 'trimester' | 'custom';
+  billingCycle: 'monthly' | 'custom';
   billingDueDay: number;
   gracePeriodDays: number;
   recurringFee: Prisma.Decimal;
@@ -173,7 +173,7 @@ function generateRecurringPeriods(
   startDate: Date,
   academicYearStartDate: Date,
   academicYearEndDate: Date,
-  billingCycle: 'monthly' | 'trimester' | 'custom',
+  billingCycle: 'monthly' | 'custom',
   billingDueDay: number,
   gracePeriodDays: number,
   recurringFee: Prisma.Decimal,
@@ -190,16 +190,6 @@ function generateRecurringPeriods(
         gracePeriodDays,
         recurringFee
       );
-    case 'trimester':
-      return generateCalendarPeriods(
-        enrollmentId,
-        startDate,
-        billingDueDay,
-        gracePeriodDays,
-        recurringFee,
-        calendarRows,
-        'trimester'
-      );
     case 'custom':
       return generateCalendarPeriods(
         enrollmentId,
@@ -207,8 +197,7 @@ function generateRecurringPeriods(
         billingDueDay,
         gracePeriodDays,
         recurringFee,
-        calendarRows,
-        'custom'
+        calendarRows
       );
   }
 }
@@ -273,7 +262,7 @@ function generateMonthlyPeriods(
 }
 
 /**
- * Generates billing periods from BranchCalendar rows for trimester or custom cycles.
+ * Generates billing periods from BranchCalendar rows for the custom cycle.
  * Filters rows by periodEnd >= startDate, then validates count.
  */
 function generateCalendarPeriods(
@@ -282,20 +271,12 @@ function generateCalendarPeriods(
   billingDueDay: number,
   gracePeriodDays: number,
   recurringFee: Prisma.Decimal,
-  calendarRows: Array<{ periodStart: Date; periodEnd: Date }>,
-  cycleType: 'trimester' | 'custom'
+  calendarRows: Array<{ periodStart: Date; periodEnd: Date }>
 ): GeneratedPeriod[] {
   // Filter to rows where periodEnd >= startDate
   const filteredRows = calendarRows.filter((row) => row.periodEnd >= startDate);
 
-  // Validate row count
-  if (cycleType === 'trimester' && filteredRows.length !== 3) {
-    throw new Error(
-      `Trimester billing cycle requires exactly 3 calendar rows after filtering by start date, but found ${filteredRows.length}. ` +
-        `Expected 3, found ${filteredRows.length}.`
-    );
-  }
-  if (cycleType === 'custom' && filteredRows.length < 1) {
+  if (filteredRows.length < 1) {
     throw new Error(
       'Custom billing cycle requires at least 1 calendar row after filtering by start date, but found 0. ' +
         'Please configure BranchCalendar entries for this branch and academic year.'

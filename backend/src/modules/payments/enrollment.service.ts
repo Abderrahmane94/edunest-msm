@@ -121,11 +121,11 @@ class EnrollmentService {
 
         // Req 7.8: startDate must be > first period's periodStart
         // For monthly: first period start is first of the month containing startDate
-        // For trimester/custom: first period start comes from calendar rows
+        // For custom: first period start comes from calendar rows
         // We determine the first period start based on billing cycle
         const firstPeriodStart = this.getFirstPeriodStart(
           enrollStart,
-          config.billingCycle as 'monthly' | 'trimester' | 'custom',
+          config.billingCycle as 'monthly' | 'custom',
           branchId,
           academicYearId,
           tx,
@@ -159,7 +159,7 @@ class EnrollmentService {
         }
       }
 
-      // (f) Fetch BranchCalendar rows if billingCycle is trimester/custom
+      // (f) Fetch BranchCalendar rows if billingCycle is custom
       const calendarRows = await fetchCalendarRows(tx, baseFeeId, academicYearId, config.billingCycle);
 
       // (g) Call generatePeriodsForEnrollment with all params
@@ -186,7 +186,7 @@ class EnrollmentService {
           startDate: enrollStart,
           academicYearStartDate: ayStart,
           academicYearEndDate: ayEnd,
-          billingCycle: config.billingCycle as 'monthly' | 'trimester' | 'custom',
+          billingCycle: config.billingCycle as 'monthly' | 'custom',
           billingDueDay: config.billingDueDay,
           gracePeriodDays: config.gracePeriodDays,
           recurringFee: recurringFeeDecimal,
@@ -200,7 +200,7 @@ class EnrollmentService {
         });
       } catch (err) {
         // Surface calendar-configuration failures (e.g. missing/short custom
-        // or trimester periods) as a proper 422 instead of a generic 500.
+        // periods) as a proper 422 instead of a generic 500.
         throw new EnrollmentServiceError(
           err instanceof Error ? err.message : 'Failed to generate billing periods',
           422,
@@ -543,7 +543,7 @@ class EnrollmentService {
    */
   private async getFirstPeriodStart(
     startDate: Date,
-    billingCycle: 'monthly' | 'trimester' | 'custom',
+    billingCycle: 'monthly' | 'custom',
     branchId: string,
     academicYearId: string,
     tx: TransactionClient,
@@ -559,7 +559,7 @@ class EnrollmentService {
       return new Date(effectiveStart.getFullYear(), effectiveStart.getMonth(), 1);
     }
 
-    // For trimester/custom, get calendar rows and find the first one
+    // For custom, get calendar rows and find the first one
     // whose periodEnd >= startDate
     const rows = await tx.branchCalendar.findMany({
       where: { branchId, academicYearId },

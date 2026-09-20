@@ -7,9 +7,10 @@ type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0
  * Fetches BranchCalendar rows for trimester/custom billing cycles, shaped for
  * `generatePeriodsForEnrollment`. Monthly cycles need no calendar rows.
  *
- * Periods belong to one specific recurring fee (branchFeeId) — different fees
- * can have entirely different custom/trimester schedules for the same
- * academic year.
+ * Periods are reusable, branch + academic-year scoped building blocks
+ * explicitly assigned to fees via BranchFeePeriod — a period can be shared by
+ * several fees, and a fee can be assigned several periods (its own subset of
+ * the branch's trimesters, say).
  *
  * Shared by enrollment creation and recurring-fee application so both walk
  * the exact same calendar-resolution path.
@@ -25,7 +26,10 @@ export async function fetchCalendarRows(
   }
 
   const rows = await tx.branchCalendar.findMany({
-    where: { branchFeeId, academicYearId },
+    where: {
+      academicYearId,
+      feeAssignments: { some: { branchFeeId } },
+    },
     orderBy: { periodStart: 'asc' },
   });
 

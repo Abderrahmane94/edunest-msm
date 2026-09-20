@@ -34,6 +34,20 @@ function todayString(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * Clamps a date (YYYY-MM-DD) into an academic year's range. The child's
+ * registration date (step 1) may fall before the school year technically
+ * starts (or, rarely, after it ends) — the payments enrollment's start_date
+ * must be within that range, so it's clamped rather than sent as-is.
+ */
+function clampToAcademicYear(date: string, startDate: string, endDate: string): string {
+  const start = startDate.slice(0, 10);
+  const end = endDate.slice(0, 10);
+  if (date < start) return start;
+  if (date > end) return end;
+  return date;
+}
+
 // ─── Step 1: Basic info ──────────────────────────────────────────────────────
 
 function BasicsStep({
@@ -504,12 +518,15 @@ function FeesStep({
     setError(null);
     setIsSaving(true);
     try {
+      const startDate = activeYear
+        ? clampToAcademicYear(enrollmentDate, activeYear.start_date, activeYear.end_date)
+        : enrollmentDate;
       const result = await createEnrollment.mutateAsync({
         childId: child.id,
         branchId,
         academicYearId: activeYear?.id ?? '',
         baseFeeId,
-        startDate: enrollmentDate,
+        startDate,
       });
       for (const feeId of extraFeeIds) {
         await applyFee.mutateAsync({ enrollmentId: result.enrollmentId, branchFeeId: feeId });

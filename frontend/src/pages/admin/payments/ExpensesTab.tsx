@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Upload, Download, Trash2 } from 'lucide-react';
+import { Upload, Download, Trash2, X } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
 import {
   Button,
@@ -26,7 +26,52 @@ import {
   type Expense,
 } from '@/hooks/useExpenses';
 
-const CATEGORY_KEYS = ['supplies', 'utilities', 'maintenance', 'salaries', 'food', 'transport', 'other'];
+// ─── Shared receipt file picker ─────────────────────────────────────────────
+
+function ReceiptFilePicker({
+  file,
+  onSelect,
+  onClear,
+  disabled,
+}: {
+  file: File | null;
+  onSelect: (file: File) => void;
+  onClear: () => void;
+  disabled?: boolean;
+}) {
+  const { t } = useTranslation();
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button type="button" variant="secondary" size="sm" onClick={() => inputRef.current?.click()} disabled={disabled}>
+        <Upload className="w-4 h-4" />
+        {t('finance.expenses.uploadReceipt', 'Upload receipt')}
+      </Button>
+      {file && (
+        <span className="flex items-center gap-1 text-caption text-text-secondary truncate max-w-[160px]">
+          {file.name}
+          <button type="button" onClick={onClear} className="text-text-disabled hover:text-danger">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </span>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*,.pdf"
+        onChange={(e) => {
+          const selected = e.target.files?.[0];
+          if (selected) onSelect(selected);
+          e.target.value = '';
+        }}
+        className="hidden"
+      />
+    </div>
+  );
+}
+
+const CATEGORY_KEYS = ['supplies', 'utilities', 'maintenance', 'food', 'transport', 'other'];
 
 export function ExpensesTab() {
   const { t } = useTranslation();
@@ -140,8 +185,11 @@ function CreateExpenseDialog({
   const [description, setDescription] = React.useState('');
   const [amount, setAmount] = React.useState('');
   const [date, setDate] = React.useState(new Date().toISOString().slice(0, 10));
+  const [receiptFile, setReceiptFile] = React.useState<File | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
 
   const createExpense = useCreateExpense();
+  const uploadReceipt = useUploadExpenseReceipt();
 
   const categoryOptions = CATEGORY_KEYS.map((key) => ({
     value: key,
@@ -153,27 +201,33 @@ function CreateExpenseDialog({
     setDescription('');
     setAmount('');
     setDate(new Date().toISOString().slice(0, 10));
+    setReceiptFile(null);
+    setError(null);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!category || !description.trim() || !amount || !date) return;
+    setError(null);
 
-    createExpense.mutate(
-      {
+    try {
+      const created = await createExpense.mutateAsync({
         category,
         description: description.trim(),
         amount: parseFloat(amount),
         date,
-      },
-      {
-        onSuccess: () => {
-          resetForm();
-          onOpenChange(false);
-        },
-      },
-    );
+      });
+      if (receiptFile && created) {
+        await uploadReceipt.mutateAsync({ id: created.id, file: receiptFile });
+      }
+      resetForm();
+      onOpenChange(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('common.error'));
+    }
   }
+
+  const isPending = createExpense.isPending || uploadReceipt.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -227,6 +281,17 @@ function CreateExpenseDialog({
             />
           </FormField>
 
+          <FormField label={t('finance.expenses.columns.receipt')} htmlFor="expense-receipt-create">
+            <ReceiptFilePicker
+              file={receiptFile}
+              onSelect={setReceiptFile}
+              onClear={() => setReceiptFile(null)}
+              disabled={isPending}
+            />
+          </FormField>
+
+          {error && <p className="text-body text-danger">{error}</p>}
+
           <DialogFooter>
             <Button variant="secondary" type="button" onClick={() => onOpenChange(false)}>
               {t('common.cancel')}
@@ -234,9 +299,9 @@ function CreateExpenseDialog({
             <Button
               variant="primary"
               type="submit"
-              disabled={!category || !description.trim() || !amount || createExpense.isPending}
+              disabled={!category || !description.trim() || !amount || isPending}
             >
-              {createExpense.isPending ? t('common.loading') : t('finance.expenses.form.submit')}
+              {isPending ? t('common.loading') : t('finance.expenses.form.submit')}
             </Button>
           </DialogFooter>
         </form>

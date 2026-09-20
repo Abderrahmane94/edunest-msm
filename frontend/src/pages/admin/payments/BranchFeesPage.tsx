@@ -19,6 +19,8 @@ import { formatDZD } from '@/lib/formatters';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import { useChildren } from '@/hooks/useChildren';
 import { useClassrooms } from '@/hooks/useClassrooms';
+import { useAcademicYears } from '@/hooks/useAcademicYears';
+import { useBranchCalendar } from '@/hooks/useBranchCalendar';
 import {
   useBranchFees,
   useCreateBranchFee,
@@ -46,6 +48,12 @@ function FeeDialog({
   const { t } = useTranslation();
   const createFee = useCreateBranchFee(branchId);
   const updateFee = useUpdateBranchFee(branchId);
+  const { data: academicYears } = useAcademicYears();
+  const activeAcademicYear = React.useMemo(
+    () => academicYears?.find((y) => y.is_active) ?? academicYears?.[0],
+    [academicYears],
+  );
+  const { data: calendarEntries } = useBranchCalendar(branchId, activeAcademicYear?.id);
 
   const [name, setName] = React.useState('');
   const [amount, setAmount] = React.useState('');
@@ -250,12 +258,31 @@ function FeeDialog({
           )}
 
           {isRecurring && (billingCycle === 'trimester' || billingCycle === 'custom') && (
-            <div className="flex items-start gap-3 bg-accent-muted rounded-lg p-3">
-              <CalendarDays className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+            <div
+              className={`flex items-start gap-3 rounded-lg p-3 ${
+                calendarEntries && calendarEntries.length > 0 ? 'bg-success-muted' : 'bg-accent-muted'
+              }`}
+            >
+              <CalendarDays
+                className={`w-4 h-4 shrink-0 mt-0.5 ${
+                  calendarEntries && calendarEntries.length > 0 ? 'text-success' : 'text-accent'
+                }`}
+              />
               <div className="flex-1 min-w-0">
                 <p className="text-caption text-foreground">
                   {t('payments.fees.fields.customCycleHint')}
                 </p>
+                {activeAcademicYear && (
+                  <p className="text-caption font-medium text-foreground mt-1">
+                    {calendarEntries && calendarEntries.length > 0
+                      ? t('payments.fees.fields.periodsConfigured', {
+                          count: calendarEntries.length,
+                          year: activeAcademicYear.name,
+                          labels: calendarEntries.map((e) => e.label).join(', '),
+                        })
+                      : t('payments.fees.fields.noPeriodsConfigured', { year: activeAcademicYear.name })}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={() => {

@@ -13,9 +13,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/Dialog';
-import { FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui/Input';
-import { useAcademicYears } from '@/hooks/useAcademicYears';
+import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import {
   useBranchCalendar,
@@ -50,24 +49,14 @@ export function BranchCalendarPage() {
 
   // Data fetching
   const { branchId: selectedBranchId } = useDefaultBranch();
-  const { data: academicYears } = useAcademicYears();
-
-  // Selection state
-  const [selectedAcademicYearId, setSelectedAcademicYearId] = React.useState<string>('');
+  const { data: activeAcademicYear, isLoading: yearLoading } = useActiveAcademicYear();
+  const selectedAcademicYearId = activeAcademicYear?.id ?? '';
 
   // Dialog state
   const [formOpen, setFormOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [editingEntry, setEditingEntry] = React.useState<BranchCalendarEntry | null>(null);
   const [deletingEntry, setDeletingEntry] = React.useState<BranchCalendarEntry | null>(null);
-
-  // Auto-select active academic year
-  React.useEffect(() => {
-    if (!selectedAcademicYearId && academicYears && academicYears.length > 0) {
-      const active = academicYears.find((y) => y.is_active);
-      setSelectedAcademicYearId(active?.id ?? academicYears[0].id);
-    }
-  }, [academicYears, selectedAcademicYearId]);
 
   // Calendar data
   const { data: calendarEntries, isLoading: entriesLoading } = useBranchCalendar(
@@ -220,23 +209,11 @@ export function BranchCalendarPage() {
         )}
       </div>
 
-      {/* Selectors */}
-      <div className="flex flex-wrap gap-4">
-        <div className="w-full sm:w-64">
-          <FormSelect
-            label={t('payments.branchCalendar.selectYear', 'Academic Year')}
-            name="academicYear"
-            value={selectedAcademicYearId}
-            onChange={(e) => setSelectedAcademicYearId(e.target.value)}
-            options={(academicYears ?? []).map((y) => ({ value: y.id, label: y.name }))}
-            placeholder={t('payments.branchCalendar.selectYearPlaceholder', 'Select year')}
-          />
-        </div>
-      </div>
-
       {/* Content */}
-      {!isReady ? (
-        <EmptyState message={t('payments.branchCalendar.selectPrompt', 'Select an academic year to view calendar entries.')} />
+      {!yearLoading && !activeAcademicYear ? (
+        <EmptyState message={t('payments.branchCalendar.noActiveYear', 'No active academic year is configured yet.')} />
+      ) : !isReady ? (
+        <LoadingSkeleton />
       ) : entriesLoading ? (
         <LoadingSkeleton />
       ) : (

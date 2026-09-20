@@ -1484,8 +1484,7 @@
         "recurringHelper": "Activez pour facturer ce frais selon un cycle (mensuel, trimestriel...) au lieu d'une seule fois.",
         "customCycleHint": "Les cycles trimestriel et personnalisé facturent ce frais sur les périodes que vous lui assignez ci-dessous (créées dans la section Calendrier).",
         "savePeriodsFirst": "Enregistrez d'abord ce frais — vous pourrez ensuite lui assigner des périodes.",
-        "periodsYear": "Année scolaire",
-        "noPeriodsAvailable": "Aucune période créée pour cette année. Ajoutez-en dans la section Calendrier ci-dessous."
+        "noPeriodsAvailable": "Aucune période créée pour l'année scolaire active. Ajoutez-en dans la section Calendrier ci-dessous."
       },
       "errors": {
         "nameRequired": "Le nom est requis (1-100 caractères)",
@@ -1521,9 +1520,7 @@
       "title": "Périodes (calendrier)",
       "description": "Créez vos périodes ici, puis assignez-en une ou plusieurs à chaque frais trimestriel ou personnalisé depuis sa fiche.",
       "addEntry": "Ajouter une période",
-      "selectYear": "Année scolaire",
-      "selectYearPlaceholder": "Sélectionner une année",
-      "selectPrompt": "Sélectionnez une année scolaire pour voir les périodes.",
+      "noActiveYear": "Aucune année scolaire active n'est configurée.",
       "noEntries": "Aucune période définie pour cette année.",
       "createEntry": "Nouvelle entrée de calendrier",
       "editEntry": "Modifier l'entrée du calendrier",
@@ -1564,8 +1561,6 @@
         "description": "Créer une nouvelle inscription pour un enfant",
         "child": "Enfant",
         "selectChild": "Sélectionner un enfant",
-        "academicYear": "Année scolaire",
-        "selectAcademicYear": "Sélectionner une année",
         "startDate": "Date de début",
         "baseFee": "Frais de base",
         "selectBaseFee": "Sélectionner un frais récurrent",
@@ -1579,7 +1574,7 @@
         "firstPeriodAmountHelper": "Optionnel — pour inscription en cours de cycle",
         "feeValidation": "Doit être entre 0,00 et 9 999 999,99 avec max 2 décimales",
         "childRequired": "Veuillez sélectionner un enfant",
-        "academicYearRequired": "Veuillez sélectionner une année scolaire",
+        "noActiveAcademicYear": "Aucune année scolaire active n'est configurée — configurez-en une avant de créer une inscription.",
         "startDateRequired": "Veuillez spécifier la date de début"
       },
       "result": {

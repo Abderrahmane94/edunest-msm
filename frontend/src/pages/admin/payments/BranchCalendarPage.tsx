@@ -32,7 +32,6 @@ const calendarFormSchema = z
     label: z.string().min(1, 'Label is required').max(100, 'Label must be 100 characters or less'),
     period_start: z.string().min(1, 'Period start is required'),
     period_end: z.string().min(1, 'Period end is required'),
-    due_date: z.string().min(1, 'Due date is required'),
   })
   .refine(
     (data) => {
@@ -40,13 +39,6 @@ const calendarFormSchema = z
       return data.period_end >= data.period_start;
     },
     { message: 'Period end must be on or after period start', path: ['period_end'] },
-  )
-  .refine(
-    (data) => {
-      if (!data.period_start || !data.due_date) return true;
-      return data.due_date >= data.period_start;
-    },
-    { message: 'Due date must be on or after period start', path: ['due_date'] },
   );
 
 type CalendarFormValues = z.infer<typeof calendarFormSchema>;
@@ -101,7 +93,7 @@ export function BranchCalendarPage() {
   // Handlers
   function handleOpenCreate() {
     setEditingEntry(null);
-    reset({ label: '', period_start: '', period_end: '', due_date: '' });
+    reset({ label: '', period_start: '', period_end: '' });
     setFormOpen(true);
   }
 
@@ -111,7 +103,6 @@ export function BranchCalendarPage() {
       label: entry.label,
       period_start: entry.periodStart.slice(0, 10),
       period_end: entry.periodEnd.slice(0, 10),
-      due_date: entry.dueDate.slice(0, 10),
     });
     setFormOpen(true);
   }
@@ -129,7 +120,6 @@ export function BranchCalendarPage() {
         label: data.label,
         period_start: data.period_start,
         period_end: data.period_end,
-        due_date: data.due_date,
       });
     } else {
       await createMutation.mutateAsync({
@@ -137,7 +127,6 @@ export function BranchCalendarPage() {
         label: data.label,
         period_start: data.period_start,
         period_end: data.period_end,
-        due_date: data.due_date,
         academicYearId: selectedAcademicYearId,
       });
     }
@@ -171,11 +160,6 @@ export function BranchCalendarPage() {
       key: 'periodEnd',
       header: t('payments.branchCalendar.columns.periodEnd', 'Period End'),
       render: (row) => formatDate(row.periodEnd),
-    },
-    {
-      key: 'dueDate',
-      header: t('payments.branchCalendar.columns.dueDate', 'Due Date'),
-      render: (row) => formatDate(row.dueDate),
     },
     {
       key: 'actions',
@@ -300,13 +284,6 @@ export function BranchCalendarPage() {
               label={t('payments.branchCalendar.fields.periodEnd', 'Period End')}
               error={errors.period_end?.message}
               {...register('period_end')}
-            />
-
-            <Input
-              type="date"
-              label={t('payments.branchCalendar.fields.dueDate', 'Due Date')}
-              error={errors.due_date?.message}
-              {...register('due_date')}
             />
 
             <DialogFooter>

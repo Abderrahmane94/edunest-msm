@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, Edit2, DollarSign, Users, CalendarDays, Check } from 'lucide-react';
+import { Trash2, Edit2, Eye, DollarSign, Users, CalendarDays, Check } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -384,6 +384,118 @@ function FeeDialog({
   );
 }
 
+// ─── View Fee Dialog ─────────────────────────────────────────────────────────
+
+function InfoRow({ label, value, dir }: { label: string; value: React.ReactNode; dir?: 'ltr' | 'rtl' }) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-1.5">
+      <span className="text-caption text-text-secondary">{label}</span>
+      <span className="text-body font-medium text-foreground" dir={dir}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function ViewFeeDialog({
+  open,
+  onOpenChange,
+  fee,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  fee: BranchFee | null;
+}) {
+  const { t, i18n } = useTranslation();
+  const { data: academicYears } = useAcademicYears();
+  const activeAcademicYear = React.useMemo(
+    () => academicYears?.find((y) => y.is_active) ?? academicYears?.[0],
+    [academicYears],
+  );
+  const [periodsYearId, setPeriodsYearId] = React.useState<string>('');
+
+  React.useEffect(() => {
+    if (open && activeAcademicYear) setPeriodsYearId(activeAcademicYear.id);
+  }, [open, activeAcademicYear]);
+
+  const showPeriods = !!fee?.billingCycle && (fee.billingCycle === 'trimester' || fee.billingCycle === 'custom');
+
+  const { data: feePeriods, isLoading: feePeriodsLoading } = useFeePeriods(
+    showPeriods ? fee?.id : undefined,
+    showPeriods ? periodsYearId || undefined : undefined,
+  );
+  const assignedPeriods = (feePeriods ?? []).filter((p) => p.isAssigned);
+
+  if (!fee) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[440px]">
+        <DialogHeader>
+          <DialogTitle>{t('payments.fees.view.title', { name: fee.name })}</DialogTitle>
+        </DialogHeader>
+
+        <div className="divide-y divide-border">
+          <InfoRow label={t('payments.fees.fields.name')} value={fee.name} />
+          <InfoRow
+            label={t('payments.fees.fields.amount')}
+            value={formatDZD(Number(fee.amount), i18n.language)}
+            dir="ltr"
+          />
+          <InfoRow
+            label={t('payments.fees.fields.recurring')}
+            value={
+              fee.billingCycle
+                ? t(`payments.branchConfig.cycle${fee.billingCycle.charAt(0).toUpperCase()}${fee.billingCycle.slice(1)}`)
+                : t('payments.fees.oneShot')
+            }
+          />
+          {fee.billingCycle && (
+            <>
+              <InfoRow label={t('payments.branchConfig.billingDueDay')} value={fee.billingDueDay} />
+              <InfoRow label={t('payments.branchConfig.gracePeriodDays')} value={fee.gracePeriodDays} />
+            </>
+          )}
+        </div>
+
+        {showPeriods && (
+          <div className="space-y-3 pt-1">
+            <FormSelect
+              label={t('payments.fees.fields.periodsYear')}
+              name="view-fee-periods-year"
+              value={periodsYearId}
+              onChange={(e) => setPeriodsYearId(e.target.value)}
+              options={(academicYears ?? []).map((y) => ({ value: y.id, label: y.name }))}
+            />
+
+            {feePeriodsLoading ? (
+              <div className="animate-pulse h-12 bg-subtle rounded-md" />
+            ) : assignedPeriods.length === 0 ? (
+              <p className="text-caption text-text-secondary">{t('payments.fees.view.noAssignedPeriods')}</p>
+            ) : (
+              <ul className="border border-border rounded-md divide-y divide-border max-h-48 overflow-y-auto">
+                {assignedPeriods.map((period) => (
+                  <li key={period.id} className="p-2 text-caption text-foreground">
+                    {period.label}
+                    <span className="text-text-disabled ms-1">
+                      ({new Date(period.periodStart).toLocaleDateString()} –{' '}
+                      {new Date(period.periodEnd).toLocaleDateString()})
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Assign Fee Dialog ───────────────────────────────────────────────────────
 
 function AssignFeeDialog({
@@ -610,11 +722,18 @@ export default function BranchFeesPage() {
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = React.useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = React.useState(false);
   const [editingFee, setEditingFee] = React.useState<BranchFee | null>(null);
   const [assigningFee, setAssigningFee] = React.useState<BranchFee | null>(null);
+  const [viewingFee, setViewingFee] = React.useState<BranchFee | null>(null);
 
   const { data: fees, isLoading } = useBranchFees(selectedBranchId);
   const deleteFee = useDeleteBranchFee(selectedBranchId);
+
+  function handleView(fee: BranchFee) {
+    setViewingFee(fee);
+    setViewDialogOpen(true);
+  }
 
   function handleEdit(fee: BranchFee) {
     setEditingFee(fee);
@@ -671,6 +790,9 @@ export default function BranchFeesPage() {
       header: '',
       render: (fee) => (
         <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="sm" onClick={() => handleView(fee)} title={t('payments.fees.view.button')}>
+            <Eye className="w-4 h-4" />
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => handleAssign(fee)} title={t('payments.fees.assign.button')}>
             <Users className="w-4 h-4 text-primary" />
           </Button>
@@ -734,6 +856,9 @@ export default function BranchFeesPage() {
           fee={assigningFee}
         />
       )}
+
+      {/* View Fee Dialog */}
+      <ViewFeeDialog open={viewDialogOpen} onOpenChange={setViewDialogOpen} fee={viewingFee} />
     </div>
   );
 }

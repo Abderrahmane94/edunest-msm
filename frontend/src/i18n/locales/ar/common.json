@@ -1493,6 +1493,11 @@
         "nameRequired": "الاسم مطلوب (1-100 حرف)",
         "amountInvalid": "المبلغ يجب أن يكون بين 0.00 و 9,999,999.99 د.ج"
       },
+      "view": {
+        "button": "عرض",
+        "title": "تفاصيل الرسم « {{name}} »",
+        "noAssignedPeriods": "لا توجد فترة مرتبطة بهذا الرسم لهذه السنة."
+      },
       "assign": {
         "button": "تعيين",
         "title": "تعيين « {{name}} »",
@@ -1531,15 +1536,13 @@
       "columns": {
         "label": "التسمية",
         "periodStart": "بداية الفترة",
-        "periodEnd": "نهاية الفترة",
-        "dueDate": "تاريخ الاستحقاق"
+        "periodEnd": "نهاية الفترة"
       },
       "fields": {
         "label": "التسمية",
         "labelPlaceholder": "مثال: الفصل الأول",
         "periodStart": "بداية الفترة",
-        "periodEnd": "نهاية الفترة",
-        "dueDate": "تاريخ الاستحقاق"
+        "periodEnd": "نهاية الفترة"
       }
     },
     "enrollments": {

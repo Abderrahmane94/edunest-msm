@@ -8,10 +8,12 @@ import type { GeneratePeriodsInput } from '../billing-period.service';
  * Property 17: Trimester/Custom Period Boundaries From Calendar
  *
  * For any enrollment at a branch with `trimester` or `custom` billing cycle,
- * the generated billing periods' `period_start`, `period_end`, and `due_date` values
- * SHALL match exactly the corresponding BranchCalendar rows (for rows whose
- * `period_end` >= enrollment `start_date`), taken in ascending `period_start` order
- * with no date transformation.
+ * the generated billing periods' `period_start` and `period_end` values SHALL
+ * match exactly the corresponding BranchCalendar rows (for rows whose
+ * `period_end` >= enrollment `start_date`), taken in ascending `period_start`
+ * order with no date transformation. `due_date` is not stored on the
+ * calendar row — it is derived from the fee's `billing_due_day`, anchored to
+ * the month each period starts in.
  *
  * **Validates: Requirements 2.2, 4.5**
  */
@@ -38,23 +40,25 @@ function arbDateOnly(minYear = 2020, maxYear = 2029) {
 }
 
 /**
- * Generates a calendar row with period_start <= period_end and due_date >= period_start.
+ * Resolves the expected due date for a period: the fee's billing_due_day,
+ * anchored to the month the period starts in — mirrors dueDateForPeriod in
+ * billing-period.service.ts.
+ */
+function expectedDueDate(periodStart: Date, billingDueDay: number): Date {
+  return new Date(periodStart.getFullYear(), periodStart.getMonth(), billingDueDay);
+}
+
+/**
+ * Generates a calendar row with period_start <= period_end.
  */
 function arbCalendarRow() {
   return arbDateOnly().chain((periodStart) => {
     // period_end is same day or up to 120 days after period_start
-    return fc
-      .tuple(
-        fc.integer({ min: 0, max: 120 }),
-        fc.integer({ min: 0, max: 30 })
-      )
-      .map(([endOffset, dueOffset]) => {
-        const periodEnd = new Date(periodStart.getTime());
-        periodEnd.setDate(periodEnd.getDate() + endOffset);
-        const dueDate = new Date(periodStart.getTime());
-        dueDate.setDate(dueDate.getDate() + dueOffset);
-        return { periodStart, periodEnd, dueDate };
-      });
+    return fc.integer({ min: 0, max: 120 }).map((endOffset) => {
+      const periodEnd = new Date(periodStart.getTime());
+      periodEnd.setDate(periodEnd.getDate() + endOffset);
+      return { periodStart, periodEnd };
+    });
   });
 }
 
@@ -79,36 +83,29 @@ function arbTrimesterInput() {
           fc.integer({ min: 30, max: 120 }),
           fc.integer({ min: 30, max: 120 }),
           fc.integer({ min: 0, max: 10 }),
-          fc.integer({ min: 0, max: 10 }),
           fc.integer({ min: 0, max: 10 })
         )
-        .map(([len1, len2, len3, gap1, gap2, dueOff]) => {
+        .map(([len1, len2, len3, gap1, gap2]) => {
           // First row starts at or before startDate
           const row1Start = new Date(startDate.getTime());
           row1Start.setDate(row1Start.getDate() - Math.floor(len1 / 2));
           const row1End = new Date(row1Start.getTime());
           row1End.setDate(row1End.getDate() + len1);
-          const row1Due = new Date(row1Start.getTime());
-          row1Due.setDate(row1Due.getDate() + dueOff);
 
           const row2Start = new Date(row1End.getTime());
           row2Start.setDate(row2Start.getDate() + gap1 + 1);
           const row2End = new Date(row2Start.getTime());
           row2End.setDate(row2End.getDate() + len2);
-          const row2Due = new Date(row2Start.getTime());
-          row2Due.setDate(row2Due.getDate() + dueOff);
 
           const row3Start = new Date(row2End.getTime());
           row3Start.setDate(row3Start.getDate() + gap2 + 1);
           const row3End = new Date(row3Start.getTime());
           row3End.setDate(row3End.getDate() + len3);
-          const row3Due = new Date(row3Start.getTime());
-          row3Due.setDate(row3Due.getDate() + dueOff);
 
           const calendarRows = [
-            { periodStart: row1Start, periodEnd: row1End, dueDate: row1Due },
-            { periodStart: row2Start, periodEnd: row2End, dueDate: row2Due },
-            { periodStart: row3Start, periodEnd: row3End, dueDate: row3Due },
+            { periodStart: row1Start, periodEnd: row1End },
+            { periodStart: row2Start, periodEnd: row2End },
+            { periodStart: row3Start, periodEnd: row3End },
           ];
 
           // Ensure all rows have periodEnd >= startDate (by construction row1End >= startDate)
@@ -147,11 +144,10 @@ function arbCustomInput() {
       return fc
         .tuple(
           fc.array(fc.integer({ min: 20, max: 90 }), { minLength: rowCount, maxLength: rowCount }),
-          fc.array(fc.integer({ min: 0, max: 10 }), { minLength: rowCount, maxLength: rowCount }),
-          fc.integer({ min: 0, max: 10 })
+          fc.array(fc.integer({ min: 0, max: 10 }), { minLength: rowCount, maxLength: rowCount })
         )
-        .map(([lengths, gaps, dueOff]) => {
-          const calendarRows: Array<{ periodStart: Date; periodEnd: Date; dueDate: Date }> = [];
+        .map(([lengths, gaps]) => {
+          const calendarRows: Array<{ periodStart: Date; periodEnd: Date }> = [];
 
           // Start the first row before or at startDate to guarantee at least 1 qualifying row
           let currentStart = new Date(startDate.getTime());
@@ -161,10 +157,8 @@ function arbCustomInput() {
             const periodStart = new Date(currentStart.getTime());
             const periodEnd = new Date(periodStart.getTime());
             periodEnd.setDate(periodEnd.getDate() + lengths[i]);
-            const dueDate = new Date(periodStart.getTime());
-            dueDate.setDate(dueDate.getDate() + dueOff);
 
-            calendarRows.push({ periodStart, periodEnd, dueDate });
+            calendarRows.push({ periodStart, periodEnd });
 
             // Next row starts after this row ends + gap
             currentStart = new Date(periodEnd.getTime());
@@ -220,7 +214,7 @@ describe('Property 17: Trimester/Custom Period Boundaries From Calendar', () => 
       );
     });
 
-    it('period_start, period_end, and due_date copied unchanged from BranchCalendar rows in ascending period_start order', () => {
+    it('period_start and period_end copied unchanged from BranchCalendar rows in ascending order; due_date derived from billing_due_day', () => {
       fc.assert(
         fc.property(
           arbTrimesterInput(),
@@ -251,7 +245,12 @@ describe('Property 17: Trimester/Custom Period Boundaries From Calendar', () => 
             for (let i = 0; i < recurringPeriods.length; i++) {
               expect(datesEqual(recurringPeriods[i].periodStart, filteredRows[i].periodStart)).toBe(true);
               expect(datesEqual(recurringPeriods[i].periodEnd, filteredRows[i].periodEnd)).toBe(true);
-              expect(datesEqual(recurringPeriods[i].dueDate, filteredRows[i].dueDate)).toBe(true);
+              expect(
+                datesEqual(
+                  recurringPeriods[i].dueDate,
+                  expectedDueDate(filteredRows[i].periodStart, billingDueDay)
+                )
+              ).toBe(true);
             }
           }
         ),
@@ -294,7 +293,7 @@ describe('Property 17: Trimester/Custom Period Boundaries From Calendar', () => 
       );
     });
 
-    it('period_start, period_end, and due_date copied unchanged from BranchCalendar rows', () => {
+    it('period_start and period_end copied unchanged from BranchCalendar rows; due_date derived from billing_due_day', () => {
       fc.assert(
         fc.property(
           arbCustomInput(),
@@ -323,7 +322,12 @@ describe('Property 17: Trimester/Custom Period Boundaries From Calendar', () => 
             for (let i = 0; i < recurringPeriods.length; i++) {
               expect(datesEqual(recurringPeriods[i].periodStart, filteredRows[i].periodStart)).toBe(true);
               expect(datesEqual(recurringPeriods[i].periodEnd, filteredRows[i].periodEnd)).toBe(true);
-              expect(datesEqual(recurringPeriods[i].dueDate, filteredRows[i].dueDate)).toBe(true);
+              expect(
+                datesEqual(
+                  recurringPeriods[i].dueDate,
+                  expectedDueDate(filteredRows[i].periodStart, billingDueDay)
+                )
+              ).toBe(true);
             }
           }
         ),

@@ -773,7 +773,6 @@ model BranchCalendar {
   label          String
   periodStart    DateTime @map("period_start") @db.Date
   periodEnd      DateTime @map("period_end") @db.Date
-  dueDate        DateTime @map("due_date") @db.Date
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 

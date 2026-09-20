@@ -14,7 +14,7 @@ export interface GeneratePeriodsInput {
   recurringFee: Prisma.Decimal;
   registrationFee: Prisma.Decimal | null;
   firstPeriodAmountDue?: Prisma.Decimal;
-  calendarRows: Array<{ periodStart: Date; periodEnd: Date; dueDate: Date }>;
+  calendarRows: Array<{ periodStart: Date; periodEnd: Date }>;
 }
 
 export interface GeneratedPeriod {
@@ -59,6 +59,14 @@ function lastDayOfMonth(year: number, month: number): Date {
  */
 function firstDayOfMonth(year: number, month: number): Date {
   return new Date(year, month, 1);
+}
+
+/**
+ * Resolves a due date from the fee's configured day-of-month, anchored to
+ * the month a period starts in.
+ */
+function dueDateForPeriod(periodStart: Date, billingDueDay: number): Date {
+  return new Date(periodStart.getFullYear(), periodStart.getMonth(), billingDueDay);
 }
 
 // --- Period Generation ---
@@ -169,7 +177,7 @@ function generateRecurringPeriods(
   billingDueDay: number,
   gracePeriodDays: number,
   recurringFee: Prisma.Decimal,
-  calendarRows: Array<{ periodStart: Date; periodEnd: Date; dueDate: Date }>
+  calendarRows: Array<{ periodStart: Date; periodEnd: Date }>
 ): GeneratedPeriod[] {
   switch (billingCycle) {
     case 'monthly':
@@ -186,6 +194,7 @@ function generateRecurringPeriods(
       return generateCalendarPeriods(
         enrollmentId,
         startDate,
+        billingDueDay,
         gracePeriodDays,
         recurringFee,
         calendarRows,
@@ -195,6 +204,7 @@ function generateRecurringPeriods(
       return generateCalendarPeriods(
         enrollmentId,
         startDate,
+        billingDueDay,
         gracePeriodDays,
         recurringFee,
         calendarRows,
@@ -238,7 +248,7 @@ function generateMonthlyPeriods(
   while (year < endYear || (year === endYear && month <= endMonth)) {
     const periodStart = firstDayOfMonth(year, month);
     const periodEnd = lastDayOfMonth(year, month);
-    const dueDate = new Date(year, month, billingDueDay);
+    const dueDate = dueDateForPeriod(periodStart, billingDueDay);
     const graceEndDate = addDays(dueDate, gracePeriodDays);
 
     periods.push({
@@ -269,9 +279,10 @@ function generateMonthlyPeriods(
 function generateCalendarPeriods(
   enrollmentId: string,
   startDate: Date,
+  billingDueDay: number,
   gracePeriodDays: number,
   recurringFee: Prisma.Decimal,
-  calendarRows: Array<{ periodStart: Date; periodEnd: Date; dueDate: Date }>,
+  calendarRows: Array<{ periodStart: Date; periodEnd: Date }>,
   cycleType: 'trimester' | 'custom'
 ): GeneratedPeriod[] {
   // Filter to rows where periodEnd >= startDate
@@ -298,13 +309,14 @@ function generateCalendarPeriods(
 
   // Generate periods from sorted rows
   return sortedRows.map((row) => {
-    const graceEndDate = addDays(row.dueDate, gracePeriodDays);
+    const dueDate = dueDateForPeriod(row.periodStart, billingDueDay);
+    const graceEndDate = addDays(dueDate, gracePeriodDays);
 
     return {
       enrollmentId,
       periodStart: row.periodStart,
       periodEnd: row.periodEnd,
-      dueDate: row.dueDate,
+      dueDate,
       graceEndDate,
       amountDue: recurringFee,
       isRegistrationPeriod: false,

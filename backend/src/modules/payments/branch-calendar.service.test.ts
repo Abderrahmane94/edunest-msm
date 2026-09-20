@@ -28,7 +28,6 @@ describe('Branch Calendar Validation', () => {
         label: 'Trimester 1',
         period_start: '2025-03-01',
         period_end: '2025-02-01',
-        due_date: '2025-03-15',
       });
 
       expect(result.success).toBe(false);
@@ -38,27 +37,11 @@ describe('Branch Calendar Validation', () => {
       }
     });
 
-    it('should reject when due_date is before period_start', () => {
-      const result = createBranchCalendarSchema.safeParse({
-        label: 'Trimester 1',
-        period_start: '2025-03-01',
-        period_end: '2025-05-31',
-        due_date: '2025-02-15',
-      });
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        const fieldErrors = result.error.issues.map((i) => i.path.join('.'));
-        expect(fieldErrors).toContain('due_date');
-      }
-    });
-
     it('should pass with valid dates', () => {
       const result = createBranchCalendarSchema.safeParse({
         label: 'Trimester 1',
         period_start: '2025-01-01',
         period_end: '2025-03-31',
-        due_date: '2025-01-15',
       });
 
       expect(result.success).toBe(true);
@@ -66,7 +49,6 @@ describe('Branch Calendar Validation', () => {
         expect(result.data.label).toBe('Trimester 1');
         expect(result.data.period_start).toBeInstanceOf(Date);
         expect(result.data.period_end).toBeInstanceOf(Date);
-        expect(result.data.due_date).toBeInstanceOf(Date);
       }
     });
 
@@ -75,7 +57,6 @@ describe('Branch Calendar Validation', () => {
         label: '',
         period_start: '2025-01-01',
         period_end: '2025-03-31',
-        due_date: '2025-01-15',
       });
 
       expect(result.success).toBe(false);
@@ -90,7 +71,6 @@ describe('Branch Calendar Validation', () => {
         label: 'A'.repeat(101),
         period_start: '2025-01-01',
         period_end: '2025-03-31',
-        due_date: '2025-01-15',
       });
 
       expect(result.success).toBe(false);
@@ -105,7 +85,6 @@ describe('Branch Calendar Validation', () => {
         label: 'X',
         period_start: '2025-01-01',
         period_end: '2025-03-31',
-        due_date: '2025-01-15',
       });
 
       expect(result.success).toBe(true);
@@ -116,7 +95,6 @@ describe('Branch Calendar Validation', () => {
         label: 'A'.repeat(100),
         period_start: '2025-01-01',
         period_end: '2025-03-31',
-        due_date: '2025-01-15',
       });
 
       expect(result.success).toBe(true);
@@ -127,18 +105,6 @@ describe('Branch Calendar Validation', () => {
         label: 'Single day period',
         period_start: '2025-03-01',
         period_end: '2025-03-01',
-        due_date: '2025-03-01',
-      });
-
-      expect(result.success).toBe(true);
-    });
-
-    it('should accept when due_date equals period_start', () => {
-      const result = createBranchCalendarSchema.safeParse({
-        label: 'Due on start',
-        period_start: '2025-03-01',
-        period_end: '2025-05-31',
-        due_date: '2025-03-01',
       });
 
       expect(result.success).toBe(true);
@@ -171,7 +137,6 @@ describe('Branch Calendar Validation', () => {
         label: 'Existing Trimester',
         periodStart: new Date('2025-01-01'),
         periodEnd: new Date('2025-03-31'),
-        dueDate: new Date('2025-01-15'),
       } as never);
 
       await expect(
@@ -179,7 +144,6 @@ describe('Branch Calendar Validation', () => {
           label: 'Overlapping Trimester',
           period_start: new Date('2025-02-01'),
           period_end: new Date('2025-04-30'),
-          due_date: new Date('2025-02-15'),
         }),
       ).rejects.toThrow(BranchCalendarServiceError);
 
@@ -188,7 +152,6 @@ describe('Branch Calendar Validation', () => {
           label: 'Overlapping Trimester',
           period_start: new Date('2025-02-01'),
           period_end: new Date('2025-04-30'),
-          due_date: new Date('2025-02-15'),
         });
       } catch (error) {
         expect(error).toBeInstanceOf(BranchCalendarServiceError);
@@ -220,7 +183,6 @@ describe('Branch Calendar Validation', () => {
         label: 'Trimester 2',
         periodStart: new Date('2025-04-01'),
         periodEnd: new Date('2025-06-30'),
-        dueDate: new Date('2025-04-15'),
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -230,7 +192,6 @@ describe('Branch Calendar Validation', () => {
         label: 'Trimester 2',
         period_start: new Date('2025-04-01'),
         period_end: new Date('2025-06-30'),
-        due_date: new Date('2025-04-15'),
       });
 
       expect(result).toEqual(createdEntry);
@@ -241,7 +202,6 @@ describe('Branch Calendar Validation', () => {
           label: 'Trimester 2',
           periodStart: new Date('2025-04-01'),
           periodEnd: new Date('2025-06-30'),
-          dueDate: new Date('2025-04-15'),
         },
       });
     });
@@ -254,7 +214,6 @@ describe('Branch Calendar Validation', () => {
           label: 'Trimester 1',
           period_start: new Date('2025-01-01'),
           period_end: new Date('2025-03-31'),
-          due_date: new Date('2025-01-15'),
         }),
       ).rejects.toThrow(BranchCalendarServiceError);
 
@@ -263,7 +222,6 @@ describe('Branch Calendar Validation', () => {
           label: 'Trimester 1',
           period_start: new Date('2025-01-01'),
           period_end: new Date('2025-03-31'),
-          due_date: new Date('2025-01-15'),
         });
       } catch (error) {
         const serviceError = error as BranchCalendarServiceError;
@@ -284,7 +242,6 @@ describe('Branch Calendar Validation', () => {
           label: 'Trimester 1',
           period_start: new Date('2025-01-01'),
           period_end: new Date('2025-03-31'),
-          due_date: new Date('2025-01-15'),
         }),
       ).rejects.toThrow(BranchCalendarServiceError);
 
@@ -293,7 +250,6 @@ describe('Branch Calendar Validation', () => {
           label: 'Trimester 1',
           period_start: new Date('2025-01-01'),
           period_end: new Date('2025-03-31'),
-          due_date: new Date('2025-01-15'),
         });
       } catch (error) {
         const serviceError = error as BranchCalendarServiceError;

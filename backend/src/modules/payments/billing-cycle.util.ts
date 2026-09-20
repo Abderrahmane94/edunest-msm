@@ -20,7 +20,7 @@ export async function fetchCalendarRows(
   branchFeeId: string,
   academicYearId: string,
   billingCycle: 'monthly' | 'trimester' | 'custom',
-): Promise<Array<{ periodStart: Date; periodEnd: Date; dueDate: Date }>> {
+): Promise<Array<{ periodStart: Date; periodEnd: Date }>> {
   if (billingCycle !== 'trimester' && billingCycle !== 'custom') {
     return [];
   }
@@ -36,6 +36,5 @@ export async function fetchCalendarRows(
   return rows.map((r) => ({
     periodStart: new Date(r.periodStart),
     periodEnd: new Date(r.periodEnd),
-    dueDate: new Date(r.dueDate),
   }));
 }

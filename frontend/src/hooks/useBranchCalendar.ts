@@ -14,7 +14,6 @@ export interface BranchCalendarEntry {
   label: string;
   periodStart: string;
   periodEnd: string;
-  dueDate: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,7 +22,6 @@ export interface CreateBranchCalendarInput {
   label: string;
   period_start: string;
   period_end: string;
-  due_date: string;
   academicYearId: string;
 }
 
@@ -31,7 +29,6 @@ export interface UpdateBranchCalendarInput {
   label: string;
   period_start: string;
   period_end: string;
-  due_date: string;
 }
 
 // ─── Branches ─────────────────────────────────────────────────────────────────
@@ -77,7 +74,6 @@ export function useCreateBranchCalendar() {
         label: data.label,
         period_start: data.period_start,
         period_end: data.period_end,
-        due_date: data.due_date,
         academicYearId: data.academicYearId,
       });
       if (!res.success) {
@@ -103,7 +99,6 @@ export function useUpdateBranchCalendar() {
         label: data.label,
         period_start: data.period_start,
         period_end: data.period_end,
-        due_date: data.due_date,
       });
       if (!res.success) {
         throw new Error(res.error?.message ?? 'Failed to update calendar entry');

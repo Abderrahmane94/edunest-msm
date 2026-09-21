@@ -248,7 +248,11 @@
       "today": "Aujourd'hui",
       "clear": "Effacer",
       "previousMonth": "Mois précédent",
-      "nextMonth": "Mois suivant"
+      "nextMonth": "Mois suivant",
+      "previousYear": "Année précédente",
+      "nextYear": "Année suivante",
+      "previousYears": "Années précédentes",
+      "nextYears": "Années suivantes"
     },
     "softDelete": {
       "button": "Supprimer",

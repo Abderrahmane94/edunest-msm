@@ -36,6 +36,12 @@ function addMonths(date: Date, delta: number): Date {
   return new Date(date.getFullYear(), date.getMonth() + delta, 1);
 }
 
+const YEAR_GRID_SIZE = 12;
+
+function yearGridStart(year: number): number {
+  return year - (((year % YEAR_GRID_SIZE) + YEAR_GRID_SIZE) % YEAR_GRID_SIZE);
+}
+
 /** Builds a 6-week (42-day) grid starting on the Sunday on/before the 1st of the month. */
 function buildMonthGrid(year: number, month: number): Date[] {
   const firstWeekday = new Date(year, month, 1).getDay();
@@ -49,6 +55,8 @@ function formatDisplay(value: string): string {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   return `${d}/${m}/${date.getFullYear()}`;
 }
+
+type ViewMode = 'days' | 'months' | 'years';
 
 export interface DatePickerInputProps {
   id?: string;
@@ -87,6 +95,7 @@ export function DatePickerInput({
   const lang: 'fr' | 'ar' = i18n.language === 'ar' ? 'ar' : 'fr';
 
   const [open, setOpen] = React.useState(false);
+  const [viewMode, setViewMode] = React.useState<ViewMode>('days');
   const containerRef = React.useRef<HTMLDivElement>(null);
   const selected = parseISODate(value);
   const [viewDate, setViewDate] = React.useState(() => selected ?? new Date());
@@ -94,6 +103,10 @@ export function DatePickerInput({
   React.useEffect(() => {
     if (selected) setViewDate(selected);
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  React.useEffect(() => {
+    if (open) setViewMode('days');
+  }, [open]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -125,10 +138,34 @@ export function DatePickerInput({
     return false;
   }
 
+  function isDisabledMonth(year: number, month: number): boolean {
+    if (min && toISODate(new Date(year, month + 1, 0)) < min) return true;
+    if (max && toISODate(new Date(year, month, 1)) > max) return true;
+    return false;
+  }
+
+  function isDisabledYear(year: number): boolean {
+    if (min && toISODate(new Date(year, 11, 31)) < min) return true;
+    if (max && toISODate(new Date(year, 0, 1)) > max) return true;
+    return false;
+  }
+
   function selectDay(date: Date) {
     if (isDisabledDate(date)) return;
     emitChange(toISODate(date));
     setOpen(false);
+  }
+
+  function selectMonth(month: number) {
+    if (isDisabledMonth(viewDate.getFullYear(), month)) return;
+    setViewDate(new Date(viewDate.getFullYear(), month, 1));
+    setViewMode('days');
+  }
+
+  function selectYear(year: number) {
+    if (isDisabledYear(year)) return;
+    setViewDate(new Date(year, viewDate.getMonth(), 1));
+    setViewMode('months');
   }
 
   const monthGrid = buildMonthGrid(viewDate.getFullYear(), viewDate.getMonth());
@@ -163,82 +200,192 @@ export function DatePickerInput({
           role="dialog"
           className="absolute z-50 mt-1 bg-card border border-border rounded-lg shadow-lg p-3 w-[280px] start-0"
         >
-          <div className="flex items-center justify-between mb-2">
-            <button
-              type="button"
-              onClick={() => setViewDate((d) => addMonths(d, -1))}
-              className="p-1 rounded hover:bg-hover text-text-secondary"
-              aria-label={t('common.datePicker.previousMonth')}
-            >
-              <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
-            </button>
-            <span className="text-label font-medium text-foreground">
-              {MONTHS[lang][viewDate.getMonth()]} {viewDate.getFullYear()}
-            </span>
-            <button
-              type="button"
-              onClick={() => setViewDate((d) => addMonths(d, 1))}
-              className="p-1 rounded hover:bg-hover text-text-secondary"
-              aria-label={t('common.datePicker.nextMonth')}
-            >
-              <ChevronRight className="w-4 h-4 rtl:rotate-180" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-7 gap-0.5 mb-1">
-            {WEEKDAYS[lang].map((w, i) => (
-              <div key={i} className="text-center text-caption text-text-secondary font-medium py-1">
-                {w}
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-0.5">
-            {monthGrid.map((date) => {
-              const iso = toISODate(date);
-              const inCurrentMonth = date.getMonth() === viewDate.getMonth();
-              const isSelected = value === iso;
-              const isToday = iso === todayIso;
-              const dayDisabled = isDisabledDate(date);
-              return (
+          {viewMode === 'days' && (
+            <>
+              <div className="flex items-center justify-between mb-2">
                 <button
-                  key={iso}
                   type="button"
-                  disabled={dayDisabled}
-                  onClick={() => selectDay(date)}
-                  className={cn(
-                    'h-8 w-8 rounded-md text-caption flex items-center justify-center transition-colors',
-                    inCurrentMonth ? 'text-foreground' : 'text-text-disabled',
-                    isToday && !isSelected && 'border border-primary',
-                    isSelected && 'bg-primary text-white',
-                    !isSelected && !dayDisabled && 'hover:bg-hover',
-                    dayDisabled && 'opacity-30 cursor-not-allowed',
-                  )}
+                  onClick={() => setViewDate((d) => addMonths(d, -1))}
+                  className="p-1 rounded hover:bg-hover text-text-secondary"
+                  aria-label={t('common.datePicker.previousMonth')}
                 >
-                  {date.getDate()}
+                  <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
                 </button>
-              );
-            })}
-          </div>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('months')}
+                  className="text-label font-medium text-foreground hover:underline px-1 rounded"
+                >
+                  {MONTHS[lang][viewDate.getMonth()]} {viewDate.getFullYear()}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewDate((d) => addMonths(d, 1))}
+                  className="p-1 rounded hover:bg-hover text-text-secondary"
+                  aria-label={t('common.datePicker.nextMonth')}
+                >
+                  <ChevronRight className="w-4 h-4 rtl:rotate-180" />
+                </button>
+              </div>
 
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
-            <button
-              type="button"
-              onClick={() => selectDay(new Date())}
-              className="text-caption text-primary hover:underline"
-            >
-              {t('common.datePicker.today')}
-            </button>
-            {value && (
-              <button
-                type="button"
-                onClick={() => { emitChange(''); setOpen(false); }}
-                className="text-caption text-text-secondary hover:underline"
-              >
-                {t('common.datePicker.clear')}
-              </button>
-            )}
-          </div>
+              <div className="grid grid-cols-7 gap-0.5 mb-1">
+                {WEEKDAYS[lang].map((w, i) => (
+                  <div key={i} className="text-center text-caption text-text-secondary font-medium py-1">
+                    {w}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-0.5">
+                {monthGrid.map((date) => {
+                  const iso = toISODate(date);
+                  const inCurrentMonth = date.getMonth() === viewDate.getMonth();
+                  const isSelected = value === iso;
+                  const isToday = iso === todayIso;
+                  const dayDisabled = isDisabledDate(date);
+                  return (
+                    <button
+                      key={iso}
+                      type="button"
+                      disabled={dayDisabled}
+                      onClick={() => selectDay(date)}
+                      className={cn(
+                        'h-8 w-8 rounded-md text-caption flex items-center justify-center transition-colors',
+                        inCurrentMonth ? 'text-foreground' : 'text-text-disabled',
+                        isToday && !isSelected && 'border border-primary',
+                        isSelected && 'bg-primary text-white',
+                        !isSelected && !dayDisabled && 'hover:bg-hover',
+                        dayDisabled && 'opacity-30 cursor-not-allowed',
+                      )}
+                    >
+                      {date.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => selectDay(new Date())}
+                  className="text-caption text-primary hover:underline"
+                >
+                  {t('common.datePicker.today')}
+                </button>
+                {value && (
+                  <button
+                    type="button"
+                    onClick={() => { emitChange(''); setOpen(false); }}
+                    className="text-caption text-text-secondary hover:underline"
+                  >
+                    {t('common.datePicker.clear')}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+
+          {viewMode === 'months' && (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  type="button"
+                  onClick={() => setViewDate((d) => new Date(d.getFullYear() - 1, d.getMonth(), 1))}
+                  className="p-1 rounded hover:bg-hover text-text-secondary"
+                  aria-label={t('common.datePicker.previousYear')}
+                >
+                  <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('years')}
+                  className="text-label font-medium text-foreground hover:underline px-1 rounded"
+                >
+                  {viewDate.getFullYear()}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewDate((d) => new Date(d.getFullYear() + 1, d.getMonth(), 1))}
+                  className="p-1 rounded hover:bg-hover text-text-secondary"
+                  aria-label={t('common.datePicker.nextYear')}
+                >
+                  <ChevronRight className="w-4 h-4 rtl:rotate-180" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1">
+                {MONTHS[lang].map((label, month) => {
+                  const isCurrent = month === viewDate.getMonth();
+                  const monthDisabled = isDisabledMonth(viewDate.getFullYear(), month);
+                  return (
+                    <button
+                      key={month}
+                      type="button"
+                      disabled={monthDisabled}
+                      onClick={() => selectMonth(month)}
+                      className={cn(
+                        'h-10 rounded-md text-caption flex items-center justify-center transition-colors',
+                        isCurrent ? 'bg-primary text-white' : 'text-foreground',
+                        !isCurrent && !monthDisabled && 'hover:bg-hover',
+                        monthDisabled && 'opacity-30 cursor-not-allowed',
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {viewMode === 'years' && (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  type="button"
+                  onClick={() => setViewDate((d) => new Date(d.getFullYear() - YEAR_GRID_SIZE, d.getMonth(), 1))}
+                  className="p-1 rounded hover:bg-hover text-text-secondary"
+                  aria-label={t('common.datePicker.previousYears')}
+                >
+                  <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
+                </button>
+                <span className="text-label font-medium text-foreground" dir="ltr">
+                  {yearGridStart(viewDate.getFullYear())} – {yearGridStart(viewDate.getFullYear()) + YEAR_GRID_SIZE - 1}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setViewDate((d) => new Date(d.getFullYear() + YEAR_GRID_SIZE, d.getMonth(), 1))}
+                  className="p-1 rounded hover:bg-hover text-text-secondary"
+                  aria-label={t('common.datePicker.nextYears')}
+                >
+                  <ChevronRight className="w-4 h-4 rtl:rotate-180" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1">
+                {Array.from({ length: YEAR_GRID_SIZE }, (_, i) => yearGridStart(viewDate.getFullYear()) + i).map((year) => {
+                  const isCurrent = year === viewDate.getFullYear();
+                  const yearDisabled = isDisabledYear(year);
+                  return (
+                    <button
+                      key={year}
+                      type="button"
+                      disabled={yearDisabled}
+                      onClick={() => selectYear(year)}
+                      className={cn(
+                        'h-10 rounded-md text-caption flex items-center justify-center transition-colors',
+                        isCurrent ? 'bg-primary text-white' : 'text-foreground',
+                        !isCurrent && !yearDisabled && 'hover:bg-hover',
+                        yearDisabled && 'opacity-30 cursor-not-allowed',
+                      )}
+                    >
+                      {year}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

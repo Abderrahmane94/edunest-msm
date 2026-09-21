@@ -248,7 +248,11 @@
       "today": "اليوم",
       "clear": "مسح",
       "previousMonth": "الشهر السابق",
-      "nextMonth": "الشهر التالي"
+      "nextMonth": "الشهر التالي",
+      "previousYear": "السنة السابقة",
+      "nextYear": "السنة التالية",
+      "previousYears": "السنوات السابقة",
+      "nextYears": "السنوات التالية"
     },
     "softDelete": {
       "button": "حذف",

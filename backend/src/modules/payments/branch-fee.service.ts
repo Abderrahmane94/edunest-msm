@@ -86,10 +86,22 @@ class BranchFeeService {
       where.isActive = true;
     }
 
-    return prisma.branchFee.findMany({
+    const fees = await prisma.branchFee.findMany({
       where,
       orderBy: { createdAt: 'asc' },
+      include: {
+        classroomAssignments: {
+          include: { classroom: { select: { id: true, name: true } } },
+        },
+      },
     });
+
+    // Shape classroomAssignments into a plain `classrooms` list (empty = a
+    // general fee that applies everywhere; non-empty = scoped to those classes).
+    return fees.map(({ classroomAssignments, ...fee }) => ({
+      ...fee,
+      classrooms: classroomAssignments.map((a) => a.classroom),
+    }));
   }
 
   /**

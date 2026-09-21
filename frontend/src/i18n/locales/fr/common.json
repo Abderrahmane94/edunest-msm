@@ -1519,8 +1519,10 @@
       "empty": "Aucun frais configuré",
       "confirmDelete": "Supprimer le frais « {{name}} » ? Les périodes de facturation existantes ne seront pas affectées.",
       "oneShot": "Ponctuel",
+      "scopeGeneral": "Général",
       "fields": {
         "name": "Nom du frais",
+        "scope": "Portée",
         "namePlaceholder": "Ex: Frais de transport, Tenue scolaire...",
         "amount": "Montant (DZD)",
         "recurring": "Frais récurrent (cyclique)",

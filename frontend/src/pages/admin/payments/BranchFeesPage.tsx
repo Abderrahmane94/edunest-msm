@@ -818,6 +818,26 @@ export default function BranchFeesPage() {
         ),
     },
     {
+      key: 'scope',
+      header: t('payments.fees.fields.scope'),
+      render: (fee) => {
+        const classrooms = fee.classrooms ?? [];
+        if (classrooms.length === 0) {
+          return (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-subtle text-text-secondary text-caption font-medium">
+              {t('payments.fees.scopeGeneral')}
+            </span>
+          );
+        }
+        const names = classrooms.map((c) => c.name).join(', ');
+        return (
+          <span className="text-caption text-foreground truncate max-w-[180px] block" title={names}>
+            {names}
+          </span>
+        );
+      },
+    },
+    {
       key: 'actions',
       header: '',
       render: (fee) => (

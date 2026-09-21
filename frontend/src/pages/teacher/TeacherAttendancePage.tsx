@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Clock, X, CheckCheck, Send, Calendar } from 'lucide-react';
+import { Check, Clock, X, CheckCheck, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Avatar } from '@/components/ui';
+import { Avatar, Input } from '@/components/ui';
 import { useTeacherClassroom, useClassroomChildren } from '@/hooks/useTeacherClassroom';
 import {
   useClassroomAttendance,
@@ -206,13 +206,11 @@ export function TeacherAttendancePage() {
                 {classroom.name} — {classroom.level}
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-text-secondary" />
-              <input
+            <div className="w-36">
+              <Input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-subtle border border-border rounded-md px-2 py-1 text-caption text-foreground focus:outline-none focus:border-primary transition-all duration-150"
                 aria-label={t('teacherAttendance.selectDate')}
               />
             </div>

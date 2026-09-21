@@ -272,12 +272,11 @@ function CreateExpenseDialog({
           </FormField>
 
           <FormField label={t('finance.expenses.form.date')} htmlFor="expense-date" required>
-            <input
+            <Input
               id="expense-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground focus:outline-none focus:border-primary focus:shadow-focus-ring transition-all duration-150"
             />
           </FormField>
 
@@ -409,12 +408,11 @@ function EditExpenseDialog({
           </FormField>
 
           <FormField label={t('finance.expenses.form.date')} htmlFor="expense-date-edit" required>
-            <input
+            <Input
               id="expense-date-edit"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground focus:outline-none focus:border-primary focus:shadow-focus-ring transition-all duration-150"
             />
           </FormField>
 

@@ -243,6 +243,13 @@
     "back": "رجوع",
     "error": "حدث خطأ ما",
     "confirm": "تأكيد",
+    "datePicker": {
+      "selectDate": "اختر تاريخًا",
+      "today": "اليوم",
+      "clear": "مسح",
+      "previousMonth": "الشهر السابق",
+      "nextMonth": "الشهر التالي"
+    },
     "softDelete": {
       "button": "حذف",
       "dialogTitle": "تأكيد الحذف",

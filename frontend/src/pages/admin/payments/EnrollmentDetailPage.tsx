@@ -310,22 +310,20 @@ function AddDiscountDialog({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label={t('payments.enrollmentDetail.discounts.form.validFrom')} htmlFor="discount-valid-from" required>
-              <input
+              <Input
                 id="discount-valid-from"
                 type="date"
                 value={validFrom}
                 onChange={(e) => setValidFrom(e.target.value)}
-                className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground focus:outline-none focus:border-primary focus:shadow-focus-ring transition-all duration-150"
               />
             </FormField>
 
             <FormField label={t('payments.enrollmentDetail.discounts.form.validTo')} htmlFor="discount-valid-to">
-              <input
+              <Input
                 id="discount-valid-to"
                 type="date"
                 value={validTo}
                 onChange={(e) => setValidTo(e.target.value)}
-                className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground focus:outline-none focus:border-primary focus:shadow-focus-ring transition-all duration-150"
               />
             </FormField>
           </div>

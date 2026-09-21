@@ -243,6 +243,13 @@
     "back": "Retour",
     "error": "Une erreur est survenue",
     "confirm": "Confirmer",
+    "datePicker": {
+      "selectDate": "Sélectionner une date",
+      "today": "Aujourd'hui",
+      "clear": "Effacer",
+      "previousMonth": "Mois précédent",
+      "nextMonth": "Mois suivant"
+    },
     "softDelete": {
       "button": "Supprimer",
       "dialogTitle": "Confirmer la suppression",

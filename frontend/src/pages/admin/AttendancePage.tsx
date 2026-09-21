@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ClipboardCheck, Calendar, BarChart2, Users, Eye } from 'lucide-react';
-import { Button, DataTable, StatusBadge, KPICard } from '@/components/ui';
+import { Button, DataTable, StatusBadge, KPICard, Input } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useClassrooms, type Classroom } from '@/hooks/useClassrooms';
@@ -309,19 +309,13 @@ export function AttendancePage() {
 
           {viewMode === 'daily' ? (
             /* Date picker for daily view */
-            <div className="flex flex-col gap-1 mb-4">
-              <label
-                htmlFor="attendance-date"
-                className="text-label font-medium text-foreground"
-              >
-                {t('attendance.date')}
-              </label>
-              <input
+            <div className="mb-4">
+              <Input
                 id="attendance-date"
+                label={t('attendance.date')}
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground focus:outline-none focus:border-primary focus:shadow-focus-ring transition-all duration-150"
               />
             </div>
           ) : (
@@ -481,30 +475,20 @@ export function AttendancePage() {
           {/* Date range filters */}
           <div className="bg-card border border-border rounded-lg p-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
-                <label htmlFor="tracking-start" className="text-label font-medium text-foreground">
-                  {t('attendance.tracking.startDate')}
-                </label>
-                <input
-                  id="tracking-start"
-                  type="date"
-                  value={trackingStartDate}
-                  onChange={(e) => setTrackingStartDate(e.target.value)}
-                  className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground focus:outline-none focus:border-primary focus:shadow-focus-ring transition-all duration-150"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="tracking-end" className="text-label font-medium text-foreground">
-                  {t('attendance.tracking.endDate')}
-                </label>
-                <input
-                  id="tracking-end"
-                  type="date"
-                  value={trackingEndDate}
-                  onChange={(e) => setTrackingEndDate(e.target.value)}
-                  className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground focus:outline-none focus:border-primary focus:shadow-focus-ring transition-all duration-150"
-                />
-              </div>
+              <Input
+                id="tracking-start"
+                label={t('attendance.tracking.startDate')}
+                type="date"
+                value={trackingStartDate}
+                onChange={(e) => setTrackingStartDate(e.target.value)}
+              />
+              <Input
+                id="tracking-end"
+                label={t('attendance.tracking.endDate')}
+                type="date"
+                value={trackingEndDate}
+                onChange={(e) => setTrackingEndDate(e.target.value)}
+              />
             </div>
           </div>
 

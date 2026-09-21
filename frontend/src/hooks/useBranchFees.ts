@@ -15,6 +15,8 @@ export interface BranchFee {
   billingCycle: BillingCycle | null;
   billingDueDay: number | null;
   gracePeriodDays: number | null;
+  /** Classrooms this fee is linked to — empty means a general fee that applies everywhere. */
+  classrooms?: { id: string; name: string }[];
   createdAt: string;
   updatedAt: string;
 }

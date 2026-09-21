@@ -46,6 +46,10 @@ export function useSetFeeClassrooms(branchFeeId: string | undefined) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['fee-classrooms', branchFeeId] });
+      // The fees list embeds each fee's classrooms (used by the "Scope" column)
+      // and a classroom's applicable-fees list depends on these links too.
+      qc.invalidateQueries({ queryKey: ['branch-fees'] });
+      qc.invalidateQueries({ queryKey: ['classroom-fees'] });
     },
   });
 }

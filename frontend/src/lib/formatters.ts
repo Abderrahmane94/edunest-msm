@@ -47,6 +47,24 @@ export function formatDate(dateStr: string, _locale: string = 'fr'): string {
 }
 
 /**
+ * Format a date string as a month name + year, e.g. "septembre 2026" / "سبتمبر 2026".
+ * Western digits in both locales (standard in Algeria).
+ */
+export function formatMonthYear(dateStr: string, locale: string = 'fr'): string {
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+
+    return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-DZ-u-nu-latn' : 'fr-FR', {
+      month: 'long',
+      year: 'numeric',
+    }).format(date);
+  } catch {
+    return dateStr;
+  }
+}
+
+/**
  * Format a date+time string as DD/MM/YYYY HH:mm.
  */
 export function formatDateTime(dateStr: string, _locale: string = 'fr'): string {

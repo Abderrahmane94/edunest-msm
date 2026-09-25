@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Receipt, Plus, Trash2, CheckCircle, AlertCircle, Minus, Eye, Filter, X } from 'lucide-react';
-import { formatDate, formatDZD } from '@/lib/formatters';
+import { formatDate, formatDZD, formatMonthYear } from '@/lib/formatters';
 import {
   Button,
   CreateButton,
@@ -285,8 +285,8 @@ function RecordPaymentDialog({
     return sortedPeriodsByPriority.map((p) => {
       let label: string;
       if (p.branchFeeName) {
-        // Fee period: show the fee name
-        label = p.branchFeeName;
+        // Fee period: show the fee name and its month
+        label = `${p.branchFeeName} (${formatMonthYear(p.periodStart, i18n.language)})`;
       } else if (p.isRegistrationPeriod) {
         label = t('payments.recording.registrationPeriod');
       } else {

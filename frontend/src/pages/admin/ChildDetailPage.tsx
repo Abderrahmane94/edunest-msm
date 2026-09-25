@@ -268,7 +268,7 @@ export function ChildDetailPage() {
           <div className="flex items-end gap-3">
             <div className="flex-1">
               <FormSelect
-                label={t('children.detail.enrollIn')}
+                label={child.classroom_name ? t('children.detail.changeTo') : t('children.detail.enrollIn')}
                 name="enroll-classroom"
                 value={enrollClassroomId}
                 onChange={(e) => setEnrollClassroomId(e.target.value)}
@@ -277,7 +277,9 @@ export function ChildDetailPage() {
               />
             </div>
             <Button type="button" variant="secondary" onClick={handleEnroll} disabled={!enrollClassroomId || enrollChild.isPending}>
-              {enrollChild.isPending ? t('common.loading') : t('children.detail.enroll')}
+              {enrollChild.isPending
+                ? t('common.loading')
+                : child.classroom_name ? t('children.detail.change') : t('children.detail.enroll')}
             </Button>
           </div>
           {enrollError && <p className="text-body text-danger">{enrollError}</p>}

@@ -20,6 +20,8 @@ vi.mock('../../lib/prisma', () => ({
     classroomEnrollment: {
       findFirst: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
     },
     parentChildLink: {
       count: vi.fn(),
@@ -86,6 +88,8 @@ const mockPrisma = prisma as unknown as {
   classroomEnrollment: {
     findFirst: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    count: ReturnType<typeof vi.fn>;
   };
   parentChildLink: {
     count: ReturnType<typeof vi.fn>;
@@ -283,7 +287,7 @@ describe('ChildrenService', () => {
   describe('enrollInClassroom', () => {
     it('should enroll a child in a classroom successfully', async () => {
       const child = { id: 'child-1', schoolId, isActive: true };
-      const classroom = { id: 'cls-1', schoolId, academicYearId: 'ay-1' };
+      const classroom = { id: 'cls-1', schoolId, academicYearId: 'ay-1', capacity: 20 };
       const enrollment = {
         id: 'enr-1',
         childId: 'child-1',
@@ -295,6 +299,7 @@ describe('ChildrenService', () => {
       mockPrisma.child.findFirst.mockResolvedValue(child);
       mockPrisma.classroom.findFirst.mockResolvedValue(classroom);
       mockPrisma.classroomEnrollment.findFirst.mockResolvedValue(null);
+      mockPrisma.classroomEnrollment.count.mockResolvedValue(0);
       mockPrisma.classroomEnrollment.create.mockResolvedValue(enrollment);
 
       const result = await childrenService.enrollInClassroom('child-1', schoolId, { classroomId: 'cls-1' });
@@ -308,9 +313,44 @@ describe('ChildrenService', () => {
       });
     });
 
-    it('should throw 409 when child already enrolled in a classroom for the same academic year', async () => {
+    it('should transfer the existing enrollment when enrolling into another classroom of the same academic year', async () => {
       const child = { id: 'child-1', schoolId, isActive: true };
-      const classroom = { id: 'cls-2', schoolId, academicYearId: 'ay-1' };
+      const classroom = { id: 'cls-2', schoolId, academicYearId: 'ay-1', capacity: 20 };
+      const existingEnrollment = {
+        id: 'enr-1',
+        childId: 'child-1',
+        classroomId: 'cls-1',
+        classroom: { name: 'Class A', academicYearId: 'ay-1' },
+      };
+      const updated = {
+        id: 'enr-1',
+        childId: 'child-1',
+        classroomId: 'cls-2',
+        enrolledAt: new Date(),
+        classroom: { id: 'cls-2', name: 'Class B', level: 'KG1', academicYearId: 'ay-1' },
+      };
+
+      mockPrisma.child.findFirst.mockResolvedValue(child);
+      mockPrisma.classroom.findFirst.mockResolvedValue(classroom);
+      mockPrisma.classroomEnrollment.findFirst.mockResolvedValue(existingEnrollment);
+      mockPrisma.classroomEnrollment.count.mockResolvedValue(0);
+      mockPrisma.classroomEnrollment.update.mockResolvedValue(updated);
+
+      const result = await childrenService.enrollInClassroom('child-1', schoolId, { classroomId: 'cls-2' });
+
+      expect(result).toEqual(updated);
+      expect(mockPrisma.classroomEnrollment.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'enr-1' },
+          data: expect.objectContaining({ classroomId: 'cls-2' }),
+        }),
+      );
+      expect(mockPrisma.classroomEnrollment.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw 409 when child is already enrolled in the same classroom', async () => {
+      const child = { id: 'child-1', schoolId, isActive: true };
+      const classroom = { id: 'cls-1', schoolId, academicYearId: 'ay-1', capacity: 20 };
       const existingEnrollment = {
         id: 'enr-1',
         childId: 'child-1',
@@ -323,12 +363,13 @@ describe('ChildrenService', () => {
       mockPrisma.classroomEnrollment.findFirst.mockResolvedValue(existingEnrollment);
 
       await expect(
-        childrenService.enrollInClassroom('child-1', schoolId, { classroomId: 'cls-2' }),
+        childrenService.enrollInClassroom('child-1', schoolId, { classroomId: 'cls-1' }),
       ).rejects.toMatchObject({
         statusCode: 409,
       });
 
       expect(mockPrisma.classroomEnrollment.create).not.toHaveBeenCalled();
+      expect(mockPrisma.classroomEnrollment.update).not.toHaveBeenCalled();
     });
 
     it('should throw 404 when classroom does not belong to the same school', async () => {

@@ -732,12 +732,39 @@ export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChil
     fees: t('children.wizard.steps.fees'),
   };
 
+  // Emergency/medical steps save each entry via their own "Ajouter" button, so
+  // text typed but not added would be silently lost when moving on.
+  const [hasUnsavedEntry, setHasUnsavedEntry] = React.useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = React.useState(false);
+
+  React.useEffect(() => {
+    setHasUnsavedEntry(false);
+    setShowUnsavedWarning(false);
+  }, [stepIndex]);
+
+  React.useEffect(() => {
+    if (!hasUnsavedEntry) setShowUnsavedWarning(false);
+  }, [hasUnsavedEntry]);
+
   function goNext() {
     setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
   }
   function goBack() {
     setStepIndex((i) => Math.max(i - 1, 0));
   }
+  function goNextUnlessUnsaved() {
+    if (hasUnsavedEntry && !showUnsavedWarning) {
+      setShowUnsavedWarning(true);
+      return;
+    }
+    goNext();
+  }
+
+  const unsavedWarning = showUnsavedWarning && (
+    <p className="text-body text-danger mt-4" role="alert">
+      {t('children.wizard.unsavedEntryWarning')}
+    </p>
+  );
 
   const childName = child ? `${child.first_name} ${child.last_name}` : '';
 
@@ -781,12 +808,13 @@ export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChil
 
         {step === 'emergency' && child && (
           <div>
-            <EmergencyContactsManager childId={child.id} childName={childName} />
+            <EmergencyContactsManager childId={child.id} childName={childName} onUnsavedChange={setHasUnsavedEntry} />
+            {unsavedWarning}
             <DialogFooter>
               <Button type="button" variant="secondary" onClick={goBack}>
                 {t('children.wizard.back')}
               </Button>
-              <Button type="button" onClick={goNext}>
+              <Button type="button" onClick={goNextUnlessUnsaved}>
                 {t('children.wizard.next')}
               </Button>
             </DialogFooter>
@@ -795,12 +823,13 @@ export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChil
 
         {step === 'medical' && child && (
           <div>
-            <MedicalNotesManager childId={child.id} childName={childName} />
+            <MedicalNotesManager childId={child.id} childName={childName} onUnsavedChange={setHasUnsavedEntry} />
+            {unsavedWarning}
             <DialogFooter>
               <Button type="button" variant="secondary" onClick={goBack}>
                 {t('children.wizard.back')}
               </Button>
-              <Button type="button" onClick={goNext}>
+              <Button type="button" onClick={goNextUnlessUnsaved}>
                 {t('children.wizard.next')}
               </Button>
             </DialogFooter>

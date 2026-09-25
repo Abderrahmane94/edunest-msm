@@ -33,6 +33,8 @@ const emptyForm: ContactFormState = {
 interface EmergencyContactsManagerProps {
   childId: string;
   childName: string;
+  /** Called whenever the add/edit form starts or stops holding unsaved input. */
+  onUnsavedChange?: (hasUnsaved: boolean) => void;
 }
 
 /**
@@ -41,7 +43,7 @@ interface EmergencyContactsManagerProps {
  * of the standalone EmergencyContactsDialog and as a step in the child
  * creation wizard.
  */
-export function EmergencyContactsManager({ childId, childName }: EmergencyContactsManagerProps) {
+export function EmergencyContactsManager({ childId, childName, onUnsavedChange }: EmergencyContactsManagerProps) {
   const { t } = useTranslation();
   const { data: contacts = [], isLoading: contactsLoading } = useEmergencyContacts(childId);
   const addContact = useAddEmergencyContact();
@@ -73,6 +75,13 @@ export function EmergencyContactsManager({ childId, childName }: EmergencyContac
   const [editForm, setEditForm] = React.useState<ContactFormState>(emptyForm);
   const [editErrors, setEditErrors] = React.useState<Record<string, string>>({});
   const [editError, setEditError] = React.useState<string | null>(null);
+
+  const hasUnsaved = editingId !== null || [
+    newContact.name, newContact.phone, newContact.address, newContact.national_id, newContact.relationshipOther,
+  ].some((v) => v.trim() !== '');
+  React.useEffect(() => {
+    onUnsavedChange?.(hasUnsaved);
+  }, [hasUnsaved, onUnsavedChange]);
 
   function validate(form: ContactFormState): Record<string, string> {
     const errs: Record<string, string> = {};

@@ -407,8 +407,9 @@ export function useLinkParent() {
       }
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['children'] });
+      queryClient.invalidateQueries({ queryKey: ['parent-links', variables.childId] });
     },
   });
 }

@@ -201,7 +201,8 @@ class ChildrenService {
    * Enroll a child in a classroom.
    * Enforces:
    * 1. The classroom must belong to the same school as the child.
-   * 2. The child can only have one enrollment per academic year.
+   * 2. The child can only have one enrollment per academic year — enrolling
+   *    into another classroom of the same year transfers the existing one.
    */
   async enrollInClassroom(
     childId: string,
@@ -243,9 +244,9 @@ class ChildrenService {
       },
     });
 
-    if (existingEnrollment) {
+    if (existingEnrollment?.classroomId === input.classroomId) {
       throw new ChildServiceError(
-        `Child is already enrolled in classroom "${existingEnrollment.classroom.name}" for this academic year. A child can only be enrolled in one classroom per academic year.`,
+        `Child is already enrolled in classroom "${existingEnrollment.classroom.name}".`,
         409,
       );
     }
@@ -262,22 +263,34 @@ class ChildrenService {
       );
     }
 
+    const enrollmentResponseInclude = {
+      classroom: {
+        select: {
+          id: true,
+          name: true,
+          level: true,
+          academicYearId: true,
+        },
+      },
+    } as const;
+
+    // Already enrolled in another classroom for this academic year: transfer
+    // the existing enrollment instead of creating a second one.
+    if (existingEnrollment) {
+      return prisma.classroomEnrollment.update({
+        where: { id: existingEnrollment.id },
+        data: { classroomId: input.classroomId, enrolledAt: new Date() },
+        include: enrollmentResponseInclude,
+      });
+    }
+
     // Create the enrollment
     const enrollment = await prisma.classroomEnrollment.create({
       data: {
         childId,
         classroomId: input.classroomId,
       },
-      include: {
-        classroom: {
-          select: {
-            id: true,
-            name: true,
-            level: true,
-            academicYearId: true,
-          },
-        },
-      },
+      include: enrollmentResponseInclude,
     });
 
     return enrollment;

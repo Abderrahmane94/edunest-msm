@@ -32,6 +32,8 @@ export function severityBadgeVariant(severity: MedicalNoteSeverity): 'present' |
 interface MedicalNotesManagerProps {
   childId: string;
   childName: string;
+  /** Called whenever the add/edit form starts or stops holding unsaved input. */
+  onUnsavedChange?: (hasUnsaved: boolean) => void;
 }
 
 /**
@@ -39,7 +41,7 @@ interface MedicalNotesManagerProps {
  * saves immediately (no outer form submit) — used both as the body of the
  * standalone MedicalNotesDialog and as a step in the child creation wizard.
  */
-export function MedicalNotesManager({ childId, childName }: MedicalNotesManagerProps) {
+export function MedicalNotesManager({ childId, childName, onUnsavedChange }: MedicalNotesManagerProps) {
   const { t } = useTranslation();
   const { data: notes = [], isLoading: notesLoading } = useMedicalNotes(childId);
   const addNote = useAddMedicalNote();
@@ -57,6 +59,11 @@ export function MedicalNotesManager({ childId, childName }: MedicalNotesManagerP
   const [editForm, setEditForm] = React.useState<NoteFormState>(emptyForm);
   const [editErrors, setEditErrors] = React.useState<Record<string, string>>({});
   const [editError, setEditError] = React.useState<string | null>(null);
+
+  const hasUnsaved = editingId !== null || !!newNote.title.trim() || !!newNote.details.trim();
+  React.useEffect(() => {
+    onUnsavedChange?.(hasUnsaved);
+  }, [hasUnsaved, onUnsavedChange]);
 
   function validate(form: NoteFormState): Record<string, string> {
     const errs: Record<string, string> = {};

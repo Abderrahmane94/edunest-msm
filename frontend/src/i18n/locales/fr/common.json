@@ -606,6 +606,7 @@
     "wizard": {
       "title": "Inscrire un enfant",
       "stepIndicator": "Étape {{current}}/{{total}} — {{label}}",
+      "unsavedEntryWarning": "Des informations saisies n'ont pas été ajoutées. Cliquez sur « Ajouter » pour les enregistrer, ou sur « Suivant » à nouveau pour continuer sans les enregistrer.",
       "steps": {
         "basics": "Informations de base",
         "parent": "Parent",

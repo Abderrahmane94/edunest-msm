@@ -90,12 +90,16 @@ async function main() {
   console.log(`✅ Parent user created: ${parent.email}`);
 
   // Create an academic year
+  // Current school year (Sept 1 – June 30): from September on it's this
+  // year's, before September it's the one that started last year.
+  const now = new Date();
+  const startYear = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
   const academicYear = await prisma.academicYear.create({
     data: {
       schoolId: school.id,
-      name: '2025-2026',
-      startDate: new Date('2025-09-01'),
-      endDate: new Date('2026-06-30'),
+      name: `${startYear}-${startYear + 1}`,
+      startDate: new Date(`${startYear}-09-01`),
+      endDate: new Date(`${startYear + 1}-06-30`),
       isActive: true,
     },
   });

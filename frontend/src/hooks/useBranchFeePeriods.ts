@@ -32,8 +32,17 @@ export function useFeePeriods(branchFeeId: string | undefined, academicYearId: s
 export function useSetFeePeriods(branchFeeId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ academicYearId, periodIds }: { academicYearId: string; periodIds: string[] }) => {
-      const res = await apiClient.put<{ periods: FeePeriod[] }>(`/payments/fees/${branchFeeId}/periods`, {
+    mutationFn: async ({
+      feeId = branchFeeId,
+      academicYearId,
+      periodIds,
+    }: {
+      /** Overrides the hook's fee id — used right after creating a fee. */
+      feeId?: string;
+      academicYearId: string;
+      periodIds: string[];
+    }) => {
+      const res = await apiClient.put<{ periods: FeePeriod[] }>(`/payments/fees/${feeId}/periods`, {
         academicYearId,
         periodIds,
       });
@@ -42,8 +51,8 @@ export function useSetFeePeriods(branchFeeId: string | undefined) {
       }
       return res.data?.periods ?? [];
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['fee-periods', branchFeeId] });
+    onSuccess: (_data, { feeId = branchFeeId }) => {
+      qc.invalidateQueries({ queryKey: ['fee-periods', feeId] });
     },
   });
 }

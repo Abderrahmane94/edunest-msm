@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
 import { generatePeriodsForEnrollment } from './billing-period.service';
 import { fetchCalendarRows } from './billing-cycle.util';
+import { branchFeeService, BranchFeeServiceError } from './branch-fee.service';
 import type { CreateEnrollmentSchemaInput } from './payments.schema';
 import type { EnrollmentGenerationResult } from './payments.types';
 
@@ -224,6 +225,16 @@ class EnrollmentService {
             cancelledAt: null,
           })),
         });
+      }
+
+      // Whole-school fees apply to every new enrollment automatically.
+      try {
+        await branchFeeService.applySchoolFeesToEnrollment(tx, { ...enrollment, academicYear });
+      } catch (err) {
+        if (err instanceof BranchFeeServiceError) {
+          throw new EnrollmentServiceError(err.message, err.statusCode, err.code);
+        }
+        throw err;
       }
 
       // (j) Return EnrollmentGenerationResult

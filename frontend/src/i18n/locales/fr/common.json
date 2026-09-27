@@ -631,6 +631,7 @@
       "fees": {
         "description": "Choisissez le frais de base (récurrent) de cet enfant et, si besoin, des frais ponctuels supplémentaires. Laissez vide pour ne pas inscrire l'enfant à la facturation maintenant.",
         "extraFees": "Frais ponctuels supplémentaires",
+        "schoolFees": "Frais de toute l'école (appliqués automatiquement)",
         "skipEnrollment": "Passer (pas de facturation pour le moment)",
         "paymentPrompt": "Montant total dû : {{amount}}. Souhaitez-vous encaisser un paiement maintenant ?",
         "payFull": "Payer tout maintenant",
@@ -1523,6 +1524,7 @@
       "confirmDelete": "Supprimer le frais « {{name}} » ? Les périodes de facturation existantes ne seront pas affectées.",
       "oneShot": "Ponctuel",
       "scopeGeneral": "Non assigné",
+      "scopeSchool": "Toute l'école",
       "fields": {
         "name": "Nom du frais",
         "scope": "Portée",
@@ -1530,6 +1532,8 @@
         "amount": "Montant (DZD)",
         "recurring": "Frais récurrent (cyclique)",
         "recurringHelper": "Activez pour facturer ce frais selon un cycle (mensuel, personnalisé...) au lieu d'une seule fois.",
+        "appliesToSchool": "S'applique à toute l'école",
+        "appliesToSchoolHint": "Les nouveaux élèves recevront ce frais automatiquement. Pour l'appliquer aux élèves déjà inscrits, utilisez « Assigner ».",
         "customCycleHint": "Le cycle personnalisé facture ce frais sur les périodes que vous lui assignez ci-dessous (créées dans la section Calendrier).",
         "savePeriodsFirst": "Enregistrez d'abord ce frais — vous pourrez ensuite lui assigner des périodes.",
         "noPeriodsAvailable": "Aucune période créée pour l'année scolaire active. Ajoutez-en dans la section Calendrier ci-dessous.",
@@ -1547,6 +1551,7 @@
         "title": "Détails du frais « {{name}} »",
         "noAssignedPeriods": "Aucune période assignée à ce frais pour cette année.",
         "classesTitle": "Classes liées",
+        "appliesToSchool": "Toute l'école — appliqué automatiquement à chaque nouvel élève.",
         "noLinkedClassrooms": "Ce frais n'est lié à aucune classe."
       },
       "assign": {

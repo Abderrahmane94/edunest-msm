@@ -66,11 +66,12 @@ router.post('/branches/:branchId/fees', async (req, res) => {
 router.put('/branches/:branchId/fees/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, amount, isActive, billingCycle, billingDueDay, gracePeriodDays } = req.body;
+    const { name, amount, isActive, appliesToSchool, billingCycle, billingDueDay, gracePeriodDays } = req.body;
     const fee = await branchFeeService.update(id, {
       name,
       amount: amount !== undefined ? Number(amount) : undefined,
       isActive,
+      appliesToSchool: typeof appliesToSchool === 'boolean' ? appliesToSchool : undefined,
       billingCycle,
       billingDueDay: billingDueDay !== undefined && billingDueDay !== null ? Number(billingDueDay) : billingDueDay,
       gracePeriodDays:

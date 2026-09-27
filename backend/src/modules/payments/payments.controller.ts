@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { paymentService, PaymentServiceError } from './payments.service';
 import { reconciliationService, ReconciliationServiceError } from './reconciliation.service';
+import { receiptService } from './receipt.service';
 import { recordPaymentSchema, recordCorrectionSchema } from './payments.schema';
 import { successResponse, errorResponse } from '../../utils/response';
 import { validateBranchAccess, resolveBranchFilter } from './tenant-scope.middleware';
@@ -567,42 +568,11 @@ export const paymentsController = {
         return;
       }
 
-      // Get the payment record with full details for receipt generation
+      // Only what the access checks below need; the receipt itself is built
+      // by receiptService.
       const paymentRecord = await prisma.paymentRecord.findUnique({
         where: { id },
-        include: {
-          allocations: {
-            include: {
-              billingPeriod: {
-                select: {
-                  id: true,
-                  periodStart: true,
-                  periodEnd: true,
-                  isRegistrationPeriod: true,
-                },
-              },
-            },
-          },
-          child: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
-          branch: {
-            select: {
-              id: true,
-              name: true,
-              school: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-        },
+        select: { id: true, branchId: true, childId: true },
       });
 
       if (!paymentRecord) {
@@ -633,37 +603,9 @@ export const paymentsController = {
         }
       }
 
-      // Build receipt response
-      const receipt = {
-        receiptNumber: paymentRecord.receiptNumber,
-        paymentRecordId: paymentRecord.id,
-        school: {
-          id: paymentRecord.branch.school.id,
-          name: paymentRecord.branch.school.name,
-        },
-        branch: {
-          id: paymentRecord.branch.id,
-          name: paymentRecord.branch.name,
-        },
-        child: {
-          id: paymentRecord.child.id,
-          name: `${paymentRecord.child.firstName} ${paymentRecord.child.lastName}`,
-        },
-        totalAmount: paymentRecord.totalAmount,
-        currency: 'DZD',
-        channel: paymentRecord.channel,
-        valueDate: paymentRecord.valueDate,
-        isCorrection: paymentRecord.isCorrection,
-        referenceNote: paymentRecord.referenceNote,
-        allocations: paymentRecord.allocations.map((alloc) => ({
-          billingPeriodId: alloc.billingPeriod.id,
-          periodStart: alloc.billingPeriod.periodStart,
-          periodEnd: alloc.billingPeriod.periodEnd,
-          isRegistrationPeriod: alloc.billingPeriod.isRegistrationPeriod,
-          amount: alloc.amount,
-        })),
-        recordedAt: paymentRecord.createdAt,
-      };
+      // The formatted, localized receipt the receipt dialog renders.
+      const language = req.query.language === 'ar' ? 'ar' : 'fr';
+      const receipt = await receiptService.generateReceipt(paymentRecord.id, language);
 
       res.status(200).json(successResponse(receipt));
     } catch (error) {

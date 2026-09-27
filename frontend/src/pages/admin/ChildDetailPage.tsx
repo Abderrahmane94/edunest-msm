@@ -23,6 +23,7 @@ import { useAcademicYears } from '@/hooks/useAcademicYears';
 import { useUsers } from '@/hooks/useUsers';
 import { EmergencyContactsDialog } from './EmergencyContactsDialog';
 import { MedicalNotesDialog, severityBadgeVariant } from './MedicalNotesDialog';
+import { ChildFeesSection } from './ChildFeesSection';
 
 export function ChildDetailPage() {
   const { t } = useTranslation();
@@ -521,6 +522,9 @@ export function ChildDetailPage() {
         childId={childId!}
         childName={child ? `${child.first_name} ${child.last_name}` : ''}
       />
+
+      {/* Assigned fees */}
+      <ChildFeesSection childId={childId!} />
 
       {/* Danger zone */}
       <div className="bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3">

@@ -57,7 +57,9 @@ export interface BillingPeriod {
   graceEndDate: string;
   amountDue: string;
   isRegistrationPeriod: boolean;
+  branchFeeId?: string | null;
   branchFeeName?: string | null;
+  branchFeeBillingCycle?: string | null;
   cancelledAt: string | null;
   status?: string;
   isLate?: boolean;
@@ -348,7 +350,9 @@ function mapBillingPeriod(raw: Record<string, unknown>): BillingPeriod {
     graceEndDate: (raw.graceEndDate ?? raw.grace_end_date) as string,
     amountDue: String(raw.amountDue ?? raw.amount_due ?? '0'),
     isRegistrationPeriod: (raw.isRegistrationPeriod ?? raw.is_registration_period ?? false) as boolean,
+    branchFeeId: (raw.branchFeeId ?? raw.branch_fee_id ?? null) as string | null,
     branchFeeName: (raw.branchFeeName ?? raw.branch_fee_name ?? null) as string | null,
+    branchFeeBillingCycle: (raw.branchFeeBillingCycle ?? null) as string | null,
     cancelledAt: (raw.cancelledAt ?? raw.cancelled_at ?? null) as string | null,
     status: (raw.status as string) ?? undefined,
     isLate: (raw.isLate ?? raw.is_late) as boolean | undefined,

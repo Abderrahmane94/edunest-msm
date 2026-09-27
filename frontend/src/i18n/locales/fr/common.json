@@ -575,6 +575,17 @@
       "noContacts": "Aucun contact d'urgence pour le moment.",
       "noPickupContact": "Aucun contact autorisé à récupérer l'enfant"
     },
+    "fees": {
+      "title": "Frais assignés",
+      "empty": "Aucun frais n'est assigné à cet enfant.",
+      "registration": "Frais d'inscription",
+      "oneShot": "Ponctuel",
+      "periods_one": "{{count}} période",
+      "periods_other": "{{count}} périodes",
+      "due": "Dû :",
+      "paid": "Payé :",
+      "outstanding": "Reste :"
+    },
     "medicalNotes": {
       "title": "Notes médicales",
       "description": "Gérer les notes médicales (allergies, conditions, médicaments) pour {{name}}.",

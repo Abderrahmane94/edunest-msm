@@ -84,6 +84,7 @@ function FeeDialog({
   const [billingDueDay, setBillingDueDay] = React.useState('1');
   const [gracePeriodDays, setGracePeriodDays] = React.useState('5');
   const [appliesToSchool, setAppliesToSchool] = React.useState(false);
+  const [showInWizard, setShowInWizard] = React.useState(true);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   React.useEffect(() => {
@@ -95,6 +96,7 @@ function FeeDialog({
       setBillingDueDay(String(editingFee.billingDueDay ?? 1));
       setGracePeriodDays(String(editingFee.gracePeriodDays ?? 5));
       setAppliesToSchool(editingFee.appliesToSchool);
+      setShowInWizard(editingFee.showInWizard);
     } else {
       setName('');
       setAmount('');
@@ -102,6 +104,7 @@ function FeeDialog({
       setBillingCycle('monthly');
       setBillingDueDay('1');
       setGracePeriodDays('5');
+      setShowInWizard(true);
       setSelectedPeriodIds([]);
     }
     setCreatedFeeId(null);
@@ -150,6 +153,7 @@ function FeeDialog({
           name: name.trim(),
           amount: Number(amount),
           appliesToSchool,
+          showInWizard,
           ...cycleFields,
         });
         if (periodsSectionActive && periodsYearId) {
@@ -161,6 +165,7 @@ function FeeDialog({
           const fee = await createFee.mutateAsync({
             name: name.trim(),
             amount: Number(amount),
+            showInWizard,
             ...cycleFields,
           });
           feeId = fee.id;
@@ -348,6 +353,22 @@ function FeeDialog({
               </div>
             </div>
           )}
+
+          <div className="flex items-center gap-2 py-1">
+            <input
+              id="fee-show-in-wizard"
+              type="checkbox"
+              checked={showInWizard}
+              onChange={(e) => setShowInWizard(e.target.checked)}
+              className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+            />
+            <label htmlFor="fee-show-in-wizard" className="text-body text-foreground cursor-pointer">
+              {t('payments.fees.fields.showInWizard')}
+            </label>
+          </div>
+          <p className="text-caption text-text-secondary -mt-2">
+            {t('payments.fees.fields.showInWizardHint')}
+          </p>
 
           {editingFee && (
             <>

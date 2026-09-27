@@ -490,7 +490,9 @@ function FeesStep({
   const { data: activeYear } = useActiveAcademicYear();
   const { data: classroomFees } = useClassroomFees(classroomId || undefined);
   const { data: branchFees } = useBranchFees(branchId);
-  const fees: BranchFee[] = classroomId ? (classroomFees ?? []) : (branchFees ?? []);
+  const fees: BranchFee[] = (classroomId ? (classroomFees ?? []) : (branchFees ?? [])).filter(
+    (f) => f.showInWizard,
+  );
   const recurringFees = fees.filter((f) => !!f.billingCycle);
   // Whole-school fees are applied automatically on enrollment (except the one
   // chosen as base fee), so they're listed rather than offered as extras.

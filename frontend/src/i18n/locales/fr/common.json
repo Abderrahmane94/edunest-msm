@@ -1533,6 +1533,8 @@
         "recurring": "Frais récurrent (cyclique)",
         "recurringHelper": "Activez pour facturer ce frais selon un cycle (mensuel, personnalisé...) au lieu d'une seule fois.",
         "appliesToSchool": "S'applique à toute l'école",
+        "showInWizard": "Afficher dans l'inscription d'un élève",
+        "showInWizardHint": "Décochez pour masquer ce frais dans l'étape « Frais » de l'assistant d'inscription.",
         "appliesToSchoolHint": "Les nouveaux élèves recevront ce frais automatiquement. Pour l'appliquer aux élèves déjà inscrits, utilisez « Assigner ».",
         "customCycleHint": "Le cycle personnalisé facture ce frais sur les périodes que vous lui assignez ci-dessous (créées dans la section Calendrier).",
         "savePeriodsFirst": "Enregistrez d'abord ce frais — vous pourrez ensuite lui assigner des périodes.",

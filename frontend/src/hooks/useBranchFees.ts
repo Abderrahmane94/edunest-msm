@@ -187,6 +187,9 @@ export function useAssignFee(branchId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['child-billing-periods'] });
       qc.invalidateQueries({ queryKey: ['enrollments'] });
+      // Assigning to the school or to classrooms changes the fee's scope.
+      qc.invalidateQueries({ queryKey: ['branch-fees', branchId] });
+      qc.invalidateQueries({ queryKey: ['classroom-fees'] });
     },
   });
 }

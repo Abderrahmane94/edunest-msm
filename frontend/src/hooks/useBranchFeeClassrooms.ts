@@ -55,8 +55,8 @@ export function useSetFeeClassrooms(branchFeeId: string | undefined) {
 }
 
 /**
- * Lists active fees applicable to a classroom: fees explicitly linked to it,
- * plus general fees with no classroom links at all.
+ * Lists active fees applicable to a classroom: fees linked to it, plus
+ * whole-school fees.
  */
 export function useClassroomFees(classroomId: string | undefined) {
   return useQuery({

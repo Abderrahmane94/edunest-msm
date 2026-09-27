@@ -340,6 +340,15 @@ class BranchFeeService {
         await tx.branchFee.update({ where: { id: fee.id }, data: { appliesToSchool: true } });
       }
 
+      // Likewise, assigning to classrooms links the fee to them, so it shows
+      // as one of their fees (and is offered for them in the enrollment wizard).
+      if (target.type === 'classrooms' && target.classroomIds?.length) {
+        await tx.branchFeeClassroom.createMany({
+          data: target.classroomIds.map((classroomId) => ({ branchFeeId: fee.id, classroomId })),
+          skipDuplicates: true,
+        });
+      }
+
       // Resolve target enrollments based on type
       let enrollmentIds: string[] = [];
 

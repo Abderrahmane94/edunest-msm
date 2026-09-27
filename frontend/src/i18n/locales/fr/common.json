@@ -1522,7 +1522,7 @@
       "empty": "Aucun frais configuré",
       "confirmDelete": "Supprimer le frais « {{name}} » ? Les périodes de facturation existantes ne seront pas affectées.",
       "oneShot": "Ponctuel",
-      "scopeGeneral": "Général",
+      "scopeGeneral": "Non assigné",
       "fields": {
         "name": "Nom du frais",
         "scope": "Portée",
@@ -1547,7 +1547,7 @@
         "title": "Détails du frais « {{name}} »",
         "noAssignedPeriods": "Aucune période assignée à ce frais pour cette année.",
         "classesTitle": "Classes liées",
-        "noLinkedClassrooms": "Ce frais est général — il s'applique à toutes les classes."
+        "noLinkedClassrooms": "Ce frais n'est lié à aucune classe."
       },
       "assign": {
         "button": "Assigner",

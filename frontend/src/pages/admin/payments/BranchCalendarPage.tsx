@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CalendarDays, Plus, Pencil, Trash2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button, DataTable, type Column } from '@/components/ui';
@@ -51,6 +51,9 @@ export function BranchCalendarPage() {
   const { branchId: selectedBranchId } = useDefaultBranch();
   const { data: activeAcademicYear, isLoading: yearLoading } = useActiveAcademicYear();
   const selectedAcademicYearId = activeAcademicYear?.id ?? '';
+  // Periods must fall within the academic year.
+  const yearMin = activeAcademicYear?.start_date?.slice(0, 10);
+  const yearMax = activeAcademicYear?.end_date?.slice(0, 10);
 
   // Dialog state
   const [formOpen, setFormOpen] = React.useState(false);
@@ -72,8 +75,10 @@ export function BranchCalendarPage() {
   // Form
   const {
     register,
+    control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<CalendarFormValues>({
     resolver: zodResolver(calendarFormSchema),
@@ -249,18 +254,40 @@ export function BranchCalendarPage() {
               {...register('label')}
             />
 
-            <Input
-              type="date"
-              label={t('payments.branchCalendar.fields.periodStart', 'Period Start')}
-              error={errors.period_start?.message}
-              {...register('period_start')}
+            {/* The date picker is controlled: it needs the current value passed in,
+                which `register` doesn't provide — hence Controller. */}
+            <Controller
+              name="period_start"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="date"
+                  label={t('payments.branchCalendar.fields.periodStart', 'Period Start')}
+                  error={errors.period_start?.message}
+                  name={field.name}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  min={yearMin}
+                  max={yearMax}
+                />
+              )}
             />
 
-            <Input
-              type="date"
-              label={t('payments.branchCalendar.fields.periodEnd', 'Period End')}
-              error={errors.period_end?.message}
-              {...register('period_end')}
+            <Controller
+              name="period_end"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="date"
+                  label={t('payments.branchCalendar.fields.periodEnd', 'Period End')}
+                  error={errors.period_end?.message}
+                  name={field.name}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  min={watch('period_start') || yearMin}
+                  max={yearMax}
+                />
+              )}
             />
 
             <DialogFooter>

@@ -4,170 +4,192 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
+/**
+ * Seeds an empty database with one school and a demo account per role.
+ *
+ * Usage: `npm run db:seed` (uses DATABASE_URL).
+ * Set SEED_PASSWORD to give every seeded account that password instead of the
+ * default `<role>123` ones — do this on any publicly reachable deployment.
+ */
 async function main() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const adapter = new PrismaPg(pool);
   const prisma = new PrismaClient({ adapter });
 
-  console.log('🌱 Seeding database...');
+  try {
+    // Refuse to run on a database that already has data: a second run would
+    // fail on duplicate emails or pile a second school on top of the first.
+    const existingUsers = await prisma.user.count();
+    if (existingUsers > 0) {
+      throw new Error(
+        `Database already has ${existingUsers} user(s) — seed only runs on an empty database.`,
+      );
+    }
 
-  // Create super admin user (password: superadmin123) — platform-level, no school
-  const superAdminPasswordHash = await bcrypt.hash('superadmin123', 10);
-  const superAdmin = await prisma.user.create({
-    data: {
-      schoolId: null,
-      firstName: 'Super',
-      lastName: 'Admin',
-      email: 'superadmin@edunest.dz',
-      passwordHash: superAdminPasswordHash,
-      role: 'super_admin',
-      isActive: true,
-      preferredLanguage: 'fr',
-    },
-  });
-  console.log(`✅ Super admin user created: ${superAdmin.email}`);
+    console.log('🌱 Seeding database...');
 
-  // Create a school
-  const school = await prisma.school.create({
-    data: {
-      name: 'روضة النور / Maternelle An-Nour',
-      schoolType: 'kindergarten',
-      address: '12 Rue Didouche Mourad',
-      wilaya: 'Alger',
-      contactEmail: 'contact@annour.dz',
-      contactPhone: '+213 21 00 00 00',
-      isActive: true,
-    },
-  });
-  console.log(`✅ School created: ${school.name} (${school.id})`);
+    const customPassword = process.env.SEED_PASSWORD;
+    const passwordFor = (role: string) => customPassword ?? `${role}123`;
 
-  // Create admin user (password: admin123)
-  const adminPasswordHash = await bcrypt.hash('admin123', 10);
-  const admin = await prisma.user.create({
-    data: {
-      schoolId: school.id,
-      firstName: 'Amine',
-      lastName: 'Admin',
-      email: 'admin@edunest.dz',
-      passwordHash: adminPasswordHash,
-      role: 'admin',
-      isActive: true,
-      preferredLanguage: 'fr',
-    },
-  });
-  console.log(`✅ Admin user created: ${admin.email}`);
+    // Hash up front: bcrypt is slow and would eat into the transaction timeout.
+    const [superAdminHash, adminHash, teacherHash, parentHash] = await Promise.all(
+      ['superadmin', 'admin', 'teacher', 'parent'].map((role) => bcrypt.hash(passwordFor(role), 10)),
+    );
 
-  // Create teacher user (password: teacher123)
-  const teacherPasswordHash = await bcrypt.hash('teacher123', 10);
-  const teacher = await prisma.user.create({
-    data: {
-      schoolId: school.id,
-      firstName: 'Fatima',
-      lastName: 'Enseignante',
-      email: 'teacher@edunest.dz',
-      passwordHash: teacherPasswordHash,
-      role: 'teacher',
-      isActive: true,
-      preferredLanguage: 'fr',
-    },
-  });
-  console.log(`✅ Teacher user created: ${teacher.email}`);
+    // Current school year (Sept 1 – June 30): from September on it's this
+    // year's, before September it's the one that started last year.
+    const now = new Date();
+    const startYear = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+    const yearStart = new Date(`${startYear}-09-01`);
+    const yearEnd = new Date(`${startYear + 1}-06-30`);
 
-  // Create parent user (password: parent123)
-  const parentPasswordHash = await bcrypt.hash('parent123', 10);
-  const parent = await prisma.user.create({
-    data: {
-      schoolId: school.id,
-      firstName: 'Karim',
-      lastName: 'Parent',
-      email: 'parent@edunest.dz',
-      passwordHash: parentPasswordHash,
-      role: 'parent',
-      isActive: true,
-      preferredLanguage: 'ar',
-    },
-  });
-  console.log(`✅ Parent user created: ${parent.email}`);
+    // All-or-nothing, so a failure never leaves a half-seeded database.
+    await prisma.$transaction(
+      async (tx) => {
+        // Super admin — platform-level, no school
+        await tx.user.create({
+          data: {
+            schoolId: null,
+            firstName: 'Super',
+            lastName: 'Admin',
+            email: 'superadmin@edunest.dz',
+            passwordHash: superAdminHash,
+            role: 'super_admin',
+            isActive: true,
+            preferredLanguage: 'fr',
+          },
+        });
 
-  // Create an academic year
-  // Current school year (Sept 1 – June 30): from September on it's this
-  // year's, before September it's the one that started last year.
-  const now = new Date();
-  const startYear = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
-  const academicYear = await prisma.academicYear.create({
-    data: {
-      schoolId: school.id,
-      name: `${startYear}-${startYear + 1}`,
-      startDate: new Date(`${startYear}-09-01`),
-      endDate: new Date(`${startYear + 1}-06-30`),
-      isActive: true,
-    },
-  });
-  console.log(`✅ Academic year created: ${academicYear.name}`);
+        const school = await tx.school.create({
+          data: {
+            name: 'روضة النور / Maternelle An-Nour',
+            schoolType: 'kindergarten',
+            address: '12 Rue Didouche Mourad',
+            wilaya: 'Alger',
+            contactEmail: 'contact@annour.dz',
+            contactPhone: '+213 21 00 00 00',
+            isActive: true,
+          },
+        });
+        console.log(`✅ School created: ${school.name} (${school.id})`);
 
-  // Create a classroom
-  const classroom = await prisma.classroom.create({
-    data: {
-      schoolId: school.id,
-      academicYearId: academicYear.id,
-      teacherUserId: teacher.id,
-      name: 'Les Papillons',
-      capacity: 25,
-      roomNumber: '101',
-      level: '4-5 ans',
-    },
-  });
-  console.log(`✅ Classroom created: ${classroom.name}`);
+        // Same default branch the payments module would auto-create on first
+        // visit, so /payments is ready straight away.
+        await tx.branch.create({
+          data: { schoolId: school.id, name: school.name, isActive: true },
+        });
+        console.log('✅ Default branch created');
 
-  // Create a child
-  const child = await prisma.child.create({
-    data: {
-      schoolId: school.id,
-      academicYearId: academicYear.id,
-      firstName: 'Yasmine',
-      lastName: 'Parent',
-      dateOfBirth: new Date('2020-03-15'),
-      gender: 'female',
-      enrollmentDate: new Date('2025-09-01'),
-      learnerType: 'child',
-      isActive: true,
-    },
-  });
-  console.log(`✅ Child created: ${child.firstName} ${child.lastName}`);
+        await tx.user.create({
+          data: {
+            schoolId: school.id,
+            firstName: 'Amine',
+            lastName: 'Admin',
+            email: 'admin@edunest.dz',
+            passwordHash: adminHash,
+            role: 'admin',
+            isActive: true,
+            preferredLanguage: 'fr',
+          },
+        });
 
-  // Enroll child in classroom
-  await prisma.classroomEnrollment.create({
-    data: {
-      childId: child.id,
-      classroomId: classroom.id,
-    },
-  });
-  console.log(`✅ Child enrolled in ${classroom.name}`);
+        const teacher = await tx.user.create({
+          data: {
+            schoolId: school.id,
+            firstName: 'Fatima',
+            lastName: 'Enseignante',
+            email: 'teacher@edunest.dz',
+            passwordHash: teacherHash,
+            role: 'teacher',
+            isActive: true,
+            preferredLanguage: 'fr',
+          },
+        });
 
-  // Link parent to child
-  await prisma.parentChildLink.create({
-    data: {
-      childId: child.id,
-      parentUserId: parent.id,
-      relationship: 'father',
-      isPrimary: true,
-    },
-  });
-  console.log(`✅ Parent linked to child`);
+        const parent = await tx.user.create({
+          data: {
+            schoolId: school.id,
+            firstName: 'Karim',
+            lastName: 'Parent',
+            email: 'parent@edunest.dz',
+            passwordHash: parentHash,
+            role: 'parent',
+            isActive: true,
+            preferredLanguage: 'ar',
+          },
+        });
+        console.log('✅ Users created');
 
-  console.log('\n🎉 Seed complete! You can now sign in with:');
-  console.log('─────────────────────────────────────────');
-  console.log('  Super admin: superadmin@edunest.dz / superadmin123');
-  console.log('  Admin:       admin@edunest.dz       / admin123');
-  console.log('  Teacher:     teacher@edunest.dz     / teacher123');
-  console.log('  Parent:      parent@edunest.dz      / parent123');
-  console.log('─────────────────────────────────────────');
+        const academicYear = await tx.academicYear.create({
+          data: {
+            schoolId: school.id,
+            name: `${startYear}-${startYear + 1}`,
+            startDate: yearStart,
+            endDate: yearEnd,
+            isActive: true,
+          },
+        });
+        console.log(`✅ Academic year created: ${academicYear.name}`);
 
-  await prisma.$disconnect();
-  await pool.end();
+        const classroom = await tx.classroom.create({
+          data: {
+            schoolId: school.id,
+            academicYearId: academicYear.id,
+            teacherUserId: teacher.id,
+            name: 'Les Papillons',
+            capacity: 25,
+            roomNumber: '101',
+            level: '4-5 ans',
+          },
+        });
+        console.log(`✅ Classroom created: ${classroom.name}`);
+
+        const child = await tx.child.create({
+          data: {
+            schoolId: school.id,
+            academicYearId: academicYear.id,
+            firstName: 'Yasmine',
+            lastName: 'Parent',
+            dateOfBirth: new Date('2020-03-15'),
+            gender: 'female',
+            enrollmentDate: yearStart,
+            learnerType: 'child',
+            isActive: true,
+          },
+        });
+
+        await tx.classroomEnrollment.create({
+          data: { childId: child.id, classroomId: classroom.id },
+        });
+
+        await tx.parentChildLink.create({
+          data: {
+            childId: child.id,
+            parentUserId: parent.id,
+            relationship: 'father',
+            isPrimary: true,
+          },
+        });
+        console.log(`✅ Child ${child.firstName} created, placed in ${classroom.name}, linked to parent`);
+      },
+      { timeout: 30_000 },
+    );
+
+    const shown = (role: string) => (customPassword ? '(SEED_PASSWORD)' : passwordFor(role));
+    console.log('\n🎉 Seed complete! You can now sign in with:');
+    console.log('─────────────────────────────────────────');
+    console.log(`  Super admin: superadmin@edunest.dz / ${shown('superadmin')}`);
+    console.log(`  Admin:       admin@edunest.dz       / ${shown('admin')}`);
+    console.log(`  Teacher:     teacher@edunest.dz     / ${shown('teacher')}`);
+    console.log(`  Parent:      parent@edunest.dz      / ${shown('parent')}`);
+    console.log('─────────────────────────────────────────');
+  } finally {
+    await prisma.$disconnect();
+    await pool.end();
+  }
 }
 
 main().catch((e) => {
-  console.error('❌ Seed failed:', e);
+  console.error('❌ Seed failed:', e instanceof Error ? e.message : e);
   process.exit(1);
 });

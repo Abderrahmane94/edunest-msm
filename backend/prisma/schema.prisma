@@ -746,6 +746,8 @@ model BranchFee {
   // Whole-school scope: set when the fee is assigned to the whole school; every
   // new enrollment in the school then gets this fee applied automatically.
   appliesToSchool Boolean           @default(false) @map("applies_to_school")
+  // Whether the fee is offered in the child-registration wizard's fee step.
+  showInWizard    Boolean           @default(true) @map("show_in_wizard")
   createdAt       DateTime          @default(now()) @map("created_at")
   updatedAt       DateTime          @updatedAt @map("updated_at")
 

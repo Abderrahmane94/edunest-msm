@@ -17,6 +17,8 @@ export interface BranchFee {
   gracePeriodDays: number | null;
   /** Whole-school scope: every new enrollment gets this fee automatically. */
   appliesToSchool: boolean;
+  /** Whether the fee is offered in the child-registration wizard. */
+  showInWizard: boolean;
   /** Classrooms this fee is linked to. */
   classrooms?: { id: string; name: string }[];
   createdAt: string;
@@ -32,6 +34,7 @@ export interface FeeCycleFields {
 export type CreateBranchFeeInput = {
   name: string;
   amount: number;
+  showInWizard?: boolean;
 } & FeeCycleFields;
 
 export type UpdateBranchFeeInput = {
@@ -39,6 +42,7 @@ export type UpdateBranchFeeInput = {
   amount?: number;
   isActive?: boolean;
   appliesToSchool?: boolean;
+  showInWizard?: boolean;
 } & FeeCycleFields;
 
 // ─── Hooks ─────────────────────────────────────────────────────────────────────

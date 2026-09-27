@@ -35,10 +35,11 @@ router.get('/branches/:branchId/fees', async (req, res) => {
 router.post('/branches/:branchId/fees', async (req, res) => {
   try {
     const { branchId } = req.params;
-    const { name, amount, billingCycle, billingDueDay, gracePeriodDays } = req.body;
+    const { name, amount, showInWizard, billingCycle, billingDueDay, gracePeriodDays } = req.body;
     const fee = await branchFeeService.create(branchId, {
       name,
       amount: Number(amount),
+      showInWizard: typeof showInWizard === 'boolean' ? showInWizard : undefined,
       billingCycle: billingCycle ?? null,
       billingDueDay: billingDueDay !== undefined && billingDueDay !== null ? Number(billingDueDay) : null,
       gracePeriodDays: gracePeriodDays !== undefined && gracePeriodDays !== null ? Number(gracePeriodDays) : null,
@@ -66,12 +67,14 @@ router.post('/branches/:branchId/fees', async (req, res) => {
 router.put('/branches/:branchId/fees/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, amount, isActive, appliesToSchool, billingCycle, billingDueDay, gracePeriodDays } = req.body;
+    const { name, amount, isActive, appliesToSchool, showInWizard, billingCycle, billingDueDay, gracePeriodDays } =
+      req.body;
     const fee = await branchFeeService.update(id, {
       name,
       amount: amount !== undefined ? Number(amount) : undefined,
       isActive,
       appliesToSchool: typeof appliesToSchool === 'boolean' ? appliesToSchool : undefined,
+      showInWizard: typeof showInWizard === 'boolean' ? showInWizard : undefined,
       billingCycle,
       billingDueDay: billingDueDay !== undefined && billingDueDay !== null ? Number(billingDueDay) : billingDueDay,
       gracePeriodDays:

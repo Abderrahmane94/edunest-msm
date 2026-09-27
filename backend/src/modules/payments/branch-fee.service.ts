@@ -114,7 +114,7 @@ class BranchFeeService {
    */
   async create(
     branchId: string,
-    data: { name: string; amount: number } & FeeCycleInput,
+    data: { name: string; amount: number; showInWizard?: boolean } & FeeCycleInput,
   ) {
     // Validate branch exists
     const branch = await prisma.branch.findUnique({ where: { id: branchId } });
@@ -148,6 +148,7 @@ class BranchFeeService {
         billingCycle: data.billingCycle ?? null,
         billingDueDay: data.billingDueDay ?? null,
         gracePeriodDays: data.gracePeriodDays ?? null,
+        showInWizard: data.showInWizard ?? true,
       },
     });
   }
@@ -157,7 +158,13 @@ class BranchFeeService {
    */
   async update(
     id: string,
-    data: { name?: string; amount?: number; isActive?: boolean; appliesToSchool?: boolean } & FeeCycleInput,
+    data: {
+      name?: string;
+      amount?: number;
+      isActive?: boolean;
+      appliesToSchool?: boolean;
+      showInWizard?: boolean;
+    } & FeeCycleInput,
   ) {
     const existing = await prisma.branchFee.findUnique({ where: { id } });
     if (!existing) {
@@ -194,6 +201,10 @@ class BranchFeeService {
 
     if (data.appliesToSchool !== undefined) {
       updateData.appliesToSchool = data.appliesToSchool;
+    }
+
+    if (data.showInWizard !== undefined) {
+      updateData.showInWizard = data.showInWizard;
     }
 
     if (

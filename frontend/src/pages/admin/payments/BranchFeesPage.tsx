@@ -83,7 +83,6 @@ function FeeDialog({
   const [billingCycle, setBillingCycle] = React.useState<BillingCycle>('monthly');
   const [billingDueDay, setBillingDueDay] = React.useState('1');
   const [gracePeriodDays, setGracePeriodDays] = React.useState('5');
-  const [appliesToSchool, setAppliesToSchool] = React.useState(false);
   const [showInWizard, setShowInWizard] = React.useState(true);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
@@ -95,7 +94,6 @@ function FeeDialog({
       setBillingCycle(editingFee.billingCycle ?? 'monthly');
       setBillingDueDay(String(editingFee.billingDueDay ?? 1));
       setGracePeriodDays(String(editingFee.gracePeriodDays ?? 5));
-      setAppliesToSchool(editingFee.appliesToSchool);
       setShowInWizard(editingFee.showInWizard);
     } else {
       setName('');
@@ -152,7 +150,6 @@ function FeeDialog({
           id: editingFee.id,
           name: name.trim(),
           amount: Number(amount),
-          appliesToSchool,
           showInWizard,
           ...cycleFields,
         });
@@ -369,26 +366,6 @@ function FeeDialog({
           <p className="text-caption text-text-secondary -mt-2">
             {t('payments.fees.fields.showInWizardHint')}
           </p>
-
-          {editingFee && (
-            <>
-              <div className="flex items-center gap-2 py-1">
-                <input
-                  id="fee-applies-to-school"
-                  type="checkbox"
-                  checked={appliesToSchool}
-                  onChange={(e) => setAppliesToSchool(e.target.checked)}
-                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                />
-                <label htmlFor="fee-applies-to-school" className="text-body text-foreground cursor-pointer">
-                  {t('payments.fees.fields.appliesToSchool')}
-                </label>
-              </div>
-              <p className="text-caption text-text-secondary -mt-2">
-                {t('payments.fees.fields.appliesToSchoolHint')}
-              </p>
-            </>
-          )}
 
           {errors.form && (
             <p className="text-body text-danger">{errors.form}</p>

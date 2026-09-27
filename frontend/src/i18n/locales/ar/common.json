@@ -576,6 +576,21 @@
       "noContacts": "لا توجد جهات اتصال طوارئ حتى الآن.",
       "noPickupContact": "لا يوجد أحد مخول باستلام الطفل"
     },
+    "fees": {
+      "title": "الرسوم المسندة",
+      "empty": "لا توجد رسوم مسندة لهذا الطفل.",
+      "registration": "رسوم التسجيل",
+      "oneShot": "لمرة واحدة",
+      "periods_zero": "{{count}} فترة",
+      "periods_one": "فترة واحدة",
+      "periods_two": "فترتان",
+      "periods_few": "{{count}} فترات",
+      "periods_many": "{{count}} فترة",
+      "periods_other": "{{count}} فترة",
+      "due": "المستحق:",
+      "paid": "المدفوع:",
+      "outstanding": "المتبقي:"
+    },
     "medicalNotes": {
       "title": "ملاحظات طبية",
       "description": "إدارة الملاحظات الطبية (الحساسية، الحالات، الأدوية) لـ {{name}}.",

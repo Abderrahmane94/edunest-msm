@@ -363,6 +363,7 @@ export const paymentsController = {
           branchFee: {
             select: {
               name: true,
+              billingCycle: true,
             },
           },
           paymentAllocations: {
@@ -403,7 +404,9 @@ export const paymentsController = {
           graceEndDate: period.graceEndDate,
           amountDue: period.amountDue,
           isRegistrationPeriod: period.isRegistrationPeriod,
+          branchFeeId: period.branchFeeId,
           branchFeeName: period.branchFee?.name ?? null,
+          branchFeeBillingCycle: period.branchFee?.billingCycle ?? null,
           cancelledAt: period.cancelledAt,
           status: derived.status,
           isLate: derived.isLate,

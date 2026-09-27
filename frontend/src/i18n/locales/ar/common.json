@@ -1568,7 +1568,8 @@
         "submit": "تطبيق الرسم",
         "resultTitle": "تم تطبيق الرسم",
         "resultApplied": "تم تطبيق الرسم على {{count}} طالب(ة)",
-        "resultSkipped": "{{count}} طالب(ة) لديهم هذا الرسم مسبقاً (تم تجاهلهم)"
+        "resultSkipped": "{{count}} طالب(ة) لديهم هذا الرسم مسبقاً (تم تجاهلهم)",
+        "resultYearEnded": "{{count}} طالب(ة) مسجلون في سنة دراسية منتهية (تم تجاهلهم)"
       }
     },
     "branchCalendar": {

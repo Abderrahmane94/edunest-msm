@@ -1567,7 +1567,8 @@
         "submit": "Appliquer le frais",
         "resultTitle": "Frais appliqué",
         "resultApplied": "Frais appliqué à {{count}} élève(s)",
-        "resultSkipped": "{{count}} élève(s) avaient déjà ce frais (ignorés)"
+        "resultSkipped": "{{count}} élève(s) avaient déjà ce frais (ignorés)",
+        "resultYearEnded": "{{count}} élève(s) inscrit(s) dans une année scolaire terminée (ignorés)"
       }
     },
     "branchCalendar": {

@@ -518,7 +518,7 @@ function FeesStep({
   }
 
   async function handleCreateEnrollment() {
-    if (!baseFeeId) return;
+    if (!canEnroll) return;
     setError(null);
     setIsSaving(true);
     try {
@@ -529,7 +529,7 @@ function FeesStep({
         childId: child.id,
         branchId,
         academicYearId: activeYear?.id ?? '',
-        baseFeeId,
+        baseFeeId: baseFeeId || undefined,
         startDate,
       });
       for (const feeId of extraFeeIds) {
@@ -565,6 +565,9 @@ function FeesStep({
   }
 
   const schoolFees = fees.filter((f) => f.appliesToSchool && f.id !== baseFeeId);
+  // Without a base fee the child is still enrolled for billing when there's
+  // something to bill: whole-school fees or extra fees picked here.
+  const canEnroll = !!baseFeeId || schoolFees.length > 0 || extraFeeIds.length > 0;
 
   const baseFeeOptions = recurringFees.map((f) => ({
     value: f.id,
@@ -630,7 +633,7 @@ function FeesStep({
             <Button type="button" variant="secondary" onClick={onFinish}>
               {t('children.wizard.fees.skipEnrollment')}
             </Button>
-            <Button type="button" onClick={handleCreateEnrollment} disabled={!baseFeeId || isSaving}>
+            <Button type="button" onClick={handleCreateEnrollment} disabled={!canEnroll || isSaving}>
               {isSaving ? t('common.loading') : t('children.wizard.next')}
             </Button>
           </DialogFooter>

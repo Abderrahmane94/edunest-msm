@@ -31,8 +31,11 @@ export interface CreateEnrollmentInput {
   childId: string;
   branchId: string;
   academicYearId: string;
-  /** The recurring fee this enrollment's base periods are generated from. */
-  baseFeeId: string;
+  /**
+   * The recurring fee this enrollment's base periods are generated from.
+   * Omitted: enrolled for billing without base periods (whole-school fees only).
+   */
+  baseFeeId?: string;
   startDate: string;
   /** Optional per-child override of the selected base fee's amount. */
   recurringFee?: number;

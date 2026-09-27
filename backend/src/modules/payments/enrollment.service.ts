@@ -41,6 +41,12 @@ class EnrollmentService {
         throw new EnrollmentServiceError('Branch not found', 404, 'NOT_FOUND');
       }
 
+      // No base fee: enroll the child for billing without base periods, so
+      // whole-school fees (and any fee applied afterwards) can reach them.
+      if (!baseFeeId) {
+        return this.createWithoutBaseFee(tx, { childId, branchId, academicYearId, startDate });
+      }
+
       // (a2) Validate the base fee: must exist, belong to this branch, be
       // active, and be recurring (billingCycle set) — a one-shot fee can't
       // be an enrollment's base fee.
@@ -246,6 +252,61 @@ class EnrollmentService {
         totalAmountDue: generationResult.totalAmountDue,
       };
     });
+  }
+
+  /**
+   * Creates an enrollment with no base fee: no base billing periods, only
+   * the whole-school fees. Runs inside `create`'s transaction.
+   */
+  private async createWithoutBaseFee(
+    tx: TransactionClient,
+    input: { childId: string; branchId: string; academicYearId: string; startDate: Date },
+  ): Promise<EnrollmentGenerationResult> {
+    const academicYear = await tx.academicYear.findUnique({ where: { id: input.academicYearId } });
+    if (!academicYear) {
+      throw new EnrollmentServiceError('Academic year not found', 404, 'NOT_FOUND');
+    }
+
+    const existing = await tx.enrollment.findUnique({
+      where: { childId_academicYearId: { childId: input.childId, academicYearId: input.academicYearId } },
+    });
+    if (existing) {
+      throw new EnrollmentServiceError(
+        `An enrollment already exists for this child in the specified academic year (id: ${existing.id})`,
+        409,
+        'CONFLICT',
+      );
+    }
+
+    const enrollStart = new Date(input.startDate);
+    const enrollment = await tx.enrollment.create({
+      data: {
+        childId: input.childId,
+        branchId: input.branchId,
+        academicYearId: input.academicYearId,
+        baseFeeId: null,
+        startDate: enrollStart,
+        status: 'active',
+        recurringFee: new Prisma.Decimal(0),
+      },
+    });
+
+    try {
+      await branchFeeService.applySchoolFeesToEnrollment(tx, { ...enrollment, academicYear });
+    } catch (err) {
+      if (err instanceof BranchFeeServiceError) {
+        throw new EnrollmentServiceError(err.message, err.statusCode, err.code);
+      }
+      throw err;
+    }
+
+    return {
+      enrollmentId: enrollment.id,
+      periodsCreated: 0,
+      earliestPeriodStart: enrollStart,
+      latestPeriodEnd: enrollStart,
+      totalAmountDue: new Prisma.Decimal(0),
+    };
   }
 
   /**

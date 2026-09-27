@@ -602,6 +602,11 @@ function AssignFeeDialog({
                 {t('payments.fees.assign.resultSkipped', { count: result.skipped })}
               </p>
             )}
+            {result.enrolled > 0 && (
+              <p className="text-caption text-text-secondary">
+                {t('payments.fees.assign.resultEnrolled', { count: result.enrolled })}
+              </p>
+            )}
             {result.yearEnded > 0 && (
               <p className="text-caption text-text-secondary">
                 {t('payments.fees.assign.resultYearEnded', { count: result.yearEnded })}

@@ -369,6 +369,8 @@ class BranchFeeService {
         return { applied: 0, skipped: alreadyApplied.size, total: enrollmentIds.length };
       }
 
+      let applied = toApply.length;
+
       if (fee.billingCycle) {
         // Recurring fee: each enrollment may belong to a different academic
         // year/calendar, so generate periods one enrollment at a time.
@@ -377,7 +379,15 @@ class BranchFeeService {
           include: { academicYear: true },
         });
 
-        for (const enrollment of enrollments) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        // An enrollment whose academic year has already ended has no
+        // remaining periods to bill, so it's skipped rather than failing
+        // the whole batch.
+        const billable = enrollments.filter((e) => new Date(e.academicYear.endDate) >= today);
+        applied = billable.length;
+
+        for (const enrollment of billable) {
           await this.generateRecurringFeePeriods(tx, fee, enrollment);
         }
       } else {
@@ -402,8 +412,8 @@ class BranchFeeService {
       }
 
       return {
-        applied: toApply.length,
-        skipped: alreadyApplied.size,
+        applied,
+        skipped: enrollmentIds.length - applied,
         total: enrollmentIds.length,
       };
     });

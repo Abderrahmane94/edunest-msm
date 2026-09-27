@@ -446,6 +446,11 @@
       "teacher": "Enseignant",
       "noTeacher": "Aucun enseignant"
     },
+    "fees": {
+      "title": "Frais assignés",
+      "empty": "Aucun frais n'est assigné à cette classe.",
+      "linked": "Cette classe"
+    },
     "assignTeacher": {
       "title": "Assigner un enseignant",
       "description": "Assigner un enseignant à la classe {{name}}.",

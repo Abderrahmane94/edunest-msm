@@ -11,6 +11,7 @@ import {
   useAssignTeacher,
 } from '@/hooks/useClassrooms';
 import { useUsers } from '@/hooks/useUsers';
+import { ClassroomFeesSection } from './ClassroomFeesSection';
 
 export function ClassroomDetailPage() {
   const { t } = useTranslation();
@@ -175,6 +176,9 @@ export function ClassroomDetailPage() {
         </div>
         {teacherError && <p className="text-body text-danger">{teacherError}</p>}
       </div>
+
+      {/* Assigned fees */}
+      <ClassroomFeesSection classroomId={classroomId!} />
 
       {/* Danger zone */}
       <div className="bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3">

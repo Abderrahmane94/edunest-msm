@@ -9,6 +9,7 @@ vi.mock('../../lib/prisma', () => ({
     billingPeriod: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), createMany: vi.fn() },
     branchCalendar: { findMany: vi.fn() },
     classroomEnrollment: { findMany: vi.fn() },
+    branchFeeClassroom: { createMany: vi.fn() },
     $transaction: vi.fn(),
   },
 }));
@@ -33,6 +34,7 @@ const mockPrisma = prisma as unknown as {
   };
   branchCalendar: { findMany: ReturnType<typeof vi.fn> };
   classroomEnrollment: { findMany: ReturnType<typeof vi.fn> };
+  branchFeeClassroom: { createMany: ReturnType<typeof vi.fn> };
   $transaction: ReturnType<typeof vi.fn>;
 };
 
@@ -255,6 +257,34 @@ describe('BranchFeeService', () => {
         where: { id: 'fee-1' },
         data: { appliesToSchool: true },
       });
+    });
+
+    it('links the fee to the classrooms it is assigned to', async () => {
+      mockPrisma.branchFee.findUnique.mockResolvedValue({
+        id: 'fee-1',
+        branchId: 'branch-1',
+        isActive: true,
+        appliesToSchool: false,
+        amount: new Prisma.Decimal(500),
+        billingCycle: null,
+        gracePeriodDays: null,
+      });
+      mockPrisma.branch.findUnique.mockResolvedValue({ id: 'branch-1', schoolId: 'school-1' });
+      mockPrisma.classroomEnrollment.findMany.mockResolvedValue([]);
+
+      await branchFeeService.applyFeeBatch('fee-1', 'branch-1', {
+        type: 'classrooms',
+        classroomIds: ['class-1', 'class-2'],
+      });
+
+      expect(mockPrisma.branchFeeClassroom.createMany).toHaveBeenCalledWith({
+        data: [
+          { branchFeeId: 'fee-1', classroomId: 'class-1' },
+          { branchFeeId: 'fee-1', classroomId: 'class-2' },
+        ],
+        skipDuplicates: true,
+      });
+      expect(mockPrisma.branchFee.update).not.toHaveBeenCalled();
     });
 
     it('does not scope the fee to the school when assigned to specific children', async () => {

@@ -122,24 +122,20 @@ describe('BranchFeeClassroomService', () => {
   });
 
   describe('listFeesForClassroom', () => {
-    it('returns fees linked to the classroom or with no classroom links at all', async () => {
+    it('returns only fees linked to the classroom', async () => {
       mockPrisma.classroom.findUnique.mockResolvedValue({ id: 'class-1', schoolId: 'school-1' });
       mockPrisma.branchFee.findMany.mockResolvedValue([
         { id: 'fee-linked', name: 'Uniform' },
-        { id: 'fee-general', name: 'Tuition' },
       ]);
 
       const result = await branchFeeClassroomService.listFeesForClassroom('class-1');
 
-      expect(result.fees).toHaveLength(2);
+      expect(result.fees).toHaveLength(1);
       expect(mockPrisma.branchFee.findMany).toHaveBeenCalledWith({
         where: {
           isActive: true,
           branch: { schoolId: 'school-1' },
-          OR: [
-            { classroomAssignments: { some: { classroomId: 'class-1' } } },
-            { classroomAssignments: { none: {} } },
-          ],
+          classroomAssignments: { some: { classroomId: 'class-1' } },
         },
         orderBy: { name: 'asc' },
       });

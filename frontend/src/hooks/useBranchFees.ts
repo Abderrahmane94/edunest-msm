@@ -165,6 +165,8 @@ export interface AssignFeeResult {
   skipped: number;
   /** Enrollments whose academic year has already ended — nothing left to bill. */
   yearEnded: number;
+  /** Children enrolled for billing on the fly by this assignment. */
+  enrolled: number;
   total: number;
 }
 

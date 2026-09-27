@@ -1591,7 +1591,8 @@
         "resultTitle": "Frais appliqué",
         "resultApplied": "Frais appliqué à {{count}} élève(s)",
         "resultSkipped": "{{count}} élève(s) avaient déjà ce frais (ignorés)",
-        "resultYearEnded": "{{count}} élève(s) inscrit(s) dans une année scolaire terminée (ignorés)"
+        "resultYearEnded": "{{count}} élève(s) inscrit(s) dans une année scolaire terminée (ignorés)",
+        "resultEnrolled": "{{count}} élève(s) inscrit(s) automatiquement à la facturation"
       }
     },
     "branchCalendar": {

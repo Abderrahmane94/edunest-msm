@@ -349,46 +349,41 @@ class BranchFeeService {
         });
       }
 
-      // Resolve target enrollments based on type
-      let enrollmentIds: string[] = [];
+      // Resolve the target children
+      let childIds: string[] = [];
 
       if (target.type === 'children' && target.childIds?.length) {
-        const enrollments = await tx.enrollment.findMany({
-          where: { childId: { in: target.childIds }, status: 'active' },
-          select: { id: true },
-        });
-        enrollmentIds = enrollments.map((e) => e.id);
+        childIds = target.childIds;
       } else if (target.type === 'classrooms' && target.classroomIds?.length) {
         const classroomEnrollments = await tx.classroomEnrollment.findMany({
           where: { classroomId: { in: target.classroomIds } },
           select: { childId: true },
         });
-        const childIds = [...new Set(classroomEnrollments.map((ce) => ce.childId))];
-
-        if (childIds.length > 0) {
-          const enrollments = await tx.enrollment.findMany({
-            where: { childId: { in: childIds }, status: 'active' },
-            select: { id: true },
-          });
-          enrollmentIds = enrollments.map((e) => e.id);
-        }
+        childIds = [...new Set(classroomEnrollments.map((ce) => ce.childId))];
       } else if (target.type === 'school') {
-        const schoolBranches = await tx.branch.findMany({
-          where: { schoolId: branch?.schoolId ?? '' },
+        const children = await tx.child.findMany({
+          where: { schoolId: branch?.schoolId ?? '', isActive: true },
           select: { id: true },
         });
-        const branchIds = schoolBranches.map((b) => b.id);
-
-        const enrollments = await tx.enrollment.findMany({
-          where: { branchId: { in: branchIds }, status: 'active' },
-          select: { id: true },
-        });
-        enrollmentIds = enrollments.map((e) => e.id);
+        childIds = children.map((c) => c.id);
       }
 
-      if (enrollmentIds.length === 0) {
-        return { applied: 0, skipped: 0, yearEnded: 0, total: 0 };
+      if (childIds.length === 0) {
+        return { applied: 0, skipped: 0, yearEnded: 0, enrolled: 0, total: 0 };
       }
+
+      // Children not yet enrolled for billing in the current school year get
+      // an enrollment created on the fly, so the fee reaches every targeted
+      // child — not only those enrolled with a base fee.
+      const { enrolled, academicYearId } = await this.enrollChildrenForBilling(tx, childIds, branchId, fee.id);
+
+      // Only the current school year's enrollments: an older enrollment left
+      // active must not be charged the fee a second time.
+      const enrollments = await tx.enrollment.findMany({
+        where: { childId: { in: childIds }, academicYearId, status: 'active' },
+        select: { id: true },
+      });
+      const enrollmentIds = enrollments.map((e) => e.id);
 
       // Check which enrollments already have this fee applied
       const existingPeriods = await tx.billingPeriod.findMany({
@@ -399,7 +394,7 @@ class BranchFeeService {
       const toApply = enrollmentIds.filter((id) => !alreadyApplied.has(id));
 
       if (toApply.length === 0) {
-        return { applied: 0, skipped: alreadyApplied.size, yearEnded: 0, total: enrollmentIds.length };
+        return { applied: 0, skipped: alreadyApplied.size, yearEnded: 0, enrolled, total: enrollmentIds.length };
       }
 
       let applied = toApply.length;
@@ -450,9 +445,68 @@ class BranchFeeService {
         skipped: alreadyApplied.size,
         // Academic year already ended — nothing left to bill.
         yearEnded: toApply.length - applied,
+        // Enrolled for billing on the fly by this assignment.
+        enrolled,
         total: enrollmentIds.length,
       };
     });
+  }
+
+  /**
+   * Creates a billing enrollment in the school's active academic year for each
+   * of the given children who doesn't have one yet. These enrollments have no
+   * base fee (nothing billed on their own) and start today, clamped to the
+   * academic year. Whole-school fees are applied to them like to any new
+   * enrollment. Returns how many children were enrolled, and the year used.
+   */
+  async enrollChildrenForBilling(
+    tx: TransactionClient,
+    childIds: string[],
+    branchId: string,
+    /** Passed through to applySchoolFeesToEnrollment. */
+    excludeFeeId?: string,
+  ): Promise<{ enrolled: number; academicYearId: string }> {
+    const branch = await tx.branch.findUnique({ where: { id: branchId } });
+    const academicYear = await tx.academicYear.findFirst({
+      where: { schoolId: branch?.schoolId ?? '', isActive: true },
+    });
+    if (!academicYear) {
+      throw new BranchFeeServiceError(
+        'No active academic year — activate one before assigning fees',
+        422,
+        'NO_ACTIVE_YEAR',
+      );
+    }
+
+    const existing = await tx.enrollment.findMany({
+      where: { childId: { in: childIds }, academicYearId: academicYear.id },
+      select: { childId: true },
+    });
+    const alreadyEnrolled = new Set(existing.map((e) => e.childId));
+    const toEnroll = childIds.filter((id) => !alreadyEnrolled.has(id));
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yearStart = new Date(academicYear.startDate);
+    const yearEnd = new Date(academicYear.endDate);
+    const startDate = today < yearStart ? yearStart : today > yearEnd ? yearEnd : today;
+
+    for (const childId of toEnroll) {
+      const enrollment = await tx.enrollment.create({
+        data: {
+          childId,
+          branchId,
+          academicYearId: academicYear.id,
+          baseFeeId: null,
+          startDate,
+          status: 'active',
+          recurringFee: new Prisma.Decimal(0),
+        },
+      });
+      await this.applySchoolFeesToEnrollment(tx, { ...enrollment, academicYear }, excludeFeeId);
+    }
+
+    return { enrolled: toEnroll.length, academicYearId: academicYear.id };
   }
 
   /**
@@ -471,14 +525,17 @@ class BranchFeeService {
       startDate: Date;
       academicYear: { startDate: Date; endDate: Date };
     },
+    /** A fee the caller is about to apply itself (skipped here to avoid a duplicate). */
+    excludeFeeId?: string,
   ) {
     const branch = await tx.branch.findUnique({ where: { id: enrollment.branchId } });
+    const skipIds = [enrollment.baseFeeId, excludeFeeId].filter((id): id is string => !!id);
     const fees = await tx.branchFee.findMany({
       where: {
         isActive: true,
         appliesToSchool: true,
         branch: { schoolId: branch?.schoolId ?? '' },
-        ...(enrollment.baseFeeId ? { id: { not: enrollment.baseFeeId } } : {}),
+        ...(skipIds.length ? { id: { notIn: skipIds } } : {}),
       },
     });
 

@@ -22,6 +22,7 @@ import { useClassrooms } from '@/hooks/useClassrooms';
 import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
 import { useFeePeriods, useSetFeePeriods } from '@/hooks/useBranchFeePeriods';
 import { useFeeClassrooms } from '@/hooks/useBranchFeeClassrooms';
+import { useBranchCalendar } from '@/hooks/useBranchCalendar';
 import {
   useBranchFees,
   useCreateBranchFee,
@@ -56,8 +57,17 @@ function FeeDialog({
     editingFee?.id,
     periodsYearId || undefined,
   );
+  // A new fee has no id yet, so list the branch calendar directly; the
+  // selection is assigned right after the fee is created.
+  const { data: branchPeriods, isLoading: branchPeriodsLoading } = useBranchCalendar(
+    editingFee ? undefined : branchId,
+    periodsYearId || undefined,
+  );
   const setFeePeriods = useSetFeePeriods(editingFee?.id);
   const [selectedPeriodIds, setSelectedPeriodIds] = React.useState<string[]>([]);
+  // Set once the fee is created, so a retry after a failed period assignment
+  // doesn't create a duplicate fee.
+  const [createdFeeId, setCreatedFeeId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setSelectedPeriodIds((feePeriods ?? []).filter((p) => p.isAssigned).map((p) => p.id));
@@ -90,7 +100,9 @@ function FeeDialog({
       setBillingCycle('monthly');
       setBillingDueDay('1');
       setGracePeriodDays('5');
+      setSelectedPeriodIds([]);
     }
+    setCreatedFeeId(null);
     setErrors({});
   }, [editingFee, open]);
 
@@ -141,11 +153,19 @@ function FeeDialog({
           await setFeePeriods.mutateAsync({ academicYearId: periodsYearId, periodIds: selectedPeriodIds });
         }
       } else {
-        await createFee.mutateAsync({
-          name: name.trim(),
-          amount: Number(amount),
-          ...cycleFields,
-        });
+        let feeId = createdFeeId;
+        if (!feeId) {
+          const fee = await createFee.mutateAsync({
+            name: name.trim(),
+            amount: Number(amount),
+            ...cycleFields,
+          });
+          feeId = fee.id;
+          setCreatedFeeId(feeId);
+        }
+        if (periodsSectionActive && periodsYearId && selectedPeriodIds.length > 0) {
+          await setFeePeriods.mutateAsync({ feeId, academicYearId: periodsYearId, periodIds: selectedPeriodIds });
+        }
       }
       onOpenChange(false);
     } catch (err) {
@@ -156,12 +176,14 @@ function FeeDialog({
     }
   }
 
-  const periodsSectionActive = !!editingFee && isRecurring && billingCycle === 'custom';
+  const periodsSectionActive = isRecurring && billingCycle === 'custom';
+  const periodOptions = editingFee ? feePeriods : branchPeriods;
+  const periodOptionsLoading = editingFee ? feePeriodsLoading : branchPeriodsLoading;
   const isPending =
     createFee.isPending ||
     updateFee.isPending ||
     setFeePeriods.isPending ||
-    (periodsSectionActive && feePeriodsLoading);
+    (periodsSectionActive && periodOptionsLoading);
 
   const billingCycleOptions = [
     { value: 'monthly', label: t('payments.branchConfig.cycleMonthly') },
@@ -285,48 +307,42 @@ function FeeDialog({
                 </p>
               </div>
 
-              {!editingFee ? (
-                <p className="text-caption text-text-secondary ps-7">
-                  {t('payments.fees.fields.savePeriodsFirst')}
-                </p>
-              ) : (
-                <div className="ps-7 space-y-3">
-                  {feePeriodsLoading ? (
-                    <div className="animate-pulse h-16 bg-subtle rounded-md" />
-                  ) : feePeriodsError ? (
-                    <p className="text-caption text-danger">
-                      {feePeriodsErrorObj instanceof Error ? feePeriodsErrorObj.message : t('common.error')}
-                    </p>
-                  ) : !feePeriods || feePeriods.length === 0 ? (
-                    <p className="text-caption text-text-secondary">
-                      {t('payments.fees.fields.noPeriodsAvailable')}
-                    </p>
-                  ) : (
-                    <div className="border border-border rounded-md divide-y divide-border max-h-48 overflow-y-auto">
-                      {feePeriods.map((period) => (
-                        <label
-                          key={period.id}
-                          className="flex items-center gap-2 p-2 cursor-pointer hover:bg-hover"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedPeriodIds.includes(period.id)}
-                            onChange={() => togglePeriod(period.id)}
-                            className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                          />
-                          <span className="text-caption text-foreground">
-                            {period.label}
-                            <span className="text-text-disabled ms-1">
-                              ({new Date(period.periodStart).toLocaleDateString()} –{' '}
-                              {new Date(period.periodEnd).toLocaleDateString()})
-                            </span>
+              <div className="ps-7 space-y-3">
+                {periodOptionsLoading ? (
+                  <div className="animate-pulse h-16 bg-subtle rounded-md" />
+                ) : editingFee && feePeriodsError ? (
+                  <p className="text-caption text-danger">
+                    {feePeriodsErrorObj instanceof Error ? feePeriodsErrorObj.message : t('common.error')}
+                  </p>
+                ) : !periodOptions || periodOptions.length === 0 ? (
+                  <p className="text-caption text-text-secondary">
+                    {t('payments.fees.fields.noPeriodsAvailable')}
+                  </p>
+                ) : (
+                  <div className="border border-border rounded-md divide-y divide-border max-h-48 overflow-y-auto">
+                    {periodOptions.map((period) => (
+                      <label
+                        key={period.id}
+                        className="flex items-center gap-2 p-2 cursor-pointer hover:bg-hover"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedPeriodIds.includes(period.id)}
+                          onChange={() => togglePeriod(period.id)}
+                          className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                        />
+                        <span className="text-caption text-foreground">
+                          {period.label}
+                          <span className="text-text-disabled ms-1">
+                            ({new Date(period.periodStart).toLocaleDateString()} –{' '}
+                            {new Date(period.periodEnd).toLocaleDateString()})
                           </span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

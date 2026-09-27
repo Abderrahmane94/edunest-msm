@@ -156,6 +156,8 @@ export interface AssignFeeInput {
 export interface AssignFeeResult {
   applied: number;
   skipped: number;
+  /** Enrollments whose academic year has already ended — nothing left to bill. */
+  yearEnded: number;
   total: number;
 }
 

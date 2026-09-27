@@ -226,7 +226,7 @@ describe('BranchFeeService', () => {
         childIds: ['child-past', 'child-current'],
       });
 
-      expect(result).toEqual({ applied: 1, skipped: 1, total: 2 });
+      expect(result).toEqual({ applied: 1, skipped: 0, yearEnded: 1, total: 2 });
       expect(mockPrisma.billingPeriod.createMany).toHaveBeenCalledTimes(1);
       const insertedData = mockPrisma.billingPeriod.createMany.mock.calls[0][0].data as Array<{
         enrollmentId: string;

@@ -354,7 +354,7 @@ class BranchFeeService {
       }
 
       if (enrollmentIds.length === 0) {
-        return { applied: 0, skipped: 0, total: 0 };
+        return { applied: 0, skipped: 0, yearEnded: 0, total: 0 };
       }
 
       // Check which enrollments already have this fee applied
@@ -366,7 +366,7 @@ class BranchFeeService {
       const toApply = enrollmentIds.filter((id) => !alreadyApplied.has(id));
 
       if (toApply.length === 0) {
-        return { applied: 0, skipped: alreadyApplied.size, total: enrollmentIds.length };
+        return { applied: 0, skipped: alreadyApplied.size, yearEnded: 0, total: enrollmentIds.length };
       }
 
       let applied = toApply.length;
@@ -413,7 +413,10 @@ class BranchFeeService {
 
       return {
         applied,
-        skipped: enrollmentIds.length - applied,
+        // Already had this fee.
+        skipped: alreadyApplied.size,
+        // Academic year already ended — nothing left to bill.
+        yearEnded: toApply.length - applied,
         total: enrollmentIds.length,
       };
     });

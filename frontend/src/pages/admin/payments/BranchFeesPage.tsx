@@ -579,6 +579,11 @@ function AssignFeeDialog({
                 {t('payments.fees.assign.resultSkipped', { count: result.skipped })}
               </p>
             )}
+            {result.yearEnded > 0 && (
+              <p className="text-caption text-text-secondary">
+                {t('payments.fees.assign.resultYearEnded', { count: result.yearEnded })}
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button onClick={() => onOpenChange(false)}>{t('common.close')}</Button>

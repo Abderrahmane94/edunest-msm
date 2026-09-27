@@ -235,6 +235,23 @@ describe('generatePeriodsForEnrollment', () => {
   const dec = (v: string | number) => new Prisma.Decimal(v);
 
   describe('monthly billing cycle', () => {
+    it('throws a clear error when the start date is after the academic year end', () => {
+      const input: GeneratePeriodsInput = {
+        enrollmentId: 'enr-1',
+        startDate: new Date(2025, 8, 27), // Sep 27, 2025
+        academicYearStartDate: new Date(2024, 8, 1),
+        academicYearEndDate: new Date(2025, 5, 30), // Jun 30, 2025
+        billingCycle: 'monthly',
+        billingDueDay: 10,
+        gracePeriodDays: 5,
+        recurringFee: dec('5000.00'),
+        registrationFee: null,
+        calendarRows: [],
+      };
+
+      expect(() => generatePeriodsForEnrollment(input)).toThrow(/after the end of the academic year/);
+    });
+
     it('generates correct number of periods from Sep to Jun (10 months)', () => {
       const input: GeneratePeriodsInput = {
         enrollmentId: 'enr-1',

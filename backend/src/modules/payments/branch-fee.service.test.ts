@@ -189,4 +189,49 @@ describe('BranchFeeService', () => {
       expect(mockPrisma.billingPeriod.createMany).not.toHaveBeenCalled();
     });
   });
+
+  describe('applyFeeBatch', () => {
+    it('skips enrollments whose academic year has already ended for a recurring fee', async () => {
+      mockPrisma.branchFee.findUnique.mockResolvedValue({
+        id: 'fee-2',
+        branchId: 'branch-1',
+        isActive: true,
+        amount: new Prisma.Decimal(3000),
+        billingCycle: 'monthly',
+        billingDueDay: 5,
+        gracePeriodDays: 5,
+      });
+      mockPrisma.branch.findUnique.mockResolvedValue({ id: 'branch-1', schoolId: 'school-1' });
+      mockPrisma.enrollment.findMany
+        .mockResolvedValueOnce([{ id: 'enr-past' }, { id: 'enr-current' }])
+        .mockResolvedValueOnce([
+          {
+            id: 'enr-past',
+            branchId: 'branch-1',
+            academicYearId: 'ay-past',
+            academicYear: { startDate: new Date('2000-09-01'), endDate: new Date('2001-06-30') },
+          },
+          {
+            id: 'enr-current',
+            branchId: 'branch-1',
+            academicYearId: 'ay-current',
+            academicYear: { startDate: new Date('2000-09-01'), endDate: new Date('2999-06-30') },
+          },
+        ]);
+      mockPrisma.billingPeriod.findMany.mockResolvedValue([]);
+      mockPrisma.billingPeriod.createMany.mockResolvedValue({ count: 1 });
+
+      const result = await branchFeeService.applyFeeBatch('fee-2', 'branch-1', {
+        type: 'children',
+        childIds: ['child-past', 'child-current'],
+      });
+
+      expect(result).toEqual({ applied: 1, skipped: 1, total: 2 });
+      expect(mockPrisma.billingPeriod.createMany).toHaveBeenCalledTimes(1);
+      const insertedData = mockPrisma.billingPeriod.createMany.mock.calls[0][0].data as Array<{
+        enrollmentId: string;
+      }>;
+      expect(insertedData.every((p) => p.enrollmentId === 'enr-current')).toBe(true);
+    });
+  });
 });

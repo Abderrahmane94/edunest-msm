@@ -170,6 +170,12 @@ export function generatePeriodsForEnrollment(input: GeneratePeriodsInput): Gener
 
   allPeriods.push(...recurringPeriods);
 
+  if (allPeriods.length === 0) {
+    throw new Error(
+      'No billing periods to generate: the start date is after the end of the academic year.'
+    );
+  }
+
   // Compute generation result
   const periodsCreated = allPeriods.length;
   const earliestPeriodStart = allPeriods.reduce(

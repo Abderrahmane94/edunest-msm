@@ -84,8 +84,8 @@ class BranchFeeClassroomService {
   }
 
   /**
-   * Lists every active fee linked to a classroom. A fee with no classroom
-   * links applies to no classroom. Used to pre-filter fee choices when enrolling a child
+   * Lists every active fee applicable to a classroom: fees linked to it, plus
+   * whole-school fees. A fee with neither applies to no classroom. Used to pre-filter fee choices when enrolling a child
    * already assigned to a classroom.
    */
   async listFeesForClassroom(classroomId: string) {
@@ -98,7 +98,7 @@ class BranchFeeClassroomService {
       where: {
         isActive: true,
         branch: { schoolId: classroom.schoolId },
-        classroomAssignments: { some: { classroomId } },
+        OR: [{ classroomAssignments: { some: { classroomId } } }, { appliesToSchool: true }],
       },
       orderBy: { name: 'asc' },
     });

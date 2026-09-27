@@ -15,7 +15,9 @@ export interface BranchFee {
   billingCycle: BillingCycle | null;
   billingDueDay: number | null;
   gracePeriodDays: number | null;
-  /** Classrooms this fee is linked to — empty means a general fee that applies everywhere. */
+  /** Whole-school scope: every new enrollment gets this fee automatically. */
+  appliesToSchool: boolean;
+  /** Classrooms this fee is linked to. */
   classrooms?: { id: string; name: string }[];
   createdAt: string;
   updatedAt: string;
@@ -36,6 +38,7 @@ export type UpdateBranchFeeInput = {
   name?: string;
   amount?: number;
   isActive?: boolean;
+  appliesToSchool?: boolean;
 } & FeeCycleFields;
 
 // ─── Hooks ─────────────────────────────────────────────────────────────────────

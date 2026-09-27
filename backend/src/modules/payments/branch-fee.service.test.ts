@@ -3,8 +3,8 @@ import { Prisma } from '@prisma/client';
 
 vi.mock('../../lib/prisma', () => ({
   default: {
-    branch: { findUnique: vi.fn() },
-    branchFee: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+    branch: { findUnique: vi.fn(), findMany: vi.fn() },
+    branchFee: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
     enrollment: { findUnique: vi.fn(), findMany: vi.fn() },
     billingPeriod: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), createMany: vi.fn() },
     branchCalendar: { findMany: vi.fn() },
@@ -17,9 +17,10 @@ import prisma from '../../lib/prisma';
 import { branchFeeService, BranchFeeServiceError } from './branch-fee.service';
 
 const mockPrisma = prisma as unknown as {
-  branch: { findUnique: ReturnType<typeof vi.fn> };
+  branch: { findUnique: ReturnType<typeof vi.fn>; findMany: ReturnType<typeof vi.fn> };
   branchFee: {
     findUnique: ReturnType<typeof vi.fn>;
+    findMany: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
   };
@@ -232,6 +233,91 @@ describe('BranchFeeService', () => {
         enrollmentId: string;
       }>;
       expect(insertedData.every((p) => p.enrollmentId === 'enr-current')).toBe(true);
+    });
+
+    it('scopes the fee to the whole school when assigned to the school', async () => {
+      mockPrisma.branchFee.findUnique.mockResolvedValue({
+        id: 'fee-1',
+        branchId: 'branch-1',
+        isActive: true,
+        appliesToSchool: false,
+        amount: new Prisma.Decimal(500),
+        billingCycle: null,
+        gracePeriodDays: null,
+      });
+      mockPrisma.branch.findUnique.mockResolvedValue({ id: 'branch-1', schoolId: 'school-1' });
+      mockPrisma.branch.findMany.mockResolvedValue([{ id: 'branch-1' }]);
+      mockPrisma.enrollment.findMany.mockResolvedValue([]);
+
+      await branchFeeService.applyFeeBatch('fee-1', 'branch-1', { type: 'school' });
+
+      expect(mockPrisma.branchFee.update).toHaveBeenCalledWith({
+        where: { id: 'fee-1' },
+        data: { appliesToSchool: true },
+      });
+    });
+
+    it('does not scope the fee to the school when assigned to specific children', async () => {
+      mockPrisma.branchFee.findUnique.mockResolvedValue({
+        id: 'fee-1',
+        branchId: 'branch-1',
+        isActive: true,
+        appliesToSchool: false,
+        amount: new Prisma.Decimal(500),
+        billingCycle: null,
+        gracePeriodDays: null,
+      });
+      mockPrisma.branch.findUnique.mockResolvedValue({ id: 'branch-1', schoolId: 'school-1' });
+      mockPrisma.enrollment.findMany.mockResolvedValue([]);
+
+      await branchFeeService.applyFeeBatch('fee-1', 'branch-1', { type: 'children', childIds: ['c1'] });
+
+      expect(mockPrisma.branchFee.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('applySchoolFeesToEnrollment', () => {
+    const enrollment = {
+      id: 'enr-new',
+      branchId: 'branch-1',
+      academicYearId: 'ay-1',
+      baseFeeId: 'fee-base',
+      startDate: new Date('2999-01-15'),
+      academicYear: { startDate: new Date('2998-09-01'), endDate: new Date('2999-06-30') },
+    };
+
+    it('applies whole-school fees other than the base fee, billing recurring ones from the start date', async () => {
+      mockPrisma.branch.findUnique.mockResolvedValue({ id: 'branch-1', schoolId: 'school-1' });
+      mockPrisma.branchFee.findMany.mockResolvedValue([
+        {
+          id: 'fee-monthly',
+          name: 'Cantine',
+          amount: new Prisma.Decimal(2000),
+          billingCycle: 'monthly',
+          billingDueDay: 5,
+          gracePeriodDays: 5,
+        },
+        { id: 'fee-once', name: 'Assurance', amount: new Prisma.Decimal(500), billingCycle: null, gracePeriodDays: null },
+      ]);
+      mockPrisma.billingPeriod.createMany.mockResolvedValue({ count: 6 });
+      mockPrisma.billingPeriod.create.mockResolvedValue({ id: 'bp-1' });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const count = await branchFeeService.applySchoolFeesToEnrollment(mockPrisma as any, enrollment);
+
+      expect(count).toBe(2);
+      expect(mockPrisma.branchFee.findMany).toHaveBeenCalledWith({
+        where: {
+          isActive: true,
+          appliesToSchool: true,
+          branch: { schoolId: 'school-1' },
+          id: { not: 'fee-base' },
+        },
+      });
+      const monthly = mockPrisma.billingPeriod.createMany.mock.calls[0][0].data as Array<{ periodStart: Date }>;
+      expect(monthly).toHaveLength(6); // Jan through Jun
+      expect(monthly[0].periodStart.getMonth()).toBe(0);
+      expect(mockPrisma.billingPeriod.create).toHaveBeenCalledTimes(1);
     });
   });
 });

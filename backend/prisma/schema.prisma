@@ -743,6 +743,9 @@ model BranchFee {
   billingCycle    BillingCycleType? @map("billing_cycle")
   billingDueDay   Int?              @map("billing_due_day")
   gracePeriodDays Int?              @map("grace_period_days")
+  // Whole-school scope: set when the fee is assigned to the whole school; every
+  // new enrollment in the school then gets this fee applied automatically.
+  appliesToSchool Boolean           @default(false) @map("applies_to_school")
   createdAt       DateTime          @default(now()) @map("created_at")
   updatedAt       DateTime          @updatedAt @map("updated_at")
 

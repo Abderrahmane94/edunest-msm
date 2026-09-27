@@ -492,7 +492,9 @@ function FeesStep({
   const { data: branchFees } = useBranchFees(branchId);
   const fees: BranchFee[] = classroomId ? (classroomFees ?? []) : (branchFees ?? []);
   const recurringFees = fees.filter((f) => !!f.billingCycle);
-  const oneShotFees = fees.filter((f) => !f.billingCycle);
+  // Whole-school fees are applied automatically on enrollment (except the one
+  // chosen as base fee), so they're listed rather than offered as extras.
+  const oneShotFees = fees.filter((f) => !f.billingCycle && !f.appliesToSchool);
 
   const createEnrollment = useCreateEnrollment();
   const applyFee = useApplyFee();
@@ -560,6 +562,8 @@ function FeesStep({
     }
   }
 
+  const schoolFees = fees.filter((f) => f.appliesToSchool && f.id !== baseFeeId);
+
   const baseFeeOptions = recurringFees.map((f) => ({
     value: f.id,
     label: `${f.name} (${formatDZD(Number(f.amount), i18n.language)})`,
@@ -580,6 +584,19 @@ function FeesStep({
             placeholder={t('payments.enrollments.form.selectBaseFee')}
             helperText={recurringFees.length === 0 ? t('payments.enrollments.form.noRecurringFees') : undefined}
           />
+
+          {schoolFees.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-label font-medium text-foreground">{t('children.wizard.fees.schoolFees')}</p>
+              <ul className="border border-border rounded-md divide-y divide-border">
+                {schoolFees.map((fee) => (
+                  <li key={fee.id} className="p-2 text-caption text-foreground">
+                    {fee.name} ({formatDZD(Number(fee.amount), i18n.language)})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {oneShotFees.length > 0 && (
             <div className="space-y-2">

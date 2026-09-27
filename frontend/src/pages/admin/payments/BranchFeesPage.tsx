@@ -83,6 +83,7 @@ function FeeDialog({
   const [billingCycle, setBillingCycle] = React.useState<BillingCycle>('monthly');
   const [billingDueDay, setBillingDueDay] = React.useState('1');
   const [gracePeriodDays, setGracePeriodDays] = React.useState('5');
+  const [appliesToSchool, setAppliesToSchool] = React.useState(false);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   React.useEffect(() => {
@@ -93,6 +94,7 @@ function FeeDialog({
       setBillingCycle(editingFee.billingCycle ?? 'monthly');
       setBillingDueDay(String(editingFee.billingDueDay ?? 1));
       setGracePeriodDays(String(editingFee.gracePeriodDays ?? 5));
+      setAppliesToSchool(editingFee.appliesToSchool);
     } else {
       setName('');
       setAmount('');
@@ -147,6 +149,7 @@ function FeeDialog({
           id: editingFee.id,
           name: name.trim(),
           amount: Number(amount),
+          appliesToSchool,
           ...cycleFields,
         });
         if (periodsSectionActive && periodsYearId) {
@@ -346,6 +349,26 @@ function FeeDialog({
             </div>
           )}
 
+          {editingFee && (
+            <>
+              <div className="flex items-center gap-2 py-1">
+                <input
+                  id="fee-applies-to-school"
+                  type="checkbox"
+                  checked={appliesToSchool}
+                  onChange={(e) => setAppliesToSchool(e.target.checked)}
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                />
+                <label htmlFor="fee-applies-to-school" className="text-body text-foreground cursor-pointer">
+                  {t('payments.fees.fields.appliesToSchool')}
+                </label>
+              </div>
+              <p className="text-caption text-text-secondary -mt-2">
+                {t('payments.fees.fields.appliesToSchoolHint')}
+              </p>
+            </>
+          )}
+
           {errors.form && (
             <p className="text-body text-danger">{errors.form}</p>
           )}
@@ -457,9 +480,11 @@ function ViewFeeDialog({
 
         <div className="space-y-3 pt-1 border-t border-border">
           <p className="text-caption font-medium text-foreground pt-2">
-            {t('payments.fees.view.classesTitle')}
+            {t('payments.fees.fields.scope')}
           </p>
-          {feeClassroomsLoading ? (
+          {fee.appliesToSchool ? (
+            <p className="text-caption text-foreground">{t('payments.fees.view.appliesToSchool')}</p>
+          ) : feeClassroomsLoading ? (
             <div className="animate-pulse h-12 bg-subtle rounded-md" />
           ) : linkedClassrooms.length === 0 ? (
             <p className="text-caption text-text-secondary">{t('payments.fees.view.noLinkedClassrooms')}</p>
@@ -780,6 +805,13 @@ export default function BranchFeesPage() {
       key: 'scope',
       header: t('payments.fees.fields.scope'),
       render: (fee) => {
+        if (fee.appliesToSchool) {
+          return (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-caption font-medium">
+              {t('payments.fees.scopeSchool')}
+            </span>
+          );
+        }
         const classrooms = fee.classrooms ?? [];
         if (classrooms.length === 0) {
           return (

@@ -5,6 +5,9 @@ import { fetchCalendarRows } from './billing-cycle.util';
 
 type BillingCycle = 'monthly' | 'custom';
 
+/** The interactive-transaction client type produced by our extended `prisma`. */
+type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
 export interface FeeCycleInput {
   billingCycle?: BillingCycle | null;
   billingDueDay?: number | null;
@@ -154,7 +157,7 @@ class BranchFeeService {
    */
   async update(
     id: string,
-    data: { name?: string; amount?: number; isActive?: boolean } & FeeCycleInput,
+    data: { name?: string; amount?: number; isActive?: boolean; appliesToSchool?: boolean } & FeeCycleInput,
   ) {
     const existing = await prisma.branchFee.findUnique({ where: { id } });
     if (!existing) {
@@ -187,6 +190,10 @@ class BranchFeeService {
 
     if (data.isActive !== undefined) {
       updateData.isActive = data.isActive;
+    }
+
+    if (data.appliesToSchool !== undefined) {
+      updateData.appliesToSchool = data.appliesToSchool;
     }
 
     if (
@@ -316,6 +323,12 @@ class BranchFeeService {
 
       const branch = await tx.branch.findUnique({ where: { id: branchId } });
 
+      // Assigning to the whole school also scopes the fee to it, so students
+      // enrolled later get it automatically (see applySchoolFeesToEnrollment).
+      if (target.type === 'school' && !fee.appliesToSchool) {
+        await tx.branchFee.update({ where: { id: fee.id }, data: { appliesToSchool: true } });
+      }
+
       // Resolve target enrollments based on type
       let enrollmentIds: string[] = [];
 
@@ -423,6 +436,51 @@ class BranchFeeService {
   }
 
   /**
+   * Applies every active whole-school fee to a newly created enrollment,
+   * except its base fee (already billed by the enrollment itself). Recurring
+   * fees are billed from the enrollment's start date. Runs inside the
+   * enrollment-creation transaction.
+   */
+  async applySchoolFeesToEnrollment(
+    tx: TransactionClient,
+    enrollment: {
+      id: string;
+      branchId: string;
+      academicYearId: string;
+      baseFeeId: string | null;
+      startDate: Date;
+      academicYear: { startDate: Date; endDate: Date };
+    },
+  ) {
+    const branch = await tx.branch.findUnique({ where: { id: enrollment.branchId } });
+    const fees = await tx.branchFee.findMany({
+      where: {
+        isActive: true,
+        appliesToSchool: true,
+        branch: { schoolId: branch?.schoolId ?? '' },
+        ...(enrollment.baseFeeId ? { id: { not: enrollment.baseFeeId } } : {}),
+      },
+    });
+
+    for (const fee of fees) {
+      try {
+        if (fee.billingCycle) {
+          await this.generateRecurringFeePeriods(tx, fee, enrollment, enrollment.startDate);
+        } else {
+          await this.createOneShotPeriod(tx, fee, enrollment.id);
+        }
+      } catch (err) {
+        if (err instanceof BranchFeeServiceError) {
+          throw new BranchFeeServiceError(`${fee.name}: ${err.message}`, err.statusCode, err.code);
+        }
+        throw err;
+      }
+    }
+
+    return fees.length;
+  }
+
+  /**
    * Creates a single one-shot BillingPeriod for a fee with no billing cycle,
    * dated today, using the fee's own grace period (defaulting to 5 days).
    */
@@ -471,8 +529,10 @@ class BranchFeeService {
       gracePeriodDays: number | null;
     },
     enrollment: { id: string; branchId: string; academicYearId: string; academicYear: { startDate: Date; endDate: Date } },
+    /** Billing starts from this date (default: today), clamped to the academic year start. */
+    from?: Date,
   ) {
-    const today = new Date();
+    const today = from ? new Date(from) : new Date();
     today.setHours(0, 0, 0, 0);
 
     const ayStart = new Date(enrollment.academicYear.startDate);

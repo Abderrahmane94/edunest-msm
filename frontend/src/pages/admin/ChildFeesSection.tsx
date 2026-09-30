@@ -17,10 +17,16 @@ interface AssignedFee {
 /**
  * Groups a child's non-cancelled billing periods by the fee they were
  * generated from, so each assigned fee shows once with its totals.
+ *
+ * `amountDue` only counts what the parent owes now: the unpaid part of every
+ * period whose due date has passed, plus the next upcoming unpaid period —
+ * not every period until the end of the school year.
  */
-function groupByFee(periods: BillingPeriod[]): AssignedFee[] {
+export function groupByFee(periods: BillingPeriod[], today: string): AssignedFee[] {
   const groups = new Map<string, AssignedFee>();
-  for (const p of periods) {
+  const hasNextUpcoming = new Set<string>();
+  const sorted = [...periods].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  for (const p of sorted) {
     if (p.cancelledAt) continue;
     const key = p.isRegistrationPeriod ? 'registration' : (p.branchFeeId ?? p.branchFeeName ?? 'unknown');
     let group = groups.get(key);
@@ -38,17 +44,32 @@ function groupByFee(periods: BillingPeriod[]): AssignedFee[] {
       groups.set(key, group);
     }
     group.periods += 1;
-    group.amountDue += Number(p.amountDue);
     group.totalPaid += Number(p.totalPaid ?? 0);
     group.outstanding += Number(p.outstanding ?? 0);
+
+    const remaining = Number(p.outstanding ?? p.amountDue);
+    if (remaining <= 0) continue;
+    if (p.dueDate.slice(0, 10) <= today) {
+      group.amountDue += remaining;
+    } else if (!hasNextUpcoming.has(key)) {
+      hasNextUpcoming.add(key);
+      group.amountDue += remaining;
+    }
   }
   return [...groups.values()];
+}
+
+/** Today's date as YYYY-MM-DD in the viewer's local time zone. */
+function localToday(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 export function ChildFeesSection({ childId }: { childId: string }) {
   const { t, i18n } = useTranslation();
   const { data: periods, isLoading, isError, error } = useChildBillingPeriods(childId);
-  const fees = React.useMemo(() => groupByFee(periods ?? []), [periods]);
+  const fees = React.useMemo(() => groupByFee(periods ?? [], localToday()), [periods]);
 
   function cycleLabel(fee: AssignedFee): string {
     if (fee.isRegistration) return t('children.fees.registration');

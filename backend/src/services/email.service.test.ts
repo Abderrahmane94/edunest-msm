@@ -96,6 +96,27 @@ describe('EmailService.sendReceiptEmail', () => {
     expect(payload.html).not.toContain('<b>Yasmine</b>');
   });
 
+  it('attaches the receipt PDF when given', async () => {
+    const { emailService } = await import('./email.service');
+    await emailService.sendReceiptEmail('parent@example.dz', buildReceipt(), {
+      filename: 'Reçu MAI-2026-000012 - Yasmine Boudiaf.pdf',
+      content: 'JVBERi0xLjcK',
+    });
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].body as string) as {
+      attachments?: { filename: string; content: string }[];
+    };
+
+    expect(payload.attachments).toEqual([
+      { filename: 'Reçu MAI-2026-000012 - Yasmine Boudiaf.pdf', content: 'JVBERi0xLjcK' },
+    ]);
+  });
+
+  it('sends no attachments field without a PDF', async () => {
+    const payload = await sendAndGetPayload(buildReceipt());
+
+    expect(payload).not.toHaveProperty('attachments');
+  });
+
   it('lays the receipt out right-to-left in Arabic', async () => {
     const payload = await sendAndGetPayload(buildReceipt({ language: 'ar', direction: 'rtl' }));
 

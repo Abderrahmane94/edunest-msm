@@ -356,14 +356,19 @@ export function useEmailReceipt() {
       paymentRecordId,
       to,
       language,
+      pdfBase64,
+      pdfFileName,
     }: {
       paymentRecordId: string;
       to?: string;
       language: 'ar' | 'fr';
+      /** The receipt as a PDF, attached to the email. */
+      pdfBase64?: string;
+      pdfFileName?: string;
     }): Promise<string> => {
       const res = await apiClient.post<{ sentTo: string }>(
         `/payments/records/${paymentRecordId}/receipt/email`,
-        { to, language },
+        { to, language, pdfBase64, pdfFileName },
       );
       if (!res.success || !res.data) {
         throw new Error(res.error?.message ?? 'Failed to send receipt');

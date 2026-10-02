@@ -592,9 +592,20 @@ export const paymentsController = {
         return;
       }
 
+      // Only attach what really is a PDF.
+      let pdf: { filename: string; content: string } | undefined;
+      if (parsed.data.pdfBase64) {
+        if (!Buffer.from(parsed.data.pdfBase64.slice(0, 16), 'base64').toString('latin1').startsWith('%PDF-')) {
+          res.status(400).json(errorResponse('VALIDATION_ERROR', 'The attachment is not a PDF'));
+          return;
+        }
+        pdf = { filename: '', content: parsed.data.pdfBase64 };
+      }
+
       const receipt = await receiptService.generateReceipt(record.id, parsed.data.language ?? 'fr');
+      if (pdf) pdf.filename = safePdfFileName(parsed.data.pdfFileName, receipt.receiptNumber);
       try {
-        await emailService.sendReceiptEmail(recipient, receipt);
+        await emailService.sendReceiptEmail(recipient, receipt, pdf);
       } catch (err) {
         res.status(502).json(
           errorResponse('EMAIL_FAILED', err instanceof Error ? err.message : 'Failed to send email'),
@@ -612,7 +623,18 @@ export const paymentsController = {
 const emailReceiptSchema = z.object({
   to: z.string().trim().email().optional().or(z.literal('')),
   language: z.enum(['ar', 'fr']).optional(),
+  // Receipt PDF rendered by the browser, base64 (~3 MB max once decoded).
+  pdfBase64: z.string().max(4_000_000).regex(/^[A-Za-z0-9+/]+={0,2}$/).optional(),
+  pdfFileName: z.string().max(150).optional(),
 });
+
+/** Keeps a client-supplied file name safe to attach: no path characters, ends in .pdf. */
+function safePdfFileName(name: string | undefined, fallback: string): string {
+  // Control characters are stripped on purpose.
+  // eslint-disable-next-line no-control-regex
+  const base = (name || fallback).replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-').trim();
+  return `${base || fallback}.pdf`;
+}
 
 function isStaffUser(req: Request): boolean {
   return !!req.user && STAFF_ROLES.includes(req.user.role as (typeof STAFF_ROLES)[number]);

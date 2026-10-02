@@ -4,6 +4,13 @@
  * Configure RESEND_API_KEY environment variable for production use.
  */
 
+import type { ReceiptData } from '../modules/payments/receipt.service';
+
+/** Escapes text interpolated into email HTML (names and labels come from user data). */
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+}
+
 interface SendEmailOptions {
   to: string;
   subject: string;
@@ -91,6 +98,64 @@ class EmailService {
         <p><a href="${invitationUrl}">Accept Invitation</a></p>
         <br/>
         <p>— The EduNest Team</p>
+      `,
+    });
+  }
+
+  /** Sends a payment receipt — every fee paid, period and amount — as HTML. */
+  async sendReceiptEmail(to: string, receipt: ReceiptData): Promise<void> {
+    const e = escapeHtml;
+    const { labels } = receipt;
+    const align = receipt.direction === 'rtl' ? 'right' : 'left';
+    const opposite = receipt.direction === 'rtl' ? 'left' : 'right';
+    const cell = 'padding:8px 12px;border-top:1px solid #e5e7eb;';
+    const field = (label: string, value: string): string =>
+      `<tr><td style="padding:4px 0;color:#6b7280;">${e(label)}</td>` +
+      `<td style="padding:4px 0;text-align:${opposite};font-weight:600;">${e(value)}</td></tr>`;
+
+    const rows = receipt.allocations
+      .map(
+        (a) =>
+          `<tr><td style="${cell}">${e(a.feeName || '—')}</td>` +
+          `<td style="${cell}color:#6b7280;" dir="ltr">${e(a.periodLabel)}</td>` +
+          `<td style="${cell}text-align:${opposite};" dir="ltr">${e(a.amount)}</td></tr>`,
+      )
+      .join('');
+
+    const feesTable = receipt.allocations.length
+      ? `<h3 style="font-size:15px;margin:24px 0 8px;">${e(labels.allocatedPeriods)}</h3>
+        <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;font-size:14px;">
+          <thead><tr style="background:#f9fafb;">
+            <th style="padding:8px 12px;text-align:${align};">${e(labels.feeName)}</th>
+            <th style="padding:8px 12px;text-align:${align};">${e(labels.periodLabel)}</th>
+            <th style="padding:8px 12px;text-align:${opposite};">${e(labels.periodAmount)}</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr style="background:#f9fafb;font-weight:700;">
+            <td colspan="2" style="${cell}">${e(labels.amount)}</td>
+            <td style="${cell}text-align:${opposite};" dir="ltr">${e(receipt.amount)}</td>
+          </tr></tfoot>
+        </table>`
+      : '';
+
+    await this.send({
+      to,
+      subject: `${receipt.title} ${receipt.receiptNumber} — ${receipt.childName}`,
+      html: `
+        <div dir="${receipt.direction}" style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#111827;text-align:${align};">
+          <h2 style="text-align:center;">${e(receipt.title)}</h2>
+          <p style="text-align:center;color:#6b7280;margin-top:-8px;">${e(receipt.schoolName)}</p>
+          <table style="width:100%;font-size:14px;background:#f9fafb;padding:12px;border-radius:8px;">
+            ${field(labels.receiptNumber, receipt.receiptNumber)}
+            ${field(labels.childName, receipt.childName)}
+            ${field(labels.amount, receipt.amount)}
+            ${field(labels.channel, receipt.channel)}
+            ${field(labels.valueDate, receipt.valueDate)}
+            ${field(labels.recordedBy, receipt.recordedBy)}
+          </table>
+          ${feesTable}
+          <p style="margin-top:24px;color:#6b7280;font-size:12px;">— ${e(receipt.schoolName)} · EduNest</p>
+        </div>
       `,
     });
   }

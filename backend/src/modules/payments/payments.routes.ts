@@ -16,6 +16,9 @@ router.get('/records', requireAdmin, paymentsController.list);
 // GET /records/:id/receipt — Generate receipt (Staff or authorized Parent)
 router.get('/records/:id/receipt', requireParentOrAdmin, paymentsController.getReceipt);
 
+// POST /records/:id/receipt/email — Email the receipt (Staff: any address, Parent: own address)
+router.post('/records/:id/receipt/email', requireParentOrAdmin, paymentsController.emailReceipt);
+
 // GET /children/:childId/periods — List child's billing periods with derived status (staff only)
 router.get('/children/:childId/periods', requireAdmin, paymentsController.getChildPeriods);
 

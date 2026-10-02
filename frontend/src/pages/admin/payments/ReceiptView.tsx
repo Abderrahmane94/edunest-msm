@@ -10,6 +10,7 @@ import {
 } from '@/components/ui';
 import { useReceipt, useEmailReceipt, type ReceiptData } from '@/hooks/usePayments';
 import { Input } from '@/components/ui/Input';
+import { receiptToPdfBase64 } from '@/lib/receiptPdf';
 
 // ─── Receipt Content (rendered both in dialog and for print) ───────────────────
 
@@ -229,6 +230,8 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
   const [emailOpen, setEmailOpen] = React.useState(false);
   const [emailTo, setEmailTo] = React.useState('');
   const [sentTo, setSentTo] = React.useState<string | null>(null);
+  const [sentWithoutPdf, setSentWithoutPdf] = React.useState(false);
+  const [preparingPdf, setPreparingPdf] = React.useState(false);
 
   // Start fresh each time the dialog opens on a receipt.
   React.useEffect(() => {
@@ -242,14 +245,32 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
   }, [receipt?.emailRecipient]);
 
   async function handleSendEmail() {
-    if (!paymentRecordId) return;
+    if (!paymentRecordId || !receipt) return;
     setSentTo(null);
+
+    // The PDF is a bonus on top of the receipt in the email body: if it can't
+    // be rendered, still send the email.
+    let pdfBase64: string | undefined;
+    if (contentRef.current) {
+      setPreparingPdf(true);
+      try {
+        pdfBase64 = await receiptToPdfBase64(contentRef.current);
+      } catch {
+        pdfBase64 = undefined;
+      } finally {
+        setPreparingPdf(false);
+      }
+    }
+
     try {
       const address = await emailReceipt.mutateAsync({
         paymentRecordId,
-        to: receipt?.canChooseRecipient ? emailTo.trim() : undefined,
+        to: receipt.canChooseRecipient ? emailTo.trim() : undefined,
         language,
+        pdfBase64,
+        pdfFileName: pdfBase64 ? receiptFileName(receipt) : undefined,
       });
+      setSentWithoutPdf(!pdfBase64);
       setSentTo(address);
     } catch {
       // Shown from emailReceipt.error below.
@@ -359,7 +380,9 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
             <div className="flex items-center justify-end gap-3">
               {sentTo && (
                 <p className="text-caption text-success me-auto" role="status">
-                  {t('payments.receipt.emailSent', { email: sentTo })}
+                  {t(sentWithoutPdf ? 'payments.receipt.emailSentNoPdf' : 'payments.receipt.emailSent', {
+                    email: sentTo,
+                  })}
                 </p>
               )}
               {emailReceipt.isError && (
@@ -371,12 +394,13 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
                 size="sm"
                 onClick={handleSendEmail}
                 disabled={
+                  preparingPdf ||
                   emailReceipt.isPending ||
                   (receipt.canChooseRecipient ? !emailTo.trim() : !receipt.emailRecipient)
                 }
               >
                 <Send className="w-4 h-4 me-1" />
-                {emailReceipt.isPending ? t('common.loading') : t('payments.receipt.emailSend')}
+                {preparingPdf || emailReceipt.isPending ? t('common.loading') : t('payments.receipt.emailSend')}
               </Button>
             </div>
           </div>

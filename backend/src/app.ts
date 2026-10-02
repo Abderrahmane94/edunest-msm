@@ -37,7 +37,9 @@ app.use(
   }),
 );
 
-// Body parsing
+// Body parsing. The receipt email carries the receipt PDF (base64), so that
+// one route accepts a larger body; everything else keeps the 100 KB default.
+app.use(/^\/api\/payments\/records\/[^/]+\/receipt\/email$/, express.json({ limit: '4mb' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

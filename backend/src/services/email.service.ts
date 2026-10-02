@@ -11,10 +11,17 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
 
+interface EmailAttachment {
+  filename: string;
+  /** Base64-encoded file content. */
+  content: string;
+}
+
 interface SendEmailOptions {
   to: string;
   subject: string;
   html: string;
+  attachments?: EmailAttachment[];
 }
 
 class EmailService {
@@ -31,6 +38,9 @@ class EmailService {
       console.log('[EmailService] Development mode - email not sent:');
       console.log(`  To: ${options.to}`);
       console.log(`  Subject: ${options.subject}`);
+      if (options.attachments?.length) {
+        console.log(`  Attachments: ${options.attachments.map((a) => a.filename).join(', ')}`);
+      }
       console.log(`  Body: ${options.html}`);
       return;
     }
@@ -51,6 +61,7 @@ class EmailService {
         to: options.to,
         subject: options.subject,
         html: options.html,
+        ...(options.attachments?.length ? { attachments: options.attachments } : {}),
       }),
     });
 
@@ -102,8 +113,11 @@ class EmailService {
     });
   }
 
-  /** Sends a payment receipt — every fee paid, period and amount — as HTML. */
-  async sendReceiptEmail(to: string, receipt: ReceiptData): Promise<void> {
+  /**
+   * Sends a payment receipt — every fee paid, period and amount — as HTML,
+   * optionally with the receipt PDF attached.
+   */
+  async sendReceiptEmail(to: string, receipt: ReceiptData, pdf?: EmailAttachment): Promise<void> {
     const e = escapeHtml;
     const { labels } = receipt;
     const align = receipt.direction === 'rtl' ? 'right' : 'left';
@@ -157,6 +171,7 @@ class EmailService {
           <p style="margin-top:24px;color:#6b7280;font-size:12px;">— ${e(receipt.schoolName)} · EduNest</p>
         </div>
       `,
+      attachments: pdf ? [pdf] : undefined,
     });
   }
 

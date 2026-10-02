@@ -314,6 +314,10 @@ export interface ReceiptData {
   isCorrepted: boolean;
   correctionMarker: string | null;
   corrections: ReceiptCorrectionLine[];
+  /** Where "send by email" goes by default (a parent: their own address). */
+  emailRecipient?: string | null;
+  /** Staff may send to any address; a parent only to their own. */
+  canChooseRecipient?: boolean;
   isCorrection: boolean;
   correctionReason: string | null;
   correctsReceiptNumber: string | null;
@@ -338,6 +342,34 @@ export function useReceipt(paymentRecordId: string | null, language?: string) {
       return res.data as ReceiptData;
     },
     enabled: !!paymentRecordId,
+  });
+}
+
+/**
+ * Email a receipt. Staff may pass `to`; a parent always receives it at their
+ * own address. Resolves with the address it was sent to.
+ * API: POST /payments/records/:id/receipt/email
+ */
+export function useEmailReceipt() {
+  return useMutation({
+    mutationFn: async ({
+      paymentRecordId,
+      to,
+      language,
+    }: {
+      paymentRecordId: string;
+      to?: string;
+      language: 'ar' | 'fr';
+    }): Promise<string> => {
+      const res = await apiClient.post<{ sentTo: string }>(
+        `/payments/records/${paymentRecordId}/receipt/email`,
+        { to, language },
+      );
+      if (!res.success || !res.data) {
+        throw new Error(res.error?.message ?? 'Failed to send receipt');
+      }
+      return res.data.sentTo;
+    },
   });
 }
 

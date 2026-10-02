@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Printer, X, AlertTriangle } from 'lucide-react';
+import { Printer, X, AlertTriangle, Mail, Send } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,8 @@ import {
   DialogTitle,
   Button,
 } from '@/components/ui';
-import { useReceipt, type ReceiptData } from '@/hooks/usePayments';
+import { useReceipt, useEmailReceipt, type ReceiptData } from '@/hooks/usePayments';
+import { Input } from '@/components/ui/Input';
 
 // ─── Receipt Content (rendered both in dialog and for print) ───────────────────
 
@@ -223,6 +224,38 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
 
   const contentRef = React.useRef<HTMLDivElement>(null);
 
+  // ─── Send by email ───
+  const emailReceipt = useEmailReceipt();
+  const [emailOpen, setEmailOpen] = React.useState(false);
+  const [emailTo, setEmailTo] = React.useState('');
+  const [sentTo, setSentTo] = React.useState<string | null>(null);
+
+  // Start fresh each time the dialog opens on a receipt.
+  React.useEffect(() => {
+    setEmailOpen(false);
+    setSentTo(null);
+    emailReceipt.reset();
+  }, [open, paymentRecordId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  React.useEffect(() => {
+    setEmailTo(receipt?.emailRecipient ?? '');
+  }, [receipt?.emailRecipient]);
+
+  async function handleSendEmail() {
+    if (!paymentRecordId) return;
+    setSentTo(null);
+    try {
+      const address = await emailReceipt.mutateAsync({
+        paymentRecordId,
+        to: receipt?.canChooseRecipient ? emailTo.trim() : undefined,
+        language,
+      });
+      setSentTo(address);
+    } catch {
+      // Shown from emailReceipt.error below.
+    }
+  }
+
   // Prints the receipt alone from a hidden frame: printing the page itself
   // came out blank (the dialog lives in a portal the print styles hide).
   // The frame's title is the default file name when saving as PDF.
@@ -277,6 +310,16 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
               <Button
                 variant="secondary"
                 size="sm"
+                onClick={() => setEmailOpen((v) => !v)}
+                disabled={!receipt}
+                aria-expanded={emailOpen}
+              >
+                <Mail className="w-4 h-4 me-1" />
+                {t('payments.receipt.sendEmail')}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={handlePrint}
                 disabled={!receipt}
               >
@@ -293,6 +336,51 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
             </div>
           </DialogTitle>
         </DialogHeader>
+
+        {/* Send by email */}
+        {emailOpen && receipt && (
+          <div className="rounded-lg border border-border bg-subtle p-3 space-y-2 print:hidden">
+            {receipt.canChooseRecipient ? (
+              <Input
+                type="email"
+                label={t('payments.receipt.emailTo')}
+                value={emailTo}
+                onChange={(e) => setEmailTo(e.target.value)}
+                placeholder="parent@example.dz"
+                helperText={receipt.emailRecipient ? undefined : t('payments.receipt.emailNoParent')}
+              />
+            ) : (
+              <p className="text-caption text-text-secondary">
+                {receipt.emailRecipient
+                  ? t('payments.receipt.emailWillSendTo', { email: receipt.emailRecipient })
+                  : t('payments.receipt.emailNoAddress')}
+              </p>
+            )}
+            <div className="flex items-center justify-end gap-3">
+              {sentTo && (
+                <p className="text-caption text-success me-auto" role="status">
+                  {t('payments.receipt.emailSent', { email: sentTo })}
+                </p>
+              )}
+              {emailReceipt.isError && (
+                <p className="text-caption text-danger me-auto" role="alert">
+                  {emailReceipt.error instanceof Error ? emailReceipt.error.message : t('common.error')}
+                </p>
+              )}
+              <Button
+                size="sm"
+                onClick={handleSendEmail}
+                disabled={
+                  emailReceipt.isPending ||
+                  (receipt.canChooseRecipient ? !emailTo.trim() : !receipt.emailRecipient)
+                }
+              >
+                <Send className="w-4 h-4 me-1" />
+                {emailReceipt.isPending ? t('common.loading') : t('payments.receipt.emailSend')}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Loading state */}
         {isLoading && (

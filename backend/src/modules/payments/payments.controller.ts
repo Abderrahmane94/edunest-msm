@@ -2,13 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import { paymentService, PaymentServiceError } from './payments.service';
 import { reconciliationService, ReconciliationServiceError } from './reconciliation.service';
 import { receiptService } from './receipt.service';
+import { emailService } from '../../services/email.service';
 import { recordPaymentSchema, recordCorrectionSchema } from './payments.schema';
 import { successResponse, errorResponse } from '../../utils/response';
 import { validateBranchAccess, resolveBranchFilter } from './tenant-scope.middleware';
 import { derivePeriodStatus } from './billing-period.service';
 import prisma from '../../lib/prisma';
 import { Prisma, PaymentChannel } from '@prisma/client';
-import { ZodError } from 'zod';
+import { z, ZodError } from 'zod';
 
 /** Roles considered "Staff" for payment access. */
 const STAFF_ROLES = ['admin', 'super_admin'] as const;
@@ -549,70 +550,137 @@ export const paymentsController = {
    */
   async getReceipt(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { id } = req.params;
-      if (!id) {
-        res.status(400).json(
-          errorResponse('VALIDATION_ERROR', 'Payment record id path parameter is required'),
-        );
-        return;
-      }
+      const record = await resolveReceiptAccess(req, res);
+      if (!record) return;
 
-      // Determine access: Staff or Parent
-      const isStaff = req.user && STAFF_ROLES.includes(req.user.role as (typeof STAFF_ROLES)[number]);
-      const isParent = req.user && req.user.role === 'parent';
-
-      if (!isStaff && !isParent) {
-        res.status(403).json(
-          errorResponse('FORBIDDEN', 'This operation is restricted to Staff or Parent users'),
-        );
-        return;
-      }
-
-      // Only what the access checks below need; the receipt itself is built
-      // by receiptService.
-      const paymentRecord = await prisma.paymentRecord.findUnique({
-        where: { id },
-        select: { id: true, branchId: true, childId: true },
-      });
-
-      if (!paymentRecord) {
-        res.status(404).json(
-          errorResponse('NOT_FOUND', 'Payment record not found'),
-        );
-        return;
-      }
-
-      // Authorization check
-      if (isStaff) {
-        // Staff: validate branch access via tenant scope
-        const validatedBranch = await validateBranchAccess(paymentRecord.branchId, req, res);
-        if (!validatedBranch) return;
-      } else if (isParent) {
-        // Parent: resolve their linked children and verify ownership
-        const links = await prisma.parentChildLink.findMany({
-          where: { parentUserId: req.user!.userId },
-          select: { childId: true },
-        });
-        const linkedChildIds = links.map((l) => l.childId);
-
-        if (!linkedChildIds.includes(paymentRecord.childId)) {
-          res.status(403).json(
-            errorResponse('FORBIDDEN', "Access denied. You are not authorized to access this child's data."),
-          );
-          return;
-        }
-      }
-
-      // The formatted, localized receipt the receipt dialog renders.
+      // The formatted, localized receipt the receipt dialog renders, plus who
+      // "send by email" would go to.
       const language = req.query.language === 'ar' ? 'ar' : 'fr';
-      const receipt = await receiptService.generateReceipt(paymentRecord.id, language);
+      const receipt = await receiptService.generateReceipt(record.id, language);
+      const emailRecipient = await defaultReceiptRecipient(req, record.childId);
 
-      res.status(200).json(successResponse(receipt));
+      res.status(200).json(
+        successResponse({ ...receipt, emailRecipient, canChooseRecipient: isStaffUser(req) }),
+      );
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/payments/records/:id/receipt/email
+   * Emails the receipt. Staff may pick the address (default: the child's
+   * primary parent); a parent always receives it at their own address.
+   */
+  async emailReceipt(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const record = await resolveReceiptAccess(req, res);
+      if (!record) return;
+
+      const parsed = emailReceiptSchema.safeParse(req.body ?? {});
+      if (!parsed.success) {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', 'Invalid email address', mapZodErrors(parsed.error)));
+        return;
+      }
+
+      const recipient = isStaffUser(req)
+        ? parsed.data.to || (await defaultReceiptRecipient(req, record.childId))
+        : await defaultReceiptRecipient(req, record.childId);
+
+      if (!recipient) {
+        res.status(400).json(errorResponse('NO_RECIPIENT', 'No email address to send the receipt to'));
+        return;
+      }
+
+      const receipt = await receiptService.generateReceipt(record.id, parsed.data.language ?? 'fr');
+      try {
+        await emailService.sendReceiptEmail(recipient, receipt);
+      } catch (err) {
+        res.status(502).json(
+          errorResponse('EMAIL_FAILED', err instanceof Error ? err.message : 'Failed to send email'),
+        );
+        return;
+      }
+
+      res.status(200).json(successResponse({ sentTo: recipient }));
     } catch (error) {
       next(error);
     }
   },
 };
+
+const emailReceiptSchema = z.object({
+  to: z.string().trim().email().optional().or(z.literal('')),
+  language: z.enum(['ar', 'fr']).optional(),
+});
+
+function isStaffUser(req: Request): boolean {
+  return !!req.user && STAFF_ROLES.includes(req.user.role as (typeof STAFF_ROLES)[number]);
+}
+
+/**
+ * Loads a payment record for receipt access: staff within their branch scope,
+ * or a parent of the record's child. Sends the error response and returns
+ * null when access is denied.
+ */
+async function resolveReceiptAccess(
+  req: Request,
+  res: Response,
+): Promise<{ id: string; branchId: string; childId: string } | null> {
+  const { id } = req.params;
+  if (!id) {
+    res.status(400).json(errorResponse('VALIDATION_ERROR', 'Payment record id path parameter is required'));
+    return null;
+  }
+
+  const isStaff = isStaffUser(req);
+  const isParent = req.user?.role === 'parent';
+  if (!isStaff && !isParent) {
+    res.status(403).json(errorResponse('FORBIDDEN', 'This operation is restricted to Staff or Parent users'));
+    return null;
+  }
+
+  const paymentRecord = await prisma.paymentRecord.findUnique({
+    where: { id },
+    select: { id: true, branchId: true, childId: true },
+  });
+  if (!paymentRecord) {
+    res.status(404).json(errorResponse('NOT_FOUND', 'Payment record not found'));
+    return null;
+  }
+
+  if (isStaff) {
+    const validatedBranch = await validateBranchAccess(paymentRecord.branchId, req, res);
+    if (!validatedBranch) return null;
+  } else {
+    const link = await prisma.parentChildLink.findFirst({
+      where: { parentUserId: req.user!.userId, childId: paymentRecord.childId },
+      select: { id: true },
+    });
+    if (!link) {
+      res.status(403).json(
+        errorResponse('FORBIDDEN', "Access denied. You are not authorized to access this child's data."),
+      );
+      return null;
+    }
+  }
+
+  return paymentRecord;
+}
+
+/** A parent gets receipts at their own address; staff default to the child's primary parent. */
+async function defaultReceiptRecipient(req: Request, childId: string): Promise<string | null> {
+  if (!isStaffUser(req)) {
+    const user = await prisma.user.findUnique({ where: { id: req.user!.userId }, select: { email: true } });
+    return user?.email ?? null;
+  }
+  const link = await prisma.parentChildLink.findFirst({
+    where: { childId },
+    orderBy: { isPrimary: 'desc' },
+    select: { parent: { select: { email: true } } },
+  });
+  return link?.parent.email ?? null;
+}
 
 /**
  * Map Zod validation errors to the standard FieldError[] format.

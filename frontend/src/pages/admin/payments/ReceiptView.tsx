@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Printer, X, AlertTriangle } from 'lucide-react';
 import {
@@ -91,6 +92,9 @@ function ReceiptContent({ receipt }: ReceiptContentProps) {
               <thead>
                 <tr className="bg-subtle">
                   <th className="px-4 py-2 text-start text-caption font-medium text-text-secondary">
+                    {labels.feeName}
+                  </th>
+                  <th className="px-4 py-2 text-start text-caption font-medium text-text-secondary">
                     {labels.periodLabel}
                   </th>
                   <th className="px-4 py-2 text-end text-caption font-medium text-text-secondary">
@@ -105,6 +109,9 @@ function ReceiptContent({ receipt }: ReceiptContentProps) {
                     className="border-t border-border"
                   >
                     <td className="px-4 py-2.5 text-body text-foreground">
+                      {alloc.feeName || '—'}
+                    </td>
+                    <td className="px-4 py-2.5 text-body text-text-secondary" dir="ltr">
                       {alloc.periodLabel}
                     </td>
                     <td className="px-4 py-2.5 text-body text-foreground text-end" dir="ltr">
@@ -113,6 +120,16 @@ function ReceiptContent({ receipt }: ReceiptContentProps) {
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr className="border-t border-border bg-subtle">
+                  <td colSpan={2} className="px-4 py-2.5 text-body font-medium text-foreground">
+                    {labels.amount}
+                  </td>
+                  <td className="px-4 py-2.5 text-body font-semibold text-foreground text-end" dir="ltr">
+                    {receipt.amount}
+                  </td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>
@@ -145,6 +162,19 @@ function ReceiptContent({ receipt }: ReceiptContentProps) {
       )}
     </div>
   );
+}
+
+// ─── Print helpers ─────────────────────────────────────────────────────────────
+
+/** e.g. "Reçu MAI-2026-000012 - Yasmine Boudiaf" — used as the PDF file name. */
+function receiptFileName(receipt: ReceiptData): string {
+  const prefix = receipt.language === 'ar' ? 'إيصال' : 'Reçu';
+  // Characters not allowed in file names on common systems.
+  return `${prefix} ${receipt.receiptNumber} - ${receipt.childName}`.replace(/[\\/:*?"<>|]/g, '-');
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
 
 // ─── Field helper ──────────────────────────────────────────────────────────────
@@ -191,8 +221,49 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
     language
   );
 
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  // Prints the receipt alone from a hidden frame: printing the page itself
+  // came out blank (the dialog lives in a portal the print styles hide).
+  // The frame's title is the default file name when saving as PDF.
   function handlePrint() {
-    window.print();
+    const node = contentRef.current;
+    if (!receipt || !node) return;
+
+    const fileName = receiptFileName(receipt);
+    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map((el) => el.outerHTML)
+      .join('');
+    const html =
+      `<!doctype html><html lang="${receipt.language}" dir="${receipt.direction}" ` +
+      `class="${document.documentElement.className}"><head><meta charset="utf-8">` +
+      `<base href="${document.baseURI}"><title>${escapeHtml(fileName)}</title>${styles}` +
+      `<style>@page{margin:12mm}body{background:#fff}</style></head>` +
+      `<body><div class="receipt-print-root">${node.innerHTML}</div></body></html>`;
+
+    const frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden', 'true');
+    Object.assign(frame.style, { position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0' });
+
+    // Some browsers name the PDF after the top page's title, so set it too.
+    const previousTitle = document.title;
+    const cleanup = () => {
+      document.title = previousTitle;
+      frame.remove();
+    };
+
+    frame.onload = () => {
+      const win = frame.contentWindow;
+      if (!win) return cleanup();
+      win.addEventListener('afterprint', cleanup);
+      document.title = fileName;
+      win.focus();
+      win.print();
+      // Fallback for browsers that don't fire afterprint on the frame.
+      setTimeout(cleanup, 60_000);
+    };
+    frame.srcdoc = html;
+    document.body.appendChild(frame);
   }
 
   return (
@@ -243,7 +314,11 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
         )}
 
         {/* Receipt content */}
-        {receipt && !isLoading && <ReceiptContent receipt={receipt} />}
+        {receipt && !isLoading && (
+          <div ref={contentRef}>
+            <ReceiptContent receipt={receipt} />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

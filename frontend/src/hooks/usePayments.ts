@@ -259,6 +259,8 @@ export function useRecordCorrection() {
 // ─── Receipt Types ─────────────────────────────────────────────────────────────
 
 export interface ReceiptAllocationLine {
+  /** The fee this line pays. */
+  feeName: string;
   periodLabel: string;
   amount: string;
   periodStart: string;
@@ -285,6 +287,7 @@ export interface ReceiptData {
     valueDate: string;
     recordedBy: string;
     allocatedPeriods: string;
+    feeName: string;
     periodLabel: string;
     periodAmount: string;
     correctionMarker: string;

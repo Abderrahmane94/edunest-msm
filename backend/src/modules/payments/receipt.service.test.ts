@@ -43,6 +43,7 @@ function buildMockPaymentRecord(overrides: Partial<{
       periodStart: Date;
       periodEnd: Date;
       isRegistrationPeriod: boolean;
+      branchFee?: { name: string } | null;
     };
   }>;
   corrections: Array<{
@@ -195,6 +196,39 @@ describe('ReceiptService', () => {
         const receipt = await receiptService.generateReceipt('payment-1', 'fr');
 
         expect(receipt.allocations[0].periodLabel).toBe("Frais d'inscription");
+        expect(receipt.allocations[0].feeName).toBe("Frais d'inscription");
+      });
+
+      it('names the fee each allocated period belongs to', async () => {
+        mockFindUnique.mockResolvedValue(buildMockPaymentRecord({
+          allocations: [
+            {
+              id: 'alloc-tuition',
+              amount: new Prisma.Decimal('5000.00'),
+              billingPeriod: {
+                periodStart: new Date('2024-09-01'),
+                periodEnd: new Date('2024-09-30'),
+                isRegistrationPeriod: false,
+                branchFee: { name: 'Frais de scolarité' },
+              },
+            },
+            {
+              id: 'alloc-legacy',
+              amount: new Prisma.Decimal('1000.00'),
+              billingPeriod: {
+                periodStart: new Date('2024-10-01'),
+                periodEnd: new Date('2024-10-31'),
+                isRegistrationPeriod: false,
+                branchFee: null,
+              },
+            },
+          ],
+        }) as any);
+
+        const receipt = await receiptService.generateReceipt('payment-1', 'fr');
+
+        expect(receipt.allocations[0].feeName).toBe('Frais de scolarité');
+        expect(receipt.allocations[1].feeName).toBe('');
       });
 
       it('formats multi-month period labels correctly', async () => {

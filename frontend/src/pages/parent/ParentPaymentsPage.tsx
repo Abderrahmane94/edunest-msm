@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Receipt, CalendarDays, Wallet, Eye, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/api-client';
+import { ReceiptView } from '@/pages/admin/payments/ReceiptView';
 
 type PeriodStatus = 'unpaid' | 'partial' | 'late_partial' | 'late' | 'paid';
 type PaymentChannel = 'cash' | 'ccp' | 'baridimob';
@@ -142,33 +143,18 @@ function PaymentCard({ payment }: { payment: ParentPaymentRecord }) {
             <p className={cn('font-mono text-subsection font-semibold', isNeg ? 'text-[var(--color-danger)]' : 'text-text-heading')}>{isNeg && '−'}{formatDZD(Math.abs(parseFloat(payment.totalAmount)))}</p>
             <p className="text-micro text-text-secondary mt-1">{channelLabel(payment.channel, t)} · {fmtDate(payment.valueDate)}</p>
           </div>
-          <button type="button" onClick={() => setShowReceipt(!showReceipt)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-muted)] transition-colors duration-150" aria-label={t('parentPayments.viewReceipt', 'View Receipt')} aria-expanded={showReceipt}>
+          <button type="button" onClick={() => setShowReceipt(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-muted)] transition-colors duration-150" aria-label={t('parentPayments.viewReceipt', 'View Receipt')}>
             <Eye className="w-3.5 h-3.5" aria-hidden="true" /><span>{t('parentPayments.viewReceipt', 'View Receipt')}</span>
           </button>
         </div>
         {payment.isCorrection && payment.correctsReceiptNumber && <p className="mt-2 text-micro text-text-secondary">{t('parentPayments.correctsReceipt', 'Corrects')}: {payment.correctsReceiptNumber}</p>}
-        {showReceipt && <ReceiptInline paymentId={payment.id} />}
+        {/* Same receipt dialog as staff: full receipt, print / save as PDF. */}
+        <ReceiptView paymentRecordId={payment.id} open={showReceipt} onOpenChange={setShowReceipt} />
       </div>
     </article></li>
   );
 }
 
-
-function ReceiptInline({ paymentId }: { paymentId: string }) {
-  const { t, i18n } = useTranslation();
-  const lang = i18n.language === 'ar' ? 'ar' : 'fr';
-  const { data, isLoading } = useQuery({ queryKey: ['parent-receipt', paymentId, lang], queryFn: async () => { const res = await apiClient.get<unknown>(`/payments/parent/receipts/${paymentId}?language=${lang}`); if (!res.success) throw new Error(res.error?.message ?? 'Failed'); return res.data as Record<string, unknown>; }, enabled: !!paymentId });
-  if (isLoading) return <div className="mt-3 p-3 rounded-lg bg-subtle animate-pulse"><div className="h-4 bg-card rounded w-2/3 mb-2" /><div className="h-3 bg-card rounded w-1/2" /></div>;
-  if (!data) return null;
-  const allocs = (data.allocations as { periodLabel: string; amount: string }[]) ?? [];
-  return (
-    <div className="mt-3 p-3 rounded-lg bg-subtle border border-border space-y-2" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <p className="text-caption font-medium text-text-heading">{(data.title as string) ?? t('parentPayments.receiptTitle', 'Payment Receipt')}</p>
-      {allocs.length > 0 && <ul className="space-y-1">{allocs.map((a, i) => (<li key={i} className="flex items-center justify-between text-micro text-text-secondary"><span>{a.periodLabel}</span><span className="font-mono">{formatDZD(a.amount)}</span></li>))}</ul>}
-      <p className="text-micro text-text-secondary pt-1 border-t border-border">{(data.schoolName as string) ?? ''} · {(data.branchName as string) ?? ''}</p>
-    </div>
-  );
-}
 
 function BalancesTab() {
   const { t } = useTranslation();

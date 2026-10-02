@@ -23,6 +23,7 @@ const LABELS: Record<ReceiptLanguage, {
   valueDate: string;
   recordedBy: string;
   allocatedPeriods: string;
+  feeName: string;
   periodLabel: string;
   periodAmount: string;
   correctionMarker: string;
@@ -46,7 +47,8 @@ const LABELS: Record<ReceiptLanguage, {
     channel: 'قناة الدفع',
     valueDate: 'تاريخ القيمة',
     recordedBy: 'سُجل بواسطة',
-    allocatedPeriods: 'الفترات المخصصة',
+    allocatedPeriods: 'الرسوم المدفوعة',
+    feeName: 'الرسم',
     periodLabel: 'الفترة',
     periodAmount: 'المبلغ',
     correctionMarker: 'تم التصحيح',
@@ -70,7 +72,8 @@ const LABELS: Record<ReceiptLanguage, {
     channel: 'Canal de paiement',
     valueDate: 'Date de valeur',
     recordedBy: 'Enregistré par',
-    allocatedPeriods: 'Périodes allouées',
+    allocatedPeriods: 'Frais payés',
+    feeName: 'Frais',
     periodLabel: 'Période',
     periodAmount: 'Montant',
     correctionMarker: 'Corrigé',
@@ -89,6 +92,8 @@ const LABELS: Record<ReceiptLanguage, {
  * Represents one allocated billing period line on a receipt.
  */
 export interface ReceiptAllocationLine {
+  /** The fee this line pays (registration fee label for a registration period). */
+  feeName: string;
   periodLabel: string;
   amount: string;
   periodStart: Date;
@@ -176,6 +181,7 @@ class ReceiptService {
                 periodStart: true,
                 periodEnd: true,
                 isRegistrationPeriod: true,
+                branchFee: { select: { name: true } },
               },
             },
           },
@@ -236,6 +242,8 @@ class ReceiptService {
       }
     };
 
+    const registrationLabel = language === 'ar' ? 'رسوم التسجيل' : 'Frais d\'inscription';
+
     // Build period label from period dates
     const buildPeriodLabel = (
       periodStart: Date,
@@ -243,7 +251,7 @@ class ReceiptService {
       isRegistrationPeriod: boolean,
     ): string => {
       if (isRegistrationPeriod) {
-        return language === 'ar' ? 'رسوم التسجيل' : 'Frais d\'inscription';
+        return registrationLabel;
       }
       const start = new Date(periodStart);
       const end = new Date(periodEnd);
@@ -266,6 +274,9 @@ class ReceiptService {
         return aStart - bStart;
       })
       .map((alloc) => ({
+        feeName: alloc.billingPeriod.isRegistrationPeriod
+          ? registrationLabel
+          : (alloc.billingPeriod.branchFee?.name ?? ''),
         periodLabel: buildPeriodLabel(
           alloc.billingPeriod.periodStart,
           alloc.billingPeriod.periodEnd,

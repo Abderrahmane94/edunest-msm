@@ -191,8 +191,9 @@
 
 /* ─── Print Styles for Receipt ─── */
 @media print {
-  /* Hide everything except the receipt content */
-  body > *:not(.receipt-print-root) {
+  /* Inside the receipt print frame, hide everything except the receipt.
+     Scoped with :has() so printing any other page isn't blank. */
+  body:has(> .receipt-print-root) > *:not(.receipt-print-root) {
     visibility: hidden;
   }
 

@@ -21,7 +21,5 @@ router.get('/history', parentAuthorizationGuard, parentPortalController.listHist
 // GET /parent/balances — outstanding balances per child
 router.get('/balances', parentAuthorizationGuard, parentPortalController.listBalances);
 
-// GET /parent/receipts/:id — view receipt (authorized child only)
-router.get('/receipts/:id', parentAuthorizationGuard, parentPortalController.viewReceipt);
 
 export default router;

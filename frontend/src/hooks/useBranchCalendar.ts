@@ -79,10 +79,12 @@ export function useCreateBranchCalendar() {
       if (!res.success) {
         throw new Error(res.error?.message ?? 'Failed to create calendar entry');
       }
-      return res.data;
+      return res.data as BranchCalendarEntry;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['branch-calendar'] });
+      // A fee's period list includes every branch period, so it changes too.
+      qc.invalidateQueries({ queryKey: ['fee-periods'] });
     },
   });
 }

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, Edit2, Eye, DollarSign, Users, CalendarDays } from 'lucide-react';
+import { Trash2, Edit2, Eye, DollarSign, Users, CalendarDays, Plus } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -22,7 +22,7 @@ import { useClassrooms } from '@/hooks/useClassrooms';
 import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
 import { useFeePeriods, useSetFeePeriods } from '@/hooks/useBranchFeePeriods';
 import { useFeeClassrooms } from '@/hooks/useBranchFeeClassrooms';
-import { useBranchCalendar } from '@/hooks/useBranchCalendar';
+import { useBranchCalendar, useCreateBranchCalendar } from '@/hooks/useBranchCalendar';
 import {
   useBranchFees,
   useCreateBranchFee,
@@ -33,6 +33,133 @@ import {
   type BillingCycle,
   type AssignFeeResult,
 } from '@/hooks/useBranchFees';
+
+// ─── New Period (inline, inside the fee dialog) ──────────────────────────────
+
+/**
+ * Creates a calendar period without leaving the fee dialog; the new period is
+ * ticked for the fee straight away. Not a nested <form> (it sits inside the
+ * fee's form), so Enter is handled by hand.
+ */
+function NewPeriodForm({
+  branchId,
+  academicYearId,
+  yearStart,
+  yearEnd,
+  onCreated,
+}: {
+  branchId: string;
+  academicYearId: string;
+  yearStart?: string;
+  yearEnd?: string;
+  onCreated: (periodId: string) => void;
+}) {
+  const { t } = useTranslation();
+  const createPeriod = useCreateBranchCalendar();
+  const [open, setOpen] = React.useState(false);
+  const [label, setLabel] = React.useState('');
+  const [start, setStart] = React.useState('');
+  const [end, setEnd] = React.useState('');
+  const [error, setError] = React.useState<string | null>(null);
+
+  function reset() {
+    setLabel('');
+    setStart('');
+    setEnd('');
+    setError(null);
+  }
+
+  async function handleCreate() {
+    if (!label.trim() || !start || !end) {
+      setError(t('payments.fees.newPeriod.required'));
+      return;
+    }
+    if (end < start) {
+      setError(t('payments.fees.newPeriod.endBeforeStart'));
+      return;
+    }
+    setError(null);
+    try {
+      const created = await createPeriod.mutateAsync({
+        branchId,
+        label: label.trim(),
+        period_start: start,
+        period_end: end,
+        academicYearId,
+      });
+      onCreated(created.id);
+      reset();
+      setOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('common.error'));
+    }
+  }
+
+  if (!open) {
+    return (
+      <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(true)}>
+        <Plus className="w-4 h-4 me-1" />
+        {t('payments.fees.newPeriod.add')}
+      </Button>
+    );
+  }
+
+  return (
+    <div
+      className="rounded-md border border-border bg-subtle p-3 space-y-3"
+      onKeyDown={(e) => {
+        // Keep Enter from submitting the fee form around this block.
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          void handleCreate();
+        }
+      }}
+    >
+      <Input
+        label={t('payments.branchCalendar.fields.label')}
+        placeholder={t('payments.branchCalendar.fields.labelPlaceholder')}
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        maxLength={100}
+      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Input
+          type="date"
+          label={t('payments.branchCalendar.fields.periodStart')}
+          value={start}
+          onChange={(e) => setStart(e.target.value)}
+          min={yearStart}
+          max={yearEnd}
+        />
+        <Input
+          type="date"
+          label={t('payments.branchCalendar.fields.periodEnd')}
+          value={end}
+          onChange={(e) => setEnd(e.target.value)}
+          min={start || yearStart}
+          max={yearEnd}
+        />
+      </div>
+      {error && <p className="text-caption text-danger">{error}</p>}
+      <div className="flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            reset();
+            setOpen(false);
+          }}
+        >
+          {t('common.cancel')}
+        </Button>
+        <Button type="button" size="sm" onClick={() => void handleCreate()} disabled={createPeriod.isPending}>
+          {createPeriod.isPending ? t('common.loading') : t('payments.fees.newPeriod.create')}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 // ─── Create/Edit Fee Dialog ──────────────────────────────────────────────────
 
@@ -69,9 +196,14 @@ function FeeDialog({
   // doesn't create a duplicate fee.
   const [createdFeeId, setCreatedFeeId] = React.useState<string | null>(null);
 
+  // Load the fee's assigned periods once per opening: a later refetch (e.g.
+  // after creating a period here) must not wipe ticks that aren't saved yet.
+  const periodsInitializedFor = React.useRef<string | null>(null);
   React.useEffect(() => {
-    setSelectedPeriodIds((feePeriods ?? []).filter((p) => p.isAssigned).map((p) => p.id));
-  }, [feePeriods]);
+    if (!editingFee || !feePeriods || periodsInitializedFor.current === editingFee.id) return;
+    periodsInitializedFor.current = editingFee.id;
+    setSelectedPeriodIds(feePeriods.filter((p) => p.isAssigned).map((p) => p.id));
+  }, [feePeriods, editingFee]);
 
   function togglePeriod(id: string) {
     setSelectedPeriodIds((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
@@ -107,6 +239,7 @@ function FeeDialog({
     }
     setCreatedFeeId(null);
     setErrors({});
+    if (!open) periodsInitializedFor.current = null;
   }, [editingFee, open]);
 
   function validate(): boolean {
@@ -346,6 +479,16 @@ function FeeDialog({
                       </label>
                     ))}
                   </div>
+                )}
+
+                {periodsYearId && (
+                  <NewPeriodForm
+                    branchId={branchId}
+                    academicYearId={periodsYearId}
+                    yearStart={activeAcademicYear?.start_date?.slice(0, 10)}
+                    yearEnd={activeAcademicYear?.end_date?.slice(0, 10)}
+                    onCreated={(id) => setSelectedPeriodIds((prev) => (prev.includes(id) ? prev : [...prev, id]))}
+                  />
                 )}
               </div>
             </div>

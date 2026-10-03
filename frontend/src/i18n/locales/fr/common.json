@@ -1541,6 +1541,12 @@
       "oneShot": "Ponctuel",
       "scopeGeneral": "Non assigné",
       "scopeSchool": "Toute l'école",
+      "newPeriod": {
+        "add": "Nouvelle période",
+        "create": "Créer la période",
+        "required": "Renseignez le libellé, le début et la fin de la période.",
+        "endBeforeStart": "La fin de la période doit être le même jour ou après son début."
+      },
       "fields": {
         "name": "Nom du frais",
         "scope": "Portée",
@@ -1554,7 +1560,7 @@
         "appliesToSchoolHint": "Les nouveaux élèves recevront ce frais automatiquement. Pour l'appliquer aux élèves déjà inscrits, utilisez « Assigner ».",
         "customCycleHint": "Le cycle personnalisé facture ce frais sur les périodes que vous lui assignez ci-dessous (créées dans la section Calendrier).",
         "savePeriodsFirst": "Enregistrez d'abord ce frais — vous pourrez ensuite lui assigner des périodes.",
-        "noPeriodsAvailable": "Aucune période créée pour l'année scolaire active. Ajoutez-en dans la section Calendrier ci-dessous.",
+        "noPeriodsAvailable": "Aucune période créée pour l'année scolaire active. Créez-en une avec « Nouvelle période » ci-dessous.",
         "classes": "Classes",
         "classesHint": "Liez ce frais à une ou plusieurs classes (ex: tenue scolaire spécifique à une classe). Sans classe liée, ce frais est général et s'applique à toutes les classes.",
         "saveClassesFirst": "Enregistrez d'abord ce frais — vous pourrez ensuite lui lier des classes.",

@@ -399,12 +399,20 @@ describe('BranchFeeService', () => {
 
   describe('changeScope', () => {
     const fee = { id: 'fee-1', appliesToSchool: true, branch: { schoolId: 'school-1' } };
-    // Two out-of-scope children (Class B): c3 owes two unpaid charges, c4 one
-    // that is already paid.
+    // Two out-of-scope children (Class B): c3 owes two unpaid charges — p1
+    // already due, p2 not yet due — and c4 one that is already paid.
+    const past = new Date('2000-01-05');
+    const future = new Date('2999-01-05');
     const outOfScopePeriods = [
-      { id: 'p1', amountDue: new Prisma.Decimal(3000), enrollment: { childId: 'c3' }, paymentAllocations: [] },
-      { id: 'p2', amountDue: new Prisma.Decimal(1500.5), enrollment: { childId: 'c3' }, paymentAllocations: [] },
-      { id: 'p3', amountDue: new Prisma.Decimal(3000), enrollment: { childId: 'c4' }, paymentAllocations: [{ id: 'a1' }] },
+      { id: 'p1', amountDue: new Prisma.Decimal(3000), dueDate: past, enrollment: { childId: 'c3' }, paymentAllocations: [] },
+      { id: 'p2', amountDue: new Prisma.Decimal(1500.5), dueDate: future, enrollment: { childId: 'c3' }, paymentAllocations: [] },
+      {
+        id: 'p3',
+        amountDue: new Prisma.Decimal(3000),
+        dueDate: past,
+        enrollment: { childId: 'c4' },
+        paymentAllocations: [{ id: 'a1' }],
+      },
     ];
 
     beforeEach(() => {
@@ -427,6 +435,10 @@ describe('BranchFeeService', () => {
         childrenAffected: 1,
         periodsToCancel: 2,
         amountToCancel: '4500.50',
+        duePeriods: 1,
+        dueAmount: '3000.00',
+        notYetDuePeriods: 1,
+        notYetDueAmount: '1500.50',
         paidPeriodsKept: 1,
         cancelled: 0,
       });
@@ -441,11 +453,11 @@ describe('BranchFeeService', () => {
       expect(mockPrisma.billingPeriod.updateMany).not.toHaveBeenCalled();
     });
 
-    it('narrows the scope and cancels only unpaid out-of-scope charges when asked', async () => {
+    it('narrows the scope and cancels all unpaid out-of-scope charges with cancelUnpaid', async () => {
       const result = await branchFeeService.changeScope('fee-1', {
         scope: 'classrooms',
         classroomIds: ['class-a'],
-        cancelOutOfScope: true,
+        outOfScope: 'cancelUnpaid',
       });
 
       expect(mockPrisma.branchFee.update).toHaveBeenCalledWith({
@@ -463,6 +475,50 @@ describe('BranchFeeService', () => {
       expect(result).toMatchObject({ dryRun: false, cancelled: 2, paidPeriodsKept: 1 });
     });
 
+    it('keeps charges already due and cancels only not-yet-due ones with cancelNotYetDue', async () => {
+      mockPrisma.billingPeriod.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await branchFeeService.changeScope('fee-1', {
+        scope: 'classrooms',
+        classroomIds: ['class-a'],
+        outOfScope: 'cancelNotYetDue',
+      });
+
+      expect(mockPrisma.billingPeriod.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['p2'] }, cancelledAt: null, paymentAllocations: { none: {} } },
+        data: { cancelledAt: expect.any(Date) },
+      });
+      expect(result).toMatchObject({ dryRun: false, cancelled: 1 });
+    });
+
+    it('counts a charge due today as already due', async () => {
+      const today = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      // A @db.Date column comes back as the calendar day at UTC midnight.
+      const dueToday = new Date(`${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`);
+      mockPrisma.billingPeriod.findMany.mockResolvedValue([
+        { id: 'p1', amountDue: new Prisma.Decimal(3000), dueDate: dueToday, enrollment: { childId: 'c3' }, paymentAllocations: [] },
+      ]);
+
+      const result = await branchFeeService.changeScope('fee-1', {
+        scope: 'classrooms',
+        classroomIds: ['class-a'],
+        dryRun: true,
+      });
+
+      expect(result).toMatchObject({ duePeriods: 1, notYetDuePeriods: 0 });
+    });
+
+    it('rejects an unknown out-of-scope action', async () => {
+      await expect(
+        branchFeeService.changeScope('fee-1', {
+          scope: 'classrooms',
+          classroomIds: ['class-a'],
+          outOfScope: 'cancelEverything' as never,
+        }),
+      ).rejects.toMatchObject({ statusCode: 400 });
+    });
+
     it('keeps every charge when narrowing without cancellation', async () => {
       const result = await branchFeeService.changeScope('fee-1', {
         scope: 'classrooms',
@@ -475,7 +531,7 @@ describe('BranchFeeService', () => {
     });
 
     it('scoping to the whole school drops classroom links and leaves nobody out', async () => {
-      const result = await branchFeeService.changeScope('fee-1', { scope: 'school', cancelOutOfScope: true });
+      const result = await branchFeeService.changeScope('fee-1', { scope: 'school', outOfScope: 'cancelUnpaid' });
 
       expect(mockPrisma.branchFee.update).toHaveBeenCalledWith({
         where: { id: 'fee-1' },
@@ -488,7 +544,7 @@ describe('BranchFeeService', () => {
     });
 
     it('scoping to none stops automatic application but keeps hand-assigned charges', async () => {
-      const result = await branchFeeService.changeScope('fee-1', { scope: 'none', cancelOutOfScope: true });
+      const result = await branchFeeService.changeScope('fee-1', { scope: 'none', outOfScope: 'cancelUnpaid' });
 
       expect(mockPrisma.branchFee.update).toHaveBeenCalledWith({
         where: { id: 'fee-1' },

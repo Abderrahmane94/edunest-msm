@@ -1643,10 +1643,13 @@
         "classroomsRequired": "Sélectionnez au moins une classe",
         "confirmTitle": "Des élèves hors de la nouvelle portée ont des frais",
         "confirmDescription": "Ce frais a déjà été facturé à des élèves d'autres classes.",
-        "confirmUnpaid": "{{children}} élève(s) d'autres classes ont {{count}} échéance(s) impayée(s) ({{amount}}).",
+        "confirmUnpaid": "{{children}} élève(s) d'autres classes ont des échéances impayées :",
+        "confirmDue": "déjà échues : {{count}} échéance(s) ({{amount}})",
+        "confirmNotYetDue": "pas encore échues : {{count}} échéance(s) ({{amount}})",
         "confirmPaidKept": "{{count}} échéance(s) déjà payée(s) ou partiellement payée(s) seront conservées.",
-        "cancelCharges": "Annuler les impayés",
-        "keepCharges": "Conserver les frais"
+        "cancelCharges": "Annuler tous les impayés",
+        "keepDueCharges": "Conserver les frais échus",
+        "keepCharges": "Conserver tous les frais"
       },
       "fields": {
         "name": "Nom du frais",

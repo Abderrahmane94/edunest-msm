@@ -1648,10 +1648,13 @@
         "classroomsRequired": "اختر فصلاً واحداً على الأقل",
         "confirmTitle": "طلاب خارج النطاق الجديد لديهم رسوم",
         "confirmDescription": "تمت فوترة هذا الرسم مسبقاً لطلاب من فصول أخرى.",
-        "confirmUnpaid": "{{children}} طالب(ة) من فصول أخرى لديهم {{count}} مستحق(ات) غير مدفوعة ({{amount}}).",
+        "confirmUnpaid": "{{children}} طالب(ة) من فصول أخرى لديهم مستحقات غير مدفوعة:",
+        "confirmDue": "حلّ أجلها: {{count}} مستحق(ات) ({{amount}})",
+        "confirmNotYetDue": "لم يحلّ أجلها بعد: {{count}} مستحق(ات) ({{amount}})",
         "confirmPaidKept": "سيتم الاحتفاظ بـ {{count}} مستحق(ات) مدفوعة كلياً أو جزئياً.",
-        "cancelCharges": "إلغاء غير المدفوع",
-        "keepCharges": "الاحتفاظ بالرسوم"
+        "cancelCharges": "إلغاء كل غير المدفوع",
+        "keepDueCharges": "الاحتفاظ بما حلّ أجله",
+        "keepCharges": "الاحتفاظ بكل الرسوم"
       },
       "fields": {
         "name": "اسم الرسم",

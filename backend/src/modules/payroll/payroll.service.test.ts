@@ -40,4 +40,19 @@ describe('payrollService.listPayments', () => {
     expect(result.total).toBe(3);
     expect(result.totalNet).toBe('75500.00');
   });
+
+  it('filters by payment date range', async () => {
+    await payrollService.listPayments('school-1', {
+      paidFrom: '2026-09-01',
+      paidTo: '2026-09-30',
+      page: 1,
+      pageSize: 20,
+    });
+
+    expect(mockPrisma.salaryPayment.findMany.mock.calls[0][0].where).toEqual({
+      schoolId: 'school-1',
+      deletedAt: null,
+      paidAt: { gte: new Date('2026-09-01'), lte: new Date('2026-09-30') },
+    });
+  });
 });

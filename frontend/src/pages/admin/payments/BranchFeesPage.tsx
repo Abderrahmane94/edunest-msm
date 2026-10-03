@@ -410,6 +410,10 @@ function FeeDialog({
     { value: 'none', label: t('payments.fees.scope.none'), hint: t('payments.fees.scope.noneHint') },
   ];
 
+  // An amount embedded in a translated sentence: non-breaking spaces keep the
+  // number and its currency on one line instead of wrapping between them.
+  const unbrokenAmount = (value: string) => formatDZD(Number(value), i18n.language).replace(/\s/g, ' ');
+
   // Confirmation step: narrowing the scope leaves charges outside it.
   if (scopePreview) {
     return (
@@ -428,7 +432,7 @@ function FeeDialog({
                     <li>
                       {t('payments.fees.scope.confirmDue', {
                         count: scopePreview.duePeriods,
-                        amount: formatDZD(Number(scopePreview.dueAmount), i18n.language),
+                        amount: unbrokenAmount(scopePreview.dueAmount),
                       })}
                     </li>
                   )}
@@ -436,7 +440,7 @@ function FeeDialog({
                     <li>
                       {t('payments.fees.scope.confirmNotYetDue', {
                         count: scopePreview.notYetDuePeriods,
-                        amount: formatDZD(Number(scopePreview.notYetDueAmount), i18n.language),
+                        amount: unbrokenAmount(scopePreview.notYetDueAmount),
                       })}
                     </li>
                   )}
@@ -450,28 +454,32 @@ function FeeDialog({
             )}
           </div>
           {errors.form && <p className="text-body text-danger">{errors.form}</p>}
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setScopePreview(null)} disabled={isPending}>
-              {t('common.back')}
-            </Button>
-            <Button variant="secondary" onClick={() => save('keep')} disabled={isPending}>
+          {/* The choices stack full-width: side by side they overflow the
+              dialog, especially with longer Arabic labels. */}
+          <div className="flex flex-col gap-2 mt-4">
+            <Button variant="secondary" className="w-full" onClick={() => save('keep')} disabled={isPending}>
               {savingAction === 'keep' && isPending ? t('common.loading') : t('payments.fees.scope.keepCharges')}
             </Button>
             {/* Only offered when it differs from both other choices. */}
             {scopePreview.duePeriods > 0 && scopePreview.notYetDuePeriods > 0 && (
-              <Button onClick={() => save('cancelNotYetDue')} disabled={isPending}>
+              <Button className="w-full" onClick={() => save('cancelNotYetDue')} disabled={isPending}>
                 {savingAction === 'cancelNotYetDue' && isPending
                   ? t('common.loading')
                   : t('payments.fees.scope.keepDueCharges')}
               </Button>
             )}
             {scopePreview.periodsToCancel > 0 && (
-              <Button variant="danger" onClick={() => save('cancelUnpaid')} disabled={isPending}>
+              <Button variant="danger" className="w-full" onClick={() => save('cancelUnpaid')} disabled={isPending}>
                 {savingAction === 'cancelUnpaid' && isPending
                   ? t('common.loading')
                   : t('payments.fees.scope.cancelCharges')}
               </Button>
             )}
+          </div>
+          <DialogFooter className="mt-4">
+            <Button variant="ghost" onClick={() => setScopePreview(null)} disabled={isPending}>
+              {t('common.back')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

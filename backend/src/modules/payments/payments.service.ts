@@ -768,10 +768,15 @@ class PaymentService {
                 id: true,
                 firstName: true,
                 lastName: true,
+                // For filtering the dashboard by class.
+                enrollments: {
+                  select: { classroom: { select: { id: true, name: true } } },
+                },
               },
             },
           },
         },
+        branchFee: { select: { id: true, name: true } },
         paymentAllocations: {
           select: {
             amount: true,
@@ -785,7 +790,13 @@ class PaymentService {
 
     // Derive status for each period and filter to late/late_partial
     const lateEntries: Array<{
+      childId: string;
       childName: string;
+      classrooms: { id: string; name: string }[];
+      /** The fee the period bills; null for a registration period. */
+      feeId: string | null;
+      feeName: string | null;
+      isRegistrationPeriod: boolean;
       periodLabel: string;
       dueDate: Date;
       graceEndDate: Date;
@@ -829,7 +840,12 @@ class PaymentService {
       const periodLabel = `${periodDate.getMonth() + 1}/${periodDate.getFullYear()}`;
 
       lateEntries.push({
+        childId: child.id,
         childName,
+        classrooms: (child.enrollments ?? []).map((ce) => ce.classroom),
+        feeId: period.branchFee?.id ?? null,
+        feeName: period.branchFee?.name ?? null,
+        isRegistrationPeriod: period.isRegistrationPeriod,
         periodLabel,
         dueDate: period.dueDate,
         graceEndDate: period.graceEndDate,

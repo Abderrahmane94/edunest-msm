@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
-import { DataTable } from '@/components/ui';
+import { Button, DataTable, Input } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
@@ -27,6 +27,20 @@ function StatusBadge({ status, label }: { status: LatePeriodStatus; label: strin
   );
 }
 
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+const REGISTRATION_FEE = '__registration__';
+const MIN_DAYS_OPTIONS = ['7', '30', '60'];
+
+/** Whole days since the grace period ended (how late the period is). */
+function daysLate(graceEndDate: string): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const graceEnd = new Date(graceEndDate);
+  graceEnd.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.floor((today.getTime() - graceEnd.getTime()) / 86_400_000));
+}
+
 // ─── Late Dashboard Page ───────────────────────────────────────────────────────
 
 export function LateDashboardPage() {
@@ -34,7 +48,52 @@ export function LateDashboardPage() {
   const { branchId: selectedBranchId } = useDefaultBranch();
   const [statusFilter, setStatusFilter] = React.useState<LatePeriodStatus | ''>('');
 
-  const { data: entries, isLoading } = useLateDashboard(selectedBranchId, statusFilter);
+  const { data: allEntries, isLoading } = useLateDashboard(selectedBranchId, statusFilter);
+
+  // ─── Filters (the late list is small and loaded whole, so filter here) ───
+  const [search, setSearch] = React.useState('');
+  const [classroomFilter, setClassroomFilter] = React.useState('');
+  const [feeFilter, setFeeFilter] = React.useState('');
+  const [minDays, setMinDays] = React.useState('');
+
+  const classroomOptions = React.useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const e of allEntries ?? []) for (const c of e.classrooms) byId.set(c.id, c.name);
+    return [...byId].sort((a, b) => a[1].localeCompare(b[1])).map(([value, label]) => ({ value, label }));
+  }, [allEntries]);
+
+  const feeOptions = React.useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const e of allEntries ?? []) {
+      if (e.isRegistrationPeriod) byId.set(REGISTRATION_FEE, t('payments.late.registrationFee'));
+      else if (e.feeId) byId.set(e.feeId, e.feeName ?? '');
+    }
+    return [...byId].sort((a, b) => a[1].localeCompare(b[1])).map(([value, label]) => ({ value, label }));
+  }, [allEntries, t]);
+
+  const entries = React.useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return (allEntries ?? []).filter((e) => {
+      if (needle && !e.childName.toLowerCase().includes(needle)) return false;
+      if (classroomFilter && !e.classrooms.some((c) => c.id === classroomFilter)) return false;
+      if (feeFilter === REGISTRATION_FEE && !e.isRegistrationPeriod) return false;
+      if (feeFilter && feeFilter !== REGISTRATION_FEE && e.feeId !== feeFilter) return false;
+      if (minDays && daysLate(e.graceEndDate) < Number(minDays)) return false;
+      return true;
+    });
+  }, [allEntries, search, classroomFilter, feeFilter, minDays]);
+
+  const hasFilters = !!(search || classroomFilter || feeFilter || minDays || statusFilter);
+  const totalOutstanding = entries.reduce((sum, e) => sum + Number(e.outstanding), 0);
+  const childCount = new Set(entries.map((e) => e.childId || e.childName)).size;
+
+  function resetFilters() {
+    setSearch('');
+    setClassroomFilter('');
+    setFeeFilter('');
+    setMinDays('');
+    setStatusFilter('');
+  }
 
   const statusOptions = [
     { value: '', label: t('payments.late.filterAll') },
@@ -47,8 +106,22 @@ export function LateDashboardPage() {
       key: 'childName',
       header: t('payments.late.columns.childName'),
       render: (entry) => (
-        <span className="text-body font-medium text-foreground">
-          {entry.childName}
+        <div>
+          <span className="text-body font-medium text-foreground">{entry.childName}</span>
+          {entry.classrooms.length > 0 && (
+            <p className="text-caption text-text-secondary">
+              {entry.classrooms.map((c) => c.name).join(', ')}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'fee',
+      header: t('payments.late.columns.fee'),
+      render: (entry) => (
+        <span className="text-body text-foreground">
+          {entry.isRegistrationPeriod ? t('payments.late.registrationFee') : (entry.feeName ?? '—')}
         </span>
       ),
     },
@@ -74,9 +147,14 @@ export function LateDashboardPage() {
       key: 'graceEndDate',
       header: t('payments.late.columns.graceEndDate'),
       render: (entry) => (
-        <span className="text-body text-text-secondary" dir="ltr">
-          {formatDate(entry.graceEndDate)}
-        </span>
+        <div>
+          <span className="text-body text-text-secondary" dir="ltr">
+            {formatDate(entry.graceEndDate)}
+          </span>
+          <p className="text-caption text-danger">
+            {t('payments.late.daysLate', { count: daysLate(entry.graceEndDate) })}
+          </p>
+        </div>
       ),
     },
     {
@@ -137,8 +215,28 @@ export function LateDashboardPage() {
       </p>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="w-full max-w-xs">
+      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <Input
+            label={t('payments.late.filters.search')}
+            placeholder={t('payments.late.filters.searchPlaceholder')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <FormSelect
+            label={t('payments.late.filters.classroom')}
+            name="classroomFilter"
+            value={classroomFilter}
+            onChange={(e) => setClassroomFilter(e.target.value)}
+            options={[{ value: '', label: t('payments.late.filters.allClassrooms') }, ...classroomOptions]}
+          />
+          <FormSelect
+            label={t('payments.late.filters.fee')}
+            name="feeFilter"
+            value={feeFilter}
+            onChange={(e) => setFeeFilter(e.target.value)}
+            options={[{ value: '', label: t('payments.late.filters.allFees') }, ...feeOptions]}
+          />
           <FormSelect
             label={t('payments.late.filterStatus')}
             name="statusFilter"
@@ -146,6 +244,32 @@ export function LateDashboardPage() {
             onChange={(e) => setStatusFilter(e.target.value as LatePeriodStatus | '')}
             options={statusOptions}
           />
+          <FormSelect
+            label={t('payments.late.filters.minDays')}
+            name="minDaysFilter"
+            value={minDays}
+            onChange={(e) => setMinDays(e.target.value)}
+            options={[
+              { value: '', label: t('payments.late.filters.anyDelay') },
+              ...MIN_DAYS_OPTIONS.map((d) => ({ value: d, label: t('payments.late.filters.moreThanDays', { count: Number(d) }) })),
+            ]}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-caption text-text-secondary">
+            {t('payments.late.filters.summary', {
+              periods: entries.length,
+              children: childCount,
+              amount: formatDZD(totalOutstanding, i18n.language),
+            })}
+          </p>
+          {hasFilters && (
+            <Button type="button" variant="ghost" size="sm" onClick={resetFilters}>
+              <X className="w-4 h-4" />
+              {t('payments.late.filters.reset')}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -158,17 +282,17 @@ export function LateDashboardPage() {
             ))}
           </div>
         </div>
-      ) : (entries ?? []).length === 0 ? (
+      ) : entries.length === 0 ? (
         <div className="bg-card border border-border rounded-lg p-8 text-center">
           <AlertTriangle className="w-10 h-10 text-text-disabled mx-auto mb-3" />
           <p className="text-body text-text-secondary">
-            {t('payments.late.empty')}
+            {hasFilters && (allEntries ?? []).length > 0 ? t('payments.late.filters.noMatch') : t('payments.late.empty')}
           </p>
         </div>
       ) : (
         <DataTable<LateDashboardEntry>
           columns={columns}
-          data={entries ?? []}
+          data={entries}
           keyExtractor={(entry) => entry.id}
           emptyMessage={t('payments.late.empty')}
         />

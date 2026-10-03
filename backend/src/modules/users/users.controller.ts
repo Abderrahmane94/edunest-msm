@@ -71,9 +71,12 @@ export const usersController = {
     try {
       // super_admin sees all users across all schools; admin sees only their school
       const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId!;
-      const { page, pageSize, search, sortBy, sortDir } = userListQuerySchema.parse(req.query);
+      const { page, pageSize, search, sortBy, sortDir, role, status } = userListQuerySchema.parse(req.query);
       const prismaSort = userSortColumnMap[sortBy] || 'createdAt';
-      const { users, total } = await usersService.list(schoolId, page, pageSize, search, prismaSort, sortDir);
+      const { users, total } = await usersService.list(schoolId, page, pageSize, search, prismaSort, sortDir, {
+        role,
+        status,
+      });
       res.status(200).json(paginatedResponse(users, page, pageSize, total));
     } catch (error) {
       if (error instanceof UserServiceError) {

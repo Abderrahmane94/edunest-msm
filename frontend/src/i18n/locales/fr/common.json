@@ -304,6 +304,15 @@
     }
   },
   "users": {
+    "filters": {
+      "role": "Rôle",
+      "allRoles": "Tous les rôles",
+      "status": "Statut",
+      "allStatuses": "Tous",
+      "summary": "{{count}} utilisateur(s)",
+      "reset": "Réinitialiser les filtres",
+      "noMatch": "Aucun utilisateur ne correspond à cette recherche ou à ces filtres."
+    },
     "title": "Utilisateurs",
     "invite": "Inviter",
     "searchPlaceholder": "Rechercher par nom ou e-mail...",

@@ -23,6 +23,8 @@ interface UsersParams {
   search?: string;
   sortColumn?: string;
   sortDirection?: 'asc' | 'desc';
+  role?: 'admin' | 'teacher' | 'parent';
+  status?: 'active' | 'inactive';
 }
 
 interface UsersResult {
@@ -51,13 +53,15 @@ function mapUser(raw: Record<string, unknown>): User {
 }
 
 export function useUsers(params: UsersParams = {}) {
-  const { page = 1, pageSize = 10, search, sortColumn, sortDirection } = params;
+  const { page = 1, pageSize = 10, search, sortColumn, sortDirection, role, status } = params;
   const queryParams = new URLSearchParams();
   queryParams.set('page', String(page));
   queryParams.set('pageSize', String(pageSize));
   if (search) queryParams.set('search', search);
   if (sortColumn) queryParams.set('sortBy', sortColumn);
   if (sortDirection) queryParams.set('sortDir', sortDirection);
+  if (role) queryParams.set('role', role);
+  if (status) queryParams.set('status', status);
 
   return useQuery({
     queryKey: ['users', params],

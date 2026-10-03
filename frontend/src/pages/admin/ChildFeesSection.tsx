@@ -1,5 +1,8 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { Settings2 } from 'lucide-react';
+import { Button } from '@/components/ui';
 import { formatDZD } from '@/lib/formatters';
 import { useChildBillingPeriods, type BillingPeriod } from '@/hooks/usePayments';
 
@@ -70,6 +73,17 @@ export function ChildFeesSection({ childId }: { childId: string }) {
   const { t, i18n } = useTranslation();
   const { data: periods, isLoading, isError, error } = useChildBillingPeriods(childId);
   const fees = React.useMemo(() => groupByFee(periods ?? [], localToday()), [periods]);
+  const navigate = useNavigate();
+
+  // The child's current billing enrollment (withdrawal, discounts): the one
+  // holding their most recent billing period.
+  const currentEnrollmentId = React.useMemo(() => {
+    let latest: { id: string; start: string } | null = null;
+    for (const p of periods ?? []) {
+      if (!latest || p.periodStart > latest.start) latest = { id: p.enrollmentId, start: p.periodStart };
+    }
+    return latest?.id ?? null;
+  }, [periods]);
 
   function cycleLabel(fee: AssignedFee): string {
     if (fee.isRegistration) return t('children.fees.registration');
@@ -82,7 +96,20 @@ export function ChildFeesSection({ childId }: { childId: string }) {
 
   return (
     <div className="bg-card border border-border rounded-lg p-6 space-y-3">
-      <h2 className="text-subsection font-semibold text-text-heading">{t('children.fees.title')}</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-subsection font-semibold text-text-heading">{t('children.fees.title')}</h2>
+        {currentEnrollmentId && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => navigate(`/admin/payments/enrollments/${currentEnrollmentId}`)}
+          >
+            <Settings2 className="w-4 h-4" />
+            {t('children.fees.manageBilling')}
+          </Button>
+        )}
+      </div>
 
       {isLoading ? (
         <div className="animate-pulse h-16 bg-subtle rounded-md" />

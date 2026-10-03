@@ -582,6 +582,7 @@
     },
     "fees": {
       "title": "Frais assignés",
+      "manageBilling": "Gérer la facturation",
       "empty": "Aucun frais n'est assigné à cet enfant.",
       "registration": "Frais d'inscription",
       "oneShot": "Ponctuel",

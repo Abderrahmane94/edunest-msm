@@ -1,7 +1,6 @@
 export { BranchConfigPage } from './BranchConfigPage';
 export { BranchCalendarPage } from './BranchCalendarPage';
 export { default as BranchFeesPage } from './BranchFeesPage';
-export { EnrollmentsPage } from './EnrollmentsPage';
 export { EnrollmentDetailPage } from './EnrollmentDetailPage';
 export { PaymentsPage } from './PaymentsPage';
 export { LateDashboardPage } from './LateDashboardPage';

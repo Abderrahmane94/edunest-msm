@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import prisma from '../../lib/prisma';
@@ -224,25 +225,31 @@ export const usersService = {
     search?: string,
     sortBy: string = 'createdAt',
     sortDir: 'asc' | 'desc' = 'desc',
+    filters: { role?: 'admin' | 'teacher' | 'parent'; status?: 'active' | 'inactive' } = {},
   ) {
     const skip = (page - 1) * pageSize;
 
     // Exclude super_admin users — they are platform-level and not school-scoped
-    const baseWhere = schoolId
-      ? { schoolId, role: { not: 'super_admin' as const } }
-      : { role: { not: 'super_admin' as const } };
+    const where: Prisma.UserWhereInput = schoolId
+      ? { schoolId, role: { not: 'super_admin' } }
+      : { role: { not: 'super_admin' } };
 
-    // Add search filter across name and email
-    const where = search
-      ? {
-          ...baseWhere,
-          OR: [
-            { firstName: { contains: search, mode: 'insensitive' as const } },
-            { lastName: { contains: search, mode: 'insensitive' as const } },
-            { email: { contains: search, mode: 'insensitive' as const } },
-          ],
-        }
-      : baseWhere;
+    if (filters.role) where.role = filters.role;
+    if (filters.status) where.isActive = filters.status === 'active';
+
+    // Each search word must match the name, email or phone, so a full name
+    // like "nadia benmansour" finds the user.
+    const words = (search ?? '').trim().split(/\s+/).filter(Boolean).slice(0, 5);
+    if (words.length) {
+      where.AND = words.map((word) => ({
+        OR: [
+          { firstName: { contains: word, mode: 'insensitive' as const } },
+          { lastName: { contains: word, mode: 'insensitive' as const } },
+          { email: { contains: word, mode: 'insensitive' as const } },
+          { phone: { contains: word } },
+        ],
+      }));
+    }
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({

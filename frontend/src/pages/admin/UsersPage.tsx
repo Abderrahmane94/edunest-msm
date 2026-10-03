@@ -2,9 +2,10 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '@/lib/formatters';
-import { Shield, ShieldOff, Mail } from 'lucide-react';
+import { Shield, ShieldOff, Mail, X } from 'lucide-react';
 import { Button, CreateButton, DataTable, StatusBadge } from '@/components/ui';
 import type { Column } from '@/components/ui';
+import { FormSelect } from '@/components/forms';
 import { useUsers, useToggleUserActive, type User } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
 import { InviteUserDialog } from './InviteUserDialog';
@@ -33,6 +34,8 @@ export function UsersPage() {
   const { t } = useTranslation();
   const [page, setPage] = React.useState(1);
   const [search, setSearch] = React.useState('');
+  const [roleFilter, setRoleFilter] = React.useState<'' | 'admin' | 'teacher' | 'parent'>('');
+  const [statusFilter, setStatusFilter] = React.useState<'' | 'active' | 'inactive'>('');
   const [sortColumn, setSortColumn] = React.useState<string>('created_at');
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('desc');
   const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false);
@@ -50,7 +53,10 @@ export function UsersPage() {
     search: search || undefined,
     sortColumn,
     sortDirection,
+    role: roleFilter || undefined,
+    status: statusFilter || undefined,
   });
+  const hasFilters = !!(roleFilter || statusFilter);
 
   const users = data?.users ?? [];
   const total = data?.total ?? 0;
@@ -205,6 +211,59 @@ export function UsersPage() {
         </div>
       )}
 
+      {/* Filters (search is in the table header) */}
+      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <FormSelect
+            label={t('users.filters.role')}
+            name="users-filter-role"
+            value={roleFilter}
+            onChange={(e) => {
+              setRoleFilter(e.target.value as '' | 'admin' | 'teacher' | 'parent');
+              setPage(1);
+            }}
+            options={[
+              { value: '', label: t('users.filters.allRoles') },
+              { value: 'admin', label: t('users.roles.admin') },
+              { value: 'teacher', label: t('users.roles.teacher') },
+              { value: 'parent', label: t('users.roles.parent') },
+            ]}
+          />
+          <FormSelect
+            label={t('users.filters.status')}
+            name="users-filter-status"
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value as '' | 'active' | 'inactive');
+              setPage(1);
+            }}
+            options={[
+              { value: '', label: t('users.filters.allStatuses') },
+              { value: 'active', label: t('users.active') },
+              { value: 'inactive', label: t('users.inactive') },
+            ]}
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-caption text-text-secondary">{t('users.filters.summary', { count: total })}</p>
+          {hasFilters && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setRoleFilter('');
+                setStatusFilter('');
+                setPage(1);
+              }}
+            >
+              <X className="w-4 h-4" />
+              {t('users.filters.reset')}
+            </Button>
+          )}
+        </div>
+      </div>
+
       <DataTable<User>
         columns={columns}
         data={users}
@@ -220,7 +279,7 @@ export function UsersPage() {
         pageSize={pageSize}
         total={total}
         onPageChange={setPage}
-        emptyMessage={t('users.noUsers')}
+        emptyMessage={hasFilters || search ? t('users.filters.noMatch') : t('users.noUsers')}
       />
 
       <InviteUserDialog

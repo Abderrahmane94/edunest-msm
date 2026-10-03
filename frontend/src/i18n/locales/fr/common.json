@@ -689,7 +689,12 @@
         "selectPlaceholder": "Sélectionner une classe"
       },
       "fees": {
-        "description": "Choisissez le frais de base (récurrent) de cet enfant et, si besoin, des frais ponctuels supplémentaires. Laissez vide pour ne pas inscrire l'enfant à la facturation maintenant.",
+        "description": "Cochez les frais de cet enfant. Les frais récurrents sont facturés à partir de sa date d'inscription (premier mois au prorata) ; les frais de toute l'école sont inclus d'office.",
+        "perMonth": "/ mois",
+        "perPeriod": "/ période",
+        "oneTime": "(une fois)",
+        "schoolWide": "Toute l'école",
+        "noFees": "Aucun frais n'est disponible pour cette inscription.",
         "extraFees": "Frais ponctuels supplémentaires",
         "schoolFees": "Frais de toute l'école (appliqués automatiquement)",
         "skipEnrollment": "Passer (pas de facturation pour le moment)",
@@ -1813,12 +1818,14 @@
         "confirm": "Confirmer le retrait"
       },
       "discounts": {
+        "allRecurringFees": "Tous les frais récurrents",
         "title": "Remises",
         "description": "{{count}} remise(s) appliquée(s)",
         "empty": "Aucune remise",
         "add": "Ajouter une remise",
         "noExpiry": "Sans expiration",
         "columns": {
+          "fee": "Frais",
           "type": "Type",
           "percentage": "Pourcentage",
           "validity": "Validité",
@@ -1831,6 +1838,8 @@
           "custom": "Personnalisé"
         },
         "form": {
+          "fee": "Frais concerné",
+          "feeHelper": "Les remises s'appliquent aux frais récurrents (mensuels ou personnalisés), pas aux frais ponctuels.",
           "title": "Ajouter une remise",
           "type": "Type",
           "percentage": "Pourcentage (%)",

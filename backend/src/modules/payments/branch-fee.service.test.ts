@@ -23,7 +23,10 @@ vi.mock('../../lib/prisma', () => ({
   },
 }));
 
+vi.mock('./discount.service', () => ({ discountService: { recalculatePeriods: vi.fn() } }));
+
 import prisma from '../../lib/prisma';
+import { discountService } from './discount.service';
 import { branchFeeService, BranchFeeServiceError } from './branch-fee.service';
 
 const mockPrisma = prisma as unknown as {
@@ -183,6 +186,8 @@ describe('BranchFeeService', () => {
       expect(insertedData.length).toBeGreaterThan(0);
       expect(insertedData.every((p) => p.branchFeeId === 'fee-2')).toBe(true);
       expect(result).toHaveProperty('periodsCreated');
+      // New periods pick up the enrollment's existing discounts.
+      expect(discountService.recalculatePeriods).toHaveBeenCalledWith(mockPrisma, 'enr-1');
     });
 
     it('rejects re-applying a fee that already has a non-cancelled period', async () => {
@@ -583,12 +588,11 @@ describe('BranchFeeService', () => {
       id: 'enr-new',
       branchId: 'branch-1',
       academicYearId: 'ay-1',
-      baseFeeId: 'fee-base',
       startDate: new Date('2999-01-15'),
       academicYear: { startDate: new Date('2998-09-01'), endDate: new Date('2999-06-30') },
     };
 
-    it('applies whole-school fees other than the base fee, billing recurring ones from the start date', async () => {
+    it('applies whole-school fees except the ones excluded, billing recurring ones from the start date', async () => {
       mockPrisma.branch.findUnique.mockResolvedValue({ id: 'branch-1', schoolId: 'school-1' });
       mockPrisma.branchFee.findMany.mockResolvedValue([
         {
@@ -605,7 +609,7 @@ describe('BranchFeeService', () => {
       mockPrisma.billingPeriod.create.mockResolvedValue({ id: 'bp-1' });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const count = await branchFeeService.applySchoolFeesToEnrollment(mockPrisma as any, enrollment);
+      const count = await branchFeeService.applySchoolFeesToEnrollment(mockPrisma as any, enrollment, ['fee-base']);
 
       expect(count).toBe(2);
       expect(mockPrisma.branchFee.findMany).toHaveBeenCalledWith({
@@ -620,6 +624,89 @@ describe('BranchFeeService', () => {
       expect(monthly).toHaveLength(6); // Jan through Jun
       expect(monthly[0].periodStart.getMonth()).toBe(0);
       expect(mockPrisma.billingPeriod.create).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('applyFeesToNewEnrollment', () => {
+    const enrollment = {
+      id: 'enr-new',
+      branchId: 'branch-1',
+      academicYearId: 'ay-1',
+      startDate: new Date('2999-01-15'),
+      academicYear: { startDate: new Date('2998-09-01'), endDate: new Date('2999-06-30') },
+    };
+    const tuition = {
+      id: 'fee-tuition',
+      name: 'Scolarité',
+      branchId: 'branch-1',
+      isActive: true,
+      amount: new Prisma.Decimal(10000),
+      billingCycle: 'monthly',
+      billingDueDay: 5,
+      gracePeriodDays: 5,
+    };
+    const insurance = {
+      id: 'fee-insurance',
+      name: 'Assurance',
+      branchId: 'branch-1',
+      isActive: true,
+      amount: new Prisma.Decimal(1500),
+      billingCycle: null,
+      gracePeriodDays: null,
+    };
+
+    beforeEach(() => {
+      mockPrisma.branch.findUnique.mockResolvedValue({ id: 'branch-1', schoolId: 'school-1' });
+      mockPrisma.billingPeriod.createMany.mockResolvedValue({ count: 6 });
+      mockPrisma.billingPeriod.create.mockResolvedValue({ id: 'bp-1' });
+    });
+
+    it('applies school fees (minus the picked ones) and the picked fees, billing recurring ones from the start date', async () => {
+      mockPrisma.branchFee.findMany
+        .mockResolvedValueOnce([]) // whole-school fees
+        .mockResolvedValueOnce([tuition, insurance]); // picked fees
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await branchFeeService.applyFeesToNewEnrollment(mockPrisma as any, enrollment, ['fee-tuition', 'fee-insurance', 'fee-tuition']);
+
+      // Picked fees aren't applied a second time as school fees.
+      expect(mockPrisma.branchFee.findMany.mock.calls[0][0].where.id).toEqual({ notIn: ['fee-tuition', 'fee-insurance'] });
+
+      const monthly = mockPrisma.billingPeriod.createMany.mock.calls[0][0].data as Array<{
+        periodStart: Date;
+        amountDue: Prisma.Decimal;
+        baseAmount: Prisma.Decimal;
+      }>;
+      expect(monthly).toHaveLength(6); // Jan (from the 15th, prorated) through Jun
+      expect(monthly[0].periodStart.getMonth()).toBe(0);
+      expect(Number(monthly[0].amountDue)).toBeLessThan(10000);
+      expect(monthly[0].baseAmount.toString()).toBe(monthly[0].amountDue.toString());
+      expect(mockPrisma.billingPeriod.create.mock.calls[0][0].data).toMatchObject({
+        branchFeeId: 'fee-insurance',
+        amountDue: insurance.amount,
+        baseAmount: insurance.amount,
+      });
+      expect(discountService.recalculatePeriods).toHaveBeenCalledWith(mockPrisma, 'enr-new');
+    });
+
+    it('rejects a fee that is not available (inactive or from another branch)', async () => {
+      mockPrisma.branchFee.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ ...insurance, isActive: false }]);
+
+      await expect(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        branchFeeService.applyFeesToNewEnrollment(mockPrisma as any, enrollment, ['fee-insurance']),
+      ).rejects.toThrow('Assurance: fee is not available');
+    });
+
+    it('rejects an unknown fee', async () => {
+      mockPrisma.branchFee.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+
+      await expect(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        branchFeeService.applyFeesToNewEnrollment(mockPrisma as any, enrollment, ['missing']),
+      ).rejects.toThrow('Fee not found');
     });
   });
 });

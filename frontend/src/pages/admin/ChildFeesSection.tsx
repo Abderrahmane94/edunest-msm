@@ -69,7 +69,14 @@ function localToday(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-export function ChildFeesSection({ childId }: { childId: string }) {
+export function ChildFeesSection({
+  childId,
+  showManageBilling = true,
+}: {
+  childId: string;
+  /** Hidden on the billing page itself. */
+  showManageBilling?: boolean;
+}) {
   const { t, i18n } = useTranslation();
   const { data: periods, isLoading, isError, error } = useChildBillingPeriods(childId);
   const fees = React.useMemo(() => groupByFee(periods ?? [], localToday()), [periods]);
@@ -98,7 +105,7 @@ export function ChildFeesSection({ childId }: { childId: string }) {
     <div className="bg-card border border-border rounded-lg p-6 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-subsection font-semibold text-text-heading">{t('children.fees.title')}</h2>
-        {currentEnrollmentId && (
+        {showManageBilling && currentEnrollmentId && (
           <Button
             type="button"
             variant="secondary"

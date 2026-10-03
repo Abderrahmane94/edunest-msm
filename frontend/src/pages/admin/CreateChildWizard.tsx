@@ -16,7 +16,7 @@ import { useUsers } from '@/hooks/useUsers';
 import { useCreateUser } from './InviteUserDialog';
 import { useClassrooms } from '@/hooks/useClassrooms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
-import { useBranchFees, useApplyFee, type BranchFee } from '@/hooks/useBranchFees';
+import { useBranchFees, type BranchFee } from '@/hooks/useBranchFees';
 import { useClassroomFees } from '@/hooks/useBranchFeeClassrooms';
 import { useCreateEnrollment } from '@/hooks/useEnrollments';
 import { useChildBillingPeriods, useRecordPayment } from '@/hooks/usePayments';
@@ -493,17 +493,15 @@ function FeesStep({
   const fees: BranchFee[] = (classroomId ? (classroomFees ?? []) : (branchFees ?? [])).filter(
     (f) => f.showInWizard,
   );
-  const recurringFees = fees.filter((f) => !!f.billingCycle);
-  // Whole-school fees are applied automatically on enrollment (except the one
-  // chosen as base fee), so they're listed rather than offered as extras.
-  const oneShotFees = fees.filter((f) => !f.billingCycle && !f.appliesToSchool);
+  // Whole-school fees are applied automatically (shown ticked, locked); the
+  // others are picked here.
+  const schoolFees = fees.filter((f) => f.appliesToSchool);
+  const optionalFees = fees.filter((f) => !f.appliesToSchool);
 
   const createEnrollment = useCreateEnrollment();
-  const applyFee = useApplyFee();
   const recordPayment = useRecordPayment(branchId);
 
-  const [baseFeeId, setBaseFeeId] = React.useState('');
-  const [extraFeeIds, setExtraFeeIds] = React.useState<string[]>([]);
+  const [selectedFeeIds, setSelectedFeeIds] = React.useState<string[]>([]);
   const [enrollmentCreated, setEnrollmentCreated] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -513,8 +511,18 @@ function FeesStep({
   const { data: billingPeriods } = useChildBillingPeriods(enrollmentCreated ? child.id : '');
   const outstanding = totalOutstanding(billingPeriods ?? []);
 
-  function toggleExtraFee(id: string) {
-    setExtraFeeIds((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
+  function toggleFee(id: string) {
+    setSelectedFeeIds((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
+  }
+
+  function feeLabel(fee: BranchFee): string {
+    const cycle =
+      fee.billingCycle === 'monthly'
+        ? t('children.wizard.fees.perMonth')
+        : fee.billingCycle === 'custom'
+          ? t('children.wizard.fees.perPeriod')
+          : t('children.wizard.fees.oneTime');
+    return `${fee.name} — ${formatDZD(Number(fee.amount), i18n.language)} ${cycle}`;
   }
 
   async function handleCreateEnrollment() {
@@ -525,16 +533,15 @@ function FeesStep({
       const startDate = activeYear
         ? clampToAcademicYear(enrollmentDate, activeYear.start_date, activeYear.end_date)
         : enrollmentDate;
-      const result = await createEnrollment.mutateAsync({
+      // One request: the enrollment and all its fees are saved together, and
+      // recurring fees are billed from the enrollment date.
+      await createEnrollment.mutateAsync({
         childId: child.id,
         branchId,
         academicYearId: activeYear?.id ?? '',
-        baseFeeId: baseFeeId || undefined,
         startDate,
+        feeIds: selectedFeeIds,
       });
-      for (const feeId of extraFeeIds) {
-        await applyFee.mutateAsync({ enrollmentId: result.enrollmentId, branchFeeId: feeId });
-      }
       await qc.invalidateQueries({ queryKey: ['child-billing-periods', child.id] });
       setEnrollmentCreated(true);
     } catch (err) {
@@ -564,15 +571,8 @@ function FeesStep({
     }
   }
 
-  const schoolFees = fees.filter((f) => f.appliesToSchool && f.id !== baseFeeId);
-  // Without a base fee the child is still enrolled for billing when there's
-  // something to bill: whole-school fees or extra fees picked here.
-  const canEnroll = !!baseFeeId || schoolFees.length > 0 || extraFeeIds.length > 0;
-
-  const baseFeeOptions = recurringFees.map((f) => ({
-    value: f.id,
-    label: `${f.name} (${formatDZD(Number(f.amount), i18n.language)})`,
-  }));
+  // Enrolled for billing as soon as there's something to bill.
+  const canEnroll = schoolFees.length > 0 || selectedFeeIds.length > 0;
 
   return (
     <div className="space-y-4">
@@ -580,47 +580,33 @@ function FeesStep({
         <>
           <p className="text-body text-text-secondary">{t('children.wizard.fees.description')}</p>
 
-          <FormSelect
-            label={t('payments.enrollments.form.baseFee')}
-            name="base_fee_id"
-            value={baseFeeId}
-            onChange={(e) => setBaseFeeId(e.target.value)}
-            options={baseFeeOptions}
-            placeholder={t('payments.enrollments.form.selectBaseFee')}
-            helperText={recurringFees.length === 0 ? t('payments.enrollments.form.noRecurringFees') : undefined}
-          />
-
-          {schoolFees.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-label font-medium text-foreground">{t('children.wizard.fees.schoolFees')}</p>
-              <ul className="border border-border rounded-md divide-y divide-border">
-                {schoolFees.map((fee) => (
-                  <li key={fee.id} className="p-2 text-caption text-foreground">
-                    {fee.name} ({formatDZD(Number(fee.amount), i18n.language)})
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {oneShotFees.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-label font-medium text-foreground">{t('children.wizard.fees.extraFees')}</p>
-              <div className="border border-border rounded-md divide-y divide-border max-h-40 overflow-y-auto">
-                {oneShotFees.map((fee) => (
-                  <label key={fee.id} className="flex items-center gap-2 p-2 cursor-pointer hover:bg-hover">
-                    <input
-                      type="checkbox"
-                      checked={extraFeeIds.includes(fee.id)}
-                      onChange={() => toggleExtraFee(fee.id)}
-                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                    />
-                    <span className="text-caption text-foreground">
-                      {fee.name} ({formatDZD(Number(fee.amount), i18n.language)})
-                    </span>
-                  </label>
-                ))}
-              </div>
+          {fees.length === 0 ? (
+            <p className="text-caption text-text-secondary">{t('children.wizard.fees.noFees')}</p>
+          ) : (
+            <div className="border border-border rounded-md divide-y divide-border max-h-64 overflow-y-auto">
+              {schoolFees.map((fee) => (
+                <label key={fee.id} className="flex items-center gap-2 p-2 opacity-90">
+                  <input
+                    type="checkbox"
+                    checked
+                    disabled
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <span className="text-caption text-foreground flex-1">{feeLabel(fee)}</span>
+                  <span className="text-micro text-primary font-medium">{t('children.wizard.fees.schoolWide')}</span>
+                </label>
+              ))}
+              {optionalFees.map((fee) => (
+                <label key={fee.id} className="flex items-center gap-2 p-2 cursor-pointer hover:bg-hover">
+                  <input
+                    type="checkbox"
+                    checked={selectedFeeIds.includes(fee.id)}
+                    onChange={() => toggleFee(fee.id)}
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <span className="text-caption text-foreground">{feeLabel(fee)}</span>
+                </label>
+              ))}
             </div>
           )}
 

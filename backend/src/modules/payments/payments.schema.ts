@@ -56,16 +56,9 @@ export const createEnrollmentSchema = z.object({
   childId: z.string().uuid('Invalid child ID'),
   branchId: z.string().uuid('Invalid branch ID'),
   academicYearId: z.string().uuid('Invalid academic year ID'),
-  // The recurring BranchFee this enrollment's base periods are generated
-  // from — its billingCycle/billingDueDay/gracePeriodDays drive generation.
-  // Omitted: the child is enrolled for billing without base periods (only
-  // whole-school fees and fees applied later are billed).
-  baseFeeId: z.string().uuid('Invalid base fee ID').optional(),
   startDate: z.coerce.date({ required_error: 'Start date is required' }),
-  // Optional per-child override of the base fee's amount.
-  recurringFee: decimalAmount(0, 9999999.99).optional(),
-  registrationFee: decimalAmount(0, 9999999.99).nullish(),
-  firstPeriodAmountDue: decimalAmount(0, 9999999.99).optional(),
+  // Fees to apply besides the whole-school ones (recurring billed from startDate).
+  feeIds: z.array(z.string().uuid('Invalid fee ID')).max(50).optional(),
 });
 
 // --- Payment Recording ---

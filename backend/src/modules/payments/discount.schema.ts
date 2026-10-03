@@ -20,7 +20,8 @@ export const createDiscountSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'validTo must be in YYYY-MM-DD format')
     .nullable()
-    .optional(),
+    .optional(),  // The fee the discount applies to; null/omitted = every recurring fee.
+  branchFeeId: z.string().uuid('Invalid fee ID').nullable().optional(),
 });
 
 export const updateDiscountSchema = z.object({
@@ -45,7 +46,8 @@ export const updateDiscountSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'validTo must be in YYYY-MM-DD format')
     .nullable()
-    .optional(),
+    .optional(),  // The fee the discount applies to; null/omitted = every recurring fee.
+  branchFeeId: z.string().uuid('Invalid fee ID').nullable().optional(),
 });
 
 export type CreateDiscountInput = z.infer<typeof createDiscountSchema>;

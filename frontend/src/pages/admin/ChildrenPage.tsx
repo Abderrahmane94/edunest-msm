@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Link2, Phone, HeartPulse } from 'lucide-react';
+import { Link2, Phone, HeartPulse, X } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import {
   Button,
@@ -22,6 +22,7 @@ import {
   type Child,
 } from '@/hooks/useChildren';
 import { useUsers } from '@/hooks/useUsers';
+import { useClassrooms } from '@/hooks/useClassrooms';
 import { EmergencyContactsDialog } from './EmergencyContactsDialog';
 import { MedicalNotesDialog } from './MedicalNotesDialog';
 import { CreateChildWizard } from './CreateChildWizard';
@@ -157,9 +158,31 @@ export function ChildrenPage() {
   const navigate = useNavigate();
   const [page, setPage] = React.useState(1);
   const [search, setSearch] = React.useState('');
+  const [classroomFilter, setClassroomFilter] = React.useState('');
+  const [genderFilter, setGenderFilter] = React.useState<'' | 'male' | 'female'>('');
+  const [parentFilter, setParentFilter] = React.useState<'' | 'true' | 'false'>('');
+  const [statusFilter, setStatusFilter] = React.useState<'' | 'active' | 'inactive'>('');
   const pageSize = 10;
 
-  const { data, isLoading } = useChildren({ page, pageSize, search: search || undefined });
+  const { data: classrooms } = useClassrooms();
+  const { data, isLoading } = useChildren({
+    page,
+    pageSize,
+    search: search || undefined,
+    classroomId: classroomFilter || undefined,
+    gender: genderFilter || undefined,
+    hasParent: parentFilter || undefined,
+    status: statusFilter || undefined,
+  });
+  const hasFilters = !!(classroomFilter || genderFilter || parentFilter || statusFilter);
+
+  function resetFilters() {
+    setClassroomFilter('');
+    setGenderFilter('');
+    setParentFilter('');
+    setStatusFilter('');
+    setPage(1);
+  }
   const children = data?.children ?? [];
   const total = data?.total ?? 0;
 
@@ -316,6 +339,76 @@ export function ChildrenPage() {
         <CreateButton label={t('children.register')} onClick={() => setCreateDialogOpen(true)} />
       </div>
 
+      {/* Filters (search is in the table header) */}
+      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <FormSelect
+            label={t('children.filters.classroom')}
+            name="children-filter-classroom"
+            value={classroomFilter}
+            onChange={(e) => {
+              setClassroomFilter(e.target.value);
+              setPage(1);
+            }}
+            options={[
+              { value: '', label: t('children.filters.allClassrooms') },
+              ...(classrooms ?? []).map((c) => ({ value: c.id, label: c.name })),
+            ]}
+          />
+          <FormSelect
+            label={t('children.filters.gender')}
+            name="children-filter-gender"
+            value={genderFilter}
+            onChange={(e) => {
+              setGenderFilter(e.target.value as '' | 'male' | 'female');
+              setPage(1);
+            }}
+            options={[
+              { value: '', label: t('children.filters.allGenders') },
+              { value: 'female', label: t('children.filters.girls') },
+              { value: 'male', label: t('children.filters.boys') },
+            ]}
+          />
+          <FormSelect
+            label={t('children.filters.parent')}
+            name="children-filter-parent"
+            value={parentFilter}
+            onChange={(e) => {
+              setParentFilter(e.target.value as '' | 'true' | 'false');
+              setPage(1);
+            }}
+            options={[
+              { value: '', label: t('children.filters.allParents') },
+              { value: 'true', label: t('children.filters.withParent') },
+              { value: 'false', label: t('children.filters.withoutParent') },
+            ]}
+          />
+          <FormSelect
+            label={t('children.filters.status')}
+            name="children-filter-status"
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value as '' | 'active' | 'inactive');
+              setPage(1);
+            }}
+            options={[
+              { value: '', label: t('children.filters.allStatuses') },
+              { value: 'active', label: t('children.filters.active') },
+              { value: 'inactive', label: t('children.filters.inactive') },
+            ]}
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-caption text-text-secondary">{t('children.filters.summary', { count: total })}</p>
+          {hasFilters && (
+            <Button type="button" variant="ghost" size="sm" onClick={resetFilters}>
+              <X className="w-4 h-4" />
+              {t('children.filters.reset')}
+            </Button>
+          )}
+        </div>
+      </div>
+
       <DataTable<Child>
         columns={columns}
         data={children}
@@ -328,7 +421,7 @@ export function ChildrenPage() {
         pageSize={pageSize}
         total={total}
         onPageChange={setPage}
-        emptyMessage={t('children.noChildren')}
+        emptyMessage={hasFilters || search ? t('children.filters.noMatch') : t('children.noChildren')}
       />
 
       <CreateChildWizard

@@ -458,6 +458,25 @@
     }
   },
   "children": {
+    "filters": {
+      "classroom": "Classe",
+      "allClassrooms": "Toutes les classes",
+      "gender": "Genre",
+      "allGenders": "Tous",
+      "girls": "Filles",
+      "boys": "Garçons",
+      "parent": "Compte parent",
+      "allParents": "Tous",
+      "withParent": "Avec parent lié",
+      "withoutParent": "Sans parent lié",
+      "status": "Statut",
+      "allStatuses": "Tous",
+      "active": "Actifs",
+      "inactive": "Inactifs",
+      "summary": "{{count}} enfant(s)",
+      "reset": "Réinitialiser les filtres",
+      "noMatch": "Aucun enfant ne correspond à cette recherche ou à ces filtres."
+    },
     "title": "Enfants",
     "register": "Inscrire",
     "searchPlaceholder": "Rechercher par nom...",

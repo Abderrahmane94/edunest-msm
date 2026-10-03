@@ -459,6 +459,25 @@
     }
   },
   "children": {
+    "filters": {
+      "classroom": "القسم",
+      "allClassrooms": "كل الأقسام",
+      "gender": "الجنس",
+      "allGenders": "الكل",
+      "girls": "إناث",
+      "boys": "ذكور",
+      "parent": "حساب ولي الأمر",
+      "allParents": "الكل",
+      "withParent": "مع ولي أمر مرتبط",
+      "withoutParent": "بدون ولي أمر مرتبط",
+      "status": "الحالة",
+      "allStatuses": "الكل",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "summary": "{{count}} طفل",
+      "reset": "إعادة تعيين الفلاتر",
+      "noMatch": "لا يوجد طفل يطابق هذا البحث أو هذه الفلاتر."
+    },
     "title": "الأطفال",
     "register": "تسجيل",
     "searchPlaceholder": "البحث بالاسم...",

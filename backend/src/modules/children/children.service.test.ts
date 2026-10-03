@@ -236,6 +236,53 @@ describe('ChildrenService', () => {
         include: expect.any(Object),
       });
     });
+
+    it('filters by name words (child or parent), class, gender, parent link and status', async () => {
+      mockPrisma.child.findMany.mockResolvedValue([]);
+      mockPrisma.child.count.mockResolvedValue(0);
+
+      await childrenService.list(schoolId, 1, 20, {
+        search: ' yasmine  boud ',
+        classroomId: 'class-1',
+        gender: 'female',
+        hasParent: true,
+        status: 'active',
+      });
+
+      const nameMatch = (word: string) => {
+        const contains = { contains: word, mode: 'insensitive' };
+        return {
+          OR: [
+            { firstName: contains },
+            { lastName: contains },
+            { parentLinks: { some: { parent: { OR: [{ firstName: contains }, { lastName: contains }] } } } },
+          ],
+        };
+      };
+      const where = {
+        schoolId,
+        enrollments: { some: { classroomId: 'class-1' } },
+        gender: 'female',
+        parentLinks: { some: {} },
+        isActive: true,
+        AND: [nameMatch('yasmine'), nameMatch('boud')],
+      };
+      expect(mockPrisma.child.findMany.mock.calls[0][0].where).toEqual(where);
+      expect(mockPrisma.child.count).toHaveBeenCalledWith({ where });
+    });
+
+    it('finds children without a linked parent, inactive ones', async () => {
+      mockPrisma.child.findMany.mockResolvedValue([]);
+      mockPrisma.child.count.mockResolvedValue(0);
+
+      await childrenService.list(schoolId, 1, 20, { hasParent: false, status: 'inactive' });
+
+      expect(mockPrisma.child.findMany.mock.calls[0][0].where).toEqual({
+        schoolId,
+        parentLinks: { none: {} },
+        isActive: false,
+      });
+    });
   });
 
   describe('getById', () => {

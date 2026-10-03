@@ -477,6 +477,12 @@ export function EnrollmentDetailPage() {
   const { data: enrollment, isLoading } = useEnrollmentDetail(enrollmentId!);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = React.useState(false);
 
+  // Back to the child's page (where this page is opened from), or to payments
+  // while the enrollment isn't loaded.
+  function goBack() {
+    navigate(enrollment?.childId ? `/admin/children/${enrollment.childId}` : '/admin/payments');
+  }
+
   function getStatusVariant(
     status: string
   ): 'present' | 'cancelled' | 'draft' {
@@ -515,7 +521,7 @@ export function EnrollmentDetailPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/admin/payments/enrollments')}
+            onClick={goBack}
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -541,7 +547,7 @@ export function EnrollmentDetailPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/admin/payments/enrollments')}
+            onClick={goBack}
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -568,7 +574,7 @@ export function EnrollmentDetailPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/admin/payments/enrollments')}
+            onClick={goBack}
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>

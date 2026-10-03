@@ -1919,6 +1919,7 @@
         "allocationRequired": "Au moins une allocation est requise",
         "allocationAmountInvalid": "Montant d'allocation invalide",
         "allocationExceedsOutstanding": "Le montant alloué ({{amount}} DZD) dépasse le solde restant ({{outstanding}} DZD) de la période",
+        "allocationDuplicatePeriod": "Une même période ne peut être allouée qu’une seule fois : regroupez les montants sur une seule ligne.",
         "allocationMismatch": "Le total des allocations doit être égal au montant total"
       },
       "success": {

@@ -1924,6 +1924,7 @@
         "allocationRequired": "يجب تخصيص فترة واحدة على الأقل",
         "allocationAmountInvalid": "مبلغ التخصيص غير صالح",
         "allocationExceedsOutstanding": "المبلغ المخصص ({{amount}} د.ج) يتجاوز الرصيد المتبقي ({{outstanding}} د.ج) للفترة",
+        "allocationDuplicatePeriod": "لا يمكن تخصيص نفس الفترة أكثر من مرة: اجمع المبالغ في سطر واحد.",
         "allocationMismatch": "مجموع التخصيصات يجب أن يساوي المبلغ الإجمالي"
       },
       "success": {

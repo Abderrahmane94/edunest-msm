@@ -210,17 +210,29 @@ export interface ChangeFeeScopeInput {
   feeId: string;
   scope: FeeScope;
   classroomIds?: string[];
-  /** Cancel unpaid charges of children left outside the new scope. */
-  cancelOutOfScope?: boolean;
+  /**
+   * Unpaid charges of children left outside the new scope: kept, cancelled
+   * where not yet due, or all cancelled. Paid charges are always kept.
+   */
+  outOfScope?: OutOfScopeAction;
   /** Preview only: report what would be cancelled without changing anything. */
   dryRun?: boolean;
 }
 
+export type OutOfScopeAction = 'keep' | 'cancelNotYetDue' | 'cancelUnpaid';
+
 export interface ChangeFeeScopeResult {
   dryRun: boolean;
   childrenAffected: number;
+  /** All unpaid out-of-scope charges (already due + not yet due). */
   periodsToCancel: number;
   amountToCancel: string;
+  /** Unpaid charges whose due date is today or earlier. */
+  duePeriods: number;
+  dueAmount: string;
+  /** Unpaid charges whose due date is after today. */
+  notYetDuePeriods: number;
+  notYetDueAmount: string;
   paidPeriodsKept: number;
   cancelled: number;
 }

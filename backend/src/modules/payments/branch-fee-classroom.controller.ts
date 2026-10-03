@@ -62,7 +62,7 @@ export const branchFeeClassroomController = {
   /**
    * PUT /api/payments/fees/:branchFeeId/scope
    * Body: { scope: 'school' | 'classrooms' | 'none', classroomIds?: string[],
-   *         cancelOutOfScope?: boolean, dryRun?: boolean }
+   *         outOfScope?: 'keep' | 'cancelNotYetDue' | 'cancelUnpaid', dryRun?: boolean }
    * Changes who the fee is for; with dryRun, previews the out-of-scope
    * charges the change would cancel without changing anything.
    */
@@ -73,7 +73,7 @@ export const branchFeeClassroomController = {
       const validatedBranch = await validateBranchFeeAccess(branchFeeId, req, res);
       if (!validatedBranch) return;
 
-      const { scope, classroomIds, cancelOutOfScope, dryRun } = req.body;
+      const { scope, classroomIds, outOfScope, cancelOutOfScope, dryRun } = req.body;
 
       if (classroomIds !== undefined && (!Array.isArray(classroomIds) || classroomIds.some((id) => typeof id !== 'string'))) {
         res.status(400).json(
@@ -85,7 +85,9 @@ export const branchFeeClassroomController = {
       const result = await branchFeeService.changeScope(branchFeeId, {
         scope,
         classroomIds,
-        cancelOutOfScope: cancelOutOfScope === true,
+        // `cancelOutOfScope: true` is the older form of 'cancelUnpaid', still
+        // sent by a frontend deployed before outOfScope existed.
+        outOfScope: outOfScope ?? (cancelOutOfScope === true ? 'cancelUnpaid' : 'keep'),
         dryRun: dryRun === true,
       });
       res.status(200).json(successResponse(result));

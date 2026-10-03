@@ -36,6 +36,7 @@ import {
   type AssignFeeResult,
   type FeeScope,
   type ChangeFeeScopeResult,
+  type OutOfScopeAction,
 } from '@/hooks/useBranchFees';
 
 // ─── New Period (inline, inside the fee dialog) ──────────────────────────────
@@ -229,6 +230,8 @@ function FeeDialog({
   // Set when narrowing the scope leaves charges outside it: the dialog then
   // asks whether to cancel them before saving anything.
   const [scopePreview, setScopePreview] = React.useState<ChangeFeeScopeResult | null>(null);
+  // Which confirmation button is saving, to show its loading label.
+  const [savingAction, setSavingAction] = React.useState<OutOfScopeAction | null>(null);
 
   React.useEffect(() => {
     if (editingFee) {
@@ -320,10 +323,11 @@ function FeeDialog({
       }
     }
 
-    await save(false);
+    await save('keep');
   }
 
-  async function save(cancelOutOfScope: boolean) {
+  async function save(outOfScope: OutOfScopeAction) {
+    setSavingAction(outOfScope);
     const cycleFields = isRecurring
       ? {
           billingCycle,
@@ -349,7 +353,7 @@ function FeeDialog({
             feeId: editingFee.id,
             scope,
             classroomIds: scope === 'classrooms' ? scopeClassroomIds : undefined,
-            cancelOutOfScope,
+            outOfScope,
           });
         }
       } else {
@@ -417,13 +421,27 @@ function FeeDialog({
           </DialogHeader>
           <div className="space-y-2 bg-subtle rounded-lg p-4">
             {scopePreview.periodsToCancel > 0 && (
-              <p className="text-body text-foreground">
-                {t('payments.fees.scope.confirmUnpaid', {
-                  children: scopePreview.childrenAffected,
-                  count: scopePreview.periodsToCancel,
-                  amount: formatDZD(Number(scopePreview.amountToCancel), i18n.language),
-                })}
-              </p>
+              <div className="text-body text-foreground">
+                <p>{t('payments.fees.scope.confirmUnpaid', { children: scopePreview.childrenAffected })}</p>
+                <ul className="list-disc ps-5 mt-1">
+                  {scopePreview.duePeriods > 0 && (
+                    <li>
+                      {t('payments.fees.scope.confirmDue', {
+                        count: scopePreview.duePeriods,
+                        amount: formatDZD(Number(scopePreview.dueAmount), i18n.language),
+                      })}
+                    </li>
+                  )}
+                  {scopePreview.notYetDuePeriods > 0 && (
+                    <li>
+                      {t('payments.fees.scope.confirmNotYetDue', {
+                        count: scopePreview.notYetDuePeriods,
+                        amount: formatDZD(Number(scopePreview.notYetDueAmount), i18n.language),
+                      })}
+                    </li>
+                  )}
+                </ul>
+              </div>
             )}
             {scopePreview.paidPeriodsKept > 0 && (
               <p className="text-caption text-text-secondary">
@@ -436,12 +454,22 @@ function FeeDialog({
             <Button variant="secondary" onClick={() => setScopePreview(null)} disabled={isPending}>
               {t('common.back')}
             </Button>
-            <Button variant="secondary" onClick={() => save(false)} disabled={isPending}>
-              {t('payments.fees.scope.keepCharges')}
+            <Button variant="secondary" onClick={() => save('keep')} disabled={isPending}>
+              {savingAction === 'keep' && isPending ? t('common.loading') : t('payments.fees.scope.keepCharges')}
             </Button>
+            {/* Only offered when it differs from both other choices. */}
+            {scopePreview.duePeriods > 0 && scopePreview.notYetDuePeriods > 0 && (
+              <Button onClick={() => save('cancelNotYetDue')} disabled={isPending}>
+                {savingAction === 'cancelNotYetDue' && isPending
+                  ? t('common.loading')
+                  : t('payments.fees.scope.keepDueCharges')}
+              </Button>
+            )}
             {scopePreview.periodsToCancel > 0 && (
-              <Button variant="danger" onClick={() => save(true)} disabled={isPending}>
-                {isPending ? t('common.loading') : t('payments.fees.scope.cancelCharges')}
+              <Button variant="danger" onClick={() => save('cancelUnpaid')} disabled={isPending}>
+                {savingAction === 'cancelUnpaid' && isPending
+                  ? t('common.loading')
+                  : t('payments.fees.scope.cancelCharges')}
               </Button>
             )}
           </DialogFooter>

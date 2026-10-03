@@ -15,17 +15,40 @@ type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0
  */
 export type FeeScope = 'school' | 'classrooms' | 'none';
 
+/**
+ * What happens to the unpaid charges of children a scope change leaves out:
+ * kept, cancelled only where not yet due (due date after today), or all
+ * cancelled. Charges with a payment allocated are kept in every case.
+ */
+export type OutOfScopeAction = 'keep' | 'cancelNotYetDue' | 'cancelUnpaid';
+
 export interface ChangeScopeResult {
   dryRun: boolean;
   /** Out-of-scope children holding unpaid charges of this fee. */
   childrenAffected: number;
-  /** Unpaid charges of out-of-scope children — cancellable. */
+  /** All unpaid charges of out-of-scope children (already due + not yet due). */
   periodsToCancel: number;
   amountToCancel: string;
+  /** Unpaid charges whose due date is today or earlier — already owed. */
+  duePeriods: number;
+  dueAmount: string;
+  /** Unpaid charges whose due date is after today. */
+  notYetDuePeriods: number;
+  notYetDueAmount: string;
   /** Charges of out-of-scope children kept because a payment is allocated to them. */
   paidPeriodsKept: number;
-  /** Charges actually cancelled (0 for a dry run or when cancellation wasn't asked). */
+  /** Charges actually cancelled (0 for a dry run or with 'keep'). */
   cancelled: number;
+}
+
+/** A date's calendar day as YYYY-MM-DD in the server's local time zone. */
+function localDateKey(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function sumAmounts(periods: { amountDue: Prisma.Decimal }[]): string {
+  return periods.reduce((sum, p) => sum.plus(p.amountDue), new Prisma.Decimal(0)).toFixed(2);
 }
 
 export interface FeeCycleInput {
@@ -261,19 +284,27 @@ class BranchFeeService {
    * Changes who a fee is for, replacing its whole-school flag and classroom
    * links together so only one scope ever applies. Narrowing to specific
    * classrooms leaves children of other classrooms out of scope: their unpaid
-   * charges of this fee for the current school year are reported, and
-   * cancelled when `cancelOutOfScope` is set. Charges with a payment allocated
-   * are never touched. 'school' covers everyone, and 'none' only stops
-   * automatic application, so neither leaves anyone out — charges assigned by
-   * hand are kept. With `dryRun`, nothing is changed: the result previews what
-   * the change would cancel.
+   * charges of this fee for the current school year are reported, split into
+   * already due (due date today or earlier) and not yet due, and handled per
+   * `outOfScope` (default 'keep'). Charges with a payment allocated are never
+   * touched. 'school' covers everyone, and 'none' only stops automatic
+   * application, so neither leaves anyone out — charges assigned by hand are
+   * kept. With `dryRun`, nothing is changed: the result previews the charges.
    */
   async changeScope(
     branchFeeId: string,
-    input: { scope: FeeScope; classroomIds?: string[]; cancelOutOfScope?: boolean; dryRun?: boolean },
+    input: { scope: FeeScope; classroomIds?: string[]; outOfScope?: OutOfScopeAction; dryRun?: boolean },
   ): Promise<ChangeScopeResult> {
     if (!['school', 'classrooms', 'none'].includes(input.scope)) {
       throw new BranchFeeServiceError('scope must be one of: school, classrooms, none', 400, 'VALIDATION_ERROR');
+    }
+    const outOfScopeAction = input.outOfScope ?? 'keep';
+    if (!['keep', 'cancelNotYetDue', 'cancelUnpaid'].includes(outOfScopeAction)) {
+      throw new BranchFeeServiceError(
+        'outOfScope must be one of: keep, cancelNotYetDue, cancelUnpaid',
+        400,
+        'VALIDATION_ERROR',
+      );
     }
 
     const classroomIds = input.scope === 'classrooms' ? [...new Set(input.classroomIds ?? [])] : [];
@@ -311,6 +342,7 @@ class BranchFeeService {
       let outOfScope: {
         id: string;
         amountDue: Prisma.Decimal;
+        dueDate: Date;
         enrollment: { childId: string };
         paymentAllocations: { id: string }[];
       }[] = [];
@@ -330,20 +362,29 @@ class BranchFeeService {
           select: {
             id: true,
             amountDue: true,
+            dueDate: true,
             enrollment: { select: { childId: true } },
             paymentAllocations: { select: { id: true }, take: 1 },
           },
         });
       }
 
-      const cancellable = outOfScope.filter((p) => p.paymentAllocations.length === 0);
+      const unpaid = outOfScope.filter((p) => p.paymentAllocations.length === 0);
+      // Already due = due date today or earlier, as in a child's amount due.
+      // dueDate is a calendar date (stored at UTC midnight).
+      const today = localDateKey(new Date());
+      const isDue = (p: { dueDate: Date }) => p.dueDate.toISOString().slice(0, 10) <= today;
+      const due = unpaid.filter(isDue);
+      const notYetDue = unpaid.filter((p) => !isDue(p));
       const summary = {
-        childrenAffected: new Set(cancellable.map((p) => p.enrollment.childId)).size,
-        periodsToCancel: cancellable.length,
-        amountToCancel: cancellable
-          .reduce((sum, p) => sum.plus(p.amountDue), new Prisma.Decimal(0))
-          .toFixed(2),
-        paidPeriodsKept: outOfScope.length - cancellable.length,
+        childrenAffected: new Set(unpaid.map((p) => p.enrollment.childId)).size,
+        periodsToCancel: unpaid.length,
+        amountToCancel: sumAmounts(unpaid),
+        duePeriods: due.length,
+        dueAmount: sumAmounts(due),
+        notYetDuePeriods: notYetDue.length,
+        notYetDueAmount: sumAmounts(notYetDue),
+        paidPeriodsKept: outOfScope.length - unpaid.length,
       };
 
       if (input.dryRun) {
@@ -361,11 +402,13 @@ class BranchFeeService {
         });
       }
 
+      const toCancel =
+        outOfScopeAction === 'cancelUnpaid' ? unpaid : outOfScopeAction === 'cancelNotYetDue' ? notYetDue : [];
       let cancelled = 0;
-      if (input.cancelOutOfScope && cancellable.length > 0) {
+      if (toCancel.length > 0) {
         const res = await tx.billingPeriod.updateMany({
           where: {
-            id: { in: cancellable.map((p) => p.id) },
+            id: { in: toCancel.map((p) => p.id) },
             cancelledAt: null,
             paymentAllocations: { none: {} },
           },

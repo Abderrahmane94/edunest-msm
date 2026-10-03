@@ -157,25 +157,39 @@ describe('ClassroomsService', () => {
 
   describe('list', () => {
     it('should return paginated classrooms for a school', async () => {
-      const classrooms = [
-        { id: 'cls-1', schoolId, name: 'Class A', capacity: 25, teacher: null, createdAt: new Date() },
-        { id: 'cls-2', schoolId, name: 'Class B', capacity: 20, teacher: null, createdAt: new Date() },
-      ];
-
-      mockPrisma.classroom.findMany.mockResolvedValue(classrooms);
+      const createdAt = new Date();
+      mockPrisma.classroom.findMany.mockResolvedValue([
+        { id: 'cls-1', schoolId, name: 'Class A', capacity: 25, teacher: null, createdAt, _count: { enrollments: 12 } },
+        { id: 'cls-2', schoolId, name: 'Class B', capacity: 20, teacher: null, createdAt, _count: { enrollments: 0 } },
+      ]);
       mockPrisma.classroom.count.mockResolvedValue(2);
 
       const result = await classroomsService.list(schoolId, 1, 20);
 
-      expect(result.classrooms).toEqual(classrooms);
+      expect(result.classrooms).toEqual([
+        { id: 'cls-1', schoolId, name: 'Class A', capacity: 25, teacher: null, createdAt, enrolledCount: 12 },
+        { id: 'cls-2', schoolId, name: 'Class B', capacity: 20, teacher: null, createdAt, enrolledCount: 0 },
+      ]);
       expect(result.total).toBe(2);
       expect(mockPrisma.classroom.findMany).toHaveBeenCalledWith({
         where: { schoolId },
         skip: 0,
         take: 20,
         orderBy: { createdAt: 'desc' },
-        include: { teacher: { select: { id: true, firstName: true, lastName: true, email: true } } },
+        include: {
+          teacher: { select: { id: true, firstName: true, lastName: true, email: true } },
+          _count: { select: { enrollments: true } },
+        },
       });
+    });
+
+    it('limits the list to one academic year when given', async () => {
+      mockPrisma.classroom.findMany.mockResolvedValue([]);
+      mockPrisma.classroom.count.mockResolvedValue(0);
+
+      await classroomsService.list(schoolId, 1, 20, undefined, 'ay-1');
+
+      expect(mockPrisma.classroom.findMany.mock.calls[0][0].where).toEqual({ schoolId, academicYearId: 'ay-1' });
     });
   });
 

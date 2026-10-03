@@ -418,6 +418,21 @@
     }
   },
   "classrooms": {
+    "filters": {
+      "search": "Recherche",
+      "searchPlaceholder": "Nom ou salle…",
+      "level": "Niveau",
+      "allLevels": "Tous les niveaux",
+      "teacher": "Enseignant",
+      "allTeachers": "Tous les enseignants",
+      "occupancy": "Places",
+      "allOccupancy": "Toutes",
+      "available": "Places disponibles",
+      "full": "Complètes",
+      "summary": "{{count}} classe(s) · {{enrolled}}/{{capacity}} places occupées",
+      "reset": "Réinitialiser les filtres",
+      "noMatch": "Aucune classe ne correspond à ces filtres."
+    },
     "title": "Classes",
     "create": "Nouvelle classe",
     "noClassrooms": "Aucune classe trouvée",

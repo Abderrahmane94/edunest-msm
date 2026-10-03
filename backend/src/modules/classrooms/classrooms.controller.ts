@@ -36,7 +36,11 @@ export const classroomsController = {
       const { page, pageSize } = paginationSchema.parse(req.query);
       // Teachers may only ever list their own assigned classrooms, regardless of query params.
       const teacherId = req.user!.role === 'teacher' ? req.user!.userId : (req.query.teacher_id as string | undefined);
-      const { classrooms, total } = await classroomsService.list(schoolId, page, pageSize, teacherId);
+      const academicYearId =
+        typeof req.query.academic_year_id === 'string' && req.query.academic_year_id
+          ? req.query.academic_year_id
+          : undefined;
+      const { classrooms, total } = await classroomsService.list(schoolId, page, pageSize, teacherId, academicYearId);
       res.status(200).json(paginatedResponse(classrooms, page, pageSize, total));
     } catch (error) {
       if (error instanceof ClassroomServiceError) {

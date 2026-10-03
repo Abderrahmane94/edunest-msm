@@ -86,13 +86,17 @@ class ClassroomsService {
     page: number,
     pageSize: number,
     teacherId?: string,
-  ): Promise<{ classrooms: ClassroomWithTeacher[]; total: number }> {
+    academicYearId?: string,
+  ): Promise<{ classrooms: (ClassroomWithTeacher & { enrolledCount: number })[]; total: number }> {
     const where: Record<string, unknown> = { schoolId };
     if (teacherId) {
       where.teacherUserId = teacherId;
     }
+    if (academicYearId) {
+      where.academicYearId = academicYearId;
+    }
 
-    const [classrooms, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       prisma.classroom.findMany({
         where,
         skip: (page - 1) * pageSize,
@@ -100,10 +104,17 @@ class ClassroomsService {
         orderBy: { createdAt: 'desc' },
         include: {
           teacher: { select: teacherSelect },
+          _count: { select: { enrollments: true } },
         },
       }),
       prisma.classroom.count({ where }),
     ]);
+
+    // Children placed in each class, for the "enrolled / capacity" display.
+    const classrooms = rows.map(({ _count, ...classroom }) => ({
+      ...classroom,
+      enrolledCount: _count?.enrollments ?? 0,
+    }));
 
     return { classrooms, total };
   }

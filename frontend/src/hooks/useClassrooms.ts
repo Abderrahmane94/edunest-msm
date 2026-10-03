@@ -35,7 +35,8 @@ function mapClassroom(raw: Record<string, unknown>): Classroom {
 }
 
 export function useClassrooms(academicYearId?: string) {
-  const params = academicYearId ? `?academic_year_id=${academicYearId}` : '';
+  // A school has few classes: load them all in one page (the API pages by 20 by default).
+  const params = `?pageSize=100${academicYearId ? `&academic_year_id=${academicYearId}` : ''}`;
   return useQuery({
     queryKey: ['classrooms', academicYearId],
     queryFn: async () => {

@@ -419,6 +419,21 @@
     }
   },
   "classrooms": {
+    "filters": {
+      "search": "بحث",
+      "searchPlaceholder": "الاسم أو القاعة…",
+      "level": "المستوى",
+      "allLevels": "كل المستويات",
+      "teacher": "المعلم",
+      "allTeachers": "كل المعلمين",
+      "occupancy": "الأماكن",
+      "allOccupancy": "الكل",
+      "available": "أماكن متاحة",
+      "full": "ممتلئة",
+      "summary": "{{count}} قسم · {{enrolled}}/{{capacity}} مكان مشغول",
+      "reset": "إعادة تعيين الفلاتر",
+      "noMatch": "لا يوجد قسم يطابق هذه الفلاتر."
+    },
     "title": "الأقسام",
     "create": "قسم جديد",
     "noClassrooms": "لم يتم العثور على أقسام",

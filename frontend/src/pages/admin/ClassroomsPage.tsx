@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCog } from 'lucide-react';
+import { Users, UserCog, X } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -288,6 +288,39 @@ export function ClassroomsPage() {
   const activeYear = (academicYears ?? []).find((y) => y.is_active);
   const { data: classrooms, isLoading } = useClassrooms(activeYear?.id);
 
+  // ─── Filters (a school has few classes, so filter here) ───
+  const [search, setSearch] = React.useState('');
+  const [levelFilter, setLevelFilter] = React.useState('');
+  const [teacherFilter, setTeacherFilter] = React.useState('');
+  const [occupancyFilter, setOccupancyFilter] = React.useState<'' | 'available' | 'full'>('');
+
+  const levelOptions = React.useMemo(
+    () => [...new Set((classrooms ?? []).map((c) => c.level).filter(Boolean))].sort(),
+    [classrooms],
+  );
+  const teacherOptions = React.useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const c of classrooms ?? []) if (c.teacher_id && c.teacher_name) byId.set(c.teacher_id, c.teacher_name);
+    return [...byId].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [classrooms]);
+
+  const filteredClassrooms = React.useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return (classrooms ?? []).filter((c) => {
+      if (needle && !c.name.toLowerCase().includes(needle) && !(c.room_number ?? '').toLowerCase().includes(needle)) {
+        return false;
+      }
+      if (levelFilter && c.level !== levelFilter) return false;
+      if (teacherFilter === '__none__' && c.teacher_id) return false;
+      if (teacherFilter && teacherFilter !== '__none__' && c.teacher_id !== teacherFilter) return false;
+      if (occupancyFilter === 'full' && c.enrolled_count < c.capacity) return false;
+      if (occupancyFilter === 'available' && c.enrolled_count >= c.capacity) return false;
+      return true;
+    });
+  }, [classrooms, search, levelFilter, teacherFilter, occupancyFilter]);
+
+  const hasFilters = !!(search || levelFilter || teacherFilter || occupancyFilter);
+
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = React.useState(false);
   const [selectedClassroom, setSelectedClassroom] = React.useState<Classroom | null>(null);
@@ -384,7 +417,9 @@ export function ClassroomsPage() {
     );
   }
 
-  const data = classrooms ?? [];
+  const data = filteredClassrooms;
+  const enrolledTotal = data.reduce((sum, c) => sum + c.enrolled_count, 0);
+  const capacityTotal = data.reduce((sum, c) => sum + c.capacity, 0);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -413,13 +448,84 @@ export function ClassroomsPage() {
           </p>
         </div>
       ) : (
-        <DataTable<Classroom>
-          columns={columns}
-          data={data}
-          keyExtractor={(c) => c.id}
-          onRowClick={(c) => navigate(`/admin/classrooms/${c.id}`)}
-          emptyMessage={t('classrooms.noClassrooms')}
-        />
+        <>
+          {/* Filters */}
+          <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <Input
+                label={t('classrooms.filters.search')}
+                placeholder={t('classrooms.filters.searchPlaceholder')}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <FormSelect
+                label={t('classrooms.filters.level')}
+                name="classrooms-filter-level"
+                value={levelFilter}
+                onChange={(e) => setLevelFilter(e.target.value)}
+                options={[
+                  { value: '', label: t('classrooms.filters.allLevels') },
+                  ...levelOptions.map((level) => ({ value: level, label: level })),
+                ]}
+              />
+              <FormSelect
+                label={t('classrooms.filters.teacher')}
+                name="classrooms-filter-teacher"
+                value={teacherFilter}
+                onChange={(e) => setTeacherFilter(e.target.value)}
+                options={[
+                  { value: '', label: t('classrooms.filters.allTeachers') },
+                  { value: '__none__', label: t('classrooms.noTeacher') },
+                  ...teacherOptions.map(([value, label]) => ({ value, label })),
+                ]}
+              />
+              <FormSelect
+                label={t('classrooms.filters.occupancy')}
+                name="classrooms-filter-occupancy"
+                value={occupancyFilter}
+                onChange={(e) => setOccupancyFilter(e.target.value as '' | 'available' | 'full')}
+                options={[
+                  { value: '', label: t('classrooms.filters.allOccupancy') },
+                  { value: 'available', label: t('classrooms.filters.available') },
+                  { value: 'full', label: t('classrooms.filters.full') },
+                ]}
+              />
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-caption text-text-secondary">
+                {t('classrooms.filters.summary', {
+                  count: data.length,
+                  enrolled: enrolledTotal,
+                  capacity: capacityTotal,
+                })}
+              </p>
+              {hasFilters && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearch('');
+                    setLevelFilter('');
+                    setTeacherFilter('');
+                    setOccupancyFilter('');
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                  {t('classrooms.filters.reset')}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <DataTable<Classroom>
+            columns={columns}
+            data={data}
+            keyExtractor={(c) => c.id}
+            onRowClick={(c) => navigate(`/admin/classrooms/${c.id}`)}
+            emptyMessage={hasFilters ? t('classrooms.filters.noMatch') : t('classrooms.noClassrooms')}
+          />
+        </>
       )}
 
       {activeYear && (

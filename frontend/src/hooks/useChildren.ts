@@ -48,17 +48,25 @@ export interface MedicalNote {
 interface ChildrenParams {
   page?: number;
   pageSize?: number;
+  /** Matches the child's and linked parents' names. */
   search?: string;
   classroomId?: string;
+  gender?: 'male' | 'female';
+  /** 'true': has a linked parent account; 'false': has none. */
+  hasParent?: 'true' | 'false';
+  status?: 'active' | 'inactive';
 }
 
 export function useChildren(params: ChildrenParams = {}) {
-  const { page = 1, pageSize = 10, search, classroomId } = params;
+  const { page = 1, pageSize = 10, search, classroomId, gender, hasParent, status } = params;
   const queryParams = new URLSearchParams();
   queryParams.set('page', String(page));
   queryParams.set('pageSize', String(pageSize));
   if (search) queryParams.set('search', search);
   if (classroomId) queryParams.set('classroom_id', classroomId);
+  if (gender) queryParams.set('gender', gender);
+  if (hasParent) queryParams.set('has_parent', hasParent);
+  if (status) queryParams.set('status', status);
 
   return useQuery({
     queryKey: ['children', params],
@@ -79,6 +87,8 @@ export function useChildren(params: ChildrenParams = {}) {
 
       return { children, total };
     },
+    // Keep the current list while a new page/filter loads (no flash, keeps the search box).
+    placeholderData: (prev) => prev,
   });
 }
 

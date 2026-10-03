@@ -31,8 +31,18 @@ export const childrenController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
-      const classroomId = req.query.classroom_id as string | undefined;
-      const { children, total } = await childrenService.list(schoolId, page, pageSize, classroomId);
+      const q = req.query;
+      const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
+      const gender = str(q.gender);
+      const status = str(q.status);
+      const hasParent = str(q.has_parent);
+      const { children, total } = await childrenService.list(schoolId, page, pageSize, {
+        classroomId: str(q.classroom_id),
+        search: str(q.search)?.slice(0, 100),
+        gender: gender === 'male' || gender === 'female' ? gender : undefined,
+        status: status === 'active' || status === 'inactive' ? status : undefined,
+        hasParent: hasParent === 'true' ? true : hasParent === 'false' ? false : undefined,
+      });
       res.status(200).json(paginatedResponse(children, page, pageSize, total));
     } catch (error) {
       if (error instanceof ChildServiceError) {

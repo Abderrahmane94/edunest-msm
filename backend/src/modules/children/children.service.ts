@@ -74,14 +74,34 @@ class ChildrenService {
     schoolId: string,
     page: number,
     pageSize: number,
-    classroomId?: string,
+    filters: ChildListFilters = {},
   ): Promise<{ children: ChildWithEnrollments[]; total: number }> {
     const where: Record<string, unknown> = { schoolId };
+    const and: Record<string, unknown>[] = [];
 
     // Filter by classroom enrollment if classroom_id is provided
-    if (classroomId) {
-      where.enrollments = { some: { classroomId } };
+    if (filters.classroomId) {
+      where.enrollments = { some: { classroomId: filters.classroomId } };
     }
+
+    // Each word must match the child's first or last name, or a linked
+    // parent's — so "yasmine boud" finds Yasmine Boudiaf.
+    for (const word of (filters.search ?? '').trim().split(/\s+/).filter(Boolean).slice(0, 5)) {
+      const contains = { contains: word, mode: 'insensitive' };
+      and.push({
+        OR: [
+          { firstName: contains },
+          { lastName: contains },
+          { parentLinks: { some: { parent: { OR: [{ firstName: contains }, { lastName: contains }] } } } },
+        ],
+      });
+    }
+
+    if (filters.gender) where.gender = filters.gender;
+    if (filters.hasParent === true) where.parentLinks = { some: {} };
+    if (filters.hasParent === false) where.parentLinks = { none: {} };
+    if (filters.status) where.isActive = filters.status === 'active';
+    if (and.length) where.AND = and;
 
     const [children, total] = await Promise.all([
       prisma.child.findMany({
@@ -841,6 +861,16 @@ class ChildrenService {
       where: { id: noteId },
     });
   }
+}
+
+export interface ChildListFilters {
+  classroomId?: string;
+  /** Words matched against the child's and linked parents' names. */
+  search?: string;
+  gender?: 'male' | 'female';
+  /** true: has a linked parent account; false: has none. */
+  hasParent?: boolean;
+  status?: 'active' | 'inactive';
 }
 
 export const childrenService = new ChildrenService();

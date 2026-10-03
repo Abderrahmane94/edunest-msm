@@ -1510,6 +1510,8 @@
       "year": "Année",
       "baseSalary": "Salaire de base (DZD)",
       "studentCount": "Nombre d'élèves",
+      "studentCountHint": "Pré-rempli : {{count}} élève(s) dans ses classes ({{classes}}). Modifiable.",
+      "studentCountNoClass": "Aucune classe n'est attribuée à cet enseignant : saisissez le nombre d'élèves.",
       "bonuses": "Primes (DZD)",
       "deductions": "Retenues (DZD)",
       "netSalary": "Net à payer (DZD)",

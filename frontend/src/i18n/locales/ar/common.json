@@ -1515,6 +1515,8 @@
       "year": "السنة",
       "baseSalary": "الراتب الأساسي (دج)",
       "studentCount": "عدد التلاميذ",
+      "studentCountHint": "معبأ مسبقًا: {{count}} طالب في أقسامه ({{classes}}). قابل للتعديل.",
+      "studentCountNoClass": "لا يوجد قسم مسند لهذا المعلم: أدخل عدد الطلاب.",
       "bonuses": "المكافآت (دج)",
       "deductions": "الخصومات (دج)",
       "netSalary": "صافي الراتب (دج)",

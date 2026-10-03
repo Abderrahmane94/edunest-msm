@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Circle } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import {
+  ErrorAlert,
   Button,
   CreateButton,
   Dialog,
@@ -78,8 +79,8 @@ function CreateAcademicYearDialog({
       await createAcademicYear.mutateAsync(formData);
       resetForm();
       onOpenChange(false);
-    } catch {
-      // Error handled by React Query
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, form: err instanceof Error ? err.message : t('common.error') }));
     }
   }
 
@@ -144,6 +145,8 @@ function CreateAcademicYearDialog({
             </FormField>
           </div>
 
+          <ErrorAlert message={errors.form} className="mb-3" />
+
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => handleClose(false)}>
               {t('common.cancel')}
@@ -164,12 +167,14 @@ export function AcademicYearsPage() {
   const { data: academicYears, isLoading } = useAcademicYears();
   const activateAcademicYear = useActivateAcademicYear();
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
+  const [actionError, setActionError] = React.useState<string | null>(null);
 
   async function handleActivate(id: string) {
+    setActionError(null);
     try {
       await activateAcademicYear.mutateAsync(id);
-    } catch {
-      // Error handled by React Query
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 
@@ -202,6 +207,8 @@ export function AcademicYearsPage() {
         </h1>
         <CreateButton label={t('academicYears.create')} onClick={() => setCreateDialogOpen(true)} />
       </div>
+
+      <ErrorAlert message={actionError} onDismiss={() => setActionError(null)} />
 
       {years.length === 0 ? (
         <div className="bg-card border border-border rounded-lg p-8 text-center">

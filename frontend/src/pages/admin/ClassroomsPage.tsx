@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserCog, X } from 'lucide-react';
 import {
+  ErrorAlert,
   Button,
   CreateButton,
   DataTable,
@@ -97,8 +98,8 @@ function CreateClassroomDialog({
       });
       resetForm();
       onOpenChange(false);
-    } catch {
-      // Error handled by React Query
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, form: err instanceof Error ? err.message : t('common.error') }));
     }
   }
 
@@ -194,6 +195,8 @@ function CreateClassroomDialog({
             options={teacherOptions}
           />
 
+          <ErrorAlert message={errors.form} className="mt-3" />
+
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => handleClose(false)}>
               {t('common.cancel')}
@@ -223,6 +226,7 @@ function AssignTeacherDialog({
 
   const teachers = (usersData?.users ?? []).filter((u) => u.role === 'teacher');
   const [teacherId, setTeacherId] = React.useState('');
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (classroom) {
@@ -234,11 +238,12 @@ function AssignTeacherDialog({
     e.preventDefault();
     if (!classroom || !teacherId) return;
 
+    setSubmitError(null);
     try {
       await assignTeacher.mutateAsync({ classroomId: classroom.id, teacherId });
       onOpenChange(false);
-    } catch {
-      // Error handled by React Query
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 
@@ -266,6 +271,8 @@ function AssignTeacherDialog({
             options={teacherOptions}
             placeholder={t('classrooms.assignTeacher.selectTeacher')}
           />
+
+          <ErrorAlert message={submitError} className="mt-3" />
 
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>

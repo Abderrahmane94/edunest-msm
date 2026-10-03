@@ -198,6 +198,7 @@ function RecordPaymentDialog({
     setAllocations((prev) =>
       prev.map((row) => (row.id === id ? { ...row, [field]: value } : row))
     );
+    if (errors.form || errors.allocations) setErrors((prev) => ({ ...prev, form: '', allocations: '' }));
   }
 
   function validate(): boolean {
@@ -226,8 +227,14 @@ function RecordPaymentDialog({
       newErrors.allocations = t('payments.recording.errors.allocationRequired');
     }
 
+    // A period can only be allocated once per payment.
+    const periodIds = validAllocations.map((row) => row.billingPeriodId);
+    if (new Set(periodIds).size !== periodIds.length) {
+      newErrors.allocations = t('payments.recording.errors.allocationDuplicatePeriod');
+    }
+
     // Validate allocation amounts
-    for (const row of validAllocations) {
+    for (const row of newErrors.allocations ? [] : validAllocations) {
       if (!isValidAmount(row.amount)) {
         newErrors.allocations = t('payments.recording.errors.allocationAmountInvalid');
         break;
@@ -276,8 +283,11 @@ function RecordPaymentDialog({
         allocations: validAllocations,
       });
       setResult(res);
-    } catch {
-      // Error handled by react-query
+    } catch (err) {
+      setErrors((prev) => ({
+        ...prev,
+        form: err instanceof Error ? err.message : t('common.error'),
+      }));
     }
   }
 
@@ -520,7 +530,13 @@ function RecordPaymentDialog({
                         {t('payments.recording.fields.selectPeriod')}
                       </option>
                       {periodOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
+                        <option
+                          key={opt.value}
+                          value={opt.value}
+                          disabled={allocations.some(
+                            (other) => other.id !== row.id && other.billingPeriodId === opt.value,
+                          )}
+                        >
                           {opt.label}
                         </option>
                       ))}
@@ -581,6 +597,17 @@ function RecordPaymentDialog({
               </p>
             )}
           </div>
+
+          {/* Error returned by the server when saving */}
+          {errors.form && (
+            <div
+              className="flex items-start gap-2 rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-body text-danger"
+              role="alert"
+            >
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>{errors.form}</span>
+            </div>
+          )}
 
           {/* Submit */}
           <DialogFooter>

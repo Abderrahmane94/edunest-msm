@@ -208,8 +208,11 @@ export function RecordCorrectionDialog({ open, onOpenChange, branchId }: Props) 
       });
       setResultReceiptNumber(result.receiptNumber);
       setSuccess(true);
-    } catch {
-      // Error handled by React Query
+    } catch (err) {
+      setErrors((prev) => ({
+        ...prev,
+        form: err instanceof Error ? err.message : t('common.error'),
+      }));
     }
   }
 
@@ -485,6 +488,16 @@ export function RecordCorrectionDialog({ open, onOpenChange, branchId }: Props) 
                 <div className="h-4 bg-hover rounded w-1/2" />
               </div>
             </div>
+          )}
+
+          {/* Error returned by the server when saving */}
+          {errors.form && (
+            <p
+              className="mt-4 rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-body text-danger"
+              role="alert"
+            >
+              {errors.form}
+            </p>
           )}
 
           <DialogFooter>

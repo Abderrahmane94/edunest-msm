@@ -76,13 +76,34 @@ export function useDeleteExpense() {
   });
 }
 
-/** Fetches a fresh signed Cloudinary URL for an expense's receipt on demand. */
-export function useExpenseReceiptUrl() {
+/** Reads the exact (UTF-8) file name from a Content-Disposition header. */
+function fileNameFromDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(header);
+  if (utf8) return decodeURIComponent(utf8[1]);
+  const plain = /filename="([^"]+)"/i.exec(header);
+  return plain ? plain[1] : null;
+}
+
+/**
+ * Downloads an expense's receipt file — in its uploaded format, with the
+ * server's suggested name ("<date> - <description>.<ext>").
+ */
+export function useExpenseReceiptFile() {
   return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await apiClient.get<{ url: string }>(`/payments/expenses/${id}/receipt-url`);
-      if (!res.success || !res.data) throw new Error(res.error?.message ?? 'Failed to get receipt URL');
-      return res.data.url;
+    mutationFn: async (id: string): Promise<{ blob: Blob; fileName: string }> => {
+      const token = localStorage.getItem('access_token');
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+      const response = await fetch(`${baseUrl}/payments/expenses/${id}/receipt`, {
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
+        throw new Error(data?.error?.message ?? 'Failed to load receipt');
+      }
+      const blob = await response.blob();
+      const fileName = fileNameFromDisposition(response.headers.get('Content-Disposition')) ?? 'receipt';
+      return { blob, fileName };
     },
   });
 }

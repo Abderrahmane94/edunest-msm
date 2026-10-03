@@ -999,6 +999,8 @@
       "empty": "Aucune dépense enregistrée",
       "notFound": "Dépense introuvable",
       "hasReceipt": "Reçu",
+      "viewReceipt": "Voir le reçu",
+      "downloadReceipt": "Télécharger",
       "detail": {
         "info": "Informations",
         "dangerZone": "Zone dangereuse",

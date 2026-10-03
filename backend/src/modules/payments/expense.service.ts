@@ -1,5 +1,6 @@
 import prisma from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
+import { extensionForUpload, extensionOf, mimeTypeForExtension, sniffExtension } from '../../utils/file-type';
 import type { CreateExpenseInput, UpdateExpenseInput } from './expense.schema';
 
 export class ExpenseServiceError extends Error {
@@ -109,7 +110,11 @@ class ExpenseService {
    * Upload a receipt for an expense. Stores the file in Cloudinary and saves
    * the public_id.
    */
-  async uploadReceipt(id: string, schoolId: string, file: Buffer) {
+  async uploadReceipt(
+    id: string,
+    schoolId: string,
+    file: { buffer: Buffer; originalName: string; mimeType: string },
+  ) {
     const expense = await prisma.expense.findFirst({
       where: { id, schoolId },
     });
@@ -122,10 +127,14 @@ class ExpenseService {
       await cloudinaryService.deleteFile(expense.receiptPublicId);
     }
 
-    const uploadResult = await cloudinaryService.uploadFile(file, {
+    // Keep the uploaded format: store the file under its real extension.
+    const extension = extensionForUpload(file.originalName, file.mimeType) ?? sniffExtension(file.buffer) ?? undefined;
+    const uploadResult = await cloudinaryService.uploadFile(file.buffer, {
       folder: `schools/${schoolId}/expenses`,
       resourceType: 'raw',
       accessMode: 'authenticated',
+      extension,
+      mimeType: file.mimeType,
     });
 
     return prisma.expense.update({
@@ -135,9 +144,14 @@ class ExpenseService {
   }
 
   /**
-   * Get a signed URL for an expense receipt (24-hour expiry).
+   * Fetches an expense's receipt with its real type and a readable name
+   * ("<date> - <description>.<ext>"). Receipts stored before extensions were
+   * kept get their type from the file's content.
    */
-  async getReceiptUrl(id: string, schoolId: string): Promise<string> {
+  async getReceiptFile(
+    id: string,
+    schoolId: string,
+  ): Promise<{ buffer: Buffer; fileName: string; mimeType: string }> {
     const expense = await prisma.expense.findFirst({
       where: { id, schoolId },
     });
@@ -150,7 +164,18 @@ class ExpenseService {
       throw new ExpenseServiceError('No receipt uploaded for this expense', 404);
     }
 
-    return cloudinaryService.generateSignedUrl(expense.receiptPublicId, 'document');
+    const buffer = await cloudinaryService.downloadFile(expense.receiptPublicId, 'document');
+    const extension = sniffExtension(buffer) ?? extensionOf(expense.receiptPublicId) ?? 'bin';
+
+    const date = expense.date.toISOString().slice(0, 10);
+    const description = expense.description
+      .replace(/[\\/:*?"<>|]/g, '-')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 80);
+    const fileName = `${date}${description ? ` - ${description}` : ''}.${extension}`;
+
+    return { buffer, fileName, mimeType: mimeTypeForExtension(extension) };
   }
 }
 

@@ -1004,6 +1004,8 @@
       "empty": "لا توجد مصروفات مسجلة",
       "notFound": "المصروف غير موجود",
       "hasReceipt": "إيصال",
+      "viewReceipt": "عرض الإيصال",
+      "downloadReceipt": "تنزيل",
       "detail": {
         "info": "المعلومات",
         "dangerZone": "منطقة الخطر",

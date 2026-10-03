@@ -44,12 +44,12 @@ router.post(
   expenseController.uploadReceipt,
 );
 
-// GET /expenses/:id/receipt-url — Get signed receipt URL (admin only)
+// GET /expenses/:id/receipt — Download the receipt file (admin only)
 router.get(
-  '/expenses/:id/receipt-url',
+  '/expenses/:id/receipt',
   requireAdmin,
   validateParams(idParamSchema),
-  expenseController.getReceiptUrl,
+  expenseController.getReceipt,
 );
 
 export default router;

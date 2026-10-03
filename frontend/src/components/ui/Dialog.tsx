@@ -63,34 +63,43 @@ export function DialogContent({ children, className }: DialogContentProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    // The layer scrolls when the panel (or a popup inside it, like a date
+    // picker) is taller than the window, instead of running off-screen.
+    <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Overlay */}
       <div
         className="fixed inset-0 bg-[var(--color-overlay)] backdrop-blur-[2px] animate-fade-in"
-        onClick={() => onOpenChange(false)}
         aria-hidden="true"
       />
 
-      {/* Panel */}
+      {/* Clicks on the empty area around the panel close the dialog */}
       <div
-        ref={contentRef}
-        role="dialog"
-        aria-modal="true"
-        className={cn(
-          'relative z-50 bg-card rounded-xl p-6 w-[90vw] max-w-[480px] shadow-level-4 animate-scale-in',
-          className
-        )}
+        className="relative flex min-h-full items-center justify-center p-4"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onOpenChange(false);
+        }}
       >
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-4 end-4"
-          onClick={() => onOpenChange(false)}
-          aria-label={t('common.closeDialog', 'Close dialog')}
+        {/* Panel */}
+        <div
+          ref={contentRef}
+          role="dialog"
+          aria-modal="true"
+          className={cn(
+            'relative z-50 bg-card rounded-xl p-6 w-[90vw] max-w-[480px] shadow-level-4 animate-scale-in',
+            className
+          )}
         >
-          <X className="w-4 h-4" />
-        </Button>
-        {children}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 end-4"
+            onClick={() => onOpenChange(false)}
+            aria-label={t('common.closeDialog', 'Close dialog')}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+          {children}
+        </div>
       </div>
     </div>
   );

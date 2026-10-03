@@ -165,11 +165,7 @@ export const paymentsController = {
         return;
       }
 
-      const filters: {
-        startDate?: Date;
-        endDate?: Date;
-        channel?: string;
-      } = {};
+      const filters: Parameters<typeof paymentService.listRecords>[1] = {};
 
       if (req.query.startDate) {
         filters.startDate = new Date(req.query.startDate as string);
@@ -187,6 +183,18 @@ export const paymentsController = {
           return;
         }
         filters.channel = channel;
+      }
+      if (typeof req.query.childId === 'string' && req.query.childId) {
+        filters.childId = req.query.childId;
+      }
+      if (req.query.type === 'payment' || req.query.type === 'correction') {
+        filters.type = req.query.type;
+      }
+      if (typeof req.query.feeId === 'string' && req.query.feeId) {
+        filters.feeId = req.query.feeId;
+      }
+      if (typeof req.query.receipt === 'string' && req.query.receipt.trim()) {
+        filters.receipt = req.query.receipt.trim().slice(0, 50);
       }
 
       const records = await paymentService.listRecords(effectiveBranchId, filters);

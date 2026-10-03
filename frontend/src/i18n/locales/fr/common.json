@@ -1975,7 +1975,16 @@
       "child": "Enfant",
       "allChannels": "Tous les canaux",
       "allChildren": "Tous les enfants",
-      "clear": "Réinitialiser"
+      "receipt": "N° de reçu",
+        "receiptPlaceholder": "ex. MAT-2026-000001",
+        "fee": "Frais",
+        "allFees": "Tous les frais",
+        "type": "Type",
+        "allTypes": "Paiements et corrections",
+        "typePayment": "Paiements",
+        "typeCorrection": "Corrections",
+        "summary": "{{count}} enregistrement(s) — total : {{amount}}",
+        "clear": "Réinitialiser"
     }
   },
   "parentPayments": {

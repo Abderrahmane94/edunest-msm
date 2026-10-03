@@ -1007,6 +1007,22 @@
       "viewReceipt": "عرض الإيصال",
       "downloadReceipt": "تنزيل",
       "edit": "تعديل",
+      "filters": {
+        "search": "بحث",
+        "searchPlaceholder": "الوصف…",
+        "category": "الفئة",
+        "allCategories": "كل الفئات",
+        "receipt": "الإيصال",
+        "allReceipts": "الكل",
+        "withReceipt": "مع إيصال",
+        "withoutReceipt": "بدون إيصال",
+        "from": "من",
+        "to": "إلى",
+        "invalidRange": "يجب أن يكون تاريخ النهاية بعد تاريخ البداية.",
+        "summary": "{{count}} مصروف — المجموع: {{amount}}",
+        "reset": "إعادة تعيين الفلاتر",
+        "noMatch": "لا توجد مصاريف تطابق هذه الفلاتر."
+      },
       "detail": {
         "info": "المعلومات",
         "dangerZone": "منطقة الخطر",

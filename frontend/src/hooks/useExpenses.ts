@@ -24,13 +24,42 @@ export interface CreateExpenseInput {
 
 export type UpdateExpenseInput = Partial<CreateExpenseInput>;
 
-export function useExpenses() {
+export interface ExpenseFilters {
+  category?: string;
+  /** YYYY-MM-DD, inclusive. */
+  from?: string;
+  /** YYYY-MM-DD, inclusive. */
+  to?: string;
+  search?: string;
+  hasReceipt?: 'true' | 'false';
+}
+
+export const EXPENSES_PAGE_SIZE = 20;
+
+/**
+ * One page of the school's expenses matching `filters`, with the number and
+ * total amount of all matching expenses (not just this page).
+ */
+export function useExpenses(filters: ExpenseFilters, page: number) {
   return useQuery({
-    queryKey: ['expenses'],
+    queryKey: ['expenses', filters, page],
     queryFn: async () => {
-      const res = await apiClient.get<Expense[]>('/payments/expenses');
-      return Array.isArray(res.data) ? res.data : [];
+      const params = new URLSearchParams({ page: String(page), pageSize: String(EXPENSES_PAGE_SIZE) });
+      for (const [key, value] of Object.entries(filters)) {
+        if (value) params.set(key, value);
+      }
+      const res = await apiClient.get<Expense[]>(`/payments/expenses?${params.toString()}`);
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load expenses');
+      const expenses = Array.isArray(res.data) ? res.data : [];
+      const meta = res.meta as { pagination?: { total?: number }; totalAmount?: string } | undefined;
+      return {
+        expenses,
+        total: meta?.pagination?.total ?? expenses.length,
+        totalAmount: meta?.totalAmount ?? '0.00',
+      };
     },
+    // Keep showing the current rows while the next page/filter loads.
+    placeholderData: (prev) => prev,
   });
 }
 

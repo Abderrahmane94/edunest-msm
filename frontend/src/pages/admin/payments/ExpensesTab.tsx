@@ -18,6 +18,8 @@ import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import {
   useExpenses,
+  EXPENSES_PAGE_SIZE,
+  type ExpenseFilters,
   useCreateExpense,
   useUpdateExpense,
   useDeleteExpense,
@@ -133,7 +135,31 @@ function useExpenseReceiptActions() {
 
 export function ExpensesTab() {
   const { t } = useTranslation();
-  const { data: expenses, isLoading } = useExpenses();
+  // ─── Filters ───
+  const [filters, setFilters] = React.useState<ExpenseFilters>({});
+  const [searchInput, setSearchInput] = React.useState('');
+  const [page, setPage] = React.useState(1);
+
+  function updateFilters(patch: Partial<ExpenseFilters>) {
+    setFilters((prev) => ({ ...prev, ...patch }));
+    setPage(1);
+  }
+
+  // Search as you type, without a request per keystroke.
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      const search = searchInput.trim() || undefined;
+      setFilters((prev) => (prev.search === search ? prev : { ...prev, search }));
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const hasFilters = Object.values(filters).some(Boolean);
+  const dateError = filters.from && filters.to && filters.from > filters.to;
+
+  const { data, isLoading } = useExpenses(dateError ? { ...filters, to: undefined } : filters, page);
+  const expenses = data?.expenses;
   const [showCreateDialog, setShowCreateDialog] = React.useState(false);
   const [editingExpense, setEditingExpense] = React.useState<Expense | null>(null);
   const receipt = useExpenseReceiptActions();
@@ -251,11 +277,88 @@ export function ExpensesTab() {
         </p>
       )}
 
+      {/* Filter bar */}
+      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <Input
+            label={t('finance.expenses.filters.search')}
+            placeholder={t('finance.expenses.filters.searchPlaceholder')}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          <FormSelect
+            label={t('finance.expenses.filters.category')}
+            name="expense-filter-category"
+            value={filters.category ?? ''}
+            onChange={(e) => updateFilters({ category: e.target.value || undefined })}
+            options={[
+              { value: '', label: t('finance.expenses.filters.allCategories') },
+              ...CATEGORY_KEYS.map((key) => ({ value: key, label: t(`finance.expenses.categories.${key}`) })),
+            ]}
+          />
+          <FormSelect
+            label={t('finance.expenses.filters.receipt')}
+            name="expense-filter-receipt"
+            value={filters.hasReceipt ?? ''}
+            onChange={(e) =>
+              updateFilters({ hasReceipt: (e.target.value || undefined) as ExpenseFilters['hasReceipt'] })
+            }
+            options={[
+              { value: '', label: t('finance.expenses.filters.allReceipts') },
+              { value: 'true', label: t('finance.expenses.filters.withReceipt') },
+              { value: 'false', label: t('finance.expenses.filters.withoutReceipt') },
+            ]}
+          />
+          <Input
+            type="date"
+            label={t('finance.expenses.filters.from')}
+            value={filters.from ?? ''}
+            onChange={(e) => updateFilters({ from: e.target.value || undefined })}
+          />
+          <Input
+            type="date"
+            label={t('finance.expenses.filters.to')}
+            value={filters.to ?? ''}
+            onChange={(e) => updateFilters({ to: e.target.value || undefined })}
+            min={filters.from}
+            error={dateError ? t('finance.expenses.filters.invalidRange') : undefined}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-caption text-text-secondary">
+            {t('finance.expenses.filters.summary', {
+              count: data?.total ?? 0,
+              amount: formatDZD(Number(data?.totalAmount ?? 0)),
+            })}
+          </p>
+          {hasFilters && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchInput('');
+                setFilters({});
+                setPage(1);
+              }}
+            >
+              <X className="w-4 h-4" />
+              {t('finance.expenses.filters.reset')}
+            </Button>
+          )}
+        </div>
+      </div>
+
       <DataTable<Expense>
         columns={columns}
         data={expenses ?? []}
         keyExtractor={(row) => row.id}
-        emptyMessage={t('finance.expenses.empty')}
+        page={page}
+        pageSize={EXPENSES_PAGE_SIZE}
+        total={data?.total ?? 0}
+        onPageChange={setPage}
+        emptyMessage={hasFilters ? t('finance.expenses.filters.noMatch') : t('finance.expenses.empty')}
       />
 
       <CreateExpenseDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />

@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileBarChart, Printer, FileDown, TrendingUp, TrendingDown, Scale } from 'lucide-react';
+import { FileBarChart, Printer, FileDown, TrendingUp, TrendingDown, Scale, CalendarRange } from 'lucide-react';
 import { formatDZD } from '@/lib/formatters';
 import { Button, Input } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
+import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
 import { useReconciliation, type ReconciliationReport } from '@/hooks/useReconciliation';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -109,6 +110,12 @@ export function ReconciliationPage() {
   const [rangeStart, setRangeStart] = React.useState(getFirstDayOfMonth());
   const [rangeEnd, setRangeEnd] = React.useState(getTodayString());
   const [dateError, setDateError] = React.useState('');
+
+  // "School year" shortcut: the whole active academic year.
+  const { data: activeYear } = useActiveAcademicYear();
+  const yearStart = activeYear?.start_date?.slice(0, 10);
+  const yearEnd = activeYear?.end_date?.slice(0, 10);
+  const isWholeYear = !!yearStart && rangeStart === yearStart && rangeEnd === yearEnd;
 
   // Validate date range
   React.useEffect(() => {
@@ -227,7 +234,23 @@ export function ReconciliationPage() {
       </p>
 
       {/* Filters */}
-      <div className="bg-card border border-border rounded-lg p-4 print:border-0 print:p-0">
+      <div className="bg-card border border-border rounded-lg p-4 space-y-3 print:border-0 print:p-0">
+        {yearStart && yearEnd && (
+          <div className="print:hidden">
+            <Button
+              type="button"
+              variant={isWholeYear ? 'primary' : 'secondary'}
+              size="sm"
+              onClick={() => {
+                setRangeStart(yearStart);
+                setRangeEnd(yearEnd);
+              }}
+            >
+              <CalendarRange className="w-4 h-4" />
+              {t('payments.reconciliation.schoolYear', { name: activeYear?.name ?? '' })}
+            </Button>
+          </div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Start date */}
           <FormField

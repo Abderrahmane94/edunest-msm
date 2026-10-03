@@ -1891,6 +1891,7 @@
       "export": "Exporter CSV",
       "empty": "Aucune donnée pour la plage de dates sélectionnée.",
       "printRange": "Période : {{start}} — {{end}}",
+      "schoolYear": "Année scolaire {{name}}",
       "balance": {
         "title": "Recettes − dépenses",
         "income": "Recettes (paiements)",

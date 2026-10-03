@@ -1633,6 +1633,21 @@
         "required": "Renseignez le libellé, le début et la fin de la période.",
         "endBeforeStart": "La fin de la période doit être le même jour ou après son début."
       },
+      "scope": {
+        "school": "Toute l'école",
+        "schoolHint": "Appliqué automatiquement à chaque nouvel élève. Pour les élèves déjà inscrits, utilisez « Assigner ».",
+        "classrooms": "Classes spécifiques",
+        "classroomsHint": "Proposé lors de l'inscription dans ces classes uniquement.",
+        "none": "Aucune (assignation manuelle)",
+        "noneHint": "Appliqué uniquement aux élèves auxquels vous l'assignez.",
+        "classroomsRequired": "Sélectionnez au moins une classe",
+        "confirmTitle": "Des élèves hors de la nouvelle portée ont des frais",
+        "confirmDescription": "Ce frais a déjà été facturé à des élèves d'autres classes.",
+        "confirmUnpaid": "{{children}} élève(s) d'autres classes ont {{count}} échéance(s) impayée(s) ({{amount}}).",
+        "confirmPaidKept": "{{count}} échéance(s) déjà payée(s) ou partiellement payée(s) seront conservées.",
+        "cancelCharges": "Annuler les impayés",
+        "keepCharges": "Conserver les frais"
+      },
       "fields": {
         "name": "Nom du frais",
         "scope": "Portée",
@@ -1684,7 +1699,9 @@
         "resultApplied": "Frais appliqué à {{count}} élève(s)",
         "resultSkipped": "{{count}} élève(s) avaient déjà ce frais (ignorés)",
         "resultYearEnded": "{{count}} élève(s) inscrit(s) dans une année scolaire terminée (ignorés)",
-        "resultEnrolled": "{{count}} élève(s) inscrit(s) automatiquement à la facturation"
+        "resultEnrolled": "{{count}} élève(s) inscrit(s) automatiquement à la facturation",
+        "andMore": "et {{count}} autre(s)",
+        "schoolScopeConflict": "Ce frais s'applique déjà à toute l'école. Pour le limiter à certaines classes, modifiez sa portée (bouton Modifier)."
       }
     },
     "branchCalendar": {

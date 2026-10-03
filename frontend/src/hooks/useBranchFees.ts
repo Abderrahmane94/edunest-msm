@@ -163,6 +163,8 @@ export interface AssignFeeInput {
 export interface AssignFeeResult {
   applied: number;
   skipped: number;
+  /** The children skipped for already having this fee. */
+  skippedChildren: { id: string; name: string }[];
   /** Enrollments whose academic year has already ended — nothing left to bill. */
   yearEnded: number;
   /** Children enrolled for billing on the fly by this assignment. */
@@ -192,6 +194,60 @@ export function useAssignFee(branchId: string) {
       // Assigning to the school or to classrooms changes the fee's scope.
       qc.invalidateQueries({ queryKey: ['branch-fees', branchId] });
       qc.invalidateQueries({ queryKey: ['classroom-fees'] });
+    },
+  });
+}
+
+/** Who a fee is for: the whole school, specific classrooms, or nobody (assigned by hand). */
+export type FeeScope = 'school' | 'classrooms' | 'none';
+
+export function feeScopeOf(fee: Pick<BranchFee, 'appliesToSchool' | 'classrooms'>): FeeScope {
+  if (fee.appliesToSchool) return 'school';
+  return fee.classrooms?.length ? 'classrooms' : 'none';
+}
+
+export interface ChangeFeeScopeInput {
+  feeId: string;
+  scope: FeeScope;
+  classroomIds?: string[];
+  /** Cancel unpaid charges of children left outside the new scope. */
+  cancelOutOfScope?: boolean;
+  /** Preview only: report what would be cancelled without changing anything. */
+  dryRun?: boolean;
+}
+
+export interface ChangeFeeScopeResult {
+  dryRun: boolean;
+  childrenAffected: number;
+  periodsToCancel: number;
+  amountToCancel: string;
+  paidPeriodsKept: number;
+  cancelled: number;
+}
+
+/**
+ * Change a fee's scope (with dryRun, preview the out-of-scope charges it
+ * would cancel).
+ */
+export function useChangeFeeScope(branchId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ feeId, ...data }: ChangeFeeScopeInput): Promise<ChangeFeeScopeResult> => {
+      const res = await apiClient.put<unknown>(`/payments/fees/${feeId}/scope`, data);
+      if (!res.success) {
+        throw new Error(res.error?.message ?? 'Failed to change fee scope');
+      }
+      return res.data as ChangeFeeScopeResult;
+    },
+    onSuccess: (result, { feeId }) => {
+      if (result.dryRun) return;
+      qc.invalidateQueries({ queryKey: ['branch-fees', branchId] });
+      qc.invalidateQueries({ queryKey: ['fee-classrooms', feeId] });
+      qc.invalidateQueries({ queryKey: ['classroom-fees'] });
+      if (result.cancelled > 0) {
+        qc.invalidateQueries({ queryKey: ['child-billing-periods'] });
+        qc.invalidateQueries({ queryKey: ['enrollments'] });
+      }
     },
   });
 }

@@ -29,9 +29,13 @@ import {
   useUpdateBranchFee,
   useDeleteBranchFee,
   useAssignFee,
+  useChangeFeeScope,
+  feeScopeOf,
   type BranchFee,
   type BillingCycle,
   type AssignFeeResult,
+  type FeeScope,
+  type ChangeFeeScopeResult,
 } from '@/hooks/useBranchFees';
 
 // ─── New Period (inline, inside the fee dialog) ──────────────────────────────
@@ -174,7 +178,7 @@ function FeeDialog({
   branchId: string;
   editingFee: BranchFee | null;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const createFee = useCreateBranchFee(branchId);
   const updateFee = useUpdateBranchFee(branchId);
   const { data: activeAcademicYear } = useActiveAcademicYear();
@@ -218,6 +222,14 @@ function FeeDialog({
   const [showInWizard, setShowInWizard] = React.useState(true);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
+  const { data: classrooms } = useClassrooms();
+  const changeScope = useChangeFeeScope(branchId);
+  const [scope, setScope] = React.useState<FeeScope>('none');
+  const [scopeClassroomIds, setScopeClassroomIds] = React.useState<string[]>([]);
+  // Set when narrowing the scope leaves charges outside it: the dialog then
+  // asks whether to cancel them before saving anything.
+  const [scopePreview, setScopePreview] = React.useState<ChangeFeeScopeResult | null>(null);
+
   React.useEffect(() => {
     if (editingFee) {
       setName(editingFee.name);
@@ -227,6 +239,8 @@ function FeeDialog({
       setBillingDueDay(String(editingFee.billingDueDay ?? 1));
       setGracePeriodDays(String(editingFee.gracePeriodDays ?? 5));
       setShowInWizard(editingFee.showInWizard);
+      setScope(feeScopeOf(editingFee));
+      setScopeClassroomIds((editingFee.classrooms ?? []).map((c) => c.id));
     } else {
       setName('');
       setAmount('');
@@ -236,11 +250,25 @@ function FeeDialog({
       setGracePeriodDays('5');
       setShowInWizard(true);
       setSelectedPeriodIds([]);
+      setScope('none');
+      setScopeClassroomIds([]);
     }
     setCreatedFeeId(null);
+    setScopePreview(null);
     setErrors({});
     if (!open) periodsInitializedFor.current = null;
   }, [editingFee, open]);
+
+  function toggleScopeClassroom(id: string) {
+    setScopeClassroomIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+  }
+
+  const linkedIds = new Set((editingFee?.classrooms ?? []).map((c) => c.id));
+  const scopeChanged = editingFee
+    ? scope !== feeScopeOf(editingFee) ||
+      (scope === 'classrooms' &&
+        (scopeClassroomIds.length !== linkedIds.size || scopeClassroomIds.some((id) => !linkedIds.has(id))))
+    : scope !== 'none';
 
   function validate(): boolean {
     const newErrors: Record<string, string> = {};
@@ -261,6 +289,9 @@ function FeeDialog({
         newErrors.gracePeriodDays = t('payments.branchConfig.gracePeriodHelper');
       }
     }
+    if (scope === 'classrooms' && scopeClassroomIds.length === 0) {
+      newErrors.scope = t('payments.fees.scope.classroomsRequired');
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -269,6 +300,30 @@ function FeeDialog({
     e.preventDefault();
     if (!validate()) return;
 
+    // Narrowing an existing fee to specific classrooms can leave children
+    // outside it with charges: preview them and ask before saving anything.
+    if (editingFee && scopeChanged && scope === 'classrooms') {
+      try {
+        const preview = await changeScope.mutateAsync({
+          feeId: editingFee.id,
+          scope,
+          classroomIds: scopeClassroomIds,
+          dryRun: true,
+        });
+        if (preview.periodsToCancel > 0 || preview.paidPeriodsKept > 0) {
+          setScopePreview(preview);
+          return;
+        }
+      } catch (err) {
+        setErrors((prev) => ({ ...prev, form: err instanceof Error ? err.message : t('common.error') }));
+        return;
+      }
+    }
+
+    await save(false);
+  }
+
+  async function save(cancelOutOfScope: boolean) {
     const cycleFields = isRecurring
       ? {
           billingCycle,
@@ -289,6 +344,14 @@ function FeeDialog({
         if (periodsSectionActive && periodsYearId) {
           await setFeePeriods.mutateAsync({ academicYearId: periodsYearId, periodIds: selectedPeriodIds });
         }
+        if (scopeChanged) {
+          await changeScope.mutateAsync({
+            feeId: editingFee.id,
+            scope,
+            classroomIds: scope === 'classrooms' ? scopeClassroomIds : undefined,
+            cancelOutOfScope,
+          });
+        }
       } else {
         let feeId = createdFeeId;
         if (!feeId) {
@@ -304,9 +367,17 @@ function FeeDialog({
         if (periodsSectionActive && periodsYearId && selectedPeriodIds.length > 0) {
           await setFeePeriods.mutateAsync({ feeId, academicYearId: periodsYearId, periodIds: selectedPeriodIds });
         }
+        if (scope !== 'none') {
+          await changeScope.mutateAsync({
+            feeId,
+            scope,
+            classroomIds: scope === 'classrooms' ? scopeClassroomIds : undefined,
+          });
+        }
       }
       onOpenChange(false);
     } catch (err) {
+      setScopePreview(null);
       setErrors((prev) => ({
         ...prev,
         form: err instanceof Error ? err.message : t('common.error'),
@@ -321,12 +392,63 @@ function FeeDialog({
     createFee.isPending ||
     updateFee.isPending ||
     setFeePeriods.isPending ||
+    changeScope.isPending ||
     (periodsSectionActive && periodOptionsLoading);
 
   const billingCycleOptions = [
     { value: 'monthly', label: t('payments.branchConfig.cycleMonthly') },
     { value: 'custom', label: t('payments.branchConfig.cycleCustom') },
   ];
+
+  const scopeOptions: { value: FeeScope; label: string; hint: string }[] = [
+    { value: 'school', label: t('payments.fees.scope.school'), hint: t('payments.fees.scope.schoolHint') },
+    { value: 'classrooms', label: t('payments.fees.scope.classrooms'), hint: t('payments.fees.scope.classroomsHint') },
+    { value: 'none', label: t('payments.fees.scope.none'), hint: t('payments.fees.scope.noneHint') },
+  ];
+
+  // Confirmation step: narrowing the scope leaves charges outside it.
+  if (scopePreview) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>{t('payments.fees.scope.confirmTitle')}</DialogTitle>
+            <DialogDescription>{t('payments.fees.scope.confirmDescription')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 bg-subtle rounded-lg p-4">
+            {scopePreview.periodsToCancel > 0 && (
+              <p className="text-body text-foreground">
+                {t('payments.fees.scope.confirmUnpaid', {
+                  children: scopePreview.childrenAffected,
+                  count: scopePreview.periodsToCancel,
+                  amount: formatDZD(Number(scopePreview.amountToCancel), i18n.language),
+                })}
+              </p>
+            )}
+            {scopePreview.paidPeriodsKept > 0 && (
+              <p className="text-caption text-text-secondary">
+                {t('payments.fees.scope.confirmPaidKept', { count: scopePreview.paidPeriodsKept })}
+              </p>
+            )}
+          </div>
+          {errors.form && <p className="text-body text-danger">{errors.form}</p>}
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setScopePreview(null)} disabled={isPending}>
+              {t('common.back')}
+            </Button>
+            <Button variant="secondary" onClick={() => save(false)} disabled={isPending}>
+              {t('payments.fees.scope.keepCharges')}
+            </Button>
+            {scopePreview.periodsToCancel > 0 && (
+              <Button variant="danger" onClick={() => save(true)} disabled={isPending}>
+                {isPending ? t('common.loading') : t('payments.fees.scope.cancelCharges')}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -510,6 +632,51 @@ function FeeDialog({
             {t('payments.fees.fields.showInWizardHint')}
           </p>
 
+          <fieldset className="space-y-2">
+            <legend className="text-label font-medium text-foreground mb-1">
+              {t('payments.fees.fields.scope')}
+            </legend>
+            {scopeOptions.map((opt) => (
+              <label key={opt.value} className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="fee-scope"
+                  value={opt.value}
+                  checked={scope === opt.value}
+                  onChange={() => setScope(opt.value)}
+                  className="w-4 h-4 mt-0.5 border-border text-primary focus:ring-primary"
+                />
+                <span>
+                  <span className="block text-body text-foreground">{opt.label}</span>
+                  <span className="block text-caption text-text-secondary">{opt.hint}</span>
+                </span>
+              </label>
+            ))}
+            {scope === 'classrooms' && (
+              <div className="ps-6 space-y-1">
+                <div className="border border-border rounded-md divide-y divide-border max-h-40 overflow-y-auto">
+                  {(classrooms ?? []).map((c) => (
+                    <label key={c.id} className="flex items-center gap-2 p-2 cursor-pointer hover:bg-hover">
+                      <input
+                        type="checkbox"
+                        checked={scopeClassroomIds.includes(c.id)}
+                        onChange={() => toggleScopeClassroom(c.id)}
+                        className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                      />
+                      <span className="text-caption text-foreground">{c.name}</span>
+                    </label>
+                  ))}
+                  {(classrooms ?? []).length === 0 && (
+                    <p className="text-caption text-text-secondary p-2">
+                      {t('payments.fees.fields.noClassroomsAvailable')}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            {errors.scope && <p className="text-caption text-danger">{errors.scope}</p>}
+          </fieldset>
+
           {errors.form && (
             <p className="text-body text-danger">{errors.form}</p>
           )}
@@ -628,7 +795,7 @@ function ViewFeeDialog({
           ) : feeClassroomsLoading ? (
             <div className="animate-pulse h-12 bg-subtle rounded-md" />
           ) : linkedClassrooms.length === 0 ? (
-            <p className="text-caption text-text-secondary">{t('payments.fees.view.noLinkedClassrooms')}</p>
+            <p className="text-caption text-text-secondary">{t('payments.fees.scope.noneHint')}</p>
           ) : (
             <ul className="border border-border rounded-md divide-y divide-border max-h-48 overflow-y-auto">
               {linkedClassrooms.map((classroom) => (
@@ -723,10 +890,14 @@ function AssignFeeDialog({
     { value: 'children', label: t('payments.fees.assign.targetChildren') },
   ];
 
+  // A whole-school fee already reaches every classroom; narrowing it is a
+  // scope change made from the edit dialog.
+  const classroomsBlocked = targetType === 'classrooms' && !!fee?.appliesToSchool;
+
   const canSubmit =
     targetType === 'school' ||
     (targetType === 'children' && selectedChildIds.length > 0) ||
-    (targetType === 'classrooms' && selectedClassroomIds.length > 0);
+    (targetType === 'classrooms' && selectedClassroomIds.length > 0 && !classroomsBlocked);
 
   // Success view
   if (result) {
@@ -741,9 +912,16 @@ function AssignFeeDialog({
               {t('payments.fees.assign.resultApplied', { count: result.applied })}
             </p>
             {result.skipped > 0 && (
-              <p className="text-caption text-text-secondary">
-                {t('payments.fees.assign.resultSkipped', { count: result.skipped })}
-              </p>
+              <div className="text-caption text-text-secondary">
+                <p>{t('payments.fees.assign.resultSkipped', { count: result.skipped })}</p>
+                {result.skippedChildren?.length > 0 && (
+                  <p className="text-text-disabled">
+                    {result.skippedChildren.slice(0, 10).map((c) => c.name).join(', ')}
+                    {result.skippedChildren.length > 10 &&
+                      ` ${t('payments.fees.assign.andMore', { count: result.skippedChildren.length - 10 })}`}
+                  </p>
+                )}
+              </div>
             )}
             {result.enrolled > 0 && (
               <p className="text-caption text-text-secondary">
@@ -822,7 +1000,13 @@ function AssignFeeDialog({
             </div>
           )}
 
-          {targetType === 'classrooms' && (
+          {classroomsBlocked && (
+            <p className="text-body text-warning bg-subtle rounded-lg p-3">
+              {t('payments.fees.assign.schoolScopeConflict')}
+            </p>
+          )}
+
+          {targetType === 'classrooms' && !classroomsBlocked && (
             <div className="space-y-2">
               <label className="text-label font-medium text-foreground">
                 {t('payments.fees.assign.selectClassrooms')}

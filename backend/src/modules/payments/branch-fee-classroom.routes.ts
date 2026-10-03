@@ -10,6 +10,9 @@ router.get('/fees/:branchFeeId/classrooms', requireAdmin, branchFeeClassroomCont
 // PUT /api/payments/fees/:branchFeeId/classrooms — Replace this fee's classroom links
 router.put('/fees/:branchFeeId/classrooms', requireAdmin, branchFeeClassroomController.setClassrooms);
 
+// PUT /api/payments/fees/:branchFeeId/scope — Change who the fee is for (dryRun to preview)
+router.put('/fees/:branchFeeId/scope', requireAdmin, branchFeeClassroomController.changeScope);
+
 // GET /api/payments/classrooms/:classroomId/fees — Fees applicable to a classroom
 router.get('/classrooms/:classroomId/fees', requireAdmin, branchFeeClassroomController.listForClassroom);
 

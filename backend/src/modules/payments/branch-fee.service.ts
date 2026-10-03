@@ -8,6 +8,26 @@ type BillingCycle = 'monthly' | 'custom';
 /** The interactive-transaction client type produced by our extended `prisma`. */
 type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
+/**
+ * Who a fee is for. Exactly one applies at a time: the whole school (applied
+ * automatically to every new enrollment), specific classrooms (linked via
+ * BranchFeeClassroom), or none (assigned by hand only).
+ */
+export type FeeScope = 'school' | 'classrooms' | 'none';
+
+export interface ChangeScopeResult {
+  dryRun: boolean;
+  /** Out-of-scope children holding unpaid charges of this fee. */
+  childrenAffected: number;
+  /** Unpaid charges of out-of-scope children — cancellable. */
+  periodsToCancel: number;
+  amountToCancel: string;
+  /** Charges of out-of-scope children kept because a payment is allocated to them. */
+  paidPeriodsKept: number;
+  /** Charges actually cancelled (0 for a dry run or when cancellation wasn't asked). */
+  cancelled: number;
+}
+
 export interface FeeCycleInput {
   billingCycle?: BillingCycle | null;
   billingDueDay?: number | null;
@@ -225,9 +245,136 @@ class BranchFeeService {
       updateData.gracePeriodDays = merged.gracePeriodDays ?? null;
     }
 
-    return prisma.branchFee.update({
-      where: { id },
-      data: updateData,
+    return prisma.$transaction(async (tx) => {
+      // A whole-school fee has no classroom links (one scope at a time).
+      if (data.appliesToSchool === true) {
+        await tx.branchFeeClassroom.deleteMany({ where: { branchFeeId: id } });
+      }
+      return tx.branchFee.update({
+        where: { id },
+        data: updateData,
+      });
+    });
+  }
+
+  /**
+   * Changes who a fee is for, replacing its whole-school flag and classroom
+   * links together so only one scope ever applies. Narrowing to specific
+   * classrooms leaves children of other classrooms out of scope: their unpaid
+   * charges of this fee for the current school year are reported, and
+   * cancelled when `cancelOutOfScope` is set. Charges with a payment allocated
+   * are never touched. 'school' covers everyone, and 'none' only stops
+   * automatic application, so neither leaves anyone out — charges assigned by
+   * hand are kept. With `dryRun`, nothing is changed: the result previews what
+   * the change would cancel.
+   */
+  async changeScope(
+    branchFeeId: string,
+    input: { scope: FeeScope; classroomIds?: string[]; cancelOutOfScope?: boolean; dryRun?: boolean },
+  ): Promise<ChangeScopeResult> {
+    if (!['school', 'classrooms', 'none'].includes(input.scope)) {
+      throw new BranchFeeServiceError('scope must be one of: school, classrooms, none', 400, 'VALIDATION_ERROR');
+    }
+
+    const classroomIds = input.scope === 'classrooms' ? [...new Set(input.classroomIds ?? [])] : [];
+    if (input.scope === 'classrooms' && classroomIds.length === 0) {
+      throw new BranchFeeServiceError(
+        'At least one classroom is required for the "classrooms" scope',
+        400,
+        'VALIDATION_ERROR',
+      );
+    }
+
+    return await prisma.$transaction(async (tx) => {
+      const fee = await tx.branchFee.findUnique({
+        where: { id: branchFeeId },
+        include: { branch: { select: { schoolId: true } } },
+      });
+      if (!fee) {
+        throw new BranchFeeServiceError('Fee not found', 404, 'NOT_FOUND');
+      }
+
+      if (classroomIds.length > 0) {
+        const valid = await tx.classroom.findMany({
+          where: { id: { in: classroomIds }, schoolId: fee.branch.schoolId, deletedAt: null },
+          select: { id: true },
+        });
+        if (valid.length !== classroomIds.length) {
+          throw new BranchFeeServiceError(
+            "One or more selected classrooms do not belong to this fee's school",
+            400,
+            'VALIDATION_ERROR',
+          );
+        }
+      }
+
+      let outOfScope: {
+        id: string;
+        amountDue: Prisma.Decimal;
+        enrollment: { childId: string };
+        paymentAllocations: { id: string }[];
+      }[] = [];
+      if (input.scope === 'classrooms') {
+        const inScope = await tx.classroomEnrollment.findMany({
+          where: { classroomId: { in: classroomIds } },
+          select: { childId: true },
+        });
+        const inScopeChildIds = [...new Set(inScope.map((ce) => ce.childId))];
+        // Current school year only: earlier years' charges are settled history.
+        outOfScope = await tx.billingPeriod.findMany({
+          where: {
+            branchFeeId,
+            cancelledAt: null,
+            enrollment: { childId: { notIn: inScopeChildIds }, academicYear: { isActive: true } },
+          },
+          select: {
+            id: true,
+            amountDue: true,
+            enrollment: { select: { childId: true } },
+            paymentAllocations: { select: { id: true }, take: 1 },
+          },
+        });
+      }
+
+      const cancellable = outOfScope.filter((p) => p.paymentAllocations.length === 0);
+      const summary = {
+        childrenAffected: new Set(cancellable.map((p) => p.enrollment.childId)).size,
+        periodsToCancel: cancellable.length,
+        amountToCancel: cancellable
+          .reduce((sum, p) => sum.plus(p.amountDue), new Prisma.Decimal(0))
+          .toFixed(2),
+        paidPeriodsKept: outOfScope.length - cancellable.length,
+      };
+
+      if (input.dryRun) {
+        return { ...summary, dryRun: true, cancelled: 0 };
+      }
+
+      await tx.branchFee.update({
+        where: { id: branchFeeId },
+        data: { appliesToSchool: input.scope === 'school' },
+      });
+      await tx.branchFeeClassroom.deleteMany({ where: { branchFeeId } });
+      if (classroomIds.length > 0) {
+        await tx.branchFeeClassroom.createMany({
+          data: classroomIds.map((classroomId) => ({ branchFeeId, classroomId })),
+        });
+      }
+
+      let cancelled = 0;
+      if (input.cancelOutOfScope && cancellable.length > 0) {
+        const res = await tx.billingPeriod.updateMany({
+          where: {
+            id: { in: cancellable.map((p) => p.id) },
+            cancelledAt: null,
+            paymentAllocations: { none: {} },
+          },
+          data: { cancelledAt: new Date() },
+        });
+        cancelled = res.count;
+      }
+
+      return { ...summary, dryRun: false, cancelled };
     });
   }
 
@@ -334,10 +481,24 @@ class BranchFeeService {
 
       const branch = await tx.branch.findUnique({ where: { id: branchId } });
 
+      // Classroom links on a whole-school fee would have no effect — it already
+      // reaches every classroom. Narrowing it is a scope change (changeScope).
+      if (target.type === 'classrooms' && fee.appliesToSchool) {
+        throw new BranchFeeServiceError(
+          'This fee applies to the whole school. Change its scope to specific classrooms first.',
+          409,
+          'SCOPE_CONFLICT',
+        );
+      }
+
       // Assigning to the whole school also scopes the fee to it, so students
       // enrolled later get it automatically (see applySchoolFeesToEnrollment).
-      if (target.type === 'school' && !fee.appliesToSchool) {
-        await tx.branchFee.update({ where: { id: fee.id }, data: { appliesToSchool: true } });
+      // One scope at a time: any classroom links are replaced.
+      if (target.type === 'school') {
+        if (!fee.appliesToSchool) {
+          await tx.branchFee.update({ where: { id: fee.id }, data: { appliesToSchool: true } });
+        }
+        await tx.branchFeeClassroom.deleteMany({ where: { branchFeeId: fee.id } });
       }
 
       // Likewise, assigning to classrooms links the fee to them, so it shows
@@ -369,7 +530,7 @@ class BranchFeeService {
       }
 
       if (childIds.length === 0) {
-        return { applied: 0, skipped: 0, yearEnded: 0, enrolled: 0, total: 0 };
+        return { applied: 0, skipped: 0, skippedChildren: [], yearEnded: 0, enrolled: 0, total: 0 };
       }
 
       // Children not yet enrolled for billing in the current school year get
@@ -393,8 +554,27 @@ class BranchFeeService {
       const alreadyApplied = new Set(existingPeriods.map((p) => p.enrollmentId));
       const toApply = enrollmentIds.filter((id) => !alreadyApplied.has(id));
 
+      // Name the children skipped for already having the fee, so the result
+      // says who rather than just how many.
+      const skippedChildren =
+        alreadyApplied.size > 0
+          ? (
+              await tx.enrollment.findMany({
+                where: { id: { in: [...alreadyApplied] } },
+                select: { child: { select: { id: true, firstName: true, lastName: true } } },
+              })
+            ).map(({ child }) => ({ id: child.id, name: `${child.firstName} ${child.lastName}` }))
+          : [];
+
       if (toApply.length === 0) {
-        return { applied: 0, skipped: alreadyApplied.size, yearEnded: 0, enrolled, total: enrollmentIds.length };
+        return {
+          applied: 0,
+          skipped: alreadyApplied.size,
+          skippedChildren,
+          yearEnded: 0,
+          enrolled,
+          total: enrollmentIds.length,
+        };
       }
 
       let applied = toApply.length;
@@ -443,6 +623,7 @@ class BranchFeeService {
         applied,
         // Already had this fee.
         skipped: alreadyApplied.size,
+        skippedChildren,
         // Academic year already ended — nothing left to bill.
         yearEnded: toApply.length - applied,
         // Enrolled for billing on the fly by this assignment.

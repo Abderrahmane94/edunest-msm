@@ -8,10 +8,17 @@ vi.mock('../../lib/prisma', () => ({
     enrollment: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn() },
     academicYear: { findFirst: vi.fn() },
     child: { findMany: vi.fn() },
-    billingPeriod: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), createMany: vi.fn() },
+    billingPeriod: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      createMany: vi.fn(),
+      updateMany: vi.fn(),
+    },
     branchCalendar: { findMany: vi.fn() },
+    classroom: { findMany: vi.fn() },
     classroomEnrollment: { findMany: vi.fn() },
-    branchFeeClassroom: { createMany: vi.fn() },
+    branchFeeClassroom: { createMany: vi.fn(), deleteMany: vi.fn() },
     $transaction: vi.fn(),
   },
 }));
@@ -39,10 +46,12 @@ const mockPrisma = prisma as unknown as {
     findMany: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     createMany: ReturnType<typeof vi.fn>;
+    updateMany: ReturnType<typeof vi.fn>;
   };
   branchCalendar: { findMany: ReturnType<typeof vi.fn> };
+  classroom: { findMany: ReturnType<typeof vi.fn> };
   classroomEnrollment: { findMany: ReturnType<typeof vi.fn> };
-  branchFeeClassroom: { createMany: ReturnType<typeof vi.fn> };
+  branchFeeClassroom: { createMany: ReturnType<typeof vi.fn>; deleteMany: ReturnType<typeof vi.fn> };
   $transaction: ReturnType<typeof vi.fn>;
 };
 
@@ -256,7 +265,7 @@ describe('BranchFeeService', () => {
       });
       // The newly enrolled child gets whole-school fees, except the one being assigned.
       expect(mockPrisma.branchFee.findMany.mock.calls[0][0].where.id).toEqual({ notIn: ['fee-1'] });
-      expect(result).toEqual({ applied: 2, skipped: 0, yearEnded: 0, enrolled: 1, total: 2 });
+      expect(result).toEqual({ applied: 2, skipped: 0, skippedChildren: [], yearEnded: 0, enrolled: 1, total: 2 });
       const inserted = mockPrisma.billingPeriod.createMany.mock.calls[0][0].data as Array<{ enrollmentId: string }>;
       expect(inserted.map((p) => p.enrollmentId)).toEqual(['enr-1', 'enr-new']);
     });
@@ -296,7 +305,7 @@ describe('BranchFeeService', () => {
         childIds: ['c1'],
       });
 
-      expect(result).toEqual({ applied: 0, skipped: 0, yearEnded: 1, enrolled: 0, total: 1 });
+      expect(result).toEqual({ applied: 0, skipped: 0, skippedChildren: [], yearEnded: 1, enrolled: 0, total: 1 });
       expect(mockPrisma.billingPeriod.createMany).not.toHaveBeenCalled();
     });
 
@@ -314,6 +323,34 @@ describe('BranchFeeService', () => {
         where: { schoolId: 'school-1', isActive: true },
         select: { id: true },
       });
+      // One scope at a time: whole-school replaces any classroom links.
+      expect(mockPrisma.branchFeeClassroom.deleteMany).toHaveBeenCalledWith({ where: { branchFeeId: 'fee-1' } });
+    });
+
+    it('rejects assigning a whole-school fee to classrooms instead of silently linking them', async () => {
+      mockPrisma.branchFee.findUnique.mockResolvedValue({ ...oneShotFee, appliesToSchool: true });
+
+      await expect(
+        branchFeeService.applyFeeBatch('fee-1', 'branch-1', { type: 'classrooms', classroomIds: ['class-1'] }),
+      ).rejects.toMatchObject({ statusCode: 409, code: 'SCOPE_CONFLICT' });
+      expect(mockPrisma.branchFeeClassroom.createMany).not.toHaveBeenCalled();
+      expect(mockPrisma.billingPeriod.createMany).not.toHaveBeenCalled();
+    });
+
+    it('names the children skipped for already having the fee', async () => {
+      mockPrisma.branchFee.findUnique.mockResolvedValue(oneShotFee);
+      mockPrisma.enrollment.findMany
+        .mockResolvedValueOnce([{ childId: 'c1' }, { childId: 'c2' }]) // already enrolled this year
+        .mockResolvedValueOnce([{ id: 'enr-1' }, { id: 'enr-2' }])
+        .mockResolvedValueOnce([{ child: { id: 'c1', firstName: 'Amel', lastName: 'B' } }]);
+      mockPrisma.billingPeriod.findMany.mockResolvedValue([{ enrollmentId: 'enr-1' }]);
+
+      const result = await branchFeeService.applyFeeBatch('fee-1', 'branch-1', {
+        type: 'children',
+        childIds: ['c1', 'c2'],
+      });
+
+      expect(result).toMatchObject({ applied: 1, skipped: 1, skippedChildren: [{ id: 'c1', name: 'Amel B' }] });
     });
 
     it('links the fee to the classrooms it is assigned to', async () => {
@@ -342,6 +379,146 @@ describe('BranchFeeService', () => {
       await branchFeeService.applyFeeBatch('fee-1', 'branch-1', { type: 'children', childIds: ['c1'] });
 
       expect(mockPrisma.branchFee.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('update', () => {
+    it('drops classroom links when the fee is scoped to the whole school', async () => {
+      mockPrisma.branchFee.findUnique.mockResolvedValue({ id: 'fee-1' });
+      mockPrisma.branchFee.update.mockResolvedValue({ id: 'fee-1' });
+
+      await branchFeeService.update('fee-1', { appliesToSchool: true });
+
+      expect(mockPrisma.branchFeeClassroom.deleteMany).toHaveBeenCalledWith({ where: { branchFeeId: 'fee-1' } });
+      expect(mockPrisma.branchFee.update).toHaveBeenCalledWith({
+        where: { id: 'fee-1' },
+        data: { appliesToSchool: true },
+      });
+    });
+  });
+
+  describe('changeScope', () => {
+    const fee = { id: 'fee-1', appliesToSchool: true, branch: { schoolId: 'school-1' } };
+    // Two out-of-scope children (Class B): c3 owes two unpaid charges, c4 one
+    // that is already paid.
+    const outOfScopePeriods = [
+      { id: 'p1', amountDue: new Prisma.Decimal(3000), enrollment: { childId: 'c3' }, paymentAllocations: [] },
+      { id: 'p2', amountDue: new Prisma.Decimal(1500.5), enrollment: { childId: 'c3' }, paymentAllocations: [] },
+      { id: 'p3', amountDue: new Prisma.Decimal(3000), enrollment: { childId: 'c4' }, paymentAllocations: [{ id: 'a1' }] },
+    ];
+
+    beforeEach(() => {
+      mockPrisma.branchFee.findUnique.mockResolvedValue(fee);
+      mockPrisma.classroom.findMany.mockResolvedValue([{ id: 'class-a' }]);
+      mockPrisma.classroomEnrollment.findMany.mockResolvedValue([{ childId: 'c1' }, { childId: 'c2' }]);
+      mockPrisma.billingPeriod.findMany.mockResolvedValue(outOfScopePeriods);
+      mockPrisma.billingPeriod.updateMany.mockResolvedValue({ count: 2 });
+    });
+
+    it('previews the unpaid out-of-scope charges on a dry run without changing anything', async () => {
+      const result = await branchFeeService.changeScope('fee-1', {
+        scope: 'classrooms',
+        classroomIds: ['class-a'],
+        dryRun: true,
+      });
+
+      expect(result).toEqual({
+        dryRun: true,
+        childrenAffected: 1,
+        periodsToCancel: 2,
+        amountToCancel: '4500.50',
+        paidPeriodsKept: 1,
+        cancelled: 0,
+      });
+      // Out of scope = not in the target classrooms, current school year only.
+      expect(mockPrisma.billingPeriod.findMany.mock.calls[0][0].where).toEqual({
+        branchFeeId: 'fee-1',
+        cancelledAt: null,
+        enrollment: { childId: { notIn: ['c1', 'c2'] }, academicYear: { isActive: true } },
+      });
+      expect(mockPrisma.branchFee.update).not.toHaveBeenCalled();
+      expect(mockPrisma.branchFeeClassroom.deleteMany).not.toHaveBeenCalled();
+      expect(mockPrisma.billingPeriod.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('narrows the scope and cancels only unpaid out-of-scope charges when asked', async () => {
+      const result = await branchFeeService.changeScope('fee-1', {
+        scope: 'classrooms',
+        classroomIds: ['class-a'],
+        cancelOutOfScope: true,
+      });
+
+      expect(mockPrisma.branchFee.update).toHaveBeenCalledWith({
+        where: { id: 'fee-1' },
+        data: { appliesToSchool: false },
+      });
+      expect(mockPrisma.branchFeeClassroom.deleteMany).toHaveBeenCalledWith({ where: { branchFeeId: 'fee-1' } });
+      expect(mockPrisma.branchFeeClassroom.createMany).toHaveBeenCalledWith({
+        data: [{ branchFeeId: 'fee-1', classroomId: 'class-a' }],
+      });
+      expect(mockPrisma.billingPeriod.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['p1', 'p2'] }, cancelledAt: null, paymentAllocations: { none: {} } },
+        data: { cancelledAt: expect.any(Date) },
+      });
+      expect(result).toMatchObject({ dryRun: false, cancelled: 2, paidPeriodsKept: 1 });
+    });
+
+    it('keeps every charge when narrowing without cancellation', async () => {
+      const result = await branchFeeService.changeScope('fee-1', {
+        scope: 'classrooms',
+        classroomIds: ['class-a'],
+      });
+
+      expect(mockPrisma.branchFee.update).toHaveBeenCalled();
+      expect(mockPrisma.billingPeriod.updateMany).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ periodsToCancel: 2, cancelled: 0 });
+    });
+
+    it('scoping to the whole school drops classroom links and leaves nobody out', async () => {
+      const result = await branchFeeService.changeScope('fee-1', { scope: 'school', cancelOutOfScope: true });
+
+      expect(mockPrisma.branchFee.update).toHaveBeenCalledWith({
+        where: { id: 'fee-1' },
+        data: { appliesToSchool: true },
+      });
+      expect(mockPrisma.branchFeeClassroom.deleteMany).toHaveBeenCalled();
+      expect(mockPrisma.branchFeeClassroom.createMany).not.toHaveBeenCalled();
+      expect(mockPrisma.billingPeriod.findMany).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ periodsToCancel: 0, cancelled: 0 });
+    });
+
+    it('scoping to none stops automatic application but keeps hand-assigned charges', async () => {
+      const result = await branchFeeService.changeScope('fee-1', { scope: 'none', cancelOutOfScope: true });
+
+      expect(mockPrisma.branchFee.update).toHaveBeenCalledWith({
+        where: { id: 'fee-1' },
+        data: { appliesToSchool: false },
+      });
+      expect(mockPrisma.billingPeriod.updateMany).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ periodsToCancel: 0, cancelled: 0 });
+    });
+
+    it('rejects the classrooms scope without classrooms', async () => {
+      await expect(branchFeeService.changeScope('fee-1', { scope: 'classrooms', classroomIds: [] })).rejects.toMatchObject({
+        statusCode: 400,
+      });
+    });
+
+    it("rejects classrooms outside the fee's school", async () => {
+      mockPrisma.classroom.findMany.mockResolvedValue([]);
+
+      await expect(
+        branchFeeService.changeScope('fee-1', { scope: 'classrooms', classroomIds: ['other-school-class'] }),
+      ).rejects.toMatchObject({ statusCode: 400 });
+      expect(mockPrisma.branchFee.update).not.toHaveBeenCalled();
+    });
+
+    it('throws NOT_FOUND for an unknown fee', async () => {
+      mockPrisma.branchFee.findUnique.mockResolvedValue(null);
+
+      await expect(branchFeeService.changeScope('missing', { scope: 'none' })).rejects.toMatchObject({
+        statusCode: 404,
+      });
     });
   });
 

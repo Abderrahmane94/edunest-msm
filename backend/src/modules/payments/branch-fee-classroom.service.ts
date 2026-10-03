@@ -45,7 +45,11 @@ class BranchFeeClassroomService {
   }
 
   /**
-   * Replaces this fee's classroom links entirely with the given set.
+   * Replaces this fee's classroom links entirely with the given set. Linking
+   * classrooms scopes the fee to them, so it no longer applies to the whole
+   * school (one scope at a time). This only relabels the fee: charges already
+   * billed are left as they are — use branchFeeService.changeScope to also
+   * cancel those of children outside the new scope.
    */
   async setClassrooms(branchFeeId: string, classroomIds: string[]) {
     const fee = await prisma.branchFee.findUnique({
@@ -77,6 +81,9 @@ class BranchFeeClassroomService {
         await tx.branchFeeClassroom.createMany({
           data: classroomIds.map((classroomId) => ({ branchFeeId, classroomId })),
         });
+        if (fee.appliesToSchool) {
+          await tx.branchFee.update({ where: { id: branchFeeId }, data: { appliesToSchool: false } });
+        }
       }
     });
 

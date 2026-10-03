@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { branchFeeClassroomService, BranchFeeClassroomServiceError } from './branch-fee-classroom.service';
+import { branchFeeService, BranchFeeServiceError } from './branch-fee.service';
 import { successResponse, errorResponse } from '../../utils/response';
 import { validateBranchFeeAccess, validateClassroomAccess } from './tenant-scope.middleware';
 
@@ -51,6 +52,45 @@ export const branchFeeClassroomController = {
       res.status(200).json(successResponse(result));
     } catch (error) {
       if (error instanceof BranchFeeClassroomServiceError) {
+        res.status(error.statusCode).json(errorResponse(error.code, error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * PUT /api/payments/fees/:branchFeeId/scope
+   * Body: { scope: 'school' | 'classrooms' | 'none', classroomIds?: string[],
+   *         cancelOutOfScope?: boolean, dryRun?: boolean }
+   * Changes who the fee is for; with dryRun, previews the out-of-scope
+   * charges the change would cancel without changing anything.
+   */
+  async changeScope(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { branchFeeId } = req.params;
+
+      const validatedBranch = await validateBranchFeeAccess(branchFeeId, req, res);
+      if (!validatedBranch) return;
+
+      const { scope, classroomIds, cancelOutOfScope, dryRun } = req.body;
+
+      if (classroomIds !== undefined && (!Array.isArray(classroomIds) || classroomIds.some((id) => typeof id !== 'string'))) {
+        res.status(400).json(
+          errorResponse('VALIDATION_ERROR', 'classroomIds must be an array of classroom IDs'),
+        );
+        return;
+      }
+
+      const result = await branchFeeService.changeScope(branchFeeId, {
+        scope,
+        classroomIds,
+        cancelOutOfScope: cancelOutOfScope === true,
+        dryRun: dryRun === true,
+      });
+      res.status(200).json(successResponse(result));
+    } catch (error) {
+      if (error instanceof BranchFeeServiceError) {
         res.status(error.statusCode).json(errorResponse(error.code, error.message));
         return;
       }

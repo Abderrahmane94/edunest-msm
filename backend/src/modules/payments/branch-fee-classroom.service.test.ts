@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('../../lib/prisma', () => ({
   default: {
-    branchFee: { findUnique: vi.fn(), findMany: vi.fn() },
+    branchFee: { findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
     classroom: { findMany: vi.fn(), findUnique: vi.fn() },
     branchFeeClassroom: { findMany: vi.fn(), deleteMany: vi.fn(), createMany: vi.fn() },
     $transaction: vi.fn(),
@@ -13,7 +13,11 @@ import prisma from '../../lib/prisma';
 import { branchFeeClassroomService, BranchFeeClassroomServiceError } from './branch-fee-classroom.service';
 
 const mockPrisma = prisma as unknown as {
-  branchFee: { findUnique: ReturnType<typeof vi.fn>; findMany: ReturnType<typeof vi.fn> };
+  branchFee: {
+    findUnique: ReturnType<typeof vi.fn>;
+    findMany: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+  };
   classroom: { findMany: ReturnType<typeof vi.fn>; findUnique: ReturnType<typeof vi.fn> };
   branchFeeClassroom: {
     findMany: ReturnType<typeof vi.fn>;
@@ -118,6 +122,24 @@ describe('BranchFeeClassroomService', () => {
 
       expect(mockPrisma.branchFeeClassroom.deleteMany).toHaveBeenCalledTimes(1);
       expect(mockPrisma.branchFeeClassroom.createMany).not.toHaveBeenCalled();
+    });
+
+    it('turns off the whole-school scope when classrooms are linked', async () => {
+      mockPrisma.branchFee.findUnique.mockResolvedValue({
+        id: 'fee-1',
+        branchId: 'branch-1',
+        appliesToSchool: true,
+        branch: { schoolId: 'school-1' },
+      });
+      mockPrisma.classroom.findMany.mockResolvedValue([{ id: 'class-1' }]);
+      mockPrisma.branchFeeClassroom.findMany.mockResolvedValue([{ classroomId: 'class-1' }]);
+
+      await branchFeeClassroomService.setClassrooms('fee-1', ['class-1']);
+
+      expect(mockPrisma.branchFee.update).toHaveBeenCalledWith({
+        where: { id: 'fee-1' },
+        data: { appliesToSchool: false },
+      });
     });
   });
 

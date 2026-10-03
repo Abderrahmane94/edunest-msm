@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Upload, Download, Trash2, X, Eye } from 'lucide-react';
+import { Upload, Download, Trash2, X, Eye, Pencil } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
 import {
   Button,
@@ -73,11 +73,70 @@ function ReceiptFilePicker({
 
 const CATEGORY_KEYS = ['supplies', 'utilities', 'maintenance', 'food', 'transport', 'other'];
 
+// ─── Receipt view / download (list and edit dialog) ─────────────────────────
+
+function useExpenseReceiptActions() {
+  const { t } = useTranslation();
+  const receiptFile = useExpenseReceiptFile();
+
+  async function view(expense: Expense) {
+    // Open the tab right away (still inside the click) so popup blockers allow
+    // it, then point it at the file once loaded.
+    const tab = window.open('', '_blank');
+    try {
+      const { blob } = await receiptFile.mutateAsync(expense.id);
+      const url = URL.createObjectURL(blob);
+      if (tab) tab.location.href = url;
+      else window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      tab?.close();
+    }
+  }
+
+  async function download(expense: Expense) {
+    try {
+      const { blob, fileName } = await receiptFile.mutateAsync(expense.id);
+      // Same name as the server's, with the category spelled out:
+      // "<date> - <category> - <description>.<ext>".
+      const ext = /\.[a-z0-9]{1,5}$/i.exec(fileName)?.[0] ?? '';
+      const name = [expense.date.slice(0, 10), t(`finance.expenses.categories.${expense.category}`), expense.description]
+        .map((part) => part.replace(/[\\/:*?"<>|]/g, '-').trim())
+        .filter(Boolean)
+        .join(' - ')
+        .slice(0, 120);
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${name}${ext}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      // Exposed through `error`.
+    }
+  }
+
+  return {
+    view,
+    download,
+    isPending: receiptFile.isPending,
+    error: receiptFile.isError
+      ? receiptFile.error instanceof Error
+        ? receiptFile.error.message
+        : t('common.error')
+      : null,
+  };
+}
+
 export function ExpensesTab() {
   const { t } = useTranslation();
   const { data: expenses, isLoading } = useExpenses();
   const [showCreateDialog, setShowCreateDialog] = React.useState(false);
   const [editingExpense, setEditingExpense] = React.useState<Expense | null>(null);
+  const receipt = useExpenseReceiptActions();
 
   const columns: Column<Expense>[] = [
     {
@@ -124,13 +183,47 @@ export function ExpensesTab() {
       header: t('finance.expenses.columns.receipt'),
       render: (row) =>
         row.receiptPublicId ? (
-          <span className="inline-flex items-center gap-1 text-caption text-primary font-medium">
-            <Upload className="w-3.5 h-3.5" />
-            {t('finance.expenses.hasReceipt')}
-          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void receipt.view(row)}
+              disabled={receipt.isPending}
+              aria-label={t('finance.expenses.viewReceipt')}
+              title={t('finance.expenses.viewReceipt')}
+            >
+              <Eye className="w-4 h-4 text-primary" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void receipt.download(row)}
+              disabled={receipt.isPending}
+              aria-label={t('finance.expenses.downloadReceipt')}
+              title={t('finance.expenses.downloadReceipt')}
+            >
+              <Download className="w-4 h-4 text-primary" />
+            </Button>
+          </div>
         ) : (
           <span className="text-caption text-text-disabled">—</span>
         ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      className: 'w-12',
+      render: (row) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setEditingExpense(row)}
+          aria-label={t('finance.expenses.edit')}
+          title={t('finance.expenses.edit')}
+        >
+          <Pencil className="w-4 h-4 text-primary" />
+        </Button>
+      ),
     },
   ];
 
@@ -152,11 +245,16 @@ export function ExpensesTab() {
         <CreateButton label={t('finance.expenses.create')} onClick={() => setShowCreateDialog(true)} />
       </div>
 
+      {receipt.error && (
+        <p className="text-caption text-danger" role="alert">
+          {receipt.error}
+        </p>
+      )}
+
       <DataTable<Expense>
         columns={columns}
         data={expenses ?? []}
         keyExtractor={(row) => row.id}
-        onRowClick={(row) => setEditingExpense(row)}
         emptyMessage={t('finance.expenses.empty')}
       />
 
@@ -328,7 +426,7 @@ function EditExpenseDialog({
   const updateExpense = useUpdateExpense();
   const deleteExpense = useDeleteExpense();
   const uploadReceipt = useUploadExpenseReceipt();
-  const receiptFile = useExpenseReceiptFile();
+  const receipt = useExpenseReceiptActions();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const categoryOptions = CATEGORY_KEYS.map((key) => ({
@@ -361,46 +459,6 @@ function EditExpenseDialog({
     if (!file) return;
     uploadReceipt.mutate({ id: expense.id, file });
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }
-
-  async function handleViewReceipt() {
-    // Open the tab right away (still inside the click) so popup blockers allow
-    // it, then point it at the file once loaded.
-    const tab = window.open('', '_blank');
-    try {
-      const { blob } = await receiptFile.mutateAsync(expense.id);
-      const url = URL.createObjectURL(blob);
-      if (tab) tab.location.href = url;
-      else window.open(url, '_blank');
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    } catch {
-      tab?.close();
-    }
-  }
-
-  async function handleDownloadReceipt() {
-    try {
-      const { blob, fileName } = await receiptFile.mutateAsync(expense.id);
-      // Same name as the server's, with the category spelled out:
-      // "<date> - <category> - <description>.<ext>".
-      const ext = /\.[a-z0-9]{1,5}$/i.exec(fileName)?.[0] ?? '';
-      const name = [expense.date.slice(0, 10), t(`finance.expenses.categories.${expense.category}`), expense.description]
-        .map((part) => part.replace(/[\\/:*?"<>|]/g, '-').trim())
-        .filter(Boolean)
-        .join(' - ')
-        .slice(0, 120);
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${name}${ext}`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    } catch {
-      // Shown from receiptFile.error below.
-    }
   }
 
   return (
@@ -458,8 +516,8 @@ function EditExpenseDialog({
                     type="button"
                     variant="secondary"
                     size="sm"
-                    onClick={() => void handleViewReceipt()}
-                    disabled={receiptFile.isPending}
+                    onClick={() => void receipt.view(expense)}
+                    disabled={receipt.isPending}
                   >
                     <Eye className="w-4 h-4" />
                     {t('finance.expenses.viewReceipt')}
@@ -468,8 +526,8 @@ function EditExpenseDialog({
                     type="button"
                     variant="secondary"
                     size="sm"
-                    onClick={() => void handleDownloadReceipt()}
-                    disabled={receiptFile.isPending}
+                    onClick={() => void receipt.download(expense)}
+                    disabled={receipt.isPending}
                   >
                     <Download className="w-4 h-4" />
                     {t('finance.expenses.downloadReceipt')}
@@ -497,11 +555,7 @@ function EditExpenseDialog({
                 className="hidden"
               />
             </div>
-            {receiptFile.isError && (
-              <p className="text-caption text-danger mt-1">
-                {receiptFile.error instanceof Error ? receiptFile.error.message : t('common.error')}
-              </p>
-            )}
+            {receipt.error && <p className="text-caption text-danger mt-1">{receipt.error}</p>}
           </FormField>
 
           <div className="border-t border-border pt-4">

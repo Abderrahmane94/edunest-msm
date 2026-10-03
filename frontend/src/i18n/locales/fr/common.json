@@ -1891,6 +1891,15 @@
       "export": "Exporter CSV",
       "empty": "Aucune donnée pour la plage de dates sélectionnée.",
       "printRange": "Période : {{start}} — {{end}}",
+      "balance": {
+        "title": "Recettes − dépenses",
+        "income": "Recettes (paiements)",
+        "outflows": "Dépenses et salaires",
+        "expenses": "Dépenses",
+        "salaries": "Salaires versés",
+        "net": "Résultat net",
+        "noOutflows": "Aucune dépense ni aucun salaire sur cette période."
+      },
       "errors": {
         "invalidRange": "La date de début doit être antérieure ou égale à la date de fin.",
         "fetchFailed": "Erreur lors du chargement du rapport de rapprochement."

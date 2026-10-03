@@ -59,6 +59,13 @@ describe('fetchReconciliationReport', () => {
           baridimob: { total: '10.00', paymentCount: 1, correctionCount: 0 },
         },
         grandTotal: '260.50',
+        expenses: {
+          total: '100.00',
+          count: 2,
+          byCategory: [{ category: 'supplies', total: '100.00', count: 2 }],
+        },
+        salaries: { total: '50.00', count: 1 },
+        net: '110.50',
       },
     });
 
@@ -74,6 +81,13 @@ describe('fetchReconciliationReport', () => {
         baridimob: { total: '10.00', paymentCount: 1, correctionCount: 0 },
       },
       grandTotal: '260.50',
+      expenses: {
+        total: '100.00',
+        count: 2,
+        byCategory: [{ category: 'supplies', total: '100.00', count: 2 }],
+      },
+      salaries: { total: '50.00', count: 1 },
+      net: '110.50',
     });
   });
 

@@ -78,6 +78,16 @@ export interface ReconciliationReport {
     baridimob: ChannelSummary;
   };
   grandTotal: Prisma.Decimal;
+  /** Expenses dated within the range, school-wide, by category. */
+  expenses: {
+    total: Prisma.Decimal;
+    count: number;
+    byCategory: { category: string; total: Prisma.Decimal; count: number }[];
+  };
+  /** Salary payments (payroll) paid within the range. */
+  salaries: { total: Prisma.Decimal; count: number };
+  /** Income (grandTotal) minus expenses minus salaries. */
+  net: Prisma.Decimal;
 }
 
 export interface ChannelSummary {

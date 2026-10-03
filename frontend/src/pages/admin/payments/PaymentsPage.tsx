@@ -529,17 +529,19 @@ function RecordPaymentDialog({
                       <option value="" disabled>
                         {t('payments.recording.fields.selectPeriod')}
                       </option>
-                      {periodOptions.map((opt) => (
-                        <option
-                          key={opt.value}
-                          value={opt.value}
-                          disabled={allocations.some(
-                            (other) => other.id !== row.id && other.billingPeriodId === opt.value,
-                          )}
-                        >
-                          {opt.label}
-                        </option>
-                      ))}
+                      {/* Periods already chosen in another row aren't offered again. */}
+                      {periodOptions
+                        .filter(
+                          (opt) =>
+                            !allocations.some(
+                              (other) => other.id !== row.id && other.billingPeriodId === opt.value,
+                            ),
+                        )
+                        .map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
                     </select>
                   </div>
                   <div className="w-32">

@@ -41,6 +41,14 @@ export interface UploadOptions {
   folder: string;
   resourceType: 'image' | 'raw';
   accessMode: 'authenticated';
+  /**
+   * File extension to keep on the stored file (e.g. "jpg", "pdf"). Raw
+   * resources have no format of their own, so without it the file comes
+   * back extension-less.
+   */
+  extension?: string;
+  /** The file's MIME type, when known. */
+  mimeType?: string;
 }
 
 export interface UploadResult {
@@ -81,7 +89,7 @@ class CloudinaryService {
    */
   async uploadFile(file: Buffer, options: UploadOptions): Promise<UploadResult> {
     if (!this.isConfigured()) {
-      const ext = options.resourceType === 'image' ? 'jpg' : 'pdf';
+      const ext = options.extension ?? (options.resourceType === 'image' ? 'jpg' : 'pdf');
       const filename = `upload_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
       const publicId = `${options.folder}/${filename}`;
       const uploadsDir = path.join(__dirname, '..', '..', 'uploads', options.folder);
@@ -97,11 +105,15 @@ class CloudinaryService {
 
     // Cloudinary sniffs the real file type from the content itself, so the
     // declared mime type in the data URI doesn't need to be exact.
-    const dataUri = `data:application/octet-stream;base64,${file.toString('base64')}`;
+    const dataUri = `data:${options.mimeType || 'application/octet-stream'};base64,${file.toString('base64')}`;
     const result = await cloudinary.uploader.upload(dataUri, {
       folder: options.folder,
       resource_type: options.resourceType,
       type: 'authenticated',
+      // A raw file's public_id is its file name: give it the real extension.
+      ...(options.resourceType === 'raw' && options.extension
+        ? { public_id: `${crypto.randomUUID()}.${options.extension}` }
+        : {}),
     });
 
     return {
@@ -143,6 +155,20 @@ class CloudinaryService {
       secure: true,
       resource_type: resourceTypeFor(type),
     });
+  }
+
+  /**
+   * Fetches a stored file's bytes (from Cloudinary, or local disk in development).
+   */
+  async downloadFile(publicId: string, type: 'photo' | 'document'): Promise<Buffer> {
+    if (!this.isConfigured()) {
+      return fs.readFileSync(path.join(__dirname, '..', '..', 'uploads', publicId));
+    }
+    const response = await fetch(this.generateSignedUrl(publicId, type));
+    if (!response.ok) {
+      throw new Error(`Failed to fetch file from storage: ${response.status}`);
+    }
+    return Buffer.from(await response.arrayBuffer());
   }
 
   /**

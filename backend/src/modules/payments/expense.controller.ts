@@ -3,6 +3,7 @@ import { expenseService, ExpenseServiceError } from './expense.service';
 import type { CreateExpenseInput, UpdateExpenseInput } from './expense.schema';
 import { successResponse, errorResponse, paginatedResponse } from '../../utils/response';
 import { paginationSchema } from '../../utils/validators';
+import { contentDisposition } from '../../utils/file-type';
 
 export const expenseController = {
   /**
@@ -110,7 +111,12 @@ export const expenseController = {
         return;
       }
 
-      const expense = await expenseService.uploadReceipt(id, schoolId, req.file.buffer);
+      const expense = await expenseService.uploadReceipt(id, schoolId, {
+        buffer: req.file.buffer,
+        // Multer decodes the multipart file name as latin1; browsers send UTF-8.
+        originalName: Buffer.from(req.file.originalname, 'latin1').toString('utf8'),
+        mimeType: req.file.mimetype,
+      });
       res.status(200).json(successResponse(expense));
     } catch (error) {
       if (error instanceof ExpenseServiceError) {
@@ -122,14 +128,20 @@ export const expenseController = {
   },
 
   /**
-   * GET /api/payments/expenses/:id/receipt-url
+   * GET /api/payments/expenses/:id/receipt
+   * Streams the receipt file with its real type and a readable file name.
    */
-  async getReceiptUrl(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getReceipt(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
-      const url = await expenseService.getReceiptUrl(id, schoolId);
-      res.status(200).json(successResponse({ url }));
+      const file = await expenseService.getReceiptFile(id, schoolId);
+      res.setHeader('Content-Type', file.mimeType);
+      res.setHeader('Content-Disposition', contentDisposition('inline', file.fileName));
+      // The frontend is on another origin and reads the name from this header.
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
+      res.setHeader('Cache-Control', 'private, no-store');
+      res.status(200).send(file.buffer);
     } catch (error) {
       if (error instanceof ExpenseServiceError) {
         res.status(error.statusCode).json(errorResponse('EXPENSE_ERROR', error.message));

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Banknote, Pencil, Trash2, Download } from 'lucide-react';
+import { Banknote, Pencil, Trash2, Download, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { formatDate } from '@/lib/formatters';
@@ -494,6 +494,28 @@ function EmployeesTab() {
   const { t } = useTranslation();
   const { data: employees, isLoading } = usePayrollEmployees();
   const [setSalaryOpen, setSetSalaryOpen] = React.useState(false);
+
+  // ─── Filters (staff list is small and loaded whole) ───
+  const [search, setSearch] = React.useState('');
+  const [roleFilter, setRoleFilter] = React.useState('');
+  const [salaryFilter, setSalaryFilter] = React.useState<'' | 'fixed' | 'per_student' | 'none'>('');
+  const [paidFilter, setPaidFilter] = React.useState<'' | 'paid' | 'unpaid'>('');
+  const now = new Date();
+  const paidThisMonth = (emp: EmployeeRecord) =>
+    !!emp.lastPayment && emp.lastPayment.month === now.getMonth() + 1 && emp.lastPayment.year === now.getFullYear();
+
+  const filteredEmployees = (employees ?? []).filter((emp) => {
+    const needle = search.trim().toLowerCase();
+    if (needle && !`${emp.firstName} ${emp.lastName} ${emp.email}`.toLowerCase().includes(needle)) return false;
+    if (roleFilter && emp.role !== roleFilter) return false;
+    if (salaryFilter === 'none' && emp.salary) return false;
+    if (salaryFilter && salaryFilter !== 'none' && emp.salary?.salaryType !== salaryFilter) return false;
+    if (paidFilter === 'paid' && !paidThisMonth(emp)) return false;
+    if (paidFilter === 'unpaid' && paidThisMonth(emp)) return false;
+    return true;
+  });
+  const unpaidCount = filteredEmployees.filter((emp) => emp.salary && !paidThisMonth(emp)).length;
+  const hasEmployeeFilters = !!(search || roleFilter || salaryFilter || paidFilter);
   const [selectedEmployee, setSelectedEmployee] = React.useState<EmployeeRecord | null>(null);
 
   function openSetSalary(emp: EmployeeRecord) {
@@ -589,11 +611,79 @@ function EmployeesTab() {
 
   return (
     <>
+      <div className="bg-card border border-border rounded-lg p-4 space-y-3 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <Input
+            label={t('payroll.filters.search')}
+            placeholder={t('payroll.filters.searchPlaceholder')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <FormField label={t('payroll.columns.role')} htmlFor="payroll-filter-role">
+            <select
+              id="payroll-filter-role"
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+            >
+              <option value="">{t('payroll.filters.allRoles')}</option>
+              <option value="admin">{t('users.roles.admin')}</option>
+              <option value="teacher">{t('users.roles.teacher')}</option>
+            </select>
+          </FormField>
+          <FormField label={t('payroll.filters.salaryType')} htmlFor="payroll-filter-salary">
+            <select
+              id="payroll-filter-salary"
+              value={salaryFilter}
+              onChange={(e) => setSalaryFilter(e.target.value as '' | 'fixed' | 'per_student' | 'none')}
+              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+            >
+              <option value="">{t('payroll.filters.allSalaryTypes')}</option>
+              <option value="fixed">{t('payroll.filters.fixed')}</option>
+              <option value="per_student">{t('payroll.filters.perStudent')}</option>
+              <option value="none">{t('payroll.employees.noSalary')}</option>
+            </select>
+          </FormField>
+          <FormField label={t('payroll.filters.thisMonth')} htmlFor="payroll-filter-paid">
+            <select
+              id="payroll-filter-paid"
+              value={paidFilter}
+              onChange={(e) => setPaidFilter(e.target.value as '' | 'paid' | 'unpaid')}
+              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+            >
+              <option value="">{t('payroll.filters.allPaymentStatuses')}</option>
+              <option value="paid">{t('payroll.filters.paid')}</option>
+              <option value="unpaid">{t('payroll.filters.unpaid')}</option>
+            </select>
+          </FormField>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-caption text-text-secondary">
+            {t('payroll.filters.employeesSummary', { count: filteredEmployees.length, unpaid: unpaidCount })}
+          </p>
+          {hasEmployeeFilters && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearch('');
+                setRoleFilter('');
+                setSalaryFilter('');
+                setPaidFilter('');
+              }}
+            >
+              <X className="w-4 h-4" />
+              {t('payroll.filters.reset')}
+            </Button>
+          )}
+        </div>
+      </div>
       <DataTable<EmployeeRecord>
         columns={columns}
-        data={employees ?? []}
+        data={filteredEmployees}
         keyExtractor={(emp) => emp.id}
-        emptyMessage={t('payroll.payments.empty')}
+        emptyMessage={hasEmployeeFilters ? t('payroll.filters.noMatch') : t('payroll.payments.empty')}
       />
       <SetSalaryDialog
         open={setSalaryOpen}
@@ -835,6 +925,7 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
   const [filterUserId, setFilterUserId] = React.useState('');
   const [filterYear, setFilterYear] = React.useState<number | undefined>();
   const [filterMonth, setFilterMonth] = React.useState<number | undefined>();
+  const [filterRole, setFilterRole] = React.useState<'' | 'admin' | 'teacher'>('');
   const [page, setPage] = React.useState(1);
   const [deleteConfirm, setDeleteConfirm] = React.useState<string | null>(null);
   const [pdfRowId, setPdfRowId] = React.useState<string | null>(null);
@@ -846,6 +937,7 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
     userId: filterUserId || undefined,
     year: filterYear,
     month: filterMonth,
+    role: filterRole || undefined,
     page,
     pageSize,
   });
@@ -1031,6 +1123,33 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
           ))}
         </select>
 
+        <select
+          value={filterRole}
+          onChange={(e) => { setFilterRole(e.target.value as '' | 'admin' | 'teacher'); setPage(1); }}
+          className="h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+        >
+          <option value="">{t('payroll.filters.allRoles')}</option>
+          <option value="admin">{t('users.roles.admin')}</option>
+          <option value="teacher">{t('users.roles.teacher')}</option>
+        </select>
+
+        {(filterUserId || filterYear || filterMonth || filterRole) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setFilterUserId('');
+              setFilterYear(undefined);
+              setFilterMonth(undefined);
+              setFilterRole('');
+              setPage(1);
+            }}
+          >
+            <X className="w-4 h-4" />
+            {t('payroll.filters.reset')}
+          </Button>
+        )}
+
         <div className="flex-1" />
 
         {hasItems && (
@@ -1041,6 +1160,12 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
         )}
         <CreateButton label={t('payroll.payments.record')} onClick={() => setRecordOpen(true)} />
       </div>
+
+      {data && (
+        <p className="text-caption text-text-secondary">
+          {t('payroll.filters.paymentsSummary', { count: data.total, amount: fmtDZD(data.totalNet) })}
+        </p>
+      )}
 
       {isLoading ? (
         <div className="animate-pulse space-y-3">

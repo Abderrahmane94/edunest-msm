@@ -1465,6 +1465,23 @@
     }
   },
   "payroll": {
+    "filters": {
+      "search": "Recherche",
+      "searchPlaceholder": "Nom ou e-mail…",
+      "allRoles": "Tous les rôles",
+      "salaryType": "Type de salaire",
+      "allSalaryTypes": "Tous",
+      "fixed": "Fixe",
+      "perStudent": "Par élève",
+      "thisMonth": "Paie du mois en cours",
+      "allPaymentStatuses": "Tous",
+      "paid": "Payés",
+      "unpaid": "Non payés",
+      "employeesSummary": "{{count}} employé(s) · {{unpaid}} à payer ce mois-ci",
+      "paymentsSummary": "{{count}} paiement(s) — total net : {{amount}}",
+      "reset": "Réinitialiser les filtres",
+      "noMatch": "Aucun employé ne correspond à ces filtres."
+    },
     "title": "Gestion de la paie",
     "tabs": {
       "employees": "Employés",

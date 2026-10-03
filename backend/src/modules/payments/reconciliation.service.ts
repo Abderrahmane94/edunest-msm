@@ -21,6 +21,8 @@ export class ReconciliationServiceError extends Error {
  * - Signed totals (corrections are negative)
  * - Payment count (non-correction records)
  * - Correction count (is_correction = true records)
+ * Also sets the period's outflows against that income — expenses (by
+ * category) and salaries paid — for a net result.
  */
 export const reconciliationService = {
   /**
@@ -96,12 +98,57 @@ export const reconciliationService = {
       .add(channels.ccp.total)
       .add(channels.baridimob.total);
 
+    // Outflows over the same range. Expenses and salaries belong to the
+    // school, not a branch.
+    const branch = await prisma.branch.findUnique({
+      where: { id: branchId },
+      select: { schoolId: true },
+    });
+    const schoolId = branch?.schoolId ?? '';
+
+    const [expenseRows, salaryRows] = await Promise.all([
+      prisma.expense.findMany({
+        where: { schoolId, date: { gte: rangeStart, lte: rangeEnd } },
+        select: { category: true, amount: true },
+      }),
+      prisma.salaryPayment.findMany({
+        where: { schoolId, deletedAt: null, paidAt: { gte: rangeStart, lte: rangeEnd } },
+        select: { netSalary: true },
+      }),
+    ]);
+
+    const byCategory = new Map<string, { category: string; total: Prisma.Decimal; count: number }>();
+    let expensesTotal = new Prisma.Decimal('0.00');
+    for (const row of expenseRows) {
+      expensesTotal = expensesTotal.add(row.amount);
+      const entry = byCategory.get(row.category) ?? {
+        category: row.category,
+        total: new Prisma.Decimal('0.00'),
+        count: 0,
+      };
+      entry.total = entry.total.add(row.amount);
+      entry.count += 1;
+      byCategory.set(row.category, entry);
+    }
+
+    const salariesTotal = salaryRows.reduce(
+      (sum, row) => sum.add(row.netSalary),
+      new Prisma.Decimal('0.00'),
+    );
+
     return {
       branchId,
       rangeStart,
       rangeEnd,
       channels,
       grandTotal,
+      expenses: {
+        total: expensesTotal,
+        count: expenseRows.length,
+        byCategory: [...byCategory.values()].sort((a, b) => b.total.comparedTo(a.total)),
+      },
+      salaries: { total: salariesTotal, count: salaryRows.length },
+      net: grandTotal.sub(expensesTotal).sub(salariesTotal),
     };
   },
 };

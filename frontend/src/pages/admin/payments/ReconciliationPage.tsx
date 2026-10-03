@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileBarChart, Printer, FileDown } from 'lucide-react';
+import { FileBarChart, Printer, FileDown, TrendingUp, TrendingDown, Scale } from 'lucide-react';
 import { formatDZD } from '@/lib/formatters';
 import { Button, Input } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
-import { useReconciliation } from '@/hooks/useReconciliation';
+import { useReconciliation, type ReconciliationReport } from '@/hooks/useReconciliation';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -19,6 +19,86 @@ function getTodayString(): string {
 }
 
 const CHANNELS = ['cash', 'ccp', 'baridimob'] as const;
+
+// ─── Income minus outflows ─────────────────────────────────────────────────────
+
+function BalanceSummary({ report }: { report: ReconciliationReport }) {
+  const { t, i18n } = useTranslation();
+  const money = (value: string | number) => formatDZD(Number(value), i18n.language);
+  const outflows = Number(report.expenses.total) + Number(report.salaries.total);
+  const net = Number(report.net);
+
+  return (
+    <div className="bg-card border border-border rounded-lg p-6 space-y-5">
+      <h2 className="text-subsection font-semibold text-text-heading">
+        {t('payments.reconciliation.balance.title')}
+      </h2>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="rounded-lg bg-subtle p-4">
+          <p className="flex items-center gap-1.5 text-caption text-text-secondary">
+            <TrendingUp className="w-4 h-4 text-success" />
+            {t('payments.reconciliation.balance.income')}
+          </p>
+          <p className="mt-1 text-subsection font-semibold text-foreground" dir="ltr">
+            {money(report.grandTotal)}
+          </p>
+        </div>
+        <div className="rounded-lg bg-subtle p-4">
+          <p className="flex items-center gap-1.5 text-caption text-text-secondary">
+            <TrendingDown className="w-4 h-4 text-danger" />
+            {t('payments.reconciliation.balance.outflows')}
+          </p>
+          <p className="mt-1 text-subsection font-semibold text-foreground" dir="ltr">
+            {money(outflows)}
+          </p>
+        </div>
+        <div className="rounded-lg bg-subtle p-4">
+          <p className="flex items-center gap-1.5 text-caption text-text-secondary">
+            <Scale className="w-4 h-4 text-primary" />
+            {t('payments.reconciliation.balance.net')}
+          </p>
+          <p
+            className={`mt-1 text-subsection font-semibold ${net < 0 ? 'text-danger' : 'text-success'}`}
+            dir="ltr"
+          >
+            {money(net)}
+          </p>
+        </div>
+      </div>
+
+      {/* Outflow details */}
+      {report.expenses.count === 0 && report.salaries.count === 0 ? (
+        <p className="text-caption text-text-secondary">{t('payments.reconciliation.balance.noOutflows')}</p>
+      ) : (
+        <ul className="border border-border rounded-md divide-y divide-border">
+          {report.expenses.byCategory.map((c) => (
+            <li key={c.category} className="flex items-center justify-between px-4 py-2.5 text-body">
+              <span className="text-foreground">
+                {t('payments.reconciliation.balance.expenses')} — {t(`finance.expenses.categories.${c.category}`, c.category)}
+                <span className="text-caption text-text-secondary ms-1.5">({c.count})</span>
+              </span>
+              <span className="text-foreground" dir="ltr">
+                −{money(c.total)}
+              </span>
+            </li>
+          ))}
+          {report.salaries.count > 0 && (
+            <li className="flex items-center justify-between px-4 py-2.5 text-body">
+              <span className="text-foreground">
+                {t('payments.reconciliation.balance.salaries')}
+                <span className="text-caption text-text-secondary ms-1.5">({report.salaries.count})</span>
+              </span>
+              <span className="text-foreground" dir="ltr">
+                −{money(report.salaries.total)}
+              </span>
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 // ─── Reconciliation Page ───────────────────────────────────────────────────────
 
@@ -78,6 +158,20 @@ export function ReconciliationPage() {
         ),
       ],
     ];
+
+    // Income minus outflows, after the per-channel table.
+    rows.push(
+      [],
+      [t('payments.reconciliation.balance.title')],
+      [t('payments.reconciliation.balance.income'), report.grandTotal],
+      ...report.expenses.byCategory.map((c) => [
+        `${t('payments.reconciliation.balance.expenses')} — ${t(`finance.expenses.categories.${c.category}`, c.category)}`,
+        `-${c.total}`,
+        String(c.count),
+      ]),
+      [t('payments.reconciliation.balance.salaries'), `-${report.salaries.total}`, String(report.salaries.count)],
+      [t('payments.reconciliation.balance.net'), report.net],
+    );
 
     const csv = rows.map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -279,6 +373,9 @@ export function ReconciliationPage() {
           </div>
         </div>
       )}
+
+      {/* Income minus outflows */}
+      {!isLoading && !isError && report && <BalanceSummary report={report} />}
 
       {/* Print-only date range display */}
       {report && hasData && (

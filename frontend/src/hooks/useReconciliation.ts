@@ -19,6 +19,16 @@ export interface ReconciliationReport {
     baridimob: ChannelSummary;
   };
   grandTotal: string;
+  /** Expenses dated within the range, by category (largest first). */
+  expenses: {
+    total: string;
+    count: number;
+    byCategory: { category: string; total: string; count: number }[];
+  };
+  /** Salary payments (payroll) paid within the range. */
+  salaries: { total: string; count: number };
+  /** Income minus expenses minus salaries. */
+  net: string;
 }
 
 // ─── Hook ──────────────────────────────────────────────────────────────────────
@@ -78,6 +88,8 @@ function mapChannelSummary(raw: Record<string, unknown>): ChannelSummary {
 
 function mapReconciliationReport(raw: Record<string, unknown>): ReconciliationReport {
   const channels = (raw.channels ?? {}) as Record<string, Record<string, unknown>>;
+  const expenses = (raw.expenses ?? {}) as Record<string, unknown>;
+  const salaries = (raw.salaries ?? {}) as Record<string, unknown>;
 
   return {
     branchId: (raw.branchId ?? raw.branch_id) as string,
@@ -89,5 +101,19 @@ function mapReconciliationReport(raw: Record<string, unknown>): ReconciliationRe
       baridimob: mapChannelSummary(channels.baridimob ?? {}),
     },
     grandTotal: String(raw.grandTotal ?? raw.grand_total ?? '0.00'),
+    expenses: {
+      total: String(expenses.total ?? '0.00'),
+      count: Number(expenses.count ?? 0),
+      byCategory: ((expenses.byCategory ?? []) as Record<string, unknown>[]).map((c) => ({
+        category: String(c.category ?? ''),
+        total: String(c.total ?? '0.00'),
+        count: Number(c.count ?? 0),
+      })),
+    },
+    salaries: {
+      total: String(salaries.total ?? '0.00'),
+      count: Number(salaries.count ?? 0),
+    },
+    net: String(raw.net ?? raw.grandTotal ?? '0.00'),
   };
 }

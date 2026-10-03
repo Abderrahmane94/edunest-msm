@@ -926,6 +926,11 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
   const [filterYear, setFilterYear] = React.useState<number | undefined>();
   const [filterMonth, setFilterMonth] = React.useState<number | undefined>();
   const [filterRole, setFilterRole] = React.useState<'' | 'admin' | 'teacher'>('');
+  const [filterPaidFrom, setFilterPaidFrom] = React.useState('');
+  const [filterPaidTo, setFilterPaidTo] = React.useState('');
+  const hasPaymentFilters = !!(
+    filterUserId || filterYear || filterMonth || filterRole || filterPaidFrom || filterPaidTo
+  );
   const [page, setPage] = React.useState(1);
   const [deleteConfirm, setDeleteConfirm] = React.useState<string | null>(null);
   const [pdfRowId, setPdfRowId] = React.useState<string | null>(null);
@@ -938,6 +943,8 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
     year: filterYear,
     month: filterMonth,
     role: filterRole || undefined,
+    paidFrom: filterPaidFrom || undefined,
+    paidTo: filterPaidTo || undefined,
     page,
     pageSize,
   });
@@ -1086,72 +1093,8 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <select
-          value={filterUserId}
-          onChange={(e) => { setFilterUserId(e.target.value); setPage(1); }}
-          className="h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
-        >
-          <option value="">{t('payroll.payments.allEmployees')}</option>
-          {employees.map((emp) => (
-            <option key={emp.id} value={emp.id}>
-              {emp.firstName} {emp.lastName}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={filterYear ?? ''}
-          onChange={(e) => { setFilterYear(e.target.value ? parseInt(e.target.value) : undefined); setPage(1); }}
-          className="h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
-        >
-          <option value="">{t('payroll.payments.filterYear')}</option>
-          {yearOptions.map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
-
-        <select
-          value={filterMonth ?? ''}
-          onChange={(e) => { setFilterMonth(e.target.value ? parseInt(e.target.value) : undefined); setPage(1); }}
-          className="h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
-        >
-          <option value="">{t('payroll.payments.allMonths')}</option>
-          {monthOptions.map((m) => (
-            <option key={m} value={m}>{t(`payroll.months.${m}`)}</option>
-          ))}
-        </select>
-
-        <select
-          value={filterRole}
-          onChange={(e) => { setFilterRole(e.target.value as '' | 'admin' | 'teacher'); setPage(1); }}
-          className="h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
-        >
-          <option value="">{t('payroll.filters.allRoles')}</option>
-          <option value="admin">{t('users.roles.admin')}</option>
-          <option value="teacher">{t('users.roles.teacher')}</option>
-        </select>
-
-        {(filterUserId || filterYear || filterMonth || filterRole) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setFilterUserId('');
-              setFilterYear(undefined);
-              setFilterMonth(undefined);
-              setFilterRole('');
-              setPage(1);
-            }}
-          >
-            <X className="w-4 h-4" />
-            {t('payroll.filters.reset')}
-          </Button>
-        )}
-
-        <div className="flex-1" />
-
+      {/* Actions */}
+      <div className="flex items-center justify-end gap-3 flex-wrap">
         {hasItems && (
           <Button variant="secondary" size="sm" onClick={downloadBulkPDF} disabled={pdfBulkLoading}>
             <Download className="w-4 h-4" />
@@ -1161,11 +1104,100 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
         <CreateButton label={t('payroll.payments.record')} onClick={() => setRecordOpen(true)} />
       </div>
 
-      {data && (
-        <p className="text-caption text-text-secondary">
-          {t('payroll.filters.paymentsSummary', { count: data.total, amount: fmtDZD(data.totalNet) })}
-        </p>
-      )}
+      {/* Filters — same layout as the Employees tab */}
+      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+          <FormField label={t('payroll.payments.filterEmployee')} htmlFor="pay-filter-employee">
+            <select
+              id="pay-filter-employee"
+              value={filterUserId}
+              onChange={(e) => { setFilterUserId(e.target.value); setPage(1); }}
+              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+            >
+              <option value="">{t('payroll.payments.allEmployees')}</option>
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.firstName} {emp.lastName}
+                </option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label={t('payroll.columns.role')} htmlFor="pay-filter-role">
+            <select
+              id="pay-filter-role"
+              value={filterRole}
+              onChange={(e) => { setFilterRole(e.target.value as '' | 'admin' | 'teacher'); setPage(1); }}
+              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+            >
+              <option value="">{t('payroll.filters.allRoles')}</option>
+              <option value="admin">{t('users.roles.admin')}</option>
+              <option value="teacher">{t('users.roles.teacher')}</option>
+            </select>
+          </FormField>
+          <FormField label={t('payroll.payments.filterYear')} htmlFor="pay-filter-year">
+            <select
+              id="pay-filter-year"
+              value={filterYear ?? ''}
+              onChange={(e) => { setFilterYear(e.target.value ? parseInt(e.target.value) : undefined); setPage(1); }}
+              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+            >
+              <option value="">{t('payroll.filters.allYears')}</option>
+              {yearOptions.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label={t('payroll.payments.filterMonth')} htmlFor="pay-filter-month">
+            <select
+              id="pay-filter-month"
+              value={filterMonth ?? ''}
+              onChange={(e) => { setFilterMonth(e.target.value ? parseInt(e.target.value) : undefined); setPage(1); }}
+              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+            >
+              <option value="">{t('payroll.payments.allMonths')}</option>
+              {monthOptions.map((m) => (
+                <option key={m} value={m}>{t(`payroll.months.${m}`)}</option>
+              ))}
+            </select>
+          </FormField>
+          <Input
+            type="date"
+            label={t('payroll.filters.paidFrom')}
+            value={filterPaidFrom}
+            onChange={(e) => { setFilterPaidFrom(e.target.value); setPage(1); }}
+          />
+          <Input
+            type="date"
+            label={t('payroll.filters.paidTo')}
+            value={filterPaidTo}
+            onChange={(e) => { setFilterPaidTo(e.target.value); setPage(1); }}
+            min={filterPaidFrom || undefined}
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-caption text-text-secondary">
+            {t('payroll.filters.paymentsSummary', { count: data?.total ?? 0, amount: fmtDZD(data?.totalNet ?? 0) })}
+          </p>
+          {hasPaymentFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setFilterUserId('');
+                setFilterYear(undefined);
+                setFilterMonth(undefined);
+                setFilterRole('');
+                setFilterPaidFrom('');
+                setFilterPaidTo('');
+                setPage(1);
+              }}
+            >
+              <X className="w-4 h-4" />
+              {t('payroll.filters.reset')}
+            </Button>
+          )}
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="animate-pulse space-y-3">
@@ -1182,7 +1214,7 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
           pageSize={pageSize}
           total={data?.total ?? 0}
           onPageChange={setPage}
-          emptyMessage={t('payroll.payments.empty')}
+          emptyMessage={hasPaymentFilters ? t('payroll.filters.noPaymentMatch') : t('payroll.payments.empty')}
         />
       )}
 

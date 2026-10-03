@@ -92,6 +92,10 @@ export function usePayrollPayments(filters: {
   year?: number;
   month?: number;
   role?: 'admin' | 'teacher';
+  /** YYYY-MM-DD, inclusive. */
+  paidFrom?: string;
+  /** YYYY-MM-DD, inclusive. */
+  paidTo?: string;
   page?: number;
   pageSize?: number;
 }) {
@@ -103,6 +107,8 @@ export function usePayrollPayments(filters: {
       if (filters.year) params.set('year', String(filters.year));
       if (filters.month) params.set('month', String(filters.month));
       if (filters.role) params.set('role', filters.role);
+      if (filters.paidFrom) params.set('paidFrom', filters.paidFrom);
+      if (filters.paidTo) params.set('paidTo', filters.paidTo);
       if (filters.page) params.set('page', String(filters.page));
       if (filters.pageSize) params.set('pageSize', String(filters.pageSize));
       const res = await apiClient.get<SalaryPayment[]>(`/payroll/payments?${params}`);

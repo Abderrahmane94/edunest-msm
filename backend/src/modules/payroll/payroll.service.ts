@@ -101,6 +101,10 @@ export const payrollService = {
       year?: number;
       month?: number;
       role?: 'admin' | 'teacher';
+      /** Paid on or after this date (YYYY-MM-DD). */
+      paidFrom?: string;
+      /** Paid on or before this date (YYYY-MM-DD). */
+      paidTo?: string;
       page: number;
       pageSize: number;
     },
@@ -112,6 +116,14 @@ export const payrollService = {
       ...(filters.year ? { year: filters.year } : {}),
       ...(filters.month ? { month: filters.month } : {}),
       ...(filters.role ? { user: { role: filters.role } } : {}),
+      ...(filters.paidFrom || filters.paidTo
+        ? {
+            paidAt: {
+              ...(filters.paidFrom ? { gte: new Date(filters.paidFrom) } : {}),
+              ...(filters.paidTo ? { lte: new Date(filters.paidTo) } : {}),
+            },
+          }
+        : {}),
     };
 
     const [items, total, sum] = await Promise.all([

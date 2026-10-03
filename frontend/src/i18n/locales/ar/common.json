@@ -1484,7 +1484,11 @@
       "unpaid": "غير مدفوع",
       "employeesSummary": "{{count}} موظف · {{unpaid}} للدفع هذا الشهر",
       "paymentsSummary": "{{count}} دفعة — المجموع الصافي: {{amount}}",
-      "reset": "إعادة تعيين الفلاتر",
+            "allYears": "كل السنوات",
+      "paidFrom": "مدفوع من",
+      "paidTo": "إلى",
+      "noPaymentMatch": "لا توجد دفعة تطابق هذه الفلاتر.",
+"reset": "إعادة تعيين الفلاتر",
       "noMatch": "لا يوجد موظف يطابق هذه الفلاتر."
     },
     "title": "إدارة الرواتب",

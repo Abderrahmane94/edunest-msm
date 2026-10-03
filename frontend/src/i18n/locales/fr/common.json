@@ -1479,7 +1479,11 @@
       "unpaid": "Non payés",
       "employeesSummary": "{{count}} employé(s) · {{unpaid}} à payer ce mois-ci",
       "paymentsSummary": "{{count}} paiement(s) — total net : {{amount}}",
-      "reset": "Réinitialiser les filtres",
+            "allYears": "Toutes les années",
+      "paidFrom": "Payé du",
+      "paidTo": "Au",
+      "noPaymentMatch": "Aucun paiement ne correspond à ces filtres.",
+"reset": "Réinitialiser les filtres",
       "noMatch": "Aucun employé ne correspond à ces filtres."
     },
     "title": "Gestion de la paie",

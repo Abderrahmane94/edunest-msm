@@ -696,11 +696,23 @@ class PaymentService {
       startDate?: Date;
       endDate?: Date;
       channel?: string;
+      childId?: string;
+      /** 'payment' = regular payments, 'correction' = corrections only. */
+      type?: 'payment' | 'correction';
+      /** Payments with at least one amount allocated to this fee's periods. */
+      feeId?: string;
+      /** Part of a receipt number (case-insensitive). */
+      receipt?: string;
     } = {},
   ) {
     const where: Prisma.PaymentRecordWhereInput = {
       branchId,
     };
+
+    if (filters.childId) where.childId = filters.childId;
+    if (filters.type) where.isCorrection = filters.type === 'correction';
+    if (filters.feeId) where.allocations = { some: { billingPeriod: { branchFeeId: filters.feeId } } };
+    if (filters.receipt) where.receiptNumber = { contains: filters.receipt, mode: 'insensitive' };
 
     // Date range filter on valueDate
     if (filters.startDate || filters.endDate) {

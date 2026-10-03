@@ -142,6 +142,12 @@ export interface PaymentRecordFilters {
   endDate?: string;
   channel?: string;
   childId?: string;
+  /** 'payment' = regular payments, 'correction' = corrections only. */
+  type?: 'payment' | 'correction';
+  /** Payments that went (at least partly) toward this fee. */
+  feeId?: string;
+  /** Part of a receipt number. */
+  receipt?: string;
 }
 
 /**
@@ -154,6 +160,9 @@ export function usePaymentRecords(branchId: string, filters?: PaymentRecordFilte
   if (filters?.endDate) queryParams.set('endDate', filters.endDate);
   if (filters?.channel) queryParams.set('channel', filters.channel);
   if (filters?.childId) queryParams.set('childId', filters.childId);
+  if (filters?.type) queryParams.set('type', filters.type);
+  if (filters?.feeId) queryParams.set('feeId', filters.feeId);
+  if (filters?.receipt) queryParams.set('receipt', filters.receipt);
 
   return useQuery({
     queryKey: ['payment-records', branchId, filters],

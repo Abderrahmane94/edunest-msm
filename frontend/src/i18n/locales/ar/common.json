@@ -1988,7 +1988,16 @@
       "child": "الطفل",
       "allChannels": "جميع القنوات",
       "allChildren": "جميع الأطفال",
-      "clear": "إعادة تعيين"
+      "receipt": "رقم الإيصال",
+        "receiptPlaceholder": "مثال: MAT-2026-000001",
+        "fee": "الرسم",
+        "allFees": "كل الرسوم",
+        "type": "النوع",
+        "allTypes": "المدفوعات والتصحيحات",
+        "typePayment": "المدفوعات",
+        "typeCorrection": "التصحيحات",
+        "summary": "{{count}} عملية — المجموع: {{amount}}",
+        "clear": "إعادة تعيين"
     }
   },
   "parentPayments": {

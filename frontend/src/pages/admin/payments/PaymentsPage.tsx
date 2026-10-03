@@ -18,6 +18,7 @@ import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { useChildren } from '@/hooks/useChildren';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
+import { useBranchFees } from '@/hooks/useBranchFees';
 import {
   useChildBillingPeriods,
   useRecordPayment,
@@ -615,6 +616,35 @@ function PaymentHistoryFilters({
 }) {
   const { t } = useTranslation();
   const { data: childrenData } = useChildren({ pageSize: 100 });
+  const { branchId } = useDefaultBranch();
+  const { data: fees } = useBranchFees(branchId);
+
+  // Receipt-number search as you type, one request once typing pauses.
+  const [receiptInput, setReceiptInput] = React.useState(filters.receipt ?? '');
+  React.useEffect(() => {
+    if (!filters.receipt) setReceiptInput('');
+  }, [filters.receipt]);
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      const receipt = receiptInput.trim() || undefined;
+      if (receipt !== filters.receipt) onFiltersChange({ ...filters, receipt });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [receiptInput]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const typeOptions = [
+    { value: '', label: t('payments.filters.allTypes') },
+    { value: 'payment', label: t('payments.filters.typePayment') },
+    { value: 'correction', label: t('payments.filters.typeCorrection') },
+  ];
+
+  const feeOptions = [
+    { value: '', label: t('payments.filters.allFees') },
+    ...(fees ?? []).map((f) => ({ value: f.id, label: f.name })),
+  ];
+
+  const selectClassName =
+    'w-full appearance-none bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring';
 
   const childOptions = [
     { value: '', label: t('payments.filters.allChildren') },
@@ -631,8 +661,7 @@ function PaymentHistoryFilters({
     { value: 'baridimob', label: t('payments.recording.channels.baridimob') },
   ];
 
-  const hasActiveFilters =
-    !!filters.startDate || !!filters.endDate || !!filters.channel || !!filters.childId;
+  const hasActiveFilters = Object.values(filters).some(Boolean);
 
   return (
     <div className="bg-card border border-border rounded-lg p-4">
@@ -728,6 +757,60 @@ function PaymentHistoryFilters({
             className="w-full appearance-none bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
           >
             {childOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        {/* Receipt number */}
+        <div className="flex flex-col gap-1">
+          <label htmlFor="filter-receipt" className="text-caption text-text-secondary">
+            {t('payments.filters.receipt')}
+          </label>
+          <Input
+            id="filter-receipt"
+            value={receiptInput}
+            onChange={(e) => setReceiptInput(e.target.value)}
+            placeholder={t('payments.filters.receiptPlaceholder')}
+            dir="ltr"
+          />
+        </div>
+        {/* Fee */}
+        <div className="flex flex-col gap-1">
+          <label htmlFor="filter-fee" className="text-caption text-text-secondary">
+            {t('payments.filters.fee')}
+          </label>
+          <select
+            id="filter-fee"
+            value={filters.feeId ?? ''}
+            onChange={(e) => onFiltersChange({ ...filters, feeId: e.target.value || undefined })}
+            className={selectClassName}
+          >
+            {feeOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        {/* Type */}
+        <div className="flex flex-col gap-1">
+          <label htmlFor="filter-type" className="text-caption text-text-secondary">
+            {t('payments.filters.type')}
+          </label>
+          <select
+            id="filter-type"
+            value={filters.type ?? ''}
+            onChange={(e) =>
+              onFiltersChange({
+                ...filters,
+                type: (e.target.value || undefined) as PaymentRecordFilters['type'],
+              })
+            }
+            className={selectClassName}
+          >
+            {typeOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
@@ -897,6 +980,19 @@ export function PaymentsPage() {
         onFiltersChange={setFilters}
         onReset={handleResetFilters}
       />
+
+      {/* Summary of the filtered payments */}
+      {!isLoading && records && (
+        <p className="text-caption text-text-secondary">
+          {t('payments.filters.summary', {
+            count: records.length,
+            amount: formatDZD(
+              records.reduce((sum, r) => sum + Number(r.totalAmount), 0),
+              i18n.language,
+            ),
+          })}
+        </p>
+      )}
 
       {/* Payment records table */}
       {isLoading ? (

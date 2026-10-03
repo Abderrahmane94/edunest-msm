@@ -48,5 +48,21 @@ export const updateExpenseSchema = z.object({
     .optional(),
 });
 
+const isoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+  .optional();
+
+/** Filters for the expenses list (combined with page/pageSize). */
+export const expenseListFiltersSchema = z.object({
+  category: z.string().max(50).optional(),
+  from: isoDate,
+  to: isoDate,
+  search: z.string().trim().max(100).optional(),
+  hasReceipt: z.enum(['true', 'false']).optional(),
+});
+
+export type ExpenseListFilters = z.infer<typeof expenseListFiltersSchema>;
+
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
 export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;

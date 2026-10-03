@@ -1,7 +1,8 @@
 import prisma from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { extensionForUpload, extensionOf, mimeTypeForExtension, sniffExtension } from '../../utils/file-type';
-import type { CreateExpenseInput, UpdateExpenseInput } from './expense.schema';
+import type { CreateExpenseInput, ExpenseListFilters, UpdateExpenseInput } from './expense.schema';
+import type { Prisma } from '@prisma/client';
 
 export class ExpenseServiceError extends Error {
   constructor(
@@ -34,18 +35,32 @@ class ExpenseService {
   /**
    * List expenses for a school with pagination.
    */
-  async list(schoolId: string, page: number, pageSize: number) {
-    const [expenses, total] = await Promise.all([
+  async list(schoolId: string, page: number, pageSize: number, filters: ExpenseListFilters = {}) {
+    const where: Prisma.ExpenseWhereInput = { schoolId };
+    if (filters.category) where.category = filters.category;
+    if (filters.from || filters.to) {
+      where.date = {
+        ...(filters.from ? { gte: new Date(filters.from) } : {}),
+        ...(filters.to ? { lte: new Date(filters.to) } : {}),
+      };
+    }
+    if (filters.search) where.description = { contains: filters.search, mode: 'insensitive' };
+    if (filters.hasReceipt === 'true') where.receiptPublicId = { not: null };
+    if (filters.hasReceipt === 'false') where.receiptPublicId = null;
+
+    const [expenses, total, sum] = await Promise.all([
       prisma.expense.findMany({
-        where: { schoolId },
+        where,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        orderBy: { date: 'desc' },
+        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
       }),
-      prisma.expense.count({ where: { schoolId } }),
+      prisma.expense.count({ where }),
+      prisma.expense.aggregate({ where, _sum: { amount: true } }),
     ]);
 
-    return { expenses, total };
+    // Sum over every matching expense, not just this page.
+    return { expenses, total, totalAmount: sum._sum.amount?.toFixed(2) ?? '0.00' };
   }
 
   /**

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { expenseService, ExpenseServiceError } from './expense.service';
-import type { CreateExpenseInput, UpdateExpenseInput } from './expense.schema';
+import { expenseListFiltersSchema, type CreateExpenseInput, type UpdateExpenseInput } from './expense.schema';
 import { successResponse, errorResponse, paginatedResponse } from '../../utils/response';
 import { paginationSchema } from '../../utils/validators';
 import { contentDisposition } from '../../utils/file-type';
@@ -32,8 +32,14 @@ export const expenseController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { page, pageSize } = paginationSchema.parse(req.query);
-      const { expenses, total } = await expenseService.list(schoolId, page, pageSize);
-      res.status(200).json(paginatedResponse(expenses, page, pageSize, total));
+      const filters = expenseListFiltersSchema.safeParse(req.query);
+      if (!filters.success) {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', filters.error.errors[0]?.message ?? 'Invalid filters'));
+        return;
+      }
+      const { expenses, total, totalAmount } = await expenseService.list(schoolId, page, pageSize, filters.data);
+      const response = paginatedResponse(expenses, page, pageSize, total);
+      res.status(200).json({ ...response, meta: { ...response.meta, totalAmount } });
     } catch (error) {
       if (error instanceof ExpenseServiceError) {
         res.status(error.statusCode).json(errorResponse('EXPENSE_ERROR', error.message));

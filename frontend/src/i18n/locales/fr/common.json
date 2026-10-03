@@ -1002,6 +1002,22 @@
       "viewReceipt": "Voir le reçu",
       "downloadReceipt": "Télécharger",
       "edit": "Modifier",
+      "filters": {
+        "search": "Recherche",
+        "searchPlaceholder": "Description…",
+        "category": "Catégorie",
+        "allCategories": "Toutes les catégories",
+        "receipt": "Reçu",
+        "allReceipts": "Tous",
+        "withReceipt": "Avec reçu",
+        "withoutReceipt": "Sans reçu",
+        "from": "Du",
+        "to": "Au",
+        "invalidRange": "La date de fin doit être après la date de début.",
+        "summary": "{{count}} dépense(s) — total : {{amount}}",
+        "reset": "Réinitialiser les filtres",
+        "noMatch": "Aucune dépense ne correspond à ces filtres."
+      },
       "detail": {
         "info": "Informations",
         "dangerZone": "Zone dangereuse",

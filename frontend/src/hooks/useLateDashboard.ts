@@ -7,7 +7,13 @@ export type LatePeriodStatus = 'late' | 'late_partial';
 
 export interface LateDashboardEntry {
   id: string;
+  childId: string;
   childName: string;
+  classrooms: { id: string; name: string }[];
+  /** The fee the period bills; null for a registration period. */
+  feeId: string | null;
+  feeName: string | null;
+  isRegistrationPeriod: boolean;
   periodLabel: string;
   dueDate: string;
   graceEndDate: string;
@@ -52,8 +58,14 @@ export function useLateDashboard(branchId: string, statusFilter?: LatePeriodStat
 
 function mapLateDashboardEntry(raw: Record<string, unknown>): LateDashboardEntry {
   return {
-    id: (raw.id ?? raw.billingPeriodId ?? raw.billing_period_id ?? '') as string,
+    // The API sends the billing period id as `periodId`.
+    id: (raw.id ?? raw.periodId ?? raw.billingPeriodId ?? raw.billing_period_id ?? '') as string,
+    childId: (raw.childId ?? '') as string,
     childName: (raw.childName ?? raw.child_name ?? '') as string,
+    classrooms: (Array.isArray(raw.classrooms) ? raw.classrooms : []) as { id: string; name: string }[],
+    feeId: (raw.feeId ?? null) as string | null,
+    feeName: (raw.feeName ?? null) as string | null,
+    isRegistrationPeriod: Boolean(raw.isRegistrationPeriod),
     periodLabel: (raw.periodLabel ?? raw.period_label ?? '') as string,
     dueDate: (raw.dueDate ?? raw.due_date ?? '') as string,
     graceEndDate: (raw.graceEndDate ?? raw.grace_end_date ?? '') as string,

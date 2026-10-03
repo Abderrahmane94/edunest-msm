@@ -1862,6 +1862,24 @@
       }
     },
     "late": {
+      "registrationFee": "Frais d'inscription",
+      "daysLate_one": "{{count}} jour de retard",
+      "daysLate_other": "{{count}} jours de retard",
+      "filters": {
+        "search": "Enfant",
+        "searchPlaceholder": "Nom de l'enfant…",
+        "classroom": "Classe",
+        "allClassrooms": "Toutes les classes",
+        "fee": "Frais",
+        "allFees": "Tous les frais",
+        "minDays": "Retard",
+        "anyDelay": "Tous les retards",
+        "moreThanDays_one": "Plus de {{count}} jour",
+        "moreThanDays_other": "Plus de {{count}} jours",
+        "summary": "{{periods}} période(s) en retard · {{children}} enfant(s) · reste dû : {{amount}}",
+        "reset": "Réinitialiser les filtres",
+        "noMatch": "Aucun retard ne correspond à ces filtres."
+      },
       "title": "Retards de paiement",
       "description": "Tableau de bord des paiements en retard par branche",
       "filterBranch": "Branche",
@@ -1872,6 +1890,7 @@
       "statusLatePartial": "Partiel en retard",
       "empty": "Aucun paiement en retard. Tous les comptes sont à jour.",
       "columns": {
+        "fee": "Frais",
         "childName": "Enfant",
         "periodLabel": "Période",
         "dueDate": "Échéance",

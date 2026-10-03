@@ -42,15 +42,18 @@ export const payrollController = {
       const userId = req.query.userId as string | undefined;
       const year = req.query.year ? parseInt(req.query.year as string) : undefined;
       const month = req.query.month ? parseInt(req.query.month as string) : undefined;
+      const role = req.query.role === 'admin' || req.query.role === 'teacher' ? req.query.role : undefined;
 
-      const { items, total } = await payrollService.listPayments(schoolId, {
+      const { items, total, totalNet } = await payrollService.listPayments(schoolId, {
         userId,
         year,
         month,
+        role,
         page,
         pageSize,
       });
-      res.status(200).json(paginatedResponse(items, page, pageSize, total));
+      const response = paginatedResponse(items, page, pageSize, total);
+      res.status(200).json({ ...response, meta: { ...response.meta, totalNet } });
     } catch (err) {
       next(err);
     }

@@ -96,7 +96,14 @@ export const payrollService = {
 
   async listPayments(
     schoolId: string,
-    filters: { userId?: string; year?: number; month?: number; page: number; pageSize: number },
+    filters: {
+      userId?: string;
+      year?: number;
+      month?: number;
+      role?: 'admin' | 'teacher';
+      page: number;
+      pageSize: number;
+    },
   ) {
     const where: Prisma.SalaryPaymentWhereInput = {
       schoolId,
@@ -104,9 +111,10 @@ export const payrollService = {
       ...(filters.userId ? { userId: filters.userId } : {}),
       ...(filters.year ? { year: filters.year } : {}),
       ...(filters.month ? { month: filters.month } : {}),
+      ...(filters.role ? { user: { role: filters.role } } : {}),
     };
 
-    const [items, total] = await Promise.all([
+    const [items, total, sum] = await Promise.all([
       prisma.salaryPayment.findMany({
         where,
         include: { user: { select: { firstName: true, lastName: true, role: true } } },
@@ -115,9 +123,12 @@ export const payrollService = {
         take: filters.pageSize,
       }),
       prisma.salaryPayment.count({ where }),
+      prisma.salaryPayment.aggregate({ where, _sum: { netSalary: true } }),
     ]);
 
     return {
+      // Net paid over every matching payment, not just this page.
+      totalNet: sum._sum.netSalary?.toFixed(2) ?? '0.00',
       items: items.map((p) => ({
         id: p.id,
         userId: p.userId,

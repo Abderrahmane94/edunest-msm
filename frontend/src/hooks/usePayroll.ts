@@ -91,22 +91,28 @@ export function usePayrollPayments(filters: {
   userId?: string;
   year?: number;
   month?: number;
+  role?: 'admin' | 'teacher';
   page?: number;
   pageSize?: number;
 }) {
-  return useQuery<{ items: SalaryPayment[]; total: number }>({
+  return useQuery<{ items: SalaryPayment[]; total: number; totalNet: string }>({
     queryKey: ['payroll', 'payments', filters],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (filters.userId) params.set('userId', filters.userId);
       if (filters.year) params.set('year', String(filters.year));
       if (filters.month) params.set('month', String(filters.month));
+      if (filters.role) params.set('role', filters.role);
       if (filters.page) params.set('page', String(filters.page));
       if (filters.pageSize) params.set('pageSize', String(filters.pageSize));
       const res = await apiClient.get<SalaryPayment[]>(`/payroll/payments?${params}`);
+      // The total sits under meta.pagination (reading meta.total always gave 0
+      // and hid every page after the first).
+      const meta = (res as { meta?: { pagination?: { total?: number }; totalNet?: string } }).meta;
       return {
         items: res.data ?? [],
-        total: (res as { meta?: { total?: number } }).meta?.total ?? 0,
+        total: meta?.pagination?.total ?? 0,
+        totalNet: meta?.totalNet ?? '0.00',
       };
     },
   });

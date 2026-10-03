@@ -121,7 +121,7 @@ function WithdrawalDialog({
       });
       handleClose(false);
     } catch {
-      // Error handled by React Query
+      // Shown from withdrawEnrollment.error above the buttons.
     }
   }
 

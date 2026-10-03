@@ -70,9 +70,10 @@ export function AcademicYearDetailPage() {
   async function handleToggleActive() {
     if (!year) return;
     try {
+      setSaveError(null);
       await activateYear.mutateAsync(year.id);
-    } catch {
-      // handled by React Query
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 

@@ -76,10 +76,11 @@ export function UserDetailPage() {
 
   async function handleToggleActive() {
     if (!user) return;
+    setSaveError(null);
     try {
       await toggleActive.mutateAsync({ id: user.id, isActive: user.is_active });
-    } catch {
-      // ignore — handled by React Query
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 

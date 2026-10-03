@@ -92,10 +92,11 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
   }
 
   async function handleRemoveNote(noteId: string) {
+    setSubmitError(null);
     try {
       await removeNote.mutateAsync({ childId, noteId });
-    } catch {
-      // Surfaced via removeNote.isError below if needed
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 

@@ -120,10 +120,11 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
   }
 
   async function handleRemoveContact(contactId: string) {
+    setSubmitError(null);
     try {
       await removeContact.mutateAsync({ childId, contactId });
-    } catch {
-      // Surfaced via removeContact.isError below if needed
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 

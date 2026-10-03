@@ -18,3 +18,4 @@ export {
   EntityDeleteButton,
   type EntityDeleteButtonProps,
 } from './EntityDeleteButton';
+export { ErrorAlert } from './ErrorAlert';

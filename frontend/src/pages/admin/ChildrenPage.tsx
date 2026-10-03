@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Link2, Phone, HeartPulse, X } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import {
+  ErrorAlert,
   Button,
   CreateButton,
   DataTable,
@@ -70,6 +71,7 @@ function LinkParentDialog({
 
   const [parentId, setParentId] = React.useState('');
   const [relationship, setRelationship] = React.useState('mother');
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   function resetForm() {
     setParentId('');
@@ -80,6 +82,7 @@ function LinkParentDialog({
     e.preventDefault();
     if (!child || !parentId) return;
 
+    setSubmitError(null);
     try {
       await linkParent.mutateAsync({
         childId: child.id,
@@ -88,8 +91,8 @@ function LinkParentDialog({
       });
       resetForm();
       onOpenChange(false);
-    } catch {
-      // Error handled by React Query
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 
@@ -138,6 +141,8 @@ function LinkParentDialog({
             onChange={(e) => setRelationship(e.target.value)}
             options={relationshipOptions}
           />
+
+          <ErrorAlert message={submitError} className="mt-3" />
 
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => handleClose(false)}>

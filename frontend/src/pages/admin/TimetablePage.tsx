@@ -21,6 +21,7 @@ export function TimetablePage() {
 
   const [localDays, setLocalDays] = React.useState<DayOfWeek[]>([]);
   const [saved, setSaved] = React.useState(false);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
 
   // Auto-select first classroom
   React.useEffect(() => {
@@ -51,14 +52,15 @@ export function TimetablePage() {
 
   async function handleSave() {
     if (!selectedClassroomId) return;
+    setSaveError(null);
     try {
       await updateWorkingDays.mutateAsync({
         classroomId: selectedClassroomId,
         workingDays: localDays,
       });
       setSaved(true);
-    } catch {
-      // handled by React Query
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 
@@ -160,6 +162,11 @@ export function TimetablePage() {
               {saved && (
                 <span className="text-caption text-success font-medium">
                   {t('common.saved')}
+                </span>
+              )}
+              {saveError && (
+                <span className="text-caption text-danger font-medium" role="alert">
+                  {saveError}
                 </span>
               )}
               <Button

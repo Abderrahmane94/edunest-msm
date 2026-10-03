@@ -8,14 +8,10 @@ export interface Enrollment {
   academicYearId: string;
   startDate: string;
   status: 'active' | 'withdrawn' | 'completed';
-  registrationFee: string | null;
-  recurringFee: string;
   withdrawalDate: string | null;
   createdAt: string;
-  baseFeeId?: string | null;
   child?: { id: string; firstName: string; lastName: string };
   branch?: { id: string; name: string };
-  baseFee?: { id: string; name: string } | null;
   academicYear?: { id: string; name: string };
 }
 
@@ -31,16 +27,10 @@ export interface CreateEnrollmentInput {
   childId: string;
   branchId: string;
   academicYearId: string;
-  /**
-   * The recurring fee this enrollment's base periods are generated from.
-   * Omitted: enrolled for billing without base periods (whole-school fees only).
-   */
-  baseFeeId?: string;
+  /** Billing starts here: recurring fees are billed from this date. */
   startDate: string;
-  /** Optional per-child override of the selected base fee's amount. */
-  recurringFee?: number;
-  registrationFee?: number | null;
-  firstPeriodAmountDue?: number;
+  /** Fees to apply besides the whole-school ones (applied automatically). */
+  feeIds?: string[];
 }
 
 interface EnrollmentsParams {
@@ -52,7 +42,6 @@ interface EnrollmentsParams {
 function mapEnrollment(raw: Record<string, unknown>): Enrollment {
   const child = raw.child as Record<string, unknown> | undefined;
   const branch = raw.branch as Record<string, unknown> | undefined;
-  const baseFee = raw.baseFee as Record<string, unknown> | null | undefined;
   const academicYear = raw.academicYear as Record<string, unknown> | undefined;
 
   return {
@@ -60,11 +49,8 @@ function mapEnrollment(raw: Record<string, unknown>): Enrollment {
     childId: (raw.childId ?? raw.child_id) as string,
     branchId: (raw.branchId ?? raw.branch_id) as string,
     academicYearId: (raw.academicYearId ?? raw.academic_year_id) as string,
-    baseFeeId: (raw.baseFeeId ?? raw.base_fee_id ?? null) as string | null,
     startDate: (raw.startDate ?? raw.start_date) as string,
     status: (raw.status as Enrollment['status']) ?? 'active',
-    registrationFee: (raw.registrationFee ?? raw.registration_fee ?? null) as string | null,
-    recurringFee: (raw.recurringFee ?? raw.recurring_fee ?? '0') as string,
     withdrawalDate: (raw.withdrawalDate ?? raw.withdrawal_date ?? null) as string | null,
     createdAt: (raw.createdAt ?? raw.created_at) as string,
     child: child
@@ -77,7 +63,6 @@ function mapEnrollment(raw: Record<string, unknown>): Enrollment {
     branch: branch
       ? { id: branch.id as string, name: branch.name as string }
       : undefined,
-    baseFee: baseFee ? { id: baseFee.id as string, name: baseFee.name as string } : null,
     academicYear: academicYear
       ? { id: academicYear.id as string, name: academicYear.name as string }
       : undefined,
@@ -129,11 +114,8 @@ export function useCreateEnrollment() {
         childId: data.childId,
         branchId: data.branchId,
         academicYearId: data.academicYearId,
-        baseFeeId: data.baseFeeId,
         startDate: data.startDate,
-        recurringFee: data.recurringFee,
-        registrationFee: data.registrationFee,
-        firstPeriodAmountDue: data.firstPeriodAmountDue,
+        feeIds: data.feeIds,
       });
       if (!res.success) {
         throw new Error(res.error?.message ?? 'Failed to create enrollment');
@@ -163,6 +145,9 @@ export interface BillingPeriod {
   amountDue: string;
   isRegistrationPeriod: boolean;
   cancelledAt: string | null;
+  branchFeeId?: string | null;
+  /** The fee this period bills. */
+  branchFee?: { id: string; name: string; billingCycle: 'monthly' | 'custom' | null } | null;
   status?: 'unpaid' | 'partial' | 'late_partial' | 'late' | 'paid';
   totalPaid?: string;
   outstanding?: string;

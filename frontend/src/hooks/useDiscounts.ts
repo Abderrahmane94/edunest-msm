@@ -11,6 +11,9 @@ export interface Discount {
   description: string | null;
   validFrom: string;
   validTo: string | null;
+  /** The fee this discount applies to; null = every recurring fee. */
+  branchFeeId: string | null;
+  branchFee?: { id: string; name: string } | null;
   createdByUserId: string;
   createdAt: string;
 }
@@ -21,6 +24,8 @@ export interface CreateDiscountInput {
   description?: string | null;
   validFrom: string;
   validTo?: string | null;
+  /** null/omitted = every recurring fee. */
+  branchFeeId?: string | null;
 }
 
 export type UpdateDiscountInput = Partial<CreateDiscountInput>;
@@ -50,6 +55,7 @@ export function useCreateDiscount(enrollmentId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['discounts', enrollmentId] });
       qc.invalidateQueries({ queryKey: ['enrollment', enrollmentId] });
+      qc.invalidateQueries({ queryKey: ['child-billing-periods'] });
     },
   });
 }
@@ -65,6 +71,7 @@ export function useUpdateDiscount(enrollmentId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['discounts', enrollmentId] });
       qc.invalidateQueries({ queryKey: ['enrollment', enrollmentId] });
+      qc.invalidateQueries({ queryKey: ['child-billing-periods'] });
     },
   });
 }
@@ -80,6 +87,7 @@ export function useDeleteDiscount(enrollmentId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['discounts', enrollmentId] });
       qc.invalidateQueries({ queryKey: ['enrollment', enrollmentId] });
+      qc.invalidateQueries({ queryKey: ['child-billing-periods'] });
     },
   });
 }

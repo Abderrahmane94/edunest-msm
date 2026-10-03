@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, UserX, Calendar, Plus, Trash2, Percent } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
 import {
+  ErrorAlert,
   Button,
   StatusBadge,
   Dialog,
@@ -15,6 +16,7 @@ import {
   Input,
 } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
+import { ChildFeesSection } from '@/pages/admin/ChildFeesSection';
 import {
   useEnrollmentDetail,
   useWithdrawEnrollment,
@@ -218,15 +220,19 @@ function AddDiscountDialog({
   open,
   onOpenChange,
   enrollmentId,
+  recurringFees,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   enrollmentId: string;
+  /** The child's recurring fees a discount can target. */
+  recurringFees: { id: string; name: string }[];
 }) {
   const { t } = useTranslation();
   const createDiscount = useCreateDiscount(enrollmentId);
 
   const [type, setType] = React.useState<DiscountType>('scholarship');
+  const [branchFeeId, setBranchFeeId] = React.useState('');
   const [percentage, setPercentage] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [validFrom, setValidFrom] = React.useState(new Date().toISOString().slice(0, 10));
@@ -234,6 +240,8 @@ function AddDiscountDialog({
 
   function resetForm() {
     setType('scholarship');
+    setBranchFeeId('');
+    createDiscount.reset();
     setPercentage('');
     setDescription('');
     setValidFrom(new Date().toISOString().slice(0, 10));
@@ -256,6 +264,7 @@ function AddDiscountDialog({
         description: description.trim() || null,
         validFrom,
         validTo: validTo || null,
+        branchFeeId: branchFeeId || null,
       },
       { onSuccess: () => handleClose(false) },
     );
@@ -283,6 +292,18 @@ function AddDiscountDialog({
             value={type}
             onChange={(e) => setType(e.target.value as DiscountType)}
             options={typeOptions}
+          />
+
+          <FormSelect
+            label={t('payments.enrollmentDetail.discounts.form.fee')}
+            name="discount-fee"
+            value={branchFeeId}
+            onChange={(e) => setBranchFeeId(e.target.value)}
+            options={[
+              { value: '', label: t('payments.enrollmentDetail.discounts.allRecurringFees') },
+              ...recurringFees.map((f) => ({ value: f.id, label: f.name })),
+            ]}
+            helperText={t('payments.enrollmentDetail.discounts.form.feeHelper')}
           />
 
           <FormField label={t('payments.enrollmentDetail.discounts.form.percentage')} htmlFor="discount-percentage" required>
@@ -338,6 +359,10 @@ function AddDiscountDialog({
             <Button type="button" variant="secondary" onClick={() => handleClose(false)}>
               {t('common.cancel')}
             </Button>
+            <ErrorAlert
+              message={createDiscount.isError ? (createDiscount.error instanceof Error ? createDiscount.error.message : t('common.error')) : null}
+              className="me-auto"
+            />
             <Button type="submit" variant="primary" disabled={!percentage || !validFrom || createDiscount.isPending}>
               {createDiscount.isPending ? t('common.loading') : t('payments.enrollmentDetail.discounts.form.submit')}
             </Button>
@@ -363,6 +388,11 @@ function DiscountRow({ discount, enrollmentId }: { discount: Discount; enrollmen
       <td className="px-4 py-3">
         <span className="text-body font-medium text-foreground" dir="ltr">
           {Number(discount.percentage)}%
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <span className="text-body text-foreground">
+          {discount.branchFee?.name ?? t('payments.enrollmentDetail.discounts.allRecurringFees')}
         </span>
       </td>
       <td className="px-4 py-3">
@@ -401,7 +431,13 @@ function DiscountRow({ discount, enrollmentId }: { discount: Discount; enrollmen
   );
 }
 
-function DiscountsSection({ enrollmentId }: { enrollmentId: string }) {
+function DiscountsSection({
+  enrollmentId,
+  recurringFees,
+}: {
+  enrollmentId: string;
+  recurringFees: { id: string; name: string }[];
+}) {
   const { t } = useTranslation();
   const { data: discounts, isLoading } = useDiscounts(enrollmentId);
   const [showAddDialog, setShowAddDialog] = React.useState(false);
@@ -445,6 +481,9 @@ function DiscountsSection({ enrollmentId }: { enrollmentId: string }) {
                   {t('payments.enrollmentDetail.discounts.columns.percentage')}
                 </th>
                 <th className="px-4 py-3 text-start text-caption font-medium text-text-secondary">
+                  {t('payments.enrollmentDetail.discounts.columns.fee')}
+                </th>
+                <th className="px-4 py-3 text-start text-caption font-medium text-text-secondary">
                   {t('payments.enrollmentDetail.discounts.columns.validity')}
                 </th>
                 <th className="px-4 py-3 text-start text-caption font-medium text-text-secondary">
@@ -462,7 +501,12 @@ function DiscountsSection({ enrollmentId }: { enrollmentId: string }) {
         </div>
       )}
 
-      <AddDiscountDialog open={showAddDialog} onOpenChange={setShowAddDialog} enrollmentId={enrollmentId} />
+      <AddDiscountDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        enrollmentId={enrollmentId}
+        recurringFees={recurringFees}
+      />
     </div>
   );
 }
@@ -476,6 +520,15 @@ export function EnrollmentDetailPage() {
 
   const { data: enrollment, isLoading } = useEnrollmentDetail(enrollmentId!);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = React.useState(false);
+
+  // The recurring fees billed on this enrollment — what a discount can target.
+  const recurringFees = React.useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const p of enrollment?.billingPeriods ?? []) {
+      if (p.branchFee?.billingCycle) byId.set(p.branchFee.id, p.branchFee.name);
+    }
+    return [...byId].map(([id, name]) => ({ id, name }));
+  }, [enrollment]);
 
   // Back to the child's page (where this page is opened from), or to payments
   // while the enrollment isn't loaded.
@@ -502,6 +555,15 @@ export function EnrollmentDetailPage() {
     if (period.isRegistrationPeriod) {
       return t('payments.enrollmentDetail.periods.registration');
     }
+    // One-off fee: just its name. Recurring fee: its name and the month.
+    if (period.branchFee && !period.branchFee.billingCycle) {
+      return period.branchFee.name;
+    }
+    const prefix = period.branchFee ? `${period.branchFee.name} — ` : '';
+    return prefix + monthLabel(period);
+  }
+
+  function monthLabel(period: BillingPeriod): string {
     // Format as month label from period_start
     try {
       const date = new Date(period.periodStart);
@@ -612,14 +674,6 @@ export function EnrollmentDetailPage() {
           </div>
           <div>
             <span className="text-caption text-text-secondary block">
-              {t('payments.enrollments.form.baseFee')}
-            </span>
-            <span className="text-body font-medium text-foreground">
-              {enrollment.baseFee?.name ?? '—'}
-            </span>
-          </div>
-          <div>
-            <span className="text-caption text-text-secondary block">
               {t('payments.enrollments.columns.academicYear')}
             </span>
             <span className="text-body font-medium text-foreground">
@@ -636,30 +690,12 @@ export function EnrollmentDetailPage() {
           </div>
           <div>
             <span className="text-caption text-text-secondary block">
-              {t('payments.enrollments.columns.recurringFee')}
-            </span>
-            <span className="text-body font-medium text-foreground" dir="ltr">
-              {formatDZD(Number(enrollment.recurringFee), i18n.language)}
-            </span>
-          </div>
-          <div>
-            <span className="text-caption text-text-secondary block">
               {t('payments.enrollments.columns.startDate')}
             </span>
             <span className="text-body font-medium text-foreground" dir="ltr">
               {formatDate(enrollment.startDate)}
             </span>
           </div>
-          {enrollment.registrationFee && (
-            <div>
-              <span className="text-caption text-text-secondary block">
-                {t('payments.enrollments.form.registrationFee')}
-              </span>
-              <span className="text-body font-medium text-foreground" dir="ltr">
-                {formatDZD(Number(enrollment.registrationFee), i18n.language)}
-              </span>
-            </div>
-          )}
           {enrollment.withdrawalDate && (
             <div>
               <span className="text-caption text-text-secondary block">
@@ -772,8 +808,11 @@ export function EnrollmentDetailPage() {
         )}
       </div>
 
+      {/* The child's fees and what's left to pay */}
+      <ChildFeesSection childId={enrollment.childId} showManageBilling={false} />
+
       {/* Discounts */}
-      <DiscountsSection enrollmentId={enrollmentId!} />
+      <DiscountsSection enrollmentId={enrollmentId!} recurringFees={recurringFees} />
 
       {/* Withdrawal Dialog */}
       <WithdrawalDialog

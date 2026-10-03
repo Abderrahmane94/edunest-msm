@@ -14,9 +14,8 @@ export interface CreateEnrollmentInput {
   branchId: string;
   academicYearId: string;
   startDate: Date;
-  recurringFee?: Prisma.Decimal; // defaults to the base fee's amount
-  registrationFee?: Prisma.Decimal | null;
-  firstPeriodAmountDue?: Prisma.Decimal; // mid-cycle override
+  /** Fees applied besides the whole-school ones. */
+  feeIds?: string[];
 }
 
 export interface EnrollmentGenerationResult {

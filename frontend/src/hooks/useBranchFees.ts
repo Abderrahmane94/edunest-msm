@@ -131,29 +131,6 @@ export function useDeleteBranchFee(branchId: string) {
   });
 }
 
-/**
- * Apply a fee to an enrollment.
- */
-export function useApplyFee() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ enrollmentId, branchFeeId }: { enrollmentId: string; branchFeeId: string }) => {
-      const res = await apiClient.post<unknown>(
-        `/payments/enrollments/${enrollmentId}/apply-fee`,
-        { branchFeeId },
-      );
-      if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to apply fee');
-      }
-      return res.data;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['child-billing-periods'] });
-      qc.invalidateQueries({ queryKey: ['enrollments'] });
-    },
-  });
-}
-
 export interface AssignFeeInput {
   target: 'children' | 'classrooms' | 'school';
   childIds?: string[];

@@ -756,6 +756,7 @@ model BranchFee {
   baseForEnrollments   Enrollment[]         @relation("EnrollmentBaseFee")
   periodAssignments    BranchFeePeriod[]
   classroomAssignments BranchFeeClassroom[]
+  discounts            Discount[]
 
   @@index([branchId])
   @@map("branch_fees")
@@ -871,13 +872,17 @@ model Discount {
   description     String?
   validFrom       DateTime     @map("valid_from") @db.Date
   validTo         DateTime?    @map("valid_to") @db.Date
+  /// The fee this discount applies to; null = every recurring fee.
+  branchFeeId     String?      @map("branch_fee_id")
   createdByUserId String       @map("created_by_user_id")
   createdAt       DateTime     @default(now()) @map("created_at")
 
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
   createdBy  User       @relation(fields: [createdByUserId], references: [id])
+  branchFee  BranchFee? @relation(fields: [branchFeeId], references: [id], onDelete: SetNull)
 
   @@index([enrollmentId])
+  @@index([branchFeeId])
   @@map("discounts")
 }
 
@@ -889,6 +894,8 @@ model BillingPeriod {
   dueDate              DateTime  @map("due_date") @db.Date
   graceEndDate         DateTime  @map("grace_end_date") @db.Date
   amountDue            Decimal   @map("amount_due") @db.Decimal(10, 2)
+  /// Amount before any discount; discounts are always recomputed from it.
+  baseAmount           Decimal?  @map("base_amount") @db.Decimal(10, 2)
   isRegistrationPeriod Boolean   @default(false) @map("is_registration_period")
   branchFeeId          String?   @map("branch_fee_id")
   cancelledAt          DateTime? @map("cancelled_at")

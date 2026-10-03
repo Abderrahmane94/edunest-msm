@@ -1,21 +1,20 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
-import { prorateAmount } from './billing-period.service';
 import type { CreateDiscountInput, UpdateDiscountInput } from './discount.schema';
 
 /** The interactive-transaction client type actually produced by our tenant/soft-delete-extended `prisma`. */
 type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
 /**
- * Pure calculation: the discounted amount_due for one billing period, given
- * the enrollment's base recurring fee and the full list of discounts on the
- * enrollment. Sums the percentage of every discount whose validity window
- * covers the period's start date (capped at 100%) and applies it to the base
- * fee — always the base, never a previously-discounted amount, so repeated
- * recalculation stays idempotent and order-independent.
+ * Pure calculation: the discounted amount_due for one billing period, from its
+ * pre-discount amount and the discounts that target its fee. Sums the
+ * percentage of every discount whose validity window covers the period's
+ * start date (capped at 100%) and applies it to the base amount — always the
+ * base, never a previously-discounted amount, so repeated recalculation stays
+ * idempotent and order-independent.
  */
 export function computeDiscountedAmountDue(
-  recurringFee: Prisma.Decimal | number,
+  baseAmount: Prisma.Decimal | number,
   periodStart: Date,
   discounts: Array<{ percentage: Prisma.Decimal | number; validFrom: Date; validTo: Date | null }>,
 ): Prisma.Decimal {
@@ -24,7 +23,7 @@ export function computeDiscountedAmountDue(
     .reduce((sum, d) => sum + Number(d.percentage), 0);
 
   const cappedPct = Math.min(applicablePct, 100);
-  return new Prisma.Decimal((Number(recurringFee) * (1 - cappedPct / 100)).toFixed(2));
+  return new Prisma.Decimal((Number(baseAmount) * (1 - cappedPct / 100)).toFixed(2));
 }
 
 export class DiscountServiceError extends Error {
@@ -47,9 +46,11 @@ class DiscountService {
     this.validateDateRange(input.validFrom, input.validTo);
 
     return prisma.$transaction(async (tx) => {
+      await this.validateTargetFee(tx, enrollmentId, input.branchFeeId);
       const discount = await tx.discount.create({
         data: {
           enrollmentId,
+          branchFeeId: input.branchFeeId ?? null,
           type: input.type,
           percentage: input.percentage,
           description: input.description ?? null,
@@ -68,6 +69,7 @@ class DiscountService {
   async listByEnrollment(enrollmentId: string) {
     return prisma.discount.findMany({
       where: { enrollmentId },
+      include: { branchFee: { select: { id: true, name: true } } },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -94,9 +96,13 @@ class DiscountService {
     this.validateDateRange(validFrom, validTo);
 
     return prisma.$transaction(async (tx) => {
+      if (input.branchFeeId !== undefined) {
+        await this.validateTargetFee(tx, existing.enrollmentId, input.branchFeeId);
+      }
       const updated = await tx.discount.update({
         where: { id },
         data: {
+          ...(input.branchFeeId !== undefined && { branchFeeId: input.branchFeeId }),
           ...(input.type !== undefined && { type: input.type }),
           ...(input.percentage !== undefined && { percentage: input.percentage }),
           ...(input.description !== undefined && { description: input.description }),
@@ -133,31 +139,48 @@ class DiscountService {
     }
   }
 
-  /**
-   * Recompute amount_due for the enrollment's recurring, non-cancelled billing
-   * periods that have no recorded payment allocations yet, applying the sum of
-   * every discount whose validity window covers that period's start date
-   * (capped at 100%). Always derives from enrollment.recurringFee — the
-   * pre-discount base — never from a period's current (possibly already
-   * discounted) amount_due, so repeated edits stay consistent. The first
-   * period is re-prorated by days covered (enrollment.startDate through its
-   * periodEnd) before the discount is applied, matching the automatic
-   * proration done at generation time.
-   *
-   * Periods with any payment allocation are left untouched: once money has
-   * changed hands, the amount owed for that period is a settled fact, not
-   * something a later discount edit should rewrite.
-   */
-  private async recalculatePeriods(
+  /** A targeted fee must exist in the enrollment's branch and be recurring. */
+  private async validateTargetFee(
     tx: TransactionClient,
     enrollmentId: string,
+    branchFeeId: string | null | undefined,
   ): Promise<void> {
+    if (!branchFeeId) return;
+    const [enrollment, fee] = await Promise.all([
+      tx.enrollment.findUnique({ where: { id: enrollmentId }, select: { branchId: true } }),
+      tx.branchFee.findUnique({ where: { id: branchFeeId }, select: { branchId: true, billingCycle: true } }),
+    ]);
+    if (!fee || !enrollment || fee.branchId !== enrollment.branchId) {
+      throw new DiscountServiceError('Fee not found', 404, 'NOT_FOUND');
+    }
+    if (!fee.billingCycle) {
+      throw new DiscountServiceError(
+        'A discount can only target a recurring fee',
+        400,
+        'VALIDATION_ERROR',
+      );
+    }
+  }
+
+  /**
+   * Recompute amount_due for the enrollment's recurring-fee periods (monthly
+   * or custom cycle; never one-off fees or the registration period) that are
+   * not cancelled and have no payment yet. Each period's amount is its
+   * pre-discount base_amount reduced by the discounts targeting its fee (or
+   * every recurring fee) whose window covers the period's start, capped at
+   * 100%. Runs after every discount change and whenever new periods are
+   * generated, so new periods pick up existing discounts.
+   *
+   * Periods with any payment allocation are left untouched (the amount owed is
+   * settled once money changed hands), and so is a withdrawn enrollment, whose
+   * last period may carry a manually set amount.
+   */
+  async recalculatePeriods(tx: TransactionClient, enrollmentId: string): Promise<void> {
     const enrollment = await tx.enrollment.findUnique({
       where: { id: enrollmentId },
-      select: { recurringFee: true, baseFeeId: true, startDate: true },
+      select: { status: true },
     });
-    if (!enrollment) return;
-    const enrollmentStart = new Date(enrollment.startDate);
+    if (!enrollment || enrollment.status === 'withdrawn') return;
 
     const [periods, discounts] = await Promise.all([
       tx.billingPeriod.findMany({
@@ -165,10 +188,7 @@ class DiscountService {
           enrollmentId,
           isRegistrationPeriod: false,
           cancelledAt: null,
-          // Only the base recurring fee's own periods are discountable — a
-          // one-off/extra fee applied on top (a different branchFeeId)
-          // should never be swept into a tuition discount.
-          OR: [{ branchFeeId: null }, { branchFeeId: enrollment.baseFeeId }],
+          branchFee: { billingCycle: { not: null } },
         },
         include: {
           paymentAllocations: { select: { amount: true } },
@@ -184,22 +204,14 @@ class DiscountService {
       );
       if (!totalPaid.equals(0)) continue;
 
-      const periodStart = new Date(period.periodStart);
-      const periodEnd = new Date(period.periodEnd);
-      // The first (possibly partial) period is prorated by days actually
-      // covered before the discount percentage is applied, mirroring the
-      // automatic proration done at generation time.
-      const baseFee =
-        enrollmentStart > periodStart
-          ? prorateAmount(enrollment.recurringFee, periodStart, periodEnd, enrollmentStart)
-          : enrollment.recurringFee;
+      const baseAmount = period.baseAmount ?? period.amountDue;
+      const applicable = discounts.filter((d) => !d.branchFeeId || d.branchFeeId === period.branchFeeId);
+      const newAmountDue = computeDiscountedAmountDue(baseAmount, new Date(period.periodStart), applicable);
 
-      const newAmountDue = computeDiscountedAmountDue(baseFee, periodStart, discounts);
-
-      if (!newAmountDue.equals(period.amountDue)) {
+      if (!newAmountDue.equals(period.amountDue) || period.baseAmount === null) {
         await tx.billingPeriod.update({
           where: { id: period.id },
-          data: { amountDue: newAmountDue },
+          data: { amountDue: newAmountDue, baseAmount },
         });
       }
     }

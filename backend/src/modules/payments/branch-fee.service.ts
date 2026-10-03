@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
 import { generatePeriodsForEnrollment } from './billing-period.service';
 import { fetchCalendarRows } from './billing-cycle.util';
+import { discountService } from './discount.service';
 
 type BillingCycle = 'monthly' | 'custom';
 
@@ -483,6 +484,8 @@ class BranchFeeService {
 
       if (fee.billingCycle) {
         const periods = await this.generateRecurringFeePeriods(tx, fee, enrollment);
+        // New periods pick up the enrollment's existing discounts.
+        await discountService.recalculatePeriods(tx, enrollment.id);
         return {
           periodsCreated: periods.length,
           feeName: fee.name,
@@ -640,6 +643,7 @@ class BranchFeeService {
 
         for (const enrollment of billable) {
           await this.generateRecurringFeePeriods(tx, fee, enrollment);
+          await discountService.recalculatePeriods(tx, enrollment.id);
         }
       } else {
         const today = new Date();
@@ -655,6 +659,7 @@ class BranchFeeService {
             dueDate: today,
             graceEndDate,
             amountDue: fee.amount,
+            baseAmount: fee.amount,
             isRegistrationPeriod: false,
             branchFeeId: fee.id,
             cancelledAt: null,
@@ -727,17 +732,67 @@ class BranchFeeService {
           recurringFee: new Prisma.Decimal(0),
         },
       });
-      await this.applySchoolFeesToEnrollment(tx, { ...enrollment, academicYear }, excludeFeeId);
+      await this.applySchoolFeesToEnrollment(
+        tx,
+        { ...enrollment, academicYear },
+        excludeFeeId ? [excludeFeeId] : [],
+      );
     }
 
     return { enrolled: toEnroll.length, academicYearId: academicYear.id };
   }
 
   /**
-   * Applies every active whole-school fee to a newly created enrollment,
-   * except its base fee (already billed by the enrollment itself). Recurring
-   * fees are billed from the enrollment's start date. Runs inside the
-   * enrollment-creation transaction.
+   * Applies a new enrollment's fees: every whole-school fee plus the fees
+   * picked for the child. Recurring fees are billed from the enrollment's start
+   * date (first period prorated); one-off fees are dated today. Runs inside the
+   * enrollment-creation transaction, so a failing fee rolls everything back.
+   */
+  async applyFeesToNewEnrollment(
+    tx: TransactionClient,
+    enrollment: {
+      id: string;
+      branchId: string;
+      academicYearId: string;
+      startDate: Date;
+      academicYear: { startDate: Date; endDate: Date };
+    },
+    feeIds: string[],
+  ): Promise<void> {
+    const ids = [...new Set(feeIds)];
+    await this.applySchoolFeesToEnrollment(tx, enrollment, ids);
+
+    if (ids.length > 0) {
+      const fees = await tx.branchFee.findMany({ where: { id: { in: ids } } });
+      if (fees.length !== ids.length) {
+        throw new BranchFeeServiceError('Fee not found', 404, 'NOT_FOUND');
+      }
+      for (const fee of fees) {
+        if (!fee.isActive || fee.branchId !== enrollment.branchId) {
+          throw new BranchFeeServiceError(`${fee.name}: fee is not available`, 400, 'VALIDATION_ERROR');
+        }
+        try {
+          if (fee.billingCycle) {
+            await this.generateRecurringFeePeriods(tx, fee, enrollment, enrollment.startDate);
+          } else {
+            await this.createOneShotPeriod(tx, fee, enrollment.id);
+          }
+        } catch (err) {
+          if (err instanceof BranchFeeServiceError) {
+            throw new BranchFeeServiceError(`${fee.name}: ${err.message}`, err.statusCode, err.code);
+          }
+          throw err;
+        }
+      }
+    }
+
+    await discountService.recalculatePeriods(tx, enrollment.id);
+  }
+
+  /**
+   * Applies every active whole-school fee to a newly created enrollment
+   * (except the ones the caller applies itself). Recurring fees are billed
+   * from the enrollment's start date. Runs inside the caller's transaction.
    */
   async applySchoolFeesToEnrollment(
     tx: TransactionClient,
@@ -745,15 +800,14 @@ class BranchFeeService {
       id: string;
       branchId: string;
       academicYearId: string;
-      baseFeeId: string | null;
       startDate: Date;
       academicYear: { startDate: Date; endDate: Date };
     },
-    /** A fee the caller is about to apply itself (skipped here to avoid a duplicate). */
-    excludeFeeId?: string,
+    /** Fees the caller applies itself (skipped here to avoid duplicates). */
+    excludeFeeIds: string[] = [],
   ) {
     const branch = await tx.branch.findUnique({ where: { id: enrollment.branchId } });
-    const skipIds = [enrollment.baseFeeId, excludeFeeId].filter((id): id is string => !!id);
+    const skipIds = excludeFeeIds.filter(Boolean);
     const fees = await tx.branchFee.findMany({
       where: {
         isActive: true,
@@ -805,6 +859,7 @@ class BranchFeeService {
         dueDate: today,
         graceEndDate,
         amountDue: fee.amount,
+        baseAmount: fee.amount,
         isRegistrationPeriod: false,
         branchFeeId: fee.id,
         cancelledAt: null,
@@ -875,6 +930,8 @@ class BranchFeeService {
           dueDate: p.dueDate,
           graceEndDate: p.graceEndDate,
           amountDue: p.amountDue,
+          // Before discounts; recalculatePeriods derives amountDue from it.
+          baseAmount: p.amountDue,
           isRegistrationPeriod: false,
           branchFeeId: fee.id,
           cancelledAt: null,

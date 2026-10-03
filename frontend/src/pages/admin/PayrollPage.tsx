@@ -4,6 +4,8 @@ import { Banknote, Pencil, Trash2, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { formatDate } from '@/lib/formatters';
+import { useClassrooms } from '@/hooks/useClassrooms';
+import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
 import {
   Button,
   CreateButton,
@@ -250,15 +252,36 @@ function RecordPaymentDialog({
   const isPerStudent = selectedEmployee?.salary?.salaryType === 'per_student';
   const ratePerStudent = parseFloat(selectedEmployee?.salary?.ratePerStudent ?? '0') || 0;
 
+  // A per-student salary is pre-filled with the children in the classes this
+  // teacher has this school year (still editable).
+  const { data: activeYear } = useActiveAcademicYear();
+  const { data: classrooms } = useClassrooms(activeYear?.id);
+  const teacherClasses = React.useMemo(
+    () => (classrooms ?? []).filter((c) => c.teacher_id && c.teacher_id === form.userId),
+    [classrooms, form.userId],
+  );
+  const suggestedStudentCount = teacherClasses.reduce((sum, c) => sum + c.enrolled_count, 0);
+
   function handleEmployeeChange(userId: string) {
     const emp = employees.find((e) => e.id === userId);
+    const perStudent = emp?.salary?.salaryType === 'per_student';
+    const count = (classrooms ?? [])
+      .filter((c) => c.teacher_id && c.teacher_id === userId)
+      .reduce((sum, c) => sum + c.enrolled_count, 0);
     setForm((p) => ({
       ...p,
       userId,
       baseSalary: emp?.salary?.salaryType === 'fixed' ? (emp.salary.baseSalary ?? '') : '',
-      studentCount: '',
+      studentCount: perStudent && classrooms ? String(count) : '',
     }));
   }
+
+  // Classes may load after the employee is picked: fill the count then.
+  React.useEffect(() => {
+    if (isPerStudent && classrooms && form.studentCount === '') {
+      setForm((p) => ({ ...p, studentCount: String(suggestedStudentCount) }));
+    }
+  }, [isPerStudent, classrooms]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const computedBase = isPerStudent
     ? ratePerStudent * (parseInt(form.studentCount) || 0)
@@ -362,6 +385,14 @@ function RecordPaymentDialog({
                   onChange={(e) => setForm((p) => ({ ...p, studentCount: e.target.value }))}
                   placeholder="0"
                 />
+                <p className="text-caption text-text-secondary mt-1">
+                  {teacherClasses.length > 0
+                    ? t('payroll.recordDialog.studentCountHint', {
+                        count: suggestedStudentCount,
+                        classes: teacherClasses.map((c) => c.name).join(', '),
+                      })
+                    : t('payroll.recordDialog.studentCountNoClass')}
+                </p>
               </FormField>
               <div className="rounded-md bg-subtle border border-border px-4 py-3 flex items-center justify-between mb-3">
                 <span className="text-body text-text-secondary">

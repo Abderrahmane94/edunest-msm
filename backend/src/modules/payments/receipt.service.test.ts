@@ -44,6 +44,11 @@ function buildMockPaymentRecord(overrides: Partial<{
       periodEnd: Date;
       isRegistrationPeriod: boolean;
       branchFee?: { name: string } | null;
+      id?: string;
+      amountDue?: Prisma.Decimal;
+      baseAmount?: Prisma.Decimal | null;
+      branchFeeId?: string | null;
+      enrollment?: { discounts: Array<Record<string, unknown>> };
     };
   }>;
   corrections: Array<{
@@ -197,6 +202,72 @@ describe('ReceiptService', () => {
 
         expect(receipt.allocations[0].periodLabel).toBe("Frais d'inscription");
         expect(receipt.allocations[0].feeName).toBe("Frais d'inscription");
+      });
+
+      it('shows the discount on a discounted échéance and the total discounts', async () => {
+        mockFindUnique.mockResolvedValue(buildMockPaymentRecord({
+          totalAmount: new Prisma.Decimal('2620.00'),
+          allocations: [
+            {
+              id: 'alloc-transport',
+              amount: new Prisma.Decimal('1620.00'),
+              billingPeriod: {
+                id: 'bp-transport',
+                periodStart: new Date('2026-11-01'),
+                periodEnd: new Date('2026-11-30'),
+                isRegistrationPeriod: false,
+                amountDue: new Prisma.Decimal('1620.00'),
+                baseAmount: new Prisma.Decimal('1800.00'),
+                branchFeeId: 'fee-transport',
+                branchFee: { name: 'Transport' },
+                enrollment: {
+                  discounts: [
+                    {
+                      type: 'sibling',
+                      percentage: new Prisma.Decimal('10'),
+                      fixedAmount: null,
+                      validFrom: new Date('2026-09-01'),
+                      validTo: null,
+                      branchFeeId: null,
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              id: 'alloc-insurance',
+              amount: new Prisma.Decimal('1000.00'),
+              billingPeriod: {
+                id: 'bp-insurance',
+                periodStart: new Date('2026-10-03'),
+                periodEnd: new Date('2026-10-03'),
+                isRegistrationPeriod: false,
+                amountDue: new Prisma.Decimal('1000.00'),
+                baseAmount: new Prisma.Decimal('1000.00'),
+                branchFeeId: 'fee-insurance',
+                branchFee: { name: 'Assurance' },
+                enrollment: { discounts: [] },
+              },
+            },
+          ],
+        }) as any);
+
+        const receipt = await receiptService.generateReceipt('payment-1', 'fr');
+
+        const transport = receipt.allocations.find((a) => a.feeName === 'Transport')!;
+        const insurance = receipt.allocations.find((a) => a.feeName === 'Assurance')!;
+        expect(transport.discountNote).toBe("Remise Fratrie −10 % : −180.00 DZD (montant d'origine 1800.00 DZD)");
+        expect(insurance.discountNote).toBeNull();
+        expect(receipt.totalDiscount).toBe('180.00 DZD');
+      });
+
+      it('has no discount information when nothing was discounted', async () => {
+        mockFindUnique.mockResolvedValue(buildMockPaymentRecord() as any);
+
+        const receipt = await receiptService.generateReceipt('payment-1', 'fr');
+
+        expect(receipt.totalDiscount).toBeNull();
+        expect(receipt.allocations.every((a) => a.discountNote === null)).toBe(true);
       });
 
       it('names the fee each allocated period belongs to', async () => {

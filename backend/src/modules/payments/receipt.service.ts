@@ -34,6 +34,11 @@ const LABELS: Record<ReceiptLanguage, {
   channelCash: string;
   channelCcp: string;
   channelBaridimob: string;
+  /** "Remise" — discount mention on a line, and the total-discounts row. */
+  discount: string;
+  /** "original amount" */
+  originalAmount: string;
+  discountTypes: Record<'scholarship' | 'sibling' | 'staff' | 'custom', string>;
   direction: 'rtl' | 'ltr';
 }> = {
   ar: {
@@ -59,6 +64,9 @@ const LABELS: Record<ReceiptLanguage, {
     channelCash: 'نقدي',
     channelCcp: 'حساب بريدي جاري',
     channelBaridimob: 'بريدي موب',
+    discount: 'تخفيض',
+    originalAmount: 'المبلغ الأصلي',
+    discountTypes: { scholarship: 'منحة دراسية', sibling: 'إخوة', staff: 'طاقم العمل', custom: 'مخصص' },
     direction: 'rtl',
   },
   fr: {
@@ -84,6 +92,9 @@ const LABELS: Record<ReceiptLanguage, {
     channelCash: 'Espèces',
     channelCcp: 'CCP',
     channelBaridimob: 'BaridiMob',
+    discount: 'Remise',
+    originalAmount: "montant d'origine",
+    discountTypes: { scholarship: 'Bourse', sibling: 'Fratrie', staff: 'Personnel', custom: 'Personnalisé' },
     direction: 'ltr',
   },
 };
@@ -97,6 +108,11 @@ export interface ReceiptAllocationLine {
   periodLabel: string;
   amount: string;
   periodStart: Date;
+  /**
+   * The discount that reduced this échéance, e.g. "Remise Fratrie −10 % :
+   * −180.00 DZD (montant d'origine 1800.00 DZD)"; null when none.
+   */
+  discountNote: string | null;
 }
 
 /**
@@ -133,6 +149,8 @@ export interface ReceiptData {
   corrections: ReceiptCorrectionLine[];
   /** Present when this record IS a correction */
   isCorrection: boolean;
+  /** Sum of the discounts on the échéances this payment covers; null when none. */
+  totalDiscount: string | null;
   correctionReason: string | null;
   correctsReceiptNumber: string | null;
 }
@@ -178,10 +196,28 @@ class ReceiptService {
           include: {
             billingPeriod: {
               select: {
+                id: true,
                 periodStart: true,
                 periodEnd: true,
                 isRegistrationPeriod: true,
+                amountDue: true,
+                baseAmount: true,
+                branchFeeId: true,
                 branchFee: { select: { name: true } },
+                enrollment: {
+                  select: {
+                    discounts: {
+                      select: {
+                        type: true,
+                        percentage: true,
+                        fixedAmount: true,
+                        validFrom: true,
+                        validTo: true,
+                        branchFeeId: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -267,6 +303,39 @@ class ReceiptService {
     };
 
     // Build allocations sorted by period_start
+    type ReceiptPeriod = (typeof paymentRecord.allocations)[number]['billingPeriod'];
+
+    /** What discounts took off a period (null when nothing). */
+    const savedOn = (period: ReceiptPeriod): Prisma.Decimal | null => {
+      if (period.baseAmount == null) return null;
+      const saved = period.baseAmount.sub(period.amountDue);
+      return saved.gt(0) ? saved : null;
+    };
+
+    /** "Remise Fratrie −10 % : −180.00 DZD (montant d'origine 1800.00 DZD)". */
+    const discountNoteFor = (period: ReceiptPeriod): string | null => {
+      const saved = savedOn(period);
+      if (!saved || period.baseAmount == null) return null;
+      const start = new Date(period.periodStart);
+      const applied = period.enrollment.discounts.filter(
+        (d) =>
+          (!d.branchFeeId || d.branchFeeId === period.branchFeeId) &&
+          new Date(d.validFrom) <= start &&
+          (!d.validTo || new Date(d.validTo) >= start),
+      );
+      const names = applied
+        .map(
+          (d) =>
+            `${labels.discountTypes[d.type]} ` +
+            (d.fixedAmount !== null ? `−${formatAmount(d.fixedAmount)}` : `−${Number(d.percentage)} %`),
+        )
+        .join(' + ');
+      return (
+        `${labels.discount}${names ? ` ${names}` : ''} : −${formatAmount(saved)}` +
+        ` (${labels.originalAmount} ${formatAmount(period.baseAmount)})`
+      );
+    };
+
     const allocations: ReceiptAllocationLine[] = paymentRecord.allocations
       .sort((a, b) => {
         const aStart = new Date(a.billingPeriod.periodStart).getTime();
@@ -284,7 +353,19 @@ class ReceiptService {
         ),
         amount: formatAmount(alloc.amount),
         periodStart: alloc.billingPeriod.periodStart,
+        discountNote: discountNoteFor(alloc.billingPeriod),
       }));
+
+    // Each discounted échéance counts once, even if split over several lines.
+    const discountedPeriods = new Map<string, Prisma.Decimal>();
+    for (const alloc of paymentRecord.allocations) {
+      const saved = savedOn(alloc.billingPeriod);
+      if (saved) discountedPeriods.set(alloc.billingPeriod.id, saved);
+    }
+    const totalDiscount = [...discountedPeriods.values()].reduce(
+      (sum, v) => sum.add(v),
+      new Prisma.Decimal(0),
+    );
 
     // Build correction lines (other records that correct this one)
     const hasCorrections = paymentRecord.corrections.length > 0;
@@ -319,6 +400,7 @@ class ReceiptService {
       corrections: correctionLines,
       // Fields for when THIS record IS a correction
       isCorrection,
+      totalDiscount: totalDiscount.gt(0) ? formatAmount(totalDiscount) : null,
       correctionReason: isCorrection ? paymentRecord.referenceNote : null,
       correctsReceiptNumber: paymentRecord.correctedPayment?.receiptNumber ?? null,
     };

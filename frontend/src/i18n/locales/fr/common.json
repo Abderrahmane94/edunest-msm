@@ -1860,7 +1860,7 @@
         "columns": {
           "fee": "Frais",
           "type": "Type",
-          "percentage": "Pourcentage",
+          "percentage": "Remise",
           "validity": "Validité",
           "description": "Description"
         },
@@ -1871,6 +1871,11 @@
           "custom": "Personnalisé"
         },
         "form": {
+          "kind": "Type de remise",
+          "kind_percentage": "Pourcentage",
+          "kind_amount": "Montant",
+          "fixedAmount": "Montant (DA)",
+          "fixedAmountHelper": "Déduit de chaque échéance concernée.",
           "fee": "Frais concerné",
           "feeHelper": "Les remises s'appliquent aux frais récurrents (mensuels ou personnalisés), pas aux frais ponctuels.",
           "title": "Ajouter une remise",

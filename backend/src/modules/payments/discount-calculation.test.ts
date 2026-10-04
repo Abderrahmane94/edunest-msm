@@ -75,4 +75,28 @@ describe('computeDiscountedAmountDue', () => {
     const second = computeDiscountedAmountDue(fee, periodStart, oneDiscount);
     expect(second.toString()).toBe(first.toString());
   });
+
+  it('takes a fixed amount off the échéance', () => {
+    const discounts = [{ fixedAmount: 2000, validFrom: new Date('2026-01-01'), validTo: null }];
+    expect(computeDiscountedAmountDue(fee, new Date('2026-02-01'), discounts).toString()).toBe('13000');
+  });
+
+  it('applies percentages first, then fixed amounts', () => {
+    const discounts = [
+      { percentage: 10, validFrom: new Date('2026-01-01'), validTo: null },
+      { fixedAmount: 500, validFrom: new Date('2026-01-01'), validTo: null },
+    ];
+    // 15000 - 10% = 13500, then - 500 = 13000
+    expect(computeDiscountedAmountDue(fee, new Date('2026-02-01'), discounts).toString()).toBe('13000');
+  });
+
+  it('never goes below zero', () => {
+    const discounts = [{ fixedAmount: 20000, validFrom: new Date('2026-01-01'), validTo: null }];
+    expect(computeDiscountedAmountDue(fee, new Date('2026-02-01'), discounts).toString()).toBe('0');
+  });
+
+  it('ignores a fixed amount outside its validity window', () => {
+    const discounts = [{ fixedAmount: 2000, validFrom: new Date('2026-03-01'), validTo: null }];
+    expect(computeDiscountedAmountDue(fee, new Date('2026-02-01'), discounts).toString()).toBe('15000');
+  });
 });

@@ -7,7 +7,10 @@ export interface Discount {
   id: string;
   enrollmentId: string;
   type: DiscountType;
-  percentage: string;
+  /** Set for a percentage discount (null for a fixed amount). */
+  percentage: string | null;
+  /** Set for a fixed-amount discount: taken off each échéance it applies to. */
+  fixedAmount: string | null;
   description: string | null;
   validFrom: string;
   validTo: string | null;
@@ -20,7 +23,9 @@ export interface Discount {
 
 export interface CreateDiscountInput {
   type: DiscountType;
-  percentage: number;
+  /** Give either a percentage or a fixed amount. */
+  percentage?: number | null;
+  fixedAmount?: number | null;
   description?: string | null;
   validFrom: string;
   validTo?: string | null;

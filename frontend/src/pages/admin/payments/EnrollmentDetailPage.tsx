@@ -488,6 +488,8 @@ export function EnrollmentDetailPage() {
 
   const { data: enrollment, isLoading } = useEnrollmentDetail(enrollmentId!);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = React.useState(false);
+  // Shown on the échéances they reduce.
+  const { data: enrollmentDiscounts } = useDiscounts(enrollmentId!);
 
   // The recurring fees billed on this enrollment — what a discount can target.
   const recurringFees = React.useMemo(() => {
@@ -678,7 +680,7 @@ export function EnrollmentDetailPage() {
       </div>
 
       {/* Échéances */}
-      <EcheancesSection periods={billingPeriods} getLabel={getPeriodLabel} />
+      <EcheancesSection periods={billingPeriods} getLabel={getPeriodLabel} discounts={enrollmentDiscounts ?? []} />
 
       {/* The child's fees and what's left to pay */}
       <ChildFeesSection childId={enrollment.childId} showManageBilling={false} />

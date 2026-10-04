@@ -1809,12 +1809,14 @@
         "daysAgo_other": "depuis {{count}} jours",
         "paidPart": "payé {{amount}}",
         "summary": {
+          "discounts": "Remises",
           "total": "Total",
           "paid": "Payé",
           "remaining": "Reste à payer",
           "overdue": "Dû maintenant"
         },
         "filters": {
+          "discounted": "Avec remise",
           "all": "Toutes",
           "late": "En retard",
           "due": "À payer",

@@ -12,6 +12,21 @@ export class PayrollError extends Error {
   }
 }
 
+export interface StudentDaysResult {
+  basis: 'working_day' | 'present_day';
+  classes: {
+    id: string;
+    name: string;
+    students: number;
+    workingDays: number;
+    studentWorkingDays: number;
+    presentDays: number;
+  }[];
+  totals: { students: number; studentWorkingDays: number; presentDays: number };
+  /** Student-days the salary is computed on, per the salary's basis. */
+  units: number;
+}
+
 export const payrollService = {
   async listEmployees(schoolId: string) {
     const users = await prisma.user.findMany({
@@ -43,6 +58,7 @@ export const payrollService = {
             salaryType: u.employeeSalary.salaryType as 'fixed' | 'per_student',
             baseSalary: u.employeeSalary.baseSalary?.toFixed(2) ?? null,
             ratePerStudent: u.employeeSalary.ratePerStudent?.toFixed(2) ?? null,
+            perStudentBasis: u.employeeSalary.perStudentBasis as 'working_day' | 'present_day',
             currency: u.employeeSalary.currency,
             effectiveFrom: u.employeeSalary.effectiveFrom,
             notes: u.employeeSalary.notes,
@@ -73,6 +89,7 @@ export const payrollService = {
       baseSalary: data.salaryType === 'fixed' ? new Prisma.Decimal(data.baseSalary!) : null,
       ratePerStudent:
         data.salaryType === 'per_student' ? new Prisma.Decimal(data.ratePerStudent!) : null,
+      perStudentBasis: data.perStudentBasis,
       currency: data.currency,
       effectiveFrom: new Date(data.effectiveFrom),
       notes: data.notes,
@@ -88,6 +105,7 @@ export const payrollService = {
       salaryType: salary.salaryType as 'fixed' | 'per_student',
       baseSalary: salary.baseSalary?.toFixed(2) ?? null,
       ratePerStudent: salary.ratePerStudent?.toFixed(2) ?? null,
+      perStudentBasis: salary.perStudentBasis as 'working_day' | 'present_day',
       currency: salary.currency,
       effectiveFrom: salary.effectiveFrom,
       notes: salary.notes,
@@ -153,11 +171,99 @@ export const payrollService = {
         deductions: p.deductions.toFixed(2),
         netSalary: p.netSalary.toFixed(2),
         studentCount: p.studentCount,
+        studentDays: p.studentDays,
         paidAt: p.paidAt,
         note: p.note,
         createdAt: p.createdAt,
       })),
       total,
+    };
+  },
+
+  /**
+   * Student-days for a per-student salary in a given month, per class the
+   * teacher has in that month's academic year:
+   * - working: each child counts every working day of the class (its week days)
+   *   from the day they joined the class;
+   * - present: attendance marked present or late.
+   * `units` is the one matching the salary's basis.
+   */
+  async studentDays(
+    schoolId: string,
+    userId: string,
+    year: number,
+    month: number,
+  ): Promise<StudentDaysResult> {
+    const salary = await prisma.employeeSalary.findFirst({ where: { userId, schoolId } });
+    const basis = (salary?.perStudentBasis ?? 'working_day') as 'working_day' | 'present_day';
+
+    // @db.Date columns are UTC midnights.
+    const monthStart = new Date(Date.UTC(year, month - 1, 1));
+    const monthEnd = new Date(Date.UTC(year, month, 0));
+
+    const classrooms = await prisma.classroom.findMany({
+      where: {
+        schoolId,
+        teacherUserId: userId,
+        deletedAt: null,
+        academicYear: { startDate: { lte: monthEnd }, endDate: { gte: monthStart } },
+      },
+      select: {
+        id: true,
+        name: true,
+        workingDays: true,
+        enrollments: { select: { enrolledAt: true } },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    const presence = classrooms.length
+      ? await prisma.attendanceRecord.groupBy({
+          by: ['classroomId'],
+          where: {
+            classroomId: { in: classrooms.map((c) => c.id) },
+            date: { gte: monthStart, lte: monthEnd },
+            status: { in: ['present', 'late'] },
+          },
+          _count: { _all: true },
+        })
+      : [];
+    const presentByClass = new Map(presence.map((p) => [p.classroomId, p._count._all]));
+
+    const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const classes = classrooms.map((c) => {
+      const days = new Set(Array.isArray(c.workingDays) ? (c.workingDays as string[]) : []);
+      // The class's working dates this month.
+      const dates: number[] = [];
+      for (let d = new Date(monthStart); d <= monthEnd; d.setUTCDate(d.getUTCDate() + 1)) {
+        if (days.has(WEEKDAYS[d.getUTCDay()])) dates.push(d.getTime());
+      }
+      // Each child counts from the day they joined the class.
+      const studentWorkingDays = c.enrollments.reduce((sum, e) => {
+        const joined = new Date(e.enrolledAt);
+        const from = Date.UTC(joined.getUTCFullYear(), joined.getUTCMonth(), joined.getUTCDate());
+        return sum + dates.filter((t) => t >= from).length;
+      }, 0);
+      return {
+        id: c.id,
+        name: c.name,
+        students: c.enrollments.length,
+        workingDays: dates.length,
+        studentWorkingDays,
+        presentDays: presentByClass.get(c.id) ?? 0,
+      };
+    });
+
+    const totals = {
+      students: classes.reduce((s, c) => s + c.students, 0),
+      studentWorkingDays: classes.reduce((s, c) => s + c.studentWorkingDays, 0),
+      presentDays: classes.reduce((s, c) => s + c.presentDays, 0),
+    };
+    return {
+      basis,
+      classes,
+      totals,
+      units: basis === 'present_day' ? totals.presentDays : totals.studentWorkingDays,
     };
   },
 
@@ -180,11 +286,13 @@ export const payrollService = {
           );
         }
       } else {
+        // Rate per student per day: the base is rate × student-days.
         const rate = Number(user.employeeSalary.ratePerStudent);
-        const expected = Math.round(rate * (data.studentCount ?? 0) * 100) / 100;
+        const days = data.studentDays ?? 0;
+        const expected = Math.round(rate * days * 100) / 100;
         if (Math.abs(data.baseSalary - expected) > EPSILON) {
           throw new PayrollError(
-            `baseSalary must match the configured per-student rate (${rate.toFixed(2)} x ${data.studentCount ?? 0} students = ${expected.toFixed(2)})`,
+            `baseSalary must match the configured per-student rate (${rate.toFixed(2)} x ${days} student-days = ${expected.toFixed(2)})`,
           );
         }
       }
@@ -218,6 +326,7 @@ export const payrollService = {
             deductions: new Prisma.Decimal(data.deductions),
             netSalary: new Prisma.Decimal(net),
             studentCount: data.studentCount ?? null,
+            studentDays: data.studentDays ?? null,
             paidAt: new Date(data.paidAt),
             note: data.note,
           },
@@ -245,6 +354,7 @@ export const payrollService = {
       deductions: payment.deductions.toFixed(2),
       netSalary: payment.netSalary.toFixed(2),
       studentCount: payment.studentCount,
+      studentDays: payment.studentDays,
       paidAt: payment.paidAt,
       note: payment.note,
       createdAt: payment.createdAt,

@@ -64,6 +64,22 @@ export const payrollController = {
     }
   },
 
+  async studentDays(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const year = parseInt(req.query.year as string);
+      const month = parseInt(req.query.month as string);
+      if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', 'year and month are required'));
+        return;
+      }
+      const result = await payrollService.studentDays(schoolId, req.params.userId, year, month);
+      res.status(200).json(successResponse(result));
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async recordPayment(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const schoolId = req.user!.schoolId!;

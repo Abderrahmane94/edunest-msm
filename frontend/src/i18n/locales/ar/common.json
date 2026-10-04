@@ -1502,6 +1502,8 @@
       "payments": "المدفوعات"
     },
     "employees": {
+      "perStudentBasis_working_day": "تلميذ / يوم عمل",
+      "perStudentBasis_present_day": "تلميذ / يوم حضور",
       "noSalary": "لم يتم تحديد الراتب",
       "lastPayment": "آخر دفعة",
       "setSalary": "تحديد الراتب",
@@ -1518,7 +1520,12 @@
       "fixed": "راتب ثابت",
       "per_student": "بالتلميذ",
       "baseSalary": "الراتب الأساسي (دج)",
-      "ratePerStudent": "معدل التلميذ (دج)",
+      "perStudentBasis": "أساس الحساب",
+      "basis_working_day": "تلميذ × يوم عمل",
+      "basis_present_day": "تلميذ × يوم حضور",
+      "basisHint_working_day": "يُحتسب كل تلميذ في أقسامه عن كل يوم عمل من الشهر (حسب أيام عمل القسم)، ابتداءً من تسجيله.",
+      "basisHint_present_day": "يُحتسب كل تلميذ عن كل يوم سُجّل فيه حاضرًا (أو متأخرًا) في أقسامه.",
+      "ratePerStudent": "المعدل لكل تلميذ في اليوم (دج)",
       "effectiveFrom": "ساري منذ",
       "notes": "ملاحظات (اختياري)",
       "notesPlaceholder": "معلومات إضافية…"
@@ -1543,6 +1550,12 @@
       "studentCount": "عدد التلاميذ",
       "studentCountHint": "معبأ مسبقًا: {{count}} طالب في أقسامه ({{classes}}). قابل للتعديل.",
       "studentCountNoClass": "لا يوجد قسم مسند لهذا المعلم: أدخل عدد الطلاب.",
+      "studentDays_working_day": "تلاميذ × أيام العمل",
+      "studentDays_present_day": "تلاميذ × أيام الحضور",
+      "studentDaysHint": "محسوب من أقسامه لهذا الشهر. قابل للتعديل.",
+      "studentDaysNoClass": "لا يوجد قسم مسند لهذا المعلم في هذا الشهر: أدخل عدد أيام التلاميذ.",
+      "classDetail_working_day": "{{students}} تلميذ · {{days}} يوم عمل",
+      "classDetail_present_day": "{{students}} تلميذ · الحضور المسجل",
       "bonuses": "المكافآت (دج)",
       "deductions": "الخصومات (دج)",
       "netSalary": "صافي الراتب (دج)",
@@ -1570,6 +1583,7 @@
     "pdf": {
       "downloadPayslip": "تحميل قسيمة الراتب",
       "exportList": "تصدير PDF",
+      "studentDays": "تلاميذ × أيام",
       "studentCount": "عدد التلاميذ",
       "payslipTitle": "قسيمة الراتب",
       "reportTitle": "تقرير الرواتب",

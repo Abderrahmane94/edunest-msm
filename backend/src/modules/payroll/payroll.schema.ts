@@ -5,6 +5,8 @@ export const setSalarySchema = z
     salaryType: z.enum(['fixed', 'per_student']).default('fixed'),
     baseSalary: z.number().positive().optional(),
     ratePerStudent: z.number().positive().optional(),
+    // per_student: rate per student per working day, or per day present.
+    perStudentBasis: z.enum(['working_day', 'present_day']).default('working_day'),
     currency: z.string().default('DZD'),
     effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     notes: z.string().optional(),
@@ -22,6 +24,8 @@ export const recordPaymentSchema = z.object({
   bonuses: z.number().min(0).default(0),
   deductions: z.number().min(0).default(0),
   studentCount: z.number().int().min(0).optional(),
+  /** per_student: the student-days the base salary is computed on. */
+  studentDays: z.number().int().min(0).optional(),
   paidAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   note: z.string().optional(),
 });

@@ -4,8 +4,6 @@ import { Banknote, Pencil, Trash2, Download, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { formatDate } from '@/lib/formatters';
-import { useClassrooms } from '@/hooks/useClassrooms';
-import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
 import {
   Button,
   CreateButton,
@@ -26,6 +24,8 @@ import {
   usePayrollPayments,
   useRecordPayment,
   useDeletePayment,
+  useStudentDays,
+  type PerStudentBasis,
   type EmployeeRecord,
   type SalaryPayment,
 } from '@/hooks/usePayroll';
@@ -62,6 +62,7 @@ function SetSalaryDialog({
     salaryType: 'fixed' as 'fixed' | 'per_student',
     baseSalary: '',
     ratePerStudent: '',
+    perStudentBasis: 'working_day' as PerStudentBasis,
     effectiveFrom: new Date().toISOString().split('T')[0],
     notes: '',
   });
@@ -73,6 +74,7 @@ function SetSalaryDialog({
         salaryType: employee.salary.salaryType,
         baseSalary: employee.salary.baseSalary ?? '',
         ratePerStudent: employee.salary.ratePerStudent ?? '',
+        perStudentBasis: employee.salary.perStudentBasis ?? 'working_day',
         effectiveFrom: employee.salary.effectiveFrom.split('T')[0],
         notes: employee.salary.notes ?? '',
       });
@@ -81,6 +83,7 @@ function SetSalaryDialog({
         salaryType: 'fixed',
         baseSalary: '',
         ratePerStudent: '',
+        perStudentBasis: 'working_day',
         effectiveFrom: new Date().toISOString().split('T')[0],
         notes: '',
       });
@@ -100,6 +103,7 @@ function SetSalaryDialog({
           baseSalary: form.salaryType === 'fixed' ? parseFloat(form.baseSalary) : undefined,
           ratePerStudent:
             form.salaryType === 'per_student' ? parseFloat(form.ratePerStudent) : undefined,
+          perStudentBasis: form.salaryType === 'per_student' ? form.perStudentBasis : undefined,
           effectiveFrom: form.effectiveFrom,
           notes: form.notes || undefined,
         },
@@ -155,21 +159,44 @@ function SetSalaryDialog({
               />
             </FormField>
           ) : (
-            <FormField
-              label={t('payroll.setSalaryDialog.ratePerStudent')}
-              htmlFor="ps-rate"
-              required
-            >
-              <Input
-                id="ps-rate"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.ratePerStudent}
-                onChange={(e) => setForm((p) => ({ ...p, ratePerStudent: e.target.value }))}
-                placeholder="500"
-              />
-            </FormField>
+            <>
+              <FormField label={t('payroll.setSalaryDialog.perStudentBasis')} htmlFor="ps-basis">
+                <div className="flex gap-2">
+                  {(['working_day', 'present_day'] as const).map((basis) => (
+                    <button
+                      key={basis}
+                      type="button"
+                      onClick={() => setForm((p) => ({ ...p, perStudentBasis: basis }))}
+                      className={`flex-1 h-9 rounded-md border text-body transition-colors ${
+                        form.perStudentBasis === basis
+                          ? 'border-accent bg-accent/10 text-accent font-medium'
+                          : 'border-border bg-card text-text-secondary'
+                      }`}
+                    >
+                      {t(`payroll.setSalaryDialog.basis_${basis}`)}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-caption text-text-secondary mt-1">
+                  {t(`payroll.setSalaryDialog.basisHint_${form.perStudentBasis}`)}
+                </p>
+              </FormField>
+              <FormField
+                label={t('payroll.setSalaryDialog.ratePerStudent')}
+                htmlFor="ps-rate"
+                required
+              >
+                <Input
+                  id="ps-rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.ratePerStudent}
+                  onChange={(e) => setForm((p) => ({ ...p, ratePerStudent: e.target.value }))}
+                  placeholder="50"
+                />
+              </FormField>
+            </>
           )}
 
           <FormField label={t('payroll.setSalaryDialog.effectiveFrom')} htmlFor="ps-eff" required>
@@ -222,7 +249,7 @@ function RecordPaymentDialog({
     month: now.getMonth() + 1,
     year: now.getFullYear(),
     baseSalary: '',
-    studentCount: '',
+    studentDays: '',
     bonuses: '0',
     deductions: '0',
     paidAt: now.toISOString().split('T')[0],
@@ -238,7 +265,7 @@ function RecordPaymentDialog({
         month: d.getMonth() + 1,
         year: d.getFullYear(),
         baseSalary: '',
-        studentCount: '',
+        studentDays: '',
         bonuses: '0',
         deductions: '0',
         paidAt: d.toISOString().split('T')[0],
@@ -252,39 +279,44 @@ function RecordPaymentDialog({
   const isPerStudent = selectedEmployee?.salary?.salaryType === 'per_student';
   const ratePerStudent = parseFloat(selectedEmployee?.salary?.ratePerStudent ?? '0') || 0;
 
-  // A per-student salary is pre-filled with the children in the classes this
-  // teacher has this school year (still editable).
-  const { data: activeYear } = useActiveAcademicYear();
-  const { data: classrooms } = useClassrooms(activeYear?.id);
-  const teacherClasses = React.useMemo(
-    () => (classrooms ?? []).filter((c) => c.teacher_id && c.teacher_id === form.userId),
-    [classrooms, form.userId],
+  // A per-student salary is a rate per student per day: the month's
+  // student-days are computed from the teacher's classes (working days or
+  // attendance, per the salary's basis) and pre-filled, still editable.
+  const { data: days, isFetching: daysLoading } = useStudentDays(
+    form.userId,
+    form.year,
+    form.month,
+    open && isPerStudent,
   );
-  const suggestedStudentCount = teacherClasses.reduce((sum, c) => sum + c.enrolled_count, 0);
+  const basis: PerStudentBasis =
+    days?.basis ?? selectedEmployee?.salary?.perStudentBasis ?? 'working_day';
+
+  // Re-fill on each new employee / month; a manual edit stays until then.
+  const prefilledFor = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (!isPerStudent || !days || daysLoading) return;
+    const key = `${form.userId}-${form.year}-${form.month}`;
+    if (prefilledFor.current === key) return;
+    prefilledFor.current = key;
+    setForm((p) => ({ ...p, studentDays: String(days.units) }));
+  }, [isPerStudent, days, daysLoading, form.userId, form.year, form.month]);
+  React.useEffect(() => {
+    if (!open) prefilledFor.current = null;
+  }, [open]);
 
   function handleEmployeeChange(userId: string) {
     const emp = employees.find((e) => e.id === userId);
-    const perStudent = emp?.salary?.salaryType === 'per_student';
-    const count = (classrooms ?? [])
-      .filter((c) => c.teacher_id && c.teacher_id === userId)
-      .reduce((sum, c) => sum + c.enrolled_count, 0);
     setForm((p) => ({
       ...p,
       userId,
       baseSalary: emp?.salary?.salaryType === 'fixed' ? (emp.salary.baseSalary ?? '') : '',
-      studentCount: perStudent && classrooms ? String(count) : '',
+      studentDays: '',
     }));
   }
 
-  // Classes may load after the employee is picked: fill the count then.
-  React.useEffect(() => {
-    if (isPerStudent && classrooms && form.studentCount === '') {
-      setForm((p) => ({ ...p, studentCount: String(suggestedStudentCount) }));
-    }
-  }, [isPerStudent, classrooms]); // eslint-disable-line react-hooks/exhaustive-deps
-
+  const studentDays = parseInt(form.studentDays) || 0;
   const computedBase = isPerStudent
-    ? ratePerStudent * (parseInt(form.studentCount) || 0)
+    ? Math.round(ratePerStudent * studentDays * 100) / 100
     : parseFloat(form.baseSalary) || 0;
 
   const net = computedBase + (parseFloat(form.bonuses) || 0) - (parseFloat(form.deductions) || 0);
@@ -300,7 +332,8 @@ function RecordPaymentDialog({
         baseSalary: computedBase,
         bonuses: parseFloat(form.bonuses) || 0,
         deductions: parseFloat(form.deductions) || 0,
-        studentCount: isPerStudent ? parseInt(form.studentCount) || 0 : undefined,
+        studentCount: isPerStudent ? days?.totals.students : undefined,
+        studentDays: isPerStudent ? studentDays : undefined,
         paidAt: form.paidAt,
         note: form.note || undefined,
       });
@@ -372,33 +405,52 @@ function RecordPaymentDialog({
           {isPerStudent ? (
             <>
               <FormField
-                label={t('payroll.recordDialog.studentCount')}
-                htmlFor="rp-students"
+                label={t(`payroll.recordDialog.studentDays_${basis}`)}
+                htmlFor="rp-student-days"
                 required
               >
                 <Input
-                  id="rp-students"
+                  id="rp-student-days"
                   type="number"
                   min="0"
                   step="1"
-                  value={form.studentCount}
-                  onChange={(e) => setForm((p) => ({ ...p, studentCount: e.target.value }))}
-                  placeholder="0"
+                  value={form.studentDays}
+                  onChange={(e) => setForm((p) => ({ ...p, studentDays: e.target.value }))}
+                  placeholder={daysLoading ? t('common.loading') : '0'}
                 />
-                <p className="text-caption text-text-secondary mt-1">
-                  {teacherClasses.length > 0
-                    ? t('payroll.recordDialog.studentCountHint', {
-                        count: suggestedStudentCount,
-                        classes: teacherClasses.map((c) => c.name).join(', '),
-                      })
-                    : t('payroll.recordDialog.studentCountNoClass')}
-                </p>
+                {days && !daysLoading && (
+                  <p className="text-caption text-text-secondary mt-1">
+                    {days.classes.length > 0
+                      ? t('payroll.recordDialog.studentDaysHint')
+                      : t('payroll.recordDialog.studentDaysNoClass')}
+                  </p>
+                )}
               </FormField>
+              {days && !daysLoading && days.classes.length > 0 && (
+                <ul className="rounded-md border border-border divide-y divide-border mb-3">
+                  {days.classes.map((c) => (
+                    <li key={c.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                      <div className="min-w-0">
+                        <p className="text-body text-foreground truncate">{c.name}</p>
+                        <p className="text-caption text-text-secondary">
+                          {t(`payroll.recordDialog.classDetail_${basis}`, {
+                            students: c.students,
+                            days: c.workingDays,
+                          })}
+                        </p>
+                      </div>
+                      <span className="text-body font-mono font-medium text-foreground shrink-0">
+                        <bdi dir="ltr">{basis === 'present_day' ? c.presentDays : c.studentWorkingDays}</bdi>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
               <div className="rounded-md bg-subtle border border-border px-4 py-3 flex items-center justify-between mb-3">
                 <span className="text-body text-text-secondary">
                   {t('payroll.recordDialog.baseSalary')}
                   <span className="text-caption text-text-secondary ms-2">
-                    ({fmtDZD(ratePerStudent)} × {parseInt(form.studentCount) || 0})
+                    <bdi dir="ltr">({fmtDZD(ratePerStudent)} × {studentDays})</bdi>
                   </span>
                 </span>
                 <span className="text-body font-semibold font-mono text-foreground">
@@ -476,7 +528,7 @@ function RecordPaymentDialog({
               disabled={
                 recordPayment.isPending ||
                 !form.userId ||
-                (isPerStudent ? !form.studentCount : !form.baseSalary)
+                (isPerStudent ? form.studentDays === '' : !form.baseSalary)
               }
             >
               {recordPayment.isPending ? t('common.loading') : t('common.save')}
@@ -551,7 +603,7 @@ function EmployeesTab() {
           <div>
             <p className="text-body font-mono font-medium text-foreground">
               {emp.salary.salaryType === 'per_student'
-                ? `${fmtDZD(emp.salary.ratePerStudent!)} / ${t('payroll.employees.perStudent')}`
+                ? `${fmtDZD(emp.salary.ratePerStudent!)} / ${t(`payroll.employees.perStudentBasis_${emp.salary.perStudentBasis ?? 'working_day'}`)}`
                 : fmtDZD(emp.salary.baseSalary!)}
             </p>
             <p className="text-caption text-text-secondary" dir="ltr">
@@ -811,6 +863,7 @@ function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean, 
       <table style="width:100%;border-collapse:collapse;">
         <tbody>
           ${p.studentCount != null ? row(t('payroll.pdf.studentCount'), String(p.studentCount), '#111827') : ''}
+          ${p.studentDays != null ? row(t('payroll.pdf.studentDays'), String(p.studentDays), '#111827') : ''}
           ${row(t('payroll.pdf.paymentDate'), fmtPdfDate(p.paidAt), '#111827')}
           ${p.note ? row(t('payroll.columns.note'), p.note, '#6b7280', false) : ''}
         </tbody>

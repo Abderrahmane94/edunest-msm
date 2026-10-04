@@ -10,6 +10,7 @@ router.use(requireAdmin);
 
 router.get('/employees', payrollController.listEmployees);
 router.put('/employees/:userId/salary', payrollController.setSalary);
+router.get('/employees/:userId/student-days', payrollController.studentDays);
 
 router.get('/payments', payrollController.listPayments);
 router.post('/payments', payrollController.recordPayment);

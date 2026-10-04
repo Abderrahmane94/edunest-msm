@@ -244,15 +244,18 @@ export function EcheancesSection({
                       >
                         {getLabel(period)}
                       </p>
-                      <p className="text-caption text-text-secondary tabular-nums" dir="ltr">
-                        {formatDate(period.periodStart)} — {formatDate(period.periodEnd)}
+                      {/* dir on the text only: the paragraph keeps the page's alignment (right in Arabic). */}
+                      <p className="text-caption text-text-secondary tabular-nums">
+                        <bdi dir="ltr">
+                          {formatDate(period.periodStart)} — {formatDate(period.periodEnd)}
+                        </bdi>
                       </p>
                     </td>
 
                     {/* Due date */}
                     <td className="px-4 py-3">
-                      <p className="text-body text-foreground tabular-nums" dir="ltr">
-                        {formatDate(period.dueDate)}
+                      <p className="text-body text-foreground tabular-nums">
+                        <bdi dir="ltr">{formatDate(period.dueDate)}</bdi>
                       </p>
                       {(category === 'due' || category === 'late' || category === 'upcoming') && (
                         <p
@@ -383,9 +386,8 @@ function SummaryTile({
                 ? 'text-primary'
                 : 'text-foreground',
         )}
-        dir="ltr"
       >
-        {value}
+        <bdi dir="ltr">{value}</bdi>
       </p>
     </div>
   );

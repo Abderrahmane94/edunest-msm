@@ -1822,12 +1822,14 @@
         "daysAgo_other": "منذ {{count}} يوم",
         "paidPart": "مدفوع {{amount}}",
         "summary": {
+          "discounts": "التخفيضات",
           "total": "المجموع",
           "paid": "المدفوع",
           "remaining": "المتبقي",
           "overdue": "المستحق الآن"
         },
         "filters": {
+          "discounted": "مع تخفيض",
           "all": "الكل",
           "late": "متأخرة",
           "due": "للدفع",

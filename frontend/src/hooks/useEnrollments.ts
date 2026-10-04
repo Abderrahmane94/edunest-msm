@@ -143,6 +143,8 @@ export interface BillingPeriod {
   dueDate: string;
   graceEndDate: string;
   amountDue: string;
+  /** Amount before any discount (null for periods from before it was stored). */
+  baseAmount?: string | null;
   isRegistrationPeriod: boolean;
   cancelledAt: string | null;
   branchFeeId?: string | null;
@@ -186,6 +188,7 @@ export function useEnrollmentDetail(enrollmentId: string) {
         dueDate: (p.dueDate ?? p.due_date) as string,
         graceEndDate: (p.graceEndDate ?? p.grace_end_date) as string,
         amountDue: (p.amountDue ?? p.amount_due ?? '0') as string,
+        baseAmount: (p.baseAmount ?? p.base_amount ?? null) as string | null,
         isRegistrationPeriod: (p.isRegistrationPeriod ?? p.is_registration_period ?? false) as boolean,
         cancelledAt: (p.cancelledAt ?? p.cancelled_at ?? null) as string | null,
         // The fee each period bills: its name labels the period on the billing page.

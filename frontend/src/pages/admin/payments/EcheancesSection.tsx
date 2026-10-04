@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, AlertTriangle, AlertCircle, Clock, Ban } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, AlertCircle, Clock, Ban, Percent } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import type { BillingPeriod } from '@/hooks/useEnrollments';
+import type { Discount } from '@/hooks/useDiscounts';
 
 /** How an échéance reads at a glance. */
 type Category = 'late' | 'due' | 'upcoming' | 'paid' | 'cancelled';
@@ -36,7 +37,29 @@ const CATEGORY_STYLE: Record<Category, { pill: string; bar: string; icon: React.
   cancelled: { pill: 'bg-subtle text-text-disabled', bar: 'bg-border', icon: Ban },
 };
 
-const FILTERS: Array<'all' | Category> = ['all', 'late', 'due', 'upcoming', 'paid', 'cancelled'];
+const FILTERS: Array<'all' | Category | 'discounted'> = [
+  'all',
+  'late',
+  'due',
+  'upcoming',
+  'paid',
+  'discounted',
+  'cancelled',
+];
+
+/**
+ * The discounts behind a period's reduced amount: same rule as the server —
+ * targeting its fee (or every recurring fee) and valid on its start date.
+ */
+function discountsFor(period: BillingPeriod, discounts: Discount[]): Discount[] {
+  const start = startOfDay(period.periodStart);
+  return discounts.filter(
+    (d) =>
+      (!d.branchFeeId || d.branchFeeId === period.branchFeeId) &&
+      startOfDay(d.validFrom) <= start &&
+      (!d.validTo || startOfDay(d.validTo) >= start),
+  );
+}
 
 /**
  * The child's échéances: a summary of what's owed, filter chips, and one row
@@ -45,22 +68,37 @@ const FILTERS: Array<'all' | Category> = ['all', 'late', 'due', 'upcoming', 'pai
 export function EcheancesSection({
   periods,
   getLabel,
+  discounts = [],
 }: {
   periods: BillingPeriod[];
   /** "Fee — month" label for a period. */
   getLabel: (period: BillingPeriod) => string;
+  /** The enrollment's discounts, to explain reduced amounts. */
+  discounts?: Discount[];
 }) {
   const { t, i18n } = useTranslation();
   const money = (v: string | number) => formatDZD(Number(v), i18n.language);
   const today = startOfDay(new Date());
-  const [filter, setFilter] = React.useState<'all' | Category>('all');
+  const [filter, setFilter] = React.useState<'all' | Category | 'discounted'>('all');
 
-  const rows = periods.map((period) => ({ period, category: categoryOf(period, today) }));
+  const rows = periods.map((period) => {
+    const base = Number(period.baseAmount ?? period.amountDue);
+    const saved = Math.max(0, Math.round((base - Number(period.amountDue)) * 100) / 100);
+    return {
+      period,
+      category: categoryOf(period, today),
+      base,
+      saved,
+      applied: saved > 0 ? discountsFor(period, discounts) : [],
+    };
+  });
   const active = rows.filter((r) => r.category !== 'cancelled');
   const counts = rows.reduce<Record<string, number>>((acc, r) => {
     acc[r.category] = (acc[r.category] ?? 0) + 1;
+    if (r.saved > 0 && r.category !== 'cancelled') acc.discounted = (acc.discounted ?? 0) + 1;
     return acc;
   }, {});
+  const totalSaved = active.reduce((sum, r) => sum + r.saved, 0);
 
   const total = active.reduce((sum, r) => sum + Number(r.period.amountDue), 0);
   const paid = active.reduce((sum, r) => sum + Number(r.period.totalPaid ?? 0), 0);
@@ -69,7 +107,12 @@ export function EcheancesSection({
     .filter((r) => r.category === 'late' || r.category === 'due')
     .reduce((sum, r) => sum + Math.max(0, Number(r.period.outstanding ?? r.period.amountDue)), 0);
 
-  const visible = filter === 'all' ? rows : rows.filter((r) => r.category === filter);
+  const visible =
+    filter === 'all'
+      ? rows
+      : filter === 'discounted'
+        ? rows.filter((r) => r.saved > 0 && r.category !== 'cancelled')
+        : rows.filter((r) => r.category === filter);
 
   function relativeDue(dueDate: string): string {
     const days = Math.round((startOfDay(dueDate) - today) / DAY_MS);
@@ -92,7 +135,7 @@ export function EcheancesSection({
         </div>
 
         {/* Summary */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className={cn('grid grid-cols-2 gap-3', totalSaved > 0 ? 'lg:grid-cols-5' : 'lg:grid-cols-4')}>
           <SummaryTile label={t('payments.enrollmentDetail.periods.summary.total')} value={money(total)} />
           <SummaryTile label={t('payments.enrollmentDetail.periods.summary.paid')} value={money(paid)} tone="success" />
           <SummaryTile label={t('payments.enrollmentDetail.periods.summary.remaining')} value={money(remaining)} />
@@ -101,6 +144,13 @@ export function EcheancesSection({
             value={money(overdue)}
             tone={overdue > 0 ? 'danger' : undefined}
           />
+          {totalSaved > 0 && (
+            <SummaryTile
+              label={t('payments.enrollmentDetail.periods.summary.discounts')}
+              value={`−${money(totalSaved)}`}
+              tone="discount"
+            />
+          )}
         </div>
 
         {/* Filters */}
@@ -154,7 +204,7 @@ export function EcheancesSection({
               </tr>
             </thead>
             <tbody>
-              {visible.map(({ period, category }) => {
+              {visible.map(({ period, category, base, saved, applied }) => {
                 const style = CATEGORY_STYLE[category];
                 const Icon = style.icon;
                 const cancelled = category === 'cancelled';
@@ -193,12 +243,35 @@ export function EcheancesSection({
                       )}
                     </td>
                     <td className="px-4 py-3 text-end">
+                      {saved > 0 && !cancelled && (
+                        <p className="text-caption text-text-disabled line-through" dir="ltr">
+                          {money(base)}
+                        </p>
+                      )}
                       <p
                         className={cn('text-body font-medium', cancelled ? 'line-through text-text-disabled' : 'text-foreground')}
                         dir="ltr"
                       >
                         {money(period.amountDue)}
                       </p>
+                      {saved > 0 && !cancelled && (
+                        <span
+                          className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-micro font-medium text-primary"
+                          title={applied
+                            .map(
+                              (d) =>
+                                `${t(`payments.enrollmentDetail.discounts.types.${d.type}`)} −${Number(d.percentage)}%` +
+                                (d.description ? ` (${d.description})` : ''),
+                            )
+                            .join(' + ')}
+                        >
+                          <Percent className="w-3 h-3" />
+                          {applied.length > 0
+                            ? `−${applied.reduce((sum, d) => sum + Number(d.percentage), 0)}% ` +
+                              applied.map((d) => t(`payments.enrollmentDetail.discounts.types.${d.type}`)).join(' + ')
+                            : `−${money(saved)}`}
+                        </span>
+                      )}
                       {partlyPaid && (
                         <p className="text-caption text-success" dir="ltr">
                           {t('payments.enrollmentDetail.periods.paidPart', { amount: money(period.totalPaid ?? 0) })}
@@ -243,19 +316,39 @@ export function EcheancesSection({
   );
 }
 
-function SummaryTile({ label, value, tone }: { label: string; value: string; tone?: 'success' | 'danger' }) {
+function SummaryTile({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: 'success' | 'danger' | 'discount';
+}) {
   return (
     <div
       className={cn(
         'rounded-lg p-3',
-        tone === 'danger' ? 'bg-danger-muted' : tone === 'success' ? 'bg-success-muted' : 'bg-subtle',
+        tone === 'danger'
+          ? 'bg-danger-muted'
+          : tone === 'success'
+            ? 'bg-success-muted'
+            : tone === 'discount'
+              ? 'bg-primary/10'
+              : 'bg-subtle',
       )}
     >
       <p className="text-caption text-text-secondary">{label}</p>
       <p
         className={cn(
           'text-subsection font-semibold mt-0.5',
-          tone === 'danger' ? 'text-danger' : tone === 'success' ? 'text-success' : 'text-foreground',
+          tone === 'danger'
+            ? 'text-danger'
+            : tone === 'success'
+              ? 'text-success'
+              : tone === 'discount'
+                ? 'text-primary'
+                : 'text-foreground',
         )}
         dir="ltr"
       >

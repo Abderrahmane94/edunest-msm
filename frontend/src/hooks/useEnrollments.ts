@@ -188,6 +188,9 @@ export function useEnrollmentDetail(enrollmentId: string) {
         amountDue: (p.amountDue ?? p.amount_due ?? '0') as string,
         isRegistrationPeriod: (p.isRegistrationPeriod ?? p.is_registration_period ?? false) as boolean,
         cancelledAt: (p.cancelledAt ?? p.cancelled_at ?? null) as string | null,
+        // The fee each period bills: its name labels the period on the billing page.
+        branchFeeId: (p.branchFeeId ?? p.branch_fee_id ?? null) as string | null,
+        branchFee: (p.branchFee ?? null) as BillingPeriod['branchFee'],
         status: (p.status as BillingPeriod['status']) ?? undefined,
         totalPaid: (p.totalPaid ?? p.total_paid ?? undefined) as string | undefined,
         outstanding: (p.outstanding ?? undefined) as string | undefined,

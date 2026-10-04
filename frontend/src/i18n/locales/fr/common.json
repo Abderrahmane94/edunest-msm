@@ -1497,6 +1497,8 @@
       "payments": "Paiements"
     },
     "employees": {
+      "perStudentBasis_working_day": "élève / jour ouvrable",
+      "perStudentBasis_present_day": "élève / jour de présence",
       "noSalary": "Pas de salaire configuré",
       "lastPayment": "Dernier paiement",
       "setSalary": "Configurer le salaire",
@@ -1513,7 +1515,12 @@
       "fixed": "Salaire fixe",
       "per_student": "Par élève",
       "baseSalary": "Salaire de base (DZD)",
-      "ratePerStudent": "Taux par élève (DZD)",
+      "perStudentBasis": "Base de calcul",
+      "basis_working_day": "Élève × jour ouvrable",
+      "basis_present_day": "Élève × jour de présence",
+      "basisHint_working_day": "Chaque élève de ses classes compte pour chaque jour ouvrable du mois (selon les jours de travail de la classe), à partir de son inscription.",
+      "basisHint_present_day": "Chaque élève compte pour chaque jour où il a été marqué présent (ou en retard) dans ses classes.",
+      "ratePerStudent": "Taux par élève et par jour (DZD)",
       "effectiveFrom": "Applicable depuis",
       "notes": "Notes (optionnel)",
       "notesPlaceholder": "Informations complémentaires…"
@@ -1538,6 +1545,12 @@
       "studentCount": "Nombre d'élèves",
       "studentCountHint": "Pré-rempli : {{count}} élève(s) dans ses classes ({{classes}}). Modifiable.",
       "studentCountNoClass": "Aucune classe n'est attribuée à cet enseignant : saisissez le nombre d'élèves.",
+      "studentDays_working_day": "Élèves × jours ouvrables",
+      "studentDays_present_day": "Élèves × jours de présence",
+      "studentDaysHint": "Calculé depuis ses classes pour ce mois. Modifiable.",
+      "studentDaysNoClass": "Aucune classe attribuée à cet enseignant pour ce mois : saisissez le nombre d'élèves-jours.",
+      "classDetail_working_day": "{{students}} élève(s) · {{days}} jours ouvrables",
+      "classDetail_present_day": "{{students}} élève(s) · présences marquées",
       "bonuses": "Primes (DZD)",
       "deductions": "Retenues (DZD)",
       "netSalary": "Net à payer (DZD)",
@@ -1565,6 +1578,7 @@
     "pdf": {
       "downloadPayslip": "Télécharger le bulletin de paie",
       "exportList": "Exporter PDF",
+      "studentDays": "Élèves × jours",
       "studentCount": "Nombre d'élèves",
       "payslipTitle": "Bulletin de paie",
       "reportTitle": "Rapport de paie",

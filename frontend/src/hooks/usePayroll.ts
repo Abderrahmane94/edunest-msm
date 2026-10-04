@@ -1,10 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
+export type PerStudentBasis = 'working_day' | 'present_day';
+
 export interface EmployeeSalary {
   salaryType: 'fixed' | 'per_student';
   baseSalary: string | null;
   ratePerStudent: string | null;
+  /** per_student: the rate is per student per working day, or per day present. */
+  perStudentBasis: PerStudentBasis;
   currency: string;
   effectiveFrom: string;
   notes?: string | null;
@@ -37,6 +41,8 @@ export interface SalaryPayment {
   deductions: string;
   netSalary: string;
   studentCount?: number | null;
+  /** per_student: the student-days the base salary was computed on. */
+  studentDays?: number | null;
   paidAt: string;
   note?: string | null;
   createdAt: string;
@@ -46,6 +52,7 @@ export interface SetSalaryInput {
   salaryType: 'fixed' | 'per_student';
   baseSalary?: number;
   ratePerStudent?: number;
+  perStudentBasis?: PerStudentBasis;
   currency?: string;
   effectiveFrom: string;
   notes?: string;
@@ -59,8 +66,28 @@ export interface RecordPaymentInput {
   bonuses?: number;
   deductions?: number;
   studentCount?: number;
+  studentDays?: number;
   paidAt: string;
   note?: string;
+}
+
+/** A teacher's student-days for a month, per class (GET /payroll/employees/:id/student-days). */
+export interface StudentDaysSummary {
+  basis: PerStudentBasis;
+  classes: {
+    id: string;
+    name: string;
+    students: number;
+    /** The class's working days in the month. */
+    workingDays: number;
+    /** Sum over its children of the working days since they joined. */
+    studentWorkingDays: number;
+    /** Attendance marked present or late. */
+    presentDays: number;
+  }[];
+  totals: { students: number; studentWorkingDays: number; presentDays: number };
+  /** Student-days per the salary's basis. */
+  units: number;
 }
 
 export function usePayrollEmployees() {
@@ -70,6 +97,20 @@ export function usePayrollEmployees() {
       const res = await apiClient.get<EmployeeRecord[]>('/payroll/employees');
       return res.data ?? [];
     },
+  });
+}
+
+export function useStudentDays(userId: string | undefined, year: number, month: number, enabled: boolean) {
+  return useQuery<StudentDaysSummary>({
+    queryKey: ['payroll', 'student-days', userId, year, month],
+    queryFn: async () => {
+      const res = await apiClient.get<StudentDaysSummary>(
+        `/payroll/employees/${userId}/student-days?year=${year}&month=${month}`,
+      );
+      if (!res.success || !res.data) throw new Error(res.error?.message ?? 'PAYROLL_ERROR');
+      return res.data;
+    },
+    enabled: enabled && !!userId,
   });
 }
 

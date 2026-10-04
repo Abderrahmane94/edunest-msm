@@ -58,6 +58,8 @@ export interface BillingPeriod {
   amountDue: string;
   isRegistrationPeriod: boolean;
   branchFeeId?: string | null;
+  /** Amount before any discount (null for periods from before it was stored). */
+  baseAmount?: string | null;
   branchFeeName?: string | null;
   branchFeeBillingCycle?: string | null;
   cancelledAt: string | null;
@@ -400,6 +402,7 @@ function mapBillingPeriod(raw: Record<string, unknown>): BillingPeriod {
     amountDue: String(raw.amountDue ?? raw.amount_due ?? '0'),
     isRegistrationPeriod: (raw.isRegistrationPeriod ?? raw.is_registration_period ?? false) as boolean,
     branchFeeId: (raw.branchFeeId ?? raw.branch_fee_id ?? null) as string | null,
+    baseAmount: raw.baseAmount != null ? String(raw.baseAmount) : null,
     branchFeeName: (raw.branchFeeName ?? raw.branch_fee_name ?? null) as string | null,
     branchFeeBillingCycle: (raw.branchFeeBillingCycle ?? null) as string | null,
     cancelledAt: (raw.cancelledAt ?? raw.cancelled_at ?? null) as string | null,

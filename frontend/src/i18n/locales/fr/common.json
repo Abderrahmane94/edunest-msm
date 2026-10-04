@@ -1947,6 +1947,8 @@
       "addAllocation": "Ajouter une allocation",
       "suggestAllocation": "Suggérer l'allocation",
       "registrationPeriod": "Frais d'inscription",
+      "discountShort": "remise −{{amount}}",
+      "discountApplied": "Remise appliquée : −{{amount}} (montant d’origine {{original}})",
       "allocationSum": "Total des allocations : {{sum}} / {{total}} DZD",
       "empty": "Aucun paiement enregistré",
       "typePayment": "Paiement",

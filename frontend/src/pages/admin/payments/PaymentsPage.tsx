@@ -291,6 +291,12 @@ function RecordPaymentDialog({
     }
   }
 
+  /** What discounts took off an échéance (0 when none). */
+  function discountOf(p: { amountDue: string; baseAmount?: string | null }): number {
+    if (p.baseAmount == null) return 0;
+    return Math.max(0, Math.round((Number(p.baseAmount) - Number(p.amountDue)) * 100) / 100);
+  }
+
   // Build period options for select — sorted by priority (late first, then closest)
   const periodOptions = React.useMemo(() => {
     return sortedPeriodsByPriority.map((p) => {
@@ -308,9 +314,12 @@ function RecordPaymentDialog({
       const suffix = p.isLate
         ? ` ⚠ ${formatDZD(outstanding, i18n.language)}`
         : ` — ${formatDZD(outstanding, i18n.language)}`;
+      const saved = discountOf(p);
+      const discountNote =
+        saved > 0 ? ` · ${t('payments.recording.discountShort', { amount: formatDZD(saved, i18n.language) })}` : '';
       return {
         value: p.id,
-        label: `${label}${suffix}`,
+        label: `${label}${suffix}${discountNote}`,
       };
     });
   }, [sortedPeriodsByPriority, t, i18n.language]);
@@ -517,7 +526,7 @@ function RecordPaymentDialog({
                   key={row.id}
                   className="flex items-start gap-2"
                 >
-                  <div className="flex-1">
+                  <div className="flex-1 space-y-1">
                     <select
                       value={row.billingPeriodId}
                       onChange={(e) =>
@@ -543,6 +552,20 @@ function RecordPaymentDialog({
                           </option>
                         ))}
                     </select>
+                    {(() => {
+                      // The discount on the chosen échéance, spelled out.
+                      const chosen = availablePeriods.find((p) => p.id === row.billingPeriodId);
+                      const saved = chosen ? discountOf(chosen) : 0;
+                      if (!chosen || saved <= 0) return null;
+                      return (
+                        <p className="text-caption text-primary">
+                          {t('payments.recording.discountApplied', {
+                            amount: formatDZD(saved, i18n.language),
+                            original: formatDZD(Number(chosen.baseAmount), i18n.language),
+                          })}
+                        </p>
+                      );
+                    })()}
                   </div>
                   <div className="w-32">
                     <Input

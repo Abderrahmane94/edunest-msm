@@ -413,6 +413,8 @@ export const paymentsController = {
           dueDate: period.dueDate,
           graceEndDate: period.graceEndDate,
           amountDue: period.amountDue,
+          // Before discounts: lets the payment dialog show what a discount took off.
+          baseAmount: period.baseAmount,
           isRegistrationPeriod: period.isRegistrationPeriod,
           branchFeeId: period.branchFeeId,
           branchFeeName: period.branchFee?.name ?? null,

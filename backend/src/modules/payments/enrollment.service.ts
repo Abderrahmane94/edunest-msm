@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
 import { branchFeeService, BranchFeeServiceError } from './branch-fee.service';
+import { derivePeriodStatus } from './billing-period.service';
 import type { CreateEnrollmentSchemaInput } from './payments.schema';
 import type { EnrollmentGenerationResult } from './payments.types';
 
@@ -166,8 +167,11 @@ class EnrollmentService {
         academicYear: { select: { id: true, name: true, startDate: true, endDate: true } },
         branch: { select: { id: true, name: true } },
         billingPeriods: {
-          orderBy: { periodStart: 'asc' },
-          include: { branchFee: { select: { id: true, name: true, billingCycle: true } } },
+          orderBy: [{ dueDate: 'asc' }, { periodStart: 'asc' }],
+          include: {
+            branchFee: { select: { id: true, name: true, billingCycle: true } },
+            paymentAllocations: { select: { amount: true } },
+          },
         },
       },
     });
@@ -176,7 +180,23 @@ class EnrollmentService {
       throw new EnrollmentServiceError('Enrollment not found', 404, 'NOT_FOUND');
     }
 
-    return enrollment;
+    // What has been paid on each period and its status (paid, partial, late…),
+    // derived the same way as everywhere else in payments.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const billingPeriods = enrollment.billingPeriods.map(({ paymentAllocations, ...period }) => {
+      const totalPaid = paymentAllocations.reduce((sum, a) => sum.add(a.amount), new Prisma.Decimal(0));
+      const derived = derivePeriodStatus(period.amountDue, totalPaid, period.graceEndDate, today, period.cancelledAt);
+      return {
+        ...period,
+        status: derived.status,
+        isLate: derived.isLate,
+        totalPaid: derived.totalPaid,
+        outstanding: derived.outstanding,
+      };
+    });
+
+    return { ...enrollment, billingPeriods };
   }
 
   /**

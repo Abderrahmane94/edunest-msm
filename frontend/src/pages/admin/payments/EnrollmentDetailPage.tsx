@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, UserX, Calendar, Plus, Trash2, Percent } from 'lucide-react';
-import { formatDate, formatDZD } from '@/lib/formatters';
+import { formatDate } from '@/lib/formatters';
 import {
   ErrorAlert,
   Button,
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { ChildFeesSection } from '@/pages/admin/ChildFeesSection';
+import { EcheancesSection } from './EcheancesSection';
 import {
   useEnrollmentDetail,
   useWithdrawEnrollment,
@@ -29,39 +30,6 @@ import {
   type Discount,
   type DiscountType,
 } from '@/hooks/useDiscounts';
-
-// ─── Period Status Badge ───────────────────────────────────────────────────────
-
-function PeriodStatusBadge({ period }: { period: BillingPeriod }) {
-  const { t } = useTranslation();
-
-  if (period.cancelledAt) {
-    return (
-      <StatusBadge variant="cancelled">
-        {t('payments.enrollmentDetail.periodStatus.cancelled')}
-      </StatusBadge>
-    );
-  }
-
-  const status = period.status;
-  const variantMap: Record<string, 'draft' | 'partial' | 'overdue' | 'late' | 'paid'> = {
-    unpaid: 'draft',
-    partial: 'partial',
-    late_partial: 'overdue',
-    late: 'late',
-    paid: 'paid',
-  };
-
-  const variant = status ? variantMap[status] ?? 'draft' : 'draft';
-
-  return (
-    <StatusBadge variant={variant}>
-      {status
-        ? t(`payments.enrollmentDetail.periodStatus.${status}`)
-        : t('payments.enrollmentDetail.periodStatus.unpaid')}
-    </StatusBadge>
-  );
-}
 
 // ─── Withdrawal Dialog ─────────────────────────────────────────────────────────
 
@@ -709,104 +677,8 @@ export function EnrollmentDetailPage() {
         </div>
       </div>
 
-      {/* Billing Periods Table */}
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="p-4 border-b border-border">
-          <h2 className="text-section-title font-semibold text-text-heading">
-            {t('payments.enrollmentDetail.periods.title')}
-          </h2>
-          <p className="text-caption text-text-secondary mt-1">
-            {t('payments.enrollmentDetail.periods.description', {
-              count: billingPeriods.length,
-            })}
-          </p>
-        </div>
-
-        {billingPeriods.length === 0 ? (
-          <div className="p-6 text-center">
-            <p className="text-body text-text-secondary">
-              {t('payments.enrollmentDetail.periods.empty')}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border bg-subtle">
-                  <th className="px-4 py-3 text-start text-caption font-medium text-text-secondary">
-                    {t('payments.enrollmentDetail.periods.columns.period')}
-                  </th>
-                  <th className="px-4 py-3 text-start text-caption font-medium text-text-secondary">
-                    {t('payments.enrollmentDetail.periods.columns.dates')}
-                  </th>
-                  <th className="px-4 py-3 text-start text-caption font-medium text-text-secondary">
-                    {t('payments.enrollmentDetail.periods.columns.amountDue')}
-                  </th>
-                  <th className="px-4 py-3 text-start text-caption font-medium text-text-secondary">
-                    {t('payments.enrollmentDetail.periods.columns.status')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {billingPeriods.map((period) => (
-                  <tr
-                    key={period.id}
-                    className={`border-b border-border last:border-b-0 ${
-                      period.cancelledAt
-                        ? 'bg-subtle/50 opacity-60'
-                        : 'hover:bg-hover'
-                    }`}
-                  >
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-body font-medium ${
-                          period.cancelledAt
-                            ? 'line-through text-text-disabled'
-                            : 'text-foreground'
-                        }`}
-                      >
-                        {getPeriodLabel(period)}
-                      </span>
-                      {period.cancelledAt && (
-                        <span className="ms-2 text-micro text-danger font-medium">
-                          {t('payments.enrollmentDetail.periodStatus.cancelled')}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-body ${
-                          period.cancelledAt
-                            ? 'line-through text-text-disabled'
-                            : 'text-text-secondary'
-                        }`}
-                        dir="ltr"
-                      >
-                        {formatDate(period.periodStart)} — {formatDate(period.periodEnd)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-body ${
-                          period.cancelledAt
-                            ? 'line-through text-text-disabled'
-                            : 'text-foreground font-medium'
-                        }`}
-                        dir="ltr"
-                      >
-                        {formatDZD(Number(period.amountDue), i18n.language)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <PeriodStatusBadge period={period} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* Échéances */}
+      <EcheancesSection periods={billingPeriods} getLabel={getPeriodLabel} />
 
       {/* The child's fees and what's left to pay */}
       <ChildFeesSection childId={enrollment.childId} showManageBilling={false} />

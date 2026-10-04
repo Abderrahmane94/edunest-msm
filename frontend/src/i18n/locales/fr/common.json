@@ -1797,7 +1797,38 @@
           "period": "Frais",
           "dates": "Dates",
           "amountDue": "Montant dû",
-          "status": "Statut"
+          "status": "Statut",
+          "dueDate": "Échéance",
+          "remaining": "Reste"
+        },
+        "noMatch": "Aucune échéance dans ce filtre.",
+        "today": "aujourd'hui",
+        "inDays_one": "dans {{count}} jour",
+        "inDays_other": "dans {{count}} jours",
+        "daysAgo_one": "depuis {{count}} jour",
+        "daysAgo_other": "depuis {{count}} jours",
+        "paidPart": "payé {{amount}}",
+        "summary": {
+          "total": "Total",
+          "paid": "Payé",
+          "remaining": "Reste à payer",
+          "overdue": "Dû maintenant"
+        },
+        "filters": {
+          "all": "Toutes",
+          "late": "En retard",
+          "due": "À payer",
+          "upcoming": "À venir",
+          "paid": "Payées",
+          "cancelled": "Annulées"
+        },
+        "status": {
+          "late": "En retard",
+          "due": "À payer",
+          "upcoming": "À venir",
+          "paid": "Payé",
+          "cancelled": "Annulé",
+          "partial": "partiel"
         }
       },
       "periodStatus": {

@@ -1960,6 +1960,8 @@
       "addAllocation": "إضافة تخصيص",
       "suggestAllocation": "اقتراح التخصيص",
       "registrationPeriod": "رسوم التسجيل",
+      "discountShort": "تخفيض −{{amount}}",
+      "discountApplied": "تم تطبيق تخفيض: −{{amount}} (المبلغ الأصلي {{original}})",
       "allocationSum": "مجموع التخصيصات: {{sum}} / {{total}} د.ج",
       "empty": "لا توجد مدفوعات مسجلة",
       "typePayment": "دفعة",

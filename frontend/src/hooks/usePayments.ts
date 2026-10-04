@@ -275,6 +275,8 @@ export interface ReceiptAllocationLine {
   periodLabel: string;
   amount: string;
   periodStart: string;
+  /** The discount that reduced this échéance; null when none. */
+  discountNote: string | null;
 }
 
 export interface ReceiptCorrectionLine {
@@ -309,6 +311,8 @@ export interface ReceiptData {
     channelCash: string;
     channelCcp: string;
     channelBaridimob: string;
+    discount: string;
+    originalAmount: string;
     direction: 'rtl' | 'ltr';
   };
   title: string;
@@ -330,6 +334,8 @@ export interface ReceiptData {
   /** Staff may send to any address; a parent only to their own. */
   canChooseRecipient?: boolean;
   isCorrection: boolean;
+  /** Sum of the discounts on the échéances this payment covers; null when none. */
+  totalDiscount: string | null;
   correctionReason: string | null;
   correctsReceiptNumber: string | null;
 }

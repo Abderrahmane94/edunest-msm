@@ -112,6 +112,9 @@ function ReceiptContent({ receipt }: ReceiptContentProps) {
                   >
                     <td className="px-4 py-2.5 text-body text-foreground">
                       {alloc.feeName || '—'}
+                      {alloc.discountNote && (
+                        <p className="text-caption text-primary mt-0.5">{alloc.discountNote}</p>
+                      )}
                     </td>
                     <td className="px-4 py-2.5 text-body text-text-secondary" dir="ltr">
                       {alloc.periodLabel}
@@ -123,6 +126,16 @@ function ReceiptContent({ receipt }: ReceiptContentProps) {
                 ))}
               </tbody>
               <tfoot>
+                {receipt.totalDiscount && (
+                  <tr className="border-t border-border text-primary">
+                    <td colSpan={2} className="px-4 py-2 text-body">
+                      {labels.discount}
+                    </td>
+                    <td className="px-4 py-2 text-body text-end" dir="ltr">
+                      −{receipt.totalDiscount}
+                    </td>
+                  </tr>
+                )}
                 <tr className="border-t border-border bg-subtle">
                   <td colSpan={2} className="px-4 py-2.5 text-body font-medium text-foreground">
                     {labels.amount}

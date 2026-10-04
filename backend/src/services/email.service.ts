@@ -130,7 +130,9 @@ class EmailService {
     const rows = receipt.allocations
       .map(
         (a) =>
-          `<tr><td style="${cell}">${e(a.feeName || '—')}</td>` +
+          `<tr><td style="${cell}">${e(a.feeName || '—')}` +
+          (a.discountNote ? `<div style="font-size:12px;color:#4f46e5;">${e(a.discountNote)}</div>` : '') +
+          `</td>` +
           `<td style="${cell}color:#6b7280;" dir="ltr">${e(a.periodLabel)}</td>` +
           `<td style="${cell}text-align:${opposite};" dir="ltr">${e(a.amount)}</td></tr>`,
       )
@@ -145,7 +147,12 @@ class EmailService {
             <th style="padding:8px 12px;text-align:${opposite};">${e(labels.periodAmount)}</th>
           </tr></thead>
           <tbody>${rows}</tbody>
-          <tfoot><tr style="background:#f9fafb;font-weight:700;">
+          <tfoot>${
+            receipt.totalDiscount
+              ? `<tr style="color:#4f46e5;"><td colspan="2" style="${cell}">${e(labels.discount)}</td>` +
+                `<td style="${cell}text-align:${opposite};" dir="ltr">−${e(receipt.totalDiscount)}</td></tr>`
+              : ''
+          }<tr style="background:#f9fafb;font-weight:700;">
             <td colspan="2" style="${cell}">${e(labels.amount)}</td>
             <td style="${cell}text-align:${opposite};" dir="ltr">${e(receipt.amount)}</td>
           </tr></tfoot>

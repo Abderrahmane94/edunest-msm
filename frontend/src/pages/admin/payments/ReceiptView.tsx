@@ -114,8 +114,11 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
       `<!doctype html><html lang="${receipt.language}" dir="${receipt.direction}" ` +
       `class="${document.documentElement.className}"><head><meta charset="utf-8">` +
       `<base href="${document.baseURI}"><title>${escapeHtml(fileName)}</title>${styles}` +
-      // A4 page with margins; the on-screen "paper" frame isn't printed.
-      `<style>@page{size:A4;margin:12mm}body{background:#fff;margin:0}` +
+      // A4 page. The page margin is 0 so the browser has no room for its own
+      // header/footer (URL, date, page number); the white space around the
+      // receipt is padding inside the page instead. The on-screen "paper"
+      // frame isn't printed.
+      `<style>@page{size:A4;margin:0}body{background:#fff;margin:0;padding:12mm}` +
       `.receipt-document{border:none!important;box-shadow:none!important;border-radius:0!important}` +
       `*{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head>` +
       `<body><div class="receipt-print-root">${node.innerHTML}</div></body></html>`;

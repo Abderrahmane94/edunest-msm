@@ -1628,7 +1628,7 @@
       "editTitle": "Modifier le frais",
       "dialogDescription": "Configurez un frais ponctuel ou récurrent applicable aux inscriptions",
       "empty": "Aucun frais configuré",
-      "confirmDelete": "Supprimer le frais « {{name}} » ? Les périodes de facturation existantes ne seront pas affectées.",
+      "confirmDelete": "Supprimer le frais « {{name}} » ? Les échéances existantes ne seront pas affectées.",
       "oneShot": "Ponctuel",
       "scopeGeneral": "Non assigné",
       "scopeSchool": "Toute l'école",
@@ -1738,7 +1738,7 @@
     },
     "enrollments": {
       "title": "Inscriptions",
-      "description": "Gérer les inscriptions des enfants et les périodes de facturation",
+      "description": "Gérer les inscriptions des enfants et leurs échéances",
       "create": "Nouvelle inscription",
       "columns": {
         "childName": "Nom de l'enfant",
@@ -1789,12 +1789,12 @@
       "withdraw": "Retirer l'inscription",
       "withdrawalDate": "Date de retrait",
       "periods": {
-        "title": "Périodes de facturation",
-        "description": "{{count}} périodes de facturation",
-        "empty": "Aucune période de facturation",
+        "title": "Échéances",
+        "description": "{{count}} échéance(s)",
+        "empty": "Aucune échéance",
         "registration": "Frais d'inscription",
         "columns": {
-          "period": "Période",
+          "period": "Frais",
           "dates": "Dates",
           "amountDue": "Montant dû",
           "status": "Statut"
@@ -1903,7 +1903,7 @@
     },
     "recording": {
       "title": "Enregistrer un paiement",
-      "description": "Enregistrez un paiement reçu et allouez-le aux périodes de facturation",
+      "description": "Enregistrez un paiement reçu et allouez-le aux échéances",
       "record": "Enregistrer un paiement",
       "submit": "Enregistrer",
       "addAllocation": "Ajouter une allocation",
@@ -2086,7 +2086,7 @@
   },
   "parentPayments": {
     "title": "Paiements",
-    "subtitle": "Consultez les périodes de facturation et l'historique des paiements",
+    "subtitle": "Consultez les échéances et l'historique des paiements",
     "tabs": {
       "periods": "Facturation",
       "history": "Historique",
@@ -2122,12 +2122,12 @@
       "baridimob": "BaridiMob"
     },
     "error": {
-      "periods": "Impossible de charger les périodes de facturation.",
+      "periods": "Impossible de charger les échéances.",
       "history": "Impossible de charger l'historique des paiements.",
       "balances": "Impossible de charger les soldes."
     },
     "empty": {
-      "periods": "Aucune période de facturation pour le moment.",
+      "periods": "Aucune échéance pour le moment.",
       "history": "Aucun paiement enregistré pour le moment.",
       "balances": "Aucun enfant lié à votre compte."
     }

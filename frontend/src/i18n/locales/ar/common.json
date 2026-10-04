@@ -1802,7 +1802,46 @@
           "period": "الرسم",
           "dates": "التواريخ",
           "amountDue": "المبلغ المستحق",
-          "status": "الحالة"
+          "status": "الحالة",
+          "dueDate": "تاريخ الاستحقاق",
+          "remaining": "المتبقي"
+        },
+        "noMatch": "لا توجد مستحقات في هذا الفلتر.",
+        "today": "اليوم",
+        "inDays_zero": "خلال {{count}} يوم",
+        "inDays_one": "خلال يوم",
+        "inDays_two": "خلال يومين",
+        "inDays_few": "خلال {{count}} أيام",
+        "inDays_many": "خلال {{count}} يومًا",
+        "inDays_other": "خلال {{count}} يوم",
+        "daysAgo_zero": "منذ {{count}} يوم",
+        "daysAgo_one": "منذ يوم",
+        "daysAgo_two": "منذ يومين",
+        "daysAgo_few": "منذ {{count}} أيام",
+        "daysAgo_many": "منذ {{count}} يومًا",
+        "daysAgo_other": "منذ {{count}} يوم",
+        "paidPart": "مدفوع {{amount}}",
+        "summary": {
+          "total": "المجموع",
+          "paid": "المدفوع",
+          "remaining": "المتبقي",
+          "overdue": "المستحق الآن"
+        },
+        "filters": {
+          "all": "الكل",
+          "late": "متأخرة",
+          "due": "للدفع",
+          "upcoming": "قادمة",
+          "paid": "مدفوعة",
+          "cancelled": "ملغاة"
+        },
+        "status": {
+          "late": "متأخر",
+          "due": "للدفع",
+          "upcoming": "قادم",
+          "paid": "مدفوع",
+          "cancelled": "ملغى",
+          "partial": "جزئي"
         }
       },
       "periodStatus": {

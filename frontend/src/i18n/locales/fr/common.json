@@ -2082,6 +2082,13 @@
       "title": "Reçu",
       "description": "Détails du paiement et allocations",
       "print": "Imprimer",
+      "downloadPdf": "Télécharger le PDF",
+      "doc": {
+        "paidAmount": "Montant payé",
+        "thanks": "Merci pour votre paiement.",
+        "issuedOn": "Édité le",
+        "signature": "Cachet et signature"
+      },
       "sendEmail": "Envoyer par e-mail",
       "emailTo": "Adresse e-mail du destinataire",
       "emailNoParent": "Aucun parent avec une adresse e-mail n'est lié à cet enfant.",

@@ -1,183 +1,11 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Printer, X, AlertTriangle, Mail, Send } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  Button,
-} from '@/components/ui';
+import { Printer, Mail, Send, Download } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, Button } from '@/components/ui';
 import { useReceipt, useEmailReceipt, type ReceiptData } from '@/hooks/usePayments';
 import { Input } from '@/components/ui/Input';
-import { receiptToPdfBase64 } from '@/lib/receiptPdf';
-
-// ─── Receipt Content (rendered both in dialog and for print) ───────────────────
-
-interface ReceiptContentProps {
-  receipt: ReceiptData;
-}
-
-function ReceiptContent({ receipt }: ReceiptContentProps) {
-  const { labels, direction } = receipt;
-
-  return (
-    <div
-      className="receipt-content space-y-6 p-6"
-      dir={direction}
-    >
-      {/* Header / Title */}
-      <div className="text-center border-b border-border pb-4">
-        <h2 className="text-h2 font-semibold text-text-heading">
-          {receipt.title}
-        </h2>
-        {receipt.isCorrection && (
-          <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-danger/10 text-danger rounded-md text-caption">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span>{labels.correctionReceiptTitle}</span>
-          </div>
-        )}
-      </div>
-
-      {/* School & Branch info */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <ReceiptField label={labels.schoolName} value={receipt.schoolName} />
-        <ReceiptField label={labels.branchName} value={receipt.branchName} />
-      </div>
-
-      {/* Receipt details */}
-      <div className="bg-subtle rounded-lg p-4 space-y-3">
-        <ReceiptField
-          label={labels.receiptNumber}
-          value={receipt.receiptNumber}
-          dir="ltr"
-          mono
-        />
-        <ReceiptField label={labels.childName} value={receipt.childName} />
-        <ReceiptField
-          label={labels.amount}
-          value={receipt.amount}
-          dir="ltr"
-          highlight={receipt.isCorrection}
-        />
-        <ReceiptField label={labels.channel} value={receipt.channel} />
-        <ReceiptField label={labels.valueDate} value={receipt.valueDate} dir="ltr" />
-        <ReceiptField label={labels.recordedBy} value={receipt.recordedBy} />
-      </div>
-
-      {/* Correction-specific info (when this IS a correction) */}
-      {receipt.isCorrection && receipt.correctsReceiptNumber && (
-        <div className="bg-danger/5 border border-danger/20 rounded-lg p-4 space-y-2">
-          <ReceiptField
-            label={labels.correctsReceipt}
-            value={receipt.correctsReceiptNumber}
-            dir="ltr"
-            mono
-          />
-          {receipt.correctionReason && (
-            <ReceiptField
-              label={labels.correctionReason}
-              value={receipt.correctionReason}
-            />
-          )}
-        </div>
-      )}
-
-      {/* Allocated billing periods */}
-      {receipt.allocations.length > 0 && (
-        <div>
-          <h3 className="text-label font-medium text-text-heading mb-3">
-            {labels.allocatedPeriods}
-          </h3>
-          <div className="border border-border rounded-lg overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-subtle">
-                  <th className="px-4 py-2 text-start text-caption font-medium text-text-secondary">
-                    {labels.feeName}
-                  </th>
-                  <th className="px-4 py-2 text-start text-caption font-medium text-text-secondary">
-                    {labels.periodLabel}
-                  </th>
-                  <th className="px-4 py-2 text-end text-caption font-medium text-text-secondary">
-                    {labels.periodAmount}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {receipt.allocations.map((alloc, idx) => (
-                  <tr
-                    key={idx}
-                    className="border-t border-border"
-                  >
-                    <td className="px-4 py-2.5 text-body text-foreground">
-                      {alloc.feeName || '—'}
-                      {alloc.discountNote && (
-                        <p className="text-caption text-primary mt-0.5">{alloc.discountNote}</p>
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5 text-body text-text-secondary" dir="ltr">
-                      {alloc.periodLabel}
-                    </td>
-                    <td className="px-4 py-2.5 text-body text-foreground text-end" dir="ltr">
-                      {alloc.amount}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                {receipt.totalDiscount && (
-                  <tr className="border-t border-border text-primary">
-                    <td colSpan={2} className="px-4 py-2 text-body">
-                      {labels.discount}
-                    </td>
-                    <td className="px-4 py-2 text-body text-end" dir="ltr">
-                      −{receipt.totalDiscount}
-                    </td>
-                  </tr>
-                )}
-                <tr className="border-t border-border bg-subtle">
-                  <td colSpan={2} className="px-4 py-2.5 text-body font-medium text-foreground">
-                    {labels.amount}
-                  </td>
-                  <td className="px-4 py-2.5 text-body font-semibold text-foreground text-end" dir="ltr">
-                    {receipt.amount}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Correction markers (when this record HAS BEEN corrected) */}
-      {receipt.isCorrepted && receipt.corrections.length > 0 && (
-        <div className="bg-warning/5 border border-warning/20 rounded-lg p-4">
-          <h3 className="text-label font-medium text-warning mb-3 flex items-center gap-1.5">
-            <AlertTriangle className="w-4 h-4" />
-            {labels.correctionMarker}
-          </h3>
-          <div className="space-y-2">
-            {receipt.corrections.map((correction, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between text-body text-text-secondary"
-              >
-                <span dir="ltr" className="font-mono text-caption">
-                  {correction.receiptNumber}
-                </span>
-                <span dir="ltr">{correction.valueDate}</span>
-                <span dir="ltr" className="text-danger font-medium">
-                  {correction.amount}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+import { receiptToPdfBase64, downloadReceiptPdf } from '@/lib/receiptPdf';
+import { ReceiptDocument } from './ReceiptDocument';
 
 // ─── Print helpers ─────────────────────────────────────────────────────────────
 
@@ -192,34 +20,6 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
 
-// ─── Field helper ──────────────────────────────────────────────────────────────
-
-function ReceiptField({
-  label,
-  value,
-  dir,
-  mono,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  dir?: 'ltr' | 'rtl';
-  mono?: boolean;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="flex justify-between items-baseline gap-4">
-      <span className="text-body text-text-secondary shrink-0">{label}</span>
-      <span
-        className={`text-body text-foreground ${mono ? 'font-mono' : ''} ${highlight ? 'text-danger font-medium' : 'font-medium'}`}
-        dir={dir}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
 // ─── Receipt View Dialog ───────────────────────────────────────────────────────
 
 interface ReceiptViewProps {
@@ -231,11 +31,9 @@ interface ReceiptViewProps {
 export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptViewProps) {
   const { i18n, t } = useTranslation();
   const language = i18n.language === 'ar' ? 'ar' : 'fr';
-  const { data: receipt, isLoading, error } = useReceipt(
-    open ? paymentRecordId : null,
-    language
-  );
+  const { data: receipt, isLoading, error } = useReceipt(open ? paymentRecordId : null, language);
 
+  // The receipt document: on-screen preview, print and PDF all come from it.
   const contentRef = React.useRef<HTMLDivElement>(null);
 
   // ─── Send by email ───
@@ -245,6 +43,7 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
   const [sentTo, setSentTo] = React.useState<string | null>(null);
   const [sentWithoutPdf, setSentWithoutPdf] = React.useState(false);
   const [preparingPdf, setPreparingPdf] = React.useState(false);
+  const [downloading, setDownloading] = React.useState(false);
 
   // Start fresh each time the dialog opens on a receipt.
   React.useEffect(() => {
@@ -290,6 +89,16 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
     }
   }
 
+  async function handleDownloadPdf() {
+    if (!receipt || !contentRef.current) return;
+    setDownloading(true);
+    try {
+      await downloadReceiptPdf(contentRef.current, receiptFileName(receipt));
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   // Prints the receipt alone from a hidden frame: printing the page itself
   // came out blank (the dialog lives in a portal the print styles hide).
   // The frame's title is the default file name when saving as PDF.
@@ -305,7 +114,10 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
       `<!doctype html><html lang="${receipt.language}" dir="${receipt.direction}" ` +
       `class="${document.documentElement.className}"><head><meta charset="utf-8">` +
       `<base href="${document.baseURI}"><title>${escapeHtml(fileName)}</title>${styles}` +
-      `<style>@page{margin:12mm}body{background:#fff}</style></head>` +
+      // A4 page with margins; the on-screen "paper" frame isn't printed.
+      `<style>@page{size:A4;margin:12mm}body{background:#fff;margin:0}` +
+      `.receipt-document{border:none!important;box-shadow:none!important;border-radius:0!important}` +
+      `*{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head>` +
       `<body><div class="receipt-print-root">${node.innerHTML}</div></body></html>`;
 
     const frame = document.createElement('iframe');
@@ -335,45 +147,41 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[600px] max-h-[90vh] overflow-y-auto print:max-w-none print:max-h-none print:overflow-visible print:shadow-none print:border-none">
-        {/* Dialog header (hidden when printing) */}
-        <DialogHeader className="print:hidden">
-          <DialogTitle className="flex items-center justify-between">
-            <span>{t('payments.receipt.title')}</span>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setEmailOpen((v) => !v)}
-                disabled={!receipt}
-                aria-expanded={emailOpen}
-              >
-                <Mail className="w-4 h-4 me-1" />
-                {t('payments.receipt.sendEmail')}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handlePrint}
-                disabled={!receipt}
-              >
-                <Printer className="w-4 h-4 me-1" />
-                {t('payments.receipt.print')}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onOpenChange(false)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          </DialogTitle>
+      <DialogContent className="max-w-[760px]">
+        <DialogHeader>
+          <DialogTitle>{t('payments.receipt.title')}</DialogTitle>
         </DialogHeader>
+
+        {/* Actions */}
+        <div className="flex flex-wrap items-center justify-end gap-2 mb-4">
+          <Button
+            variant={emailOpen ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => setEmailOpen((v) => !v)}
+            disabled={!receipt}
+            aria-expanded={emailOpen}
+          >
+            <Mail className="w-4 h-4" />
+            {t('payments.receipt.sendEmail')}
+          </Button>
+          <Button variant="secondary" size="sm" onClick={handlePrint} disabled={!receipt}>
+            <Printer className="w-4 h-4" />
+            {t('payments.receipt.print')}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => void handleDownloadPdf()}
+            disabled={!receipt || downloading}
+          >
+            <Download className="w-4 h-4" />
+            {downloading ? t('common.loading') : t('payments.receipt.downloadPdf')}
+          </Button>
+        </div>
 
         {/* Send by email */}
         {emailOpen && receipt && (
-          <div className="rounded-lg border border-border bg-subtle p-3 space-y-2 print:hidden">
+          <div className="rounded-lg border border-border bg-subtle p-3 space-y-2 mb-4">
             {receipt.canChooseRecipient ? (
               <Input
                 type="email"
@@ -390,7 +198,7 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
                   : t('payments.receipt.emailNoAddress')}
               </p>
             )}
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex flex-wrap items-center justify-end gap-3">
               {sentTo && (
                 <p className="text-caption text-success me-auto" role="status">
                   {t(sentWithoutPdf ? 'payments.receipt.emailSentNoPdf' : 'payments.receipt.emailSent', {
@@ -405,14 +213,14 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
               )}
               <Button
                 size="sm"
-                onClick={handleSendEmail}
+                onClick={() => void handleSendEmail()}
                 disabled={
                   preparingPdf ||
                   emailReceipt.isPending ||
                   (receipt.canChooseRecipient ? !emailTo.trim() : !receipt.emailRecipient)
                 }
               >
-                <Send className="w-4 h-4 me-1" />
+                <Send className="w-4 h-4" />
                 {preparingPdf || emailReceipt.isPending ? t('common.loading') : t('payments.receipt.emailSend')}
               </Button>
             </div>
@@ -421,7 +229,7 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
 
         {/* Loading state */}
         {isLoading && (
-          <div className="py-12 flex justify-center print:hidden">
+          <div className="py-12">
             <div className="animate-pulse space-y-3 w-full">
               <div className="h-8 bg-hover rounded-md w-48 mx-auto" />
               <div className="h-4 bg-hover rounded-md w-full" />
@@ -433,15 +241,17 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
 
         {/* Error state */}
         {error && !isLoading && (
-          <div className="py-8 text-center text-danger print:hidden">
+          <div className="py-8 text-center text-danger">
             <p className="text-body">{t('payments.receipt.error')}</p>
           </div>
         )}
 
-        {/* Receipt content */}
+        {/* The receipt document (also what gets printed and attached) */}
         {receipt && !isLoading && (
-          <div ref={contentRef}>
-            <ReceiptContent receipt={receipt} />
+          <div className="rounded-lg bg-subtle p-3 overflow-x-auto">
+            <div ref={contentRef} className="min-w-[600px]">
+              <ReceiptDocument receipt={receipt} />
+            </div>
           </div>
         )}
       </DialogContent>

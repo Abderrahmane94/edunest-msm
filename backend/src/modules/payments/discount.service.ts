@@ -7,23 +7,31 @@ type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0
 
 /**
  * Pure calculation: the discounted amount_due for one billing period, from its
- * pre-discount amount and the discounts that target its fee. Sums the
- * percentage of every discount whose validity window covers the period's
- * start date (capped at 100%) and applies it to the base amount — always the
- * base, never a previously-discounted amount, so repeated recalculation stays
- * idempotent and order-independent.
+ * pre-discount amount and the discounts that target its fee. Of the discounts
+ * whose validity window covers the period's start date, the percentages are
+ * summed (capped at 100%) and applied first, then the fixed amounts are taken
+ * off; the result never goes below 0. Always computed from the base amount,
+ * never a previously-discounted one, so recalculation stays idempotent and
+ * order-independent.
  */
 export function computeDiscountedAmountDue(
   baseAmount: Prisma.Decimal | number,
   periodStart: Date,
-  discounts: Array<{ percentage: Prisma.Decimal | number; validFrom: Date; validTo: Date | null }>,
+  discounts: Array<{
+    percentage?: Prisma.Decimal | number | null;
+    fixedAmount?: Prisma.Decimal | number | null;
+    validFrom: Date;
+    validTo: Date | null;
+  }>,
 ): Prisma.Decimal {
-  const applicablePct = discounts
-    .filter((d) => d.validFrom <= periodStart && (!d.validTo || d.validTo >= periodStart))
-    .reduce((sum, d) => sum + Number(d.percentage), 0);
-
-  const cappedPct = Math.min(applicablePct, 100);
-  return new Prisma.Decimal((Number(baseAmount) * (1 - cappedPct / 100)).toFixed(2));
+  const active = discounts.filter((d) => d.validFrom <= periodStart && (!d.validTo || d.validTo >= periodStart));
+  const pct = Math.min(
+    active.reduce((sum, d) => sum + Number(d.percentage ?? 0), 0),
+    100,
+  );
+  const fixed = active.reduce((sum, d) => sum + Number(d.fixedAmount ?? 0), 0);
+  const amount = Math.max(0, Number(baseAmount) * (1 - pct / 100) - fixed);
+  return new Prisma.Decimal(amount.toFixed(2));
 }
 
 export class DiscountServiceError extends Error {
@@ -52,7 +60,8 @@ class DiscountService {
           enrollmentId,
           branchFeeId: input.branchFeeId ?? null,
           type: input.type,
-          percentage: input.percentage,
+          percentage: input.percentage ?? null,
+          fixedAmount: input.fixedAmount ?? null,
           description: input.description ?? null,
           validFrom: new Date(input.validFrom),
           validTo: input.validTo ? new Date(input.validTo) : null,
@@ -104,7 +113,9 @@ class DiscountService {
         data: {
           ...(input.branchFeeId !== undefined && { branchFeeId: input.branchFeeId }),
           ...(input.type !== undefined && { type: input.type }),
-          ...(input.percentage !== undefined && { percentage: input.percentage }),
+          // Switching kind clears the other value (a discount is one or the other).
+          ...(input.percentage != null && { percentage: input.percentage, fixedAmount: null }),
+          ...(input.fixedAmount != null && { fixedAmount: input.fixedAmount, percentage: null }),
           ...(input.description !== undefined && { description: input.description }),
           ...(input.validFrom !== undefined && { validFrom: new Date(input.validFrom) }),
           ...(input.validTo !== undefined && { validTo: input.validTo ? new Date(input.validTo) : null }),

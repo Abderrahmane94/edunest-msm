@@ -868,7 +868,9 @@ model Discount {
   id              String       @id @default(uuid())
   enrollmentId    String       @map("enrollment_id")
   type            DiscountType
-  percentage      Decimal      @db.Decimal(5, 2)
+  /// Either a percentage or a fixed amount (per échéance), never both.
+  percentage      Decimal?     @db.Decimal(5, 2)
+  fixedAmount     Decimal?     @map("fixed_amount") @db.Decimal(10, 2)
   description     String?
   validFrom       DateTime     @map("valid_from") @db.Date
   validTo         DateTime?    @map("valid_to") @db.Date

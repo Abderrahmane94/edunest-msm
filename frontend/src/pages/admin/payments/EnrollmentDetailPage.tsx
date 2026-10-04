@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, UserX, Calendar, Plus, Trash2, Percent } from 'lucide-react';
-import { formatDate } from '@/lib/formatters';
+import { formatDate, formatDZD } from '@/lib/formatters';
 import {
   ErrorAlert,
   Button,
@@ -201,7 +201,9 @@ function AddDiscountDialog({
 
   const [type, setType] = React.useState<DiscountType>('scholarship');
   const [branchFeeId, setBranchFeeId] = React.useState('');
+  const [mode, setMode] = React.useState<'percentage' | 'amount'>('percentage');
   const [percentage, setPercentage] = React.useState('');
+  const [fixedAmount, setFixedAmount] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [validFrom, setValidFrom] = React.useState(new Date().toISOString().slice(0, 10));
   const [validTo, setValidTo] = React.useState('');
@@ -210,7 +212,9 @@ function AddDiscountDialog({
     setType('scholarship');
     setBranchFeeId('');
     createDiscount.reset();
+    setMode('percentage');
     setPercentage('');
+    setFixedAmount('');
     setDescription('');
     setValidFrom(new Date().toISOString().slice(0, 10));
     setValidTo('');
@@ -223,12 +227,13 @@ function AddDiscountDialog({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!percentage || !validFrom) return;
+    if (!validFrom || (mode === 'percentage' ? !percentage : !fixedAmount)) return;
 
     createDiscount.mutate(
       {
         type,
-        percentage: Number(percentage),
+        percentage: mode === 'percentage' ? Number(percentage) : null,
+        fixedAmount: mode === 'amount' ? Number(fixedAmount) : null,
         description: description.trim() || null,
         validFrom,
         validTo: validTo || null,
@@ -274,19 +279,60 @@ function AddDiscountDialog({
             helperText={t('payments.enrollmentDetail.discounts.form.feeHelper')}
           />
 
-          <FormField label={t('payments.enrollmentDetail.discounts.form.percentage')} htmlFor="discount-percentage" required>
-            <Input
-              id="discount-percentage"
-              name="discount-percentage"
-              type="number"
-              min="0.01"
-              max="100"
-              step="0.01"
-              value={percentage}
-              onChange={(e) => setPercentage(e.target.value)}
-              placeholder="0.00"
-            />
-          </FormField>
+          {/* Percentage or fixed amount */}
+          <div className="space-y-2">
+            <p className="text-label font-medium text-foreground">
+              {t('payments.enrollmentDetail.discounts.form.kind')}
+            </p>
+            <div className="inline-flex rounded-md border border-border p-0.5">
+              {(['percentage', 'amount'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMode(m)}
+                  className={`rounded px-3 py-1.5 text-caption font-medium transition-colors ${
+                    mode === m ? 'bg-primary text-white' : 'text-text-secondary hover:bg-hover'
+                  }`}
+                >
+                  {t(`payments.enrollmentDetail.discounts.form.kind_${m}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {mode === 'percentage' ? (
+            <FormField label={t('payments.enrollmentDetail.discounts.form.percentage')} htmlFor="discount-percentage" required>
+              <Input
+                id="discount-percentage"
+                name="discount-percentage"
+                type="number"
+                min="0.01"
+                max="100"
+                step="0.01"
+                value={percentage}
+                onChange={(e) => setPercentage(e.target.value)}
+                placeholder="0.00"
+              />
+            </FormField>
+          ) : (
+            <FormField
+              label={t('payments.enrollmentDetail.discounts.form.fixedAmount')}
+              htmlFor="discount-fixed-amount"
+              required
+            >
+              <Input
+                id="discount-fixed-amount"
+                name="discount-fixed-amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={fixedAmount}
+                onChange={(e) => setFixedAmount(e.target.value)}
+                placeholder="0.00"
+                helperText={t('payments.enrollmentDetail.discounts.form.fixedAmountHelper')}
+              />
+            </FormField>
+          )}
 
           <FormField label={t('payments.enrollmentDetail.discounts.form.description')} htmlFor="discount-description">
             <Input
@@ -331,7 +377,13 @@ function AddDiscountDialog({
               message={createDiscount.isError ? (createDiscount.error instanceof Error ? createDiscount.error.message : t('common.error')) : null}
               className="me-auto"
             />
-            <Button type="submit" variant="primary" disabled={!percentage || !validFrom || createDiscount.isPending}>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={
+                !validFrom || (mode === 'percentage' ? !percentage : !fixedAmount) || createDiscount.isPending
+              }
+            >
               {createDiscount.isPending ? t('common.loading') : t('payments.enrollmentDetail.discounts.form.submit')}
             </Button>
           </DialogFooter>
@@ -342,7 +394,7 @@ function AddDiscountDialog({
 }
 
 function DiscountRow({ discount, enrollmentId }: { discount: Discount; enrollmentId: string }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const deleteDiscount = useDeleteDiscount(enrollmentId);
   const [confirming, setConfirming] = React.useState(false);
 
@@ -355,7 +407,9 @@ function DiscountRow({ discount, enrollmentId }: { discount: Discount; enrollmen
       </td>
       <td className="px-4 py-3">
         <span className="text-body font-medium text-foreground" dir="ltr">
-          {Number(discount.percentage)}%
+          {discount.fixedAmount != null
+            ? `−${formatDZD(Number(discount.fixedAmount), i18n.language)}`
+            : `−${Number(discount.percentage)} %`}
         </span>
       </td>
       <td className="px-4 py-3">

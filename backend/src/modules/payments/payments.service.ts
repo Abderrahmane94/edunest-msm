@@ -47,17 +47,19 @@ class PaymentService {
     } = input;
 
     return await prisma.$transaction(async (tx) => {
-      // (a) Validate child exists with at least one enrollment
+      // (a) Validate child exists with at least one billing enrollment.
+      // (`paymentEnrollments` — not `enrollments`, which are classroom
+      // placements: a child billed but not placed in a class can still pay.)
       const child = await tx.child.findUnique({
         where: { id: childId },
         include: {
-          enrollments: {
+          paymentEnrollments: {
             select: { id: true },
           },
         },
       });
 
-      if (!child || child.enrollments.length === 0) {
+      if (!child || child.paymentEnrollments.length === 0) {
         throw new PaymentServiceError(
           'Target child not found or has no enrollments',
           404,

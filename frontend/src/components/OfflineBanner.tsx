@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { WifiOff, Wifi } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useOfflineQueue } from '@/lib/offlineQueue';
 
 function subscribe(listener: () => void) {
   window.addEventListener('online', listener);
@@ -24,6 +25,8 @@ const RESTORED_MS = 3000;
 export function OfflineBanner() {
   const { t } = useTranslation();
   const online = React.useSyncExternalStore(subscribe, () => navigator.onLine);
+  const { actions } = useOfflineQueue();
+  const waiting = actions.filter((a) => !a.error).length;
   const [restored, setRestored] = React.useState(false);
   const wasOffline = React.useRef(!online);
 
@@ -54,7 +57,12 @@ export function OfflineBanner() {
         )}
       >
         {online ? <Wifi className="w-4 h-4 shrink-0" /> : <WifiOff className="w-4 h-4 shrink-0" />}
-        <span>{online ? t('offline.restored') : t('offline.banner')}</span>
+        <span>
+          {online ? t('offline.restored') : t('offline.banner')}
+          {!online && waiting > 0 && (
+            <span className="block text-micro opacity-80">{t('offline.pending', { count: waiting })}</span>
+          )}
+        </span>
       </div>
     </div>
   );

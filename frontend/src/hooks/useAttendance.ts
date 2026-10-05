@@ -1,5 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
+import { queryClient } from '@/lib/query-client';
+import { registerQueueHandler, QueueRejectedError } from '@/lib/offlineQueue';
 
 export interface AttendanceRecord {
   id: string;
@@ -82,68 +84,73 @@ export function useClassroomMonthlyReport(
   });
 }
 
-export interface BulkAttendanceRecord {
-  child_id: string;
-  status: 'present' | 'absent' | 'late';
-  note?: string;
-}
+export type AttendanceStatus = 'present' | 'absent' | 'late';
 
-export interface BulkAttendancePayload {
-  classroom_id: string;
+/** A classroom's attendance for one day, as saved by PUT /api/attendance/day. */
+export interface AttendanceDayPayload {
+  classroomId: string;
   date: string;
-  records: BulkAttendanceRecord[];
+  records: {
+    childId: string;
+    status: AttendanceStatus;
+    note?: string;
+    /** When the teacher marked the child (a later server change wins over it). */
+    markedAt: string;
+  }[];
 }
 
-/**
- * Mutation to update a single attendance record.
- * PATCH /api/attendance/:id
- */
-export function useUpdateAttendanceRecord() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ recordId, status, note }: { recordId: string; status: string; note?: string }) => {
-      const res = await apiClient.patch<AttendanceRecord>(`/attendance/${recordId}`, { status, note });
-      if (!res.success) throw new Error(res.error?.message || 'Failed to update attendance');
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['attendance'] });
-    },
-  });
+export interface AttendanceDayResult {
+  records: AttendanceRecord[];
+  /** Children changed on the server after they were marked: left as they were. */
+  skipped: string[];
 }
 
-/**
- * Mutation to bulk mark attendance for a classroom.
- * POST /api/attendance/bulk-mark
- */
-export function useBulkMarkAttendance() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: BulkAttendancePayload) => {
-      // Backend expects camelCase field names
-      const body = {
-        classroomId: payload.classroom_id,
-        date: payload.date,
-        records: payload.records.map((r) => ({
-          childId: r.child_id,
-          status: r.status,
-          note: r.note,
-        })),
-      };
-      const res = await apiClient.post<AttendanceRecord[]>('/attendance/bulk-mark', body);
-      if (!res.success) {
-        throw new Error(res.error?.message || 'Failed to mark attendance');
-      }
-      return res.data;
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['attendance', 'classroom', variables.classroom_id, variables.date],
-      });
-      queryClient.invalidateQueries({ queryKey: ['attendance', 'report'] });
-    },
-  });
+/** What a teacher should know after attendance was sent from the queue. */
+export interface AttendanceSyncNotice {
+  classroomId: string;
+  date: string;
+  skipped: string[];
 }
+
+export const ATTENDANCE_DAY = 'attendance-day';
+export const attendanceDayKey = (classroomId: string, date: string) => `attendance:${classroomId}:${date}`;
+
+/**
+ * Saves a classroom's attendance for a day (creates or updates each child;
+ * safe to send again). Throws QueueRejectedError when the server refuses it,
+ * a plain error when the network is down.
+ */
+export async function sendAttendanceDay(payload: AttendanceDayPayload): Promise<AttendanceDayResult> {
+  const res = await apiClient.put<AttendanceDayResult>('/attendance/day', payload);
+  if (!res.success || !res.data) {
+    // An expired session isn't a refusal of the attendance: keep it until the
+    // user is signed in again.
+    if (res.error?.code === 'UNAUTHORIZED') throw new Error('UNAUTHORIZED');
+    throw new QueueRejectedError(res.error?.message || 'Failed to save attendance');
+  }
+  return res.data;
+}
+
+// Attendance marked offline is queued on the device and sent when the
+// connection returns.
+registerQueueHandler<AttendanceDayPayload>(ATTENDANCE_DAY, {
+  send: async (payload): Promise<AttendanceSyncNotice | undefined> => {
+    const result = await sendAttendanceDay(payload);
+    // The saved day as the server has it now (no flash of the old statuses).
+    queryClient.setQueryData(['attendance', 'classroom', payload.classroomId, payload.date], result.records);
+    return result.skipped.length > 0
+      ? { classroomId: payload.classroomId, date: payload.date, skipped: result.skipped }
+      : undefined;
+  },
+  // Later marks of the same child replace earlier ones.
+  merge: (older, newer) => ({
+    ...newer,
+    records: [...new Map([...older.records, ...newer.records].map((r) => [r.childId, r])).values()],
+  }),
+  onSent: () => {
+    void queryClient.invalidateQueries({ queryKey: ['attendance'] });
+  },
+});
 
 // ─── Attendance Tracking (Admin) ─────────────────────────────────────────────
 

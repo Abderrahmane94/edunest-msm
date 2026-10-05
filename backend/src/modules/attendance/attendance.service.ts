@@ -1,6 +1,7 @@
 import prisma from '../../lib/prisma';
 import { notificationService } from '../../services/notification.service';
-import type { BulkMarkAttendanceInput, UpdateAttendanceInput } from './attendance.schema';
+import { Prisma } from '@prisma/client';
+import type { BulkMarkAttendanceInput, SaveAttendanceDayInput, UpdateAttendanceInput } from './attendance.schema';
 import type {
   AttendanceRecordWithChild,
   AttendanceRecordWithDetails,
@@ -177,6 +178,117 @@ class AttendanceService {
     }
 
     return updated;
+  }
+
+  /**
+   * Save a classroom's attendance for a day: creates or updates each child's
+   * record, so it can be sent again safely (attendance marked offline is sent
+   * when the connection returns, possibly more than once).
+   *
+   * A record changed on the server after the child was marked (`markedAt`,
+   * e.g. an admin correction while the teacher was offline) is kept; those
+   * children are returned in `skipped`. Parents are notified when a child
+   * becomes absent.
+   */
+  async saveDay(
+    schoolId: string,
+    userId: string,
+    userRole: string,
+    input: SaveAttendanceDayInput,
+    retried = false,
+  ): Promise<{ records: AttendanceRecordWithChild[]; skipped: string[] }> {
+    const { classroomId, date } = input;
+
+    const classroom = await prisma.classroom.findFirst({ where: { id: classroomId, schoolId } });
+    if (!classroom) {
+      throw new AttendanceServiceError('Classroom not found or does not belong to this school', 404);
+    }
+    if (userRole === 'teacher' && classroom.teacherUserId !== userId) {
+      throw new AttendanceServiceError(
+        'You are not assigned to this classroom. Only the assigned teacher or an admin can mark attendance.',
+        403,
+      );
+    }
+
+    // One entry per child (the last one wins).
+    const records = [...new Map(input.records.map((r) => [r.childId, r])).values()];
+    const childIds = records.map((r) => r.childId);
+
+    const known = await prisma.child.findMany({ where: { id: { in: childIds }, schoolId }, select: { id: true } });
+    if (known.length !== childIds.length) {
+      throw new AttendanceServiceError('Some children were not found in this school', 404);
+    }
+
+    const day = new Date(date);
+    const existing = await prisma.attendanceRecord.findMany({ where: { childId: { in: childIds }, date: day } });
+    const byChild = new Map(existing.map((r) => [r.childId, r]));
+
+    const skipped: string[] = [];
+    const becameAbsent = new Set<string>();
+    const writes: Prisma.PrismaPromise<unknown>[] = [];
+    for (const r of records) {
+      const current = byChild.get(r.childId);
+      if (current) {
+        if (r.markedAt && current.updatedAt > new Date(r.markedAt)) {
+          skipped.push(r.childId);
+          continue;
+        }
+        const note = r.note === undefined ? current.note : r.note || null;
+        if (current.status === r.status && current.note === note) continue;
+        writes.push(
+          prisma.attendanceRecord.update({
+            where: { id: current.id },
+            data: { status: r.status, note, classroomId },
+          }),
+        );
+        if (r.status === 'absent' && current.status !== 'absent') becameAbsent.add(r.childId);
+      } else {
+        writes.push(
+          prisma.attendanceRecord.create({
+            data: {
+              schoolId,
+              childId: r.childId,
+              classroomId,
+              date: day,
+              status: r.status,
+              markedByUserId: userId,
+              note: r.note || null,
+            },
+          }),
+        );
+        if (r.status === 'absent') becameAbsent.add(r.childId);
+      }
+    }
+
+    if (writes.length > 0) {
+      try {
+        await prisma.$transaction(writes);
+      } catch (err) {
+        // The same day was saved at the same moment (e.g. a resend racing the
+        // first send): read again and apply on top of it, once.
+        if (!retried && err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+          return this.saveDay(schoolId, userId, userRole, input, true);
+        }
+        throw err;
+      }
+    }
+
+    const saved = await prisma.attendanceRecord.findMany({
+      where: { childId: { in: childIds }, date: day },
+      include: { child: { select: childSelect } },
+    });
+
+    // Fire and forget, as for bulk marking.
+    const absences = saved.filter((r) => r.status === 'absent' && becameAbsent.has(r.childId));
+    if (absences.length > 0) {
+      Promise.allSettled(
+        absences.map((record) => notificationService.dispatchAbsenceNotifications(record.childId, record.id, date)),
+      ).catch((err) => {
+        console.error('[AttendanceService] Error dispatching absence notifications:', err);
+      });
+    }
+
+    return { records: saved, skipped };
   }
 
   /**

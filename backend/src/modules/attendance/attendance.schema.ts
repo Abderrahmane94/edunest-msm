@@ -26,6 +26,21 @@ export const bulkMarkAttendanceSchema = z.object({
 });
 
 /**
+ * Schema for saving a classroom's attendance for a day (create or update each
+ * child). `markedAt` is when the teacher marked the child — for attendance
+ * saved offline and sent later.
+ */
+export const saveAttendanceDaySchema = z.object({
+  classroomId: uuidSchema,
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  records: z
+    .array(attendanceRecordItemSchema.extend({ markedAt: z.string().datetime().optional() }))
+    .min(1, 'At least one attendance record is required'),
+});
+
+/**
  * Schema for updating a single attendance record.
  */
 export const updateAttendanceSchema = z.object({
@@ -100,6 +115,7 @@ export const attendanceReportQuerySchema = z.object({
 
 export type BulkMarkAttendanceInput = z.infer<typeof bulkMarkAttendanceSchema>;
 export type UpdateAttendanceInput = z.infer<typeof updateAttendanceSchema>;
+export type SaveAttendanceDayInput = z.infer<typeof saveAttendanceDaySchema>;
 export type ClassroomAttendanceQuery = z.infer<typeof classroomAttendanceQuerySchema>;
 export type ChildAttendanceQuery = z.infer<typeof childAttendanceQuerySchema>;
 export type AttendanceReportQuery = z.infer<typeof attendanceReportQuerySchema>;

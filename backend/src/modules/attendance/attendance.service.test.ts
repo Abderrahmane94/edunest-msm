@@ -16,6 +16,7 @@ vi.mock('../../lib/prisma', () => ({
     },
     child: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     parentChildLink: {
       findFirst: vi.fn(),
@@ -54,6 +55,7 @@ const mockPrisma = prisma as unknown as {
   };
   child: {
     findFirst: ReturnType<typeof vi.fn>;
+    findMany: ReturnType<typeof vi.fn>;
   };
   parentChildLink: {
     findFirst: ReturnType<typeof vi.fn>;
@@ -702,6 +704,134 @@ describe('AttendanceService', () => {
       expect(result.totalSchoolDays).toBe(1);
       expect(result.presentCount).toBe(1);
       expect(result.attendancePercentage).toBe(100);
+    });
+  });
+
+  describe('saveDay', () => {
+    const classroom = { id: classroomId, schoolId, teacherUserId: userId };
+    const day = new Date('2026-10-05');
+    const stored = (childId: string, status: string, updatedAt: string, note: string | null = null) => ({
+      id: `rec-${childId}`,
+      schoolId,
+      childId,
+      classroomId,
+      date: day,
+      status,
+      note,
+      markedByUserId: userId,
+      createdAt: new Date(updatedAt),
+      updatedAt: new Date(updatedAt),
+    });
+
+    beforeEach(() => {
+      mockPrisma.classroom.findFirst.mockResolvedValue(classroom);
+      mockPrisma.child.findMany.mockImplementation(({ where }) =>
+        Promise.resolve(where.id.in.map((id: string) => ({ id }))),
+      );
+      mockPrisma.attendanceRecord.create.mockImplementation((args) => ({ op: 'create', args }));
+      mockPrisma.attendanceRecord.update.mockImplementation((args) => ({ op: 'update', args }));
+      mockPrisma.$transaction.mockResolvedValue([]);
+    });
+
+    it('creates missing records, updates changed ones and leaves unchanged ones alone', async () => {
+      mockPrisma.attendanceRecord.findMany
+        .mockResolvedValueOnce([stored('child-2', 'present', '2026-10-05T07:00:00Z'), stored('child-3', 'late', '2026-10-05T07:00:00Z')])
+        .mockResolvedValueOnce([]);
+
+      await attendanceService.saveDay(schoolId, userId, 'teacher', {
+        classroomId,
+        date: '2026-10-05',
+        records: [
+          { childId: 'child-1', status: 'present' },
+          { childId: 'child-2', status: 'absent' },
+          { childId: 'child-3', status: 'late' },
+        ],
+      });
+
+      const ops = mockPrisma.$transaction.mock.calls[0][0];
+      expect(ops).toHaveLength(2);
+      expect(mockPrisma.attendanceRecord.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ childId: 'child-1', status: 'present', classroomId, markedByUserId: userId }),
+      });
+      expect(mockPrisma.attendanceRecord.update).toHaveBeenCalledWith({
+        where: { id: 'rec-child-2' },
+        data: { status: 'absent', note: null, classroomId },
+      });
+    });
+
+    it('keeps a record changed on the server after the child was marked offline', async () => {
+      mockPrisma.attendanceRecord.findMany
+        .mockResolvedValueOnce([stored('child-1', 'absent', '2026-10-05T09:00:00Z')])
+        .mockResolvedValueOnce([]);
+
+      const result = await attendanceService.saveDay(schoolId, userId, 'teacher', {
+        classroomId,
+        date: '2026-10-05',
+        records: [{ childId: 'child-1', status: 'present', markedAt: '2026-10-05T08:00:00Z' }],
+      });
+
+      expect(result.skipped).toEqual(['child-1']);
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('applies a change marked after the last server change', async () => {
+      mockPrisma.attendanceRecord.findMany
+        .mockResolvedValueOnce([stored('child-1', 'present', '2026-10-05T08:00:00Z')])
+        .mockResolvedValueOnce([]);
+
+      const result = await attendanceService.saveDay(schoolId, userId, 'teacher', {
+        classroomId,
+        date: '2026-10-05',
+        records: [{ childId: 'child-1', status: 'late', markedAt: '2026-10-05T08:30:00Z' }],
+      });
+
+      expect(result.skipped).toEqual([]);
+      expect(mockPrisma.attendanceRecord.update).toHaveBeenCalledTimes(1);
+    });
+
+    it('notifies parents only for children who become absent', async () => {
+      mockPrisma.attendanceRecord.findMany
+        .mockResolvedValueOnce([stored('child-2', 'absent', '2026-10-05T07:00:00Z')])
+        .mockResolvedValueOnce([
+          { ...stored('child-1', 'absent', '2026-10-05T08:00:00Z'), child: {} },
+          { ...stored('child-2', 'absent', '2026-10-05T07:00:00Z'), child: {} },
+        ]);
+
+      await attendanceService.saveDay(schoolId, userId, 'teacher', {
+        classroomId,
+        date: '2026-10-05',
+        records: [
+          { childId: 'child-1', status: 'absent' },
+          { childId: 'child-2', status: 'absent' },
+        ],
+      });
+
+      expect(mockNotificationService.dispatchAbsenceNotifications).toHaveBeenCalledTimes(1);
+      expect(mockNotificationService.dispatchAbsenceNotifications).toHaveBeenCalledWith('child-1', 'rec-child-1', '2026-10-05');
+    });
+
+    it("rejects a teacher who isn't assigned to the classroom", async () => {
+      mockPrisma.classroom.findFirst.mockResolvedValue({ ...classroom, teacherUserId: 'someone-else' });
+
+      await expect(
+        attendanceService.saveDay(schoolId, userId, 'teacher', {
+          classroomId,
+          date: '2026-10-05',
+          records: [{ childId: 'child-1', status: 'present' }],
+        }),
+      ).rejects.toMatchObject({ statusCode: 403 });
+    });
+
+    it('rejects children from another school', async () => {
+      mockPrisma.child.findMany.mockResolvedValue([]);
+
+      await expect(
+        attendanceService.saveDay(schoolId, userId, 'teacher', {
+          classroomId,
+          date: '2026-10-05',
+          records: [{ childId: 'child-x', status: 'present' }],
+        }),
+      ).rejects.toBeInstanceOf(AttendanceServiceError);
     });
   });
 });

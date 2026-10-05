@@ -228,7 +228,8 @@
   },
   "offline": {
     "banner": "Vous êtes hors ligne. Les données affichées peuvent ne pas être à jour.",
-    "restored": "Connexion rétablie"
+    "restored": "Connexion rétablie",
+    "pending": "Enregistrements en attente d'envoi : {{count}}"
   },
   "install": {
     "button": "Installer l'application",
@@ -1257,7 +1258,15 @@
     "submit": "Enregistrer la présence",
     "submitting": "Enregistrement...",
     "submitSuccess": "Présence enregistrée avec succès",
-    "submitError": "Erreur lors de l'enregistrement. Veuillez réessayer."
+    "submitError": "Erreur lors de l'enregistrement. Veuillez réessayer.",
+    "savedOffline": "Enregistré sur cet appareil. La présence sera envoyée automatiquement au retour de la connexion.",
+    "sending": "Envoi de la présence…",
+    "pendingBadge": "En attente d'envoi",
+    "conflict": "Présence du {{date}} : modifiée entre-temps par quelqu'un d'autre, ces enfants ont gardé leur statut actuel :",
+    "syncError": "La présence enregistrée sur l'appareil a été refusée : {{error}}",
+    "retry": "Réessayer",
+    "discard": "Abandonner",
+    "offlineUnavailable": "Cette page n'est pas encore disponible hors ligne. Ouvrez-la une fois avec la connexion pour pouvoir l'utiliser ensuite sans réseau."
   },
   "teacherChildren": {
     "title": "Enfants de ma classe"

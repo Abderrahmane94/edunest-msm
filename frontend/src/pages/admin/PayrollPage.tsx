@@ -1293,7 +1293,7 @@ export function PayrollPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         {(['employees', 'payments'] as Tab[]).map((tab) => (
           <Button
             key={tab}

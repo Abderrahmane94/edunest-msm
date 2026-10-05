@@ -32,7 +32,7 @@ export function ParentPaymentsPage() {
   const [activeTab, setActiveTab] = React.useState<TabId>('periods');
   return (
     <div className="min-h-screen bg-page">
-      <header className="sticky top-0 z-10 bg-card border-b border-border">
+      <header className="sticky top-14 z-10 bg-card border-b border-border">
         <div className="max-w-[600px] mx-auto px-4 py-3">
           <h1 className="text-page-title font-semibold text-text-heading">{t('parentPayments.title', 'Payments')}</h1>
           <p className="text-caption text-text-secondary">{t('parentPayments.subtitle', "View your children's charges and payments")}</p>
@@ -57,9 +57,9 @@ function TabBar({ activeTab, onTabChange }: { activeTab: TabId; onTabChange: (id
     { id: 'balances', label: t('parentPayments.tabs.balances', 'Balance'), icon: Wallet },
   ];
   return (
-    <div className="flex border-b border-border" role="tablist">
+    <div className="flex border-b border-border overflow-x-auto" role="tablist">
       {tabs.map((tab) => { const Icon = tab.icon; const isActive = activeTab === tab.id; return (
-        <button key={tab.id} id={`tab-${tab.id}`} type="button" role="tab" aria-selected={isActive} onClick={() => onTabChange(tab.id)} className={cn('flex items-center gap-2 px-4 py-3 text-body font-medium transition-colors duration-150 border-b-2 -mb-px', isActive ? 'border-[var(--color-accent)] text-[var(--color-accent)]' : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border-strong')}>
+        <button key={tab.id} id={`tab-${tab.id}`} type="button" role="tab" aria-selected={isActive} onClick={() => onTabChange(tab.id)} className={cn('flex items-center gap-2 px-4 py-3 text-body font-medium whitespace-nowrap shrink-0 transition-colors duration-150 border-b-2 -mb-px', isActive ? 'border-[var(--color-accent)] text-[var(--color-accent)]' : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border-strong')}>
           <Icon className="w-4 h-4" aria-hidden="true" /><span>{tab.label}</span>
         </button>); })}
     </div>

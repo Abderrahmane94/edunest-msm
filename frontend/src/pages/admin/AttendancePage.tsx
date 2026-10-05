@@ -253,7 +253,7 @@ export function AttendancePage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-page-title font-semibold text-text-heading">
             {t('attendance.title')}
@@ -267,7 +267,7 @@ export function AttendancePage() {
       </div>
 
       {/* View mode tabs */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Button
           variant={viewMode === 'daily' ? 'primary' : 'secondary'}
           size="sm"

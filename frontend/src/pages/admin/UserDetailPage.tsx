@@ -123,13 +123,13 @@ export function UserDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Button variant="ghost" size="sm" onClick={() => navigate('/admin/users')}>
           <ArrowLeft className="w-4 h-4" />
           {t('common.back')}
         </Button>
-        <div className="flex-1">
-          <h1 className="text-page-title font-semibold text-text-heading">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-page-title font-semibold text-text-heading break-words">
             {user.first_name} {user.last_name}
           </h1>
           <p className="text-body text-text-secondary">{user.email}</p>

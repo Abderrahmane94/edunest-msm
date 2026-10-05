@@ -158,12 +158,12 @@ export function SchoolDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Button variant="ghost" size="sm" onClick={() => navigate('/admin/schools')}>
           <ArrowLeft className="w-4 h-4" />{t('common.back')}
         </Button>
-        <div className="flex-1">
-          <h1 className="text-page-title font-semibold text-text-heading">{school.name}</h1>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-page-title font-semibold text-text-heading break-words">{school.name}</h1>
           <p className="text-body text-text-secondary">{school.wilaya}</p>
         </div>
         <StatusBadge variant={school.isActive ? 'present' : 'cancelled'}>

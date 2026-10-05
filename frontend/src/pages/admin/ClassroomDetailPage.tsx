@@ -112,13 +112,13 @@ export function ClassroomDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Button variant="ghost" size="sm" onClick={() => navigate('/admin/classrooms')}>
           <ArrowLeft className="w-4 h-4" />
           {t('common.back')}
         </Button>
-        <div className="flex-1">
-          <h1 className="text-page-title font-semibold text-text-heading">{classroom.name}</h1>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-page-title font-semibold text-text-heading break-words">{classroom.name}</h1>
           <p className="text-body text-text-secondary">
             {classroom.enrolled_count}/{classroom.capacity} {t('classrooms.columns.capacity').toLowerCase()}
             {classroom.teacher_name && ` · ${classroom.teacher_name}`}

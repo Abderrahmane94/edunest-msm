@@ -170,7 +170,7 @@ export function SchoolsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-page-title font-semibold text-text-heading">{t('schools.title')}</h1>
           <p className="text-caption text-text-secondary mt-1">

@@ -149,15 +149,21 @@ export const staffMessagingController = {
       const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const { id } = req.params;
-      const { content, messageType } = req.body as {
+      const { content, messageType, clientId } = req.body as {
         content?: string;
         messageType?: 'text' | 'photo' | 'document';
+        clientId?: unknown;
       };
 
       const type = messageType || 'text';
 
       if (type === 'text' && (!content || !content.trim())) {
         res.status(400).json(errorResponse('VALIDATION_ERROR', 'Content is required for text messages'));
+        return;
+      }
+      // The sending device's id (a message sent again is only saved once).
+      if (clientId !== undefined && (typeof clientId !== 'string' || !/^[0-9a-f-]{36}$/i.test(clientId))) {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', 'clientId must be a UUID'));
         return;
       }
 
@@ -167,6 +173,8 @@ export const staffMessagingController = {
         userId,
         content?.trim() || '',
         type,
+        undefined,
+        clientId,
       );
 
       res.status(201).json(successResponse(message));

@@ -365,38 +365,66 @@ class CommunicationService {
       );
     }
 
-    // Create the message and update lastMessageAt in a transaction
-    const [message] = await prisma.$transaction([
-      prisma.message.create({
-        data: {
-          conversationId: conversation.id,
-          senderUserId: userId,
-          content: input.content || null,
-          messageType: input.messageType,
-          cloudinaryPublicId: input.cloudinaryPublicId || null,
-        },
-        include: {
-          sender: { select: participantSelect },
-        },
-      }),
-      prisma.conversation.update({
-        where: { id: conversation.id },
-        data: { lastMessageAt: new Date() },
-      }),
-    ]);
-
     // Build response with signed URL if applicable
-    const response: MessageResponse = {
-      ...message,
-      sender: message.sender,
+    const toResponse = (message: Prisma.MessageGetPayload<{ include: { sender: { select: typeof participantSelect } } }>): MessageResponse => {
+      const response: MessageResponse = { ...message, sender: message.sender };
+      if (message.cloudinaryPublicId && (message.messageType === 'photo' || message.messageType === 'document')) {
+        response.mediaUrl = cloudinaryService.generateSignedUrl(
+          message.cloudinaryPublicId,
+          message.messageType === 'photo' ? 'photo' : 'document',
+        );
+      }
+      return response;
     };
 
-    if (message.cloudinaryPublicId && (message.messageType === 'photo' || message.messageType === 'document')) {
-      response.mediaUrl = cloudinaryService.generateSignedUrl(
-        message.cloudinaryPublicId,
-        message.messageType === 'photo' ? 'photo' : 'document',
-      );
+    // Already received (the device sent it again): return it, nothing new.
+    const findSent = async (): Promise<MessageResponse | null> => {
+      if (!input.clientId) return null;
+      const sent = await prisma.message.findUnique({
+        where: { clientId: input.clientId },
+        include: { sender: { select: participantSelect } },
+      });
+      if (!sent) return null;
+      if (sent.conversationId !== conversation.id || sent.senderUserId !== userId) {
+        throw new CommunicationServiceError('Message id already used', 409);
+      }
+      return toResponse(sent);
+    };
+    const alreadySent = await findSent();
+    if (alreadySent) return alreadySent;
+
+    // Create the message and update lastMessageAt in a transaction
+    let message;
+    try {
+      [message] = await prisma.$transaction([
+        prisma.message.create({
+          data: {
+            conversationId: conversation.id,
+            senderUserId: userId,
+            content: input.content || null,
+            messageType: input.messageType,
+            cloudinaryPublicId: input.cloudinaryPublicId || null,
+            clientId: input.clientId ?? null,
+          },
+          include: {
+            sender: { select: participantSelect },
+          },
+        }),
+        prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { lastMessageAt: new Date() },
+        }),
+      ]);
+    } catch (err) {
+      // Sent twice at the same moment: the first one was saved.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        const sent = await findSent();
+        if (sent) return sent;
+      }
+      throw err;
     }
+
+    const response = toResponse(message);
 
     // Emit "message:new" event to the conversation room (live chat view).
     const room = `conversation:${conversation.id}`;

@@ -449,6 +449,8 @@ model Message {
   messageType        MessageType @map("message_type")
   cloudinaryPublicId String?     @map("cloudinary_public_id")
   isRead             Boolean     @default(false) @map("is_read")
+  /// The sending device's id, so a message sent again is only saved once.
+  clientId           String?     @unique @map("client_id")
   createdAt          DateTime    @default(now()) @map("created_at")
 
   conversation Conversation @relation(fields: [conversationId], references: [id])
@@ -1009,6 +1011,8 @@ model StaffMessage {
   messageType        MessageType @default(text) @map("message_type")
   cloudinaryPublicId String?     @map("cloudinary_public_id")
   isRead             Boolean     @default(false) @map("is_read")
+  /// The sending device's id, so a message sent again is only saved once.
+  clientId           String?     @unique @map("client_id")
   createdAt          DateTime    @default(now()) @map("created_at")
 
   conversation StaffConversation @relation(fields: [conversationId], references: [id])

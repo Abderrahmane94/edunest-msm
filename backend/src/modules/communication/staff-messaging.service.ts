@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
 import { socketService } from '../../services/socket.service';
 import { notificationService } from '../../services/notification.service';
@@ -230,25 +231,53 @@ class StaffMessagingService {
     content: string,
     messageType: 'text' | 'photo' | 'document',
     cloudinaryPublicId?: string,
+    clientId?: string,
   ): Promise<StaffMessageResponse> {
     const conversation = await this._verifyAccess(conversationId, schoolId, userId);
 
-    const [message] = await prisma.$transaction([
-      prisma.staffMessage.create({
-        data: {
-          conversationId: conversation.id,
-          senderUserId: userId,
-          content: content || null,
-          messageType,
-          cloudinaryPublicId: cloudinaryPublicId || null,
-        },
+    // Already received (the device sent it again): return it, nothing new.
+    const findSent = async (): Promise<StaffMessageResponse | null> => {
+      if (!clientId) return null;
+      const sent = await prisma.staffMessage.findUnique({
+        where: { clientId },
         include: { sender: { select: participantSelect } },
-      }),
-      prisma.staffConversation.update({
-        where: { id: conversation.id },
-        data: { lastMessageAt: new Date() },
-      }),
-    ]);
+      });
+      if (!sent) return null;
+      if (sent.conversationId !== conversation.id || sent.senderUserId !== userId) {
+        throw new CommunicationServiceError('Message id already used', 409);
+      }
+      return this._toMessageResponse(sent);
+    };
+    const alreadySent = await findSent();
+    if (alreadySent) return alreadySent;
+
+    let message;
+    try {
+      [message] = await prisma.$transaction([
+        prisma.staffMessage.create({
+          data: {
+            conversationId: conversation.id,
+            senderUserId: userId,
+            content: content || null,
+            messageType,
+            cloudinaryPublicId: cloudinaryPublicId || null,
+            clientId: clientId ?? null,
+          },
+          include: { sender: { select: participantSelect } },
+        }),
+        prisma.staffConversation.update({
+          where: { id: conversation.id },
+          data: { lastMessageAt: new Date() },
+        }),
+      ]);
+    } catch (err) {
+      // Sent twice at the same moment: the first one was saved.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        const sent = await findSent();
+        if (sent) return sent;
+      }
+      throw err;
+    }
 
     const response = this._toMessageResponse(message);
 

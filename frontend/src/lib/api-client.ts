@@ -83,7 +83,9 @@ class ApiClient {
 
       return null;
     } catch {
-      this.clearTokens();
+      // Network failure (offline, flaky connection): the session wasn't
+      // rejected, so keep the tokens — the user stays signed in and the
+      // refresh is tried again on the next request.
       return null;
     }
   }

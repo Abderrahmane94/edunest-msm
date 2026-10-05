@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 /**
  * The app's service worker: Firebase Cloud Messaging push, plus what makes
- * EduNest an installable app (PWA) — an offline page when there is no network.
+ * EduNest an installable app (PWA) that opens without a network.
  * It is the only service worker: a second one at the same scope would replace
  * this registration and break push.
  *
@@ -13,13 +13,54 @@
  * whole app scope.
  */
 
-// ─── Offline page ──────────────────────────────────────────────────────────────
+// ─── Offline: the app opens without a connection ───────────────────────────────
+//
+// - Pages: network first; offline, the last app page (index.html) is served so
+//   the app starts and shows the data saved on the device. Without one yet,
+//   the offline page.
+// - Built files (/assets/*, content-hashed, so never change): cache first.
+// - Google Fonts: cache first, so text keeps its fonts offline.
+// API calls aren't touched: data offline comes from the app's own cache.
 
-const CACHE = 'edunest-shell-v1';
+const SHELL_CACHE = 'edunest-shell-v2';
+const ASSET_CACHE = 'edunest-assets-v1';
+const FONT_CACHE = 'edunest-fonts-v1';
+const KEEP = [SHELL_CACHE, ASSET_CACHE, FONT_CACHE];
 const OFFLINE_URL = '/offline.html';
+const SHELL_URL = '/';
+/** Old builds' files are dropped beyond this many cached files. */
+const MAX_ASSETS = 40;
+
+/** Caches the app page and the built files it loads. */
+async function cacheShell() {
+  const response = await fetch(SHELL_URL, { cache: 'no-cache' });
+  if (!response.ok) return;
+  const html = await response.clone().text();
+  await (await caches.open(SHELL_CACHE)).put(SHELL_URL, response);
+  const assets = [...new Set(html.match(/\/assets\/[^"'\s)]+/g) || [])];
+  const cache = await caches.open(ASSET_CACHE);
+  await Promise.all(
+    assets.map(async (url) => {
+      if (!(await cache.match(url))) await cache.add(url);
+    }),
+  );
+}
+
+async function trimAssets() {
+  const cache = await caches.open(ASSET_CACHE);
+  const keys = await cache.keys();
+  // Keys come back in insertion order: drop the oldest.
+  await Promise.all(keys.slice(0, Math.max(0, keys.length - MAX_ASSETS)).map((k) => cache.delete(k)));
+}
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll([OFFLINE_URL, '/icon-192.png'])));
+  event.waitUntil(
+    Promise.all([
+      caches.open(SHELL_CACHE).then((cache) => cache.addAll([OFFLINE_URL, '/icon-192.png'])),
+      // Best effort: the app page is also cached on each visit.
+      cacheShell().catch(() => undefined),
+    ]),
+  );
   self.skipWaiting();
 });
 
@@ -27,17 +68,52 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('edunest-') && k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('edunest-') && !KEEP.includes(k)).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
 
-// Pages always come from the network (the app is online-only and updates on
-// each deploy); only when that fails is the offline page shown. Other requests
-// (API, assets) are left to the browser.
+async function handleNavigation(request) {
+  try {
+    const response = await fetch(request);
+    // Every route returns the same app page: keep the latest one for offline.
+    const isAppPage = new URL(request.url).pathname !== OFFLINE_URL;
+    if (isAppPage && response.ok && (response.headers.get('content-type') || '').includes('text/html')) {
+      const copy = response.clone();
+      caches.open(SHELL_CACHE).then((cache) => cache.put(SHELL_URL, copy));
+    }
+    return response;
+  } catch {
+    const cache = await caches.open(SHELL_CACHE);
+    return (await cache.match(SHELL_URL)) || (await cache.match(OFFLINE_URL)) || Response.error();
+  }
+}
+
+async function cacheFirst(request, cacheName, onStore) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  // Opaque (cross-origin, no-cors) font CSS responses have status 0.
+  if (response.ok || response.type === 'opaque') {
+    await cache.put(request, response.clone());
+    if (onStore) onStore();
+  }
+  return response;
+}
+
 self.addEventListener('fetch', (event) => {
-  if (event.request.mode !== 'navigate') return;
-  event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_URL)));
+  const { request } = event;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+
+  if (request.mode === 'navigate') {
+    event.respondWith(handleNavigation(request));
+  } else if (url.origin === self.location.origin && url.pathname.startsWith('/assets/')) {
+    event.respondWith(cacheFirst(request, ASSET_CACHE, () => trimAssets()));
+  } else if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+    event.respondWith(cacheFirst(request, FONT_CACHE));
+  }
 });
 
 // ─── Push (Firebase Cloud Messaging) ───────────────────────────────────────────

@@ -14,6 +14,9 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_VAPID_KEY?: string;
 }
 
+/** The deployed build (see vite.config.ts `define`). */
+declare const __BUILD_ID__: string;
+
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }

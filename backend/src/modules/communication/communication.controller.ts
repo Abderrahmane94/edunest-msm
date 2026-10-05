@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { communicationService, CommunicationServiceError } from './communication.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
-import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, UpdateDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput, MessagesQuery, DailyReportsQuery, AnnouncementsQuery, EventsQuery } from './communication.schema';
+import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, UpdateDailyReportInput, SaveDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput, MessagesQuery, DailyReportsQuery, AnnouncementsQuery, EventsQuery } from './communication.schema';
 
 export const communicationController = {
   /**
@@ -184,6 +184,27 @@ export const communicationController = {
   },
 
   /**
+   * PUT /api/communication/daily-reports/day — Save a child's report for a day
+   */
+  async saveDailyReport(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const userId = req.user!.userId;
+      const userRole = req.user!.role;
+      const input = req.body as SaveDailyReportInput;
+
+      const result = await communicationService.saveDailyReport(schoolId, userId, userRole, input);
+      res.status(200).json(successResponse(result));
+    } catch (error) {
+      if (error instanceof CommunicationServiceError) {
+        res.status(error.statusCode).json(errorResponse('COMMUNICATION_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
    * GET /api/communication/daily-reports/my-children — Get reports for parent's linked children
    */
   async getReportsForMyChildren(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -302,12 +323,17 @@ export const communicationController = {
         return;
       }
 
+      // Optional device ids, one per photo in the same order ("clientIds" field).
+      const raw = (req.body as { clientIds?: string | string[] }).clientIds;
+      const clientIds = (Array.isArray(raw) ? raw : raw ? [raw] : []).map((id) => (id ? String(id) : undefined));
+
       const photos = await communicationService.uploadDailyReportPhoto(
         id,
         schoolId,
         userId,
         userRole,
         files,
+        clientIds,
       );
       res.status(201).json(successResponse(photos));
     } catch (error) {

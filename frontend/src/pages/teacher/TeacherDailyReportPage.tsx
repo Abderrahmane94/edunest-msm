@@ -1,17 +1,41 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Send, Plus, X, Camera, Minus, Check, Pencil, RotateCcw, Clock } from 'lucide-react';
+import {
+  Send,
+  Plus,
+  X,
+  Camera,
+  Minus,
+  Check,
+  Pencil,
+  RotateCcw,
+  Clock,
+  CloudOff,
+  RefreshCw,
+  Trash2,
+  AlertTriangle,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui';
 import { useTeacherClassroom, useClassroomChildren } from '@/hooks/useTeacherClassroom';
 import {
   useDailyReportsForChild,
-  useUpdateDailyReport,
   type Mood,
   type DailyReportSummary,
 } from '@/hooks/useCommunication';
-import { apiClient } from '@/lib/api-client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  DAILY_REPORT,
+  dailyReportKey,
+  type DailyReportDayPayload,
+} from '@/hooks/useDailyReportSync';
+import {
+  enqueue,
+  retryAction,
+  discardAction,
+  dismissNotice,
+  useOfflineQueue,
+  type QueuedAction,
+} from '@/lib/offlineQueue';
 
 interface MoodOption {
   value: Mood;
@@ -85,7 +109,6 @@ function formatReportDate(dateStr: string, locale: string): string {
 
 export function TeacherDailyReportPage() {
   const { t, i18n } = useTranslation();
-  const queryClient = useQueryClient();
 
   // Form state
   const [form, setForm] = React.useState<DailyReportForm>({
@@ -96,40 +119,83 @@ export function TeacherDailyReportPage() {
   const [existingPhotos, setExistingPhotos] = React.useState<DailyReportSummary['photos']>([]);
   const [photos, setPhotos] = React.useState<File[]>([]);
   const [photoPreviewUrls, setPhotoPreviewUrls] = React.useState<string[]>([]);
-  const [submitSuccess, setSubmitSuccess] = React.useState(false);
+  // The form as last saved (sent or queued): unchanged since then = saved.
+  const [savedSnapshot, setSavedSnapshot] = React.useState<string | null>(null);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const autoLoadedChildRef = React.useRef<string | null>(null);
 
-  // Fetch teacher's assigned classroom
-  const { data: classroom, isLoading: classroomLoading } = useTeacherClassroom();
+  // Offline, data not cached on this device stays "paused" instead of loading.
+  const classroomQuery = useTeacherClassroom();
+  const classroom = classroomQuery.data;
+  const childrenQuery = useClassroomChildren(classroom?.id);
+  const children = childrenQuery.data;
 
-  // Fetch children in the classroom
-  const { data: children, isLoading: childrenLoading } = useClassroomChildren(classroom?.id);
+  // Report history for the selected child (past reports, and whether today's
+  // report exists). Offline and not cached: no history, the form starts blank.
+  const historyQuery = useDailyReportsForChild(form.child_id || undefined);
+  const historyPaused = historyQuery.fetchStatus === 'paused';
+  const childReports = React.useMemo(
+    () => historyQuery.data ?? (historyPaused && form.child_id ? [] : undefined),
+    [historyQuery.data, historyPaused, form.child_id],
+  );
+  const historyLoading = historyQuery.isPending && historyQuery.fetchStatus === 'fetching';
 
-  // Fetch report history for the selected child (used to display past reports and
-  // to detect whether a report for today already exists, so the form knows
-  // whether to create or edit).
-  const { data: childReports, isLoading: historyLoading } = useDailyReportsForChild(
-    form.child_id || undefined
+  // Reports saved on the device, waiting to be sent.
+  const { actions, notices, syncing } = useOfflineQueue();
+  const pendingFor = React.useCallback(
+    (childId: string, date: string) =>
+      actions.find((a) => a.key === dailyReportKey(childId, date)) as QueuedAction<DailyReportDayPayload> | undefined,
+    [actions],
+  );
+  const pending = form.child_id ? pendingFor(form.child_id, form.date) : undefined;
+  const notice = form.child_id ? notices.find((n) => n.key === dailyReportKey(form.child_id, form.date)) : undefined;
+
+  // Previews of the photos waiting on the device.
+  const pendingPhotoUrls = React.useMemo(
+    () => (pending?.payload.photos ?? []).map((p) => ({ id: p.clientId, url: URL.createObjectURL(p.blob) })),
+    [pending],
+  );
+  React.useEffect(() => () => pendingPhotoUrls.forEach((p) => URL.revokeObjectURL(p.url)), [pendingPhotoUrls]);
+
+  /** The form with what's still waiting to be sent for that day on top. */
+  const withPending = React.useCallback(
+    (childId: string, base: Omit<DailyReportForm, 'child_id'>): DailyReportForm => {
+      const queued = pendingFor(childId, base.date)?.payload;
+      return queued
+        ? {
+            child_id: childId,
+            date: base.date,
+            mood: queued.mood,
+            meals_eaten: queued.mealsEaten,
+            nap_duration_minutes: queued.napDurationMinutes ?? 0,
+            activities: queued.activities ?? '',
+            general_note: queued.generalNote ?? '',
+          }
+        : { child_id: childId, ...base };
+    },
+    [pendingFor],
   );
 
   const loadReportIntoForm = React.useCallback((report: DailyReportSummary) => {
-    setForm((prev) => ({
-      child_id: prev.child_id,
-      date: report.date,
-      mood: report.mood,
-      meals_eaten: report.meals_eaten,
-      nap_duration_minutes: report.nap_duration_minutes ?? 0,
-      activities: report.activities,
-      general_note: report.general_note,
-    }));
+    setForm((prev) =>
+      withPending(prev.child_id, {
+        date: report.date,
+        mood: report.mood,
+        meals_eaten: report.meals_eaten,
+        nap_duration_minutes: report.nap_duration_minutes ?? 0,
+        activities: report.activities,
+        general_note: report.general_note,
+      }),
+    );
     setEditingReportId(report.id);
     setExistingPhotos(report.photos);
     setPhotos([]);
     setPhotoPreviewUrls([]);
-    setSubmitSuccess(false);
-  }, []);
+    setSavedSnapshot(null);
+    setSaveError(null);
+  }, [withPending]);
 
   // Once a child's history has loaded, auto-load today's report into the form
   // if one already exists (edit mode), otherwise leave the form blank (create mode).
@@ -144,52 +210,10 @@ export function TeacherDailyReportPage() {
     } else {
       setEditingReportId(null);
       setExistingPhotos([]);
+      // A report saved offline for today shows again.
+      setForm((prev) => withPending(prev.child_id, getBlankForm()));
     }
-  }, [form.child_id, childReports, loadReportIntoForm]);
-
-  // Create daily report mutation
-  const createReport = useMutation({
-    mutationFn: async (data: Omit<DailyReportForm, 'mood'> & { mood: Mood }) => {
-      // Map to camelCase for the backend
-      const body = {
-        childId: data.child_id,
-        date: data.date,
-        mood: data.mood,
-        mealsEaten: data.meals_eaten,
-        napDurationMinutes: data.nap_duration_minutes,
-        activities: data.activities || undefined,
-        generalNote: data.general_note || undefined,
-      };
-      const res = await apiClient.post<{ daily_report: { id: string } }>(
-        '/communication/daily-reports',
-        body
-      );
-      if (!res.success) {
-        throw new Error(res.error?.message || 'Failed to create report');
-      }
-      // Handle both response shapes
-      const resData = res.data as Record<string, unknown>;
-      const report = (resData?.daily_report ?? resData) as { id: string };
-      return report;
-    },
-  });
-
-  // Update daily report mutation (edit an existing report)
-  const updateReport = useUpdateDailyReport();
-
-  // Upload photos mutation
-  const uploadPhotos = useMutation({
-    mutationFn: async ({ reportId, files }: { reportId: string; files: File[] }) => {
-      const formData = new FormData();
-      files.forEach((file) => {
-        formData.append('photos', file);
-      });
-
-      const res = await apiClient.uploadFile(`/communication/daily-reports/${reportId}/photos`, formData);
-      if (!res.success) throw new Error(res.error?.message || 'Failed to upload photos');
-      return res;
-    },
-  });
+  }, [form.child_id, childReports, loadReportIntoForm, withPending]);
 
   // Handle photo selection
   const handlePhotoSelect = React.useCallback(
@@ -238,7 +262,8 @@ export function TeacherDailyReportPage() {
     setExistingPhotos([]);
     setPhotos([]);
     setPhotoPreviewUrls([]);
-    setSubmitSuccess(false);
+    setSavedSnapshot(null);
+    setSaveError(null);
   }, []);
 
   // Discard the currently loaded report and start a fresh one for today.
@@ -248,80 +273,58 @@ export function TeacherDailyReportPage() {
     setExistingPhotos([]);
     setPhotos([]);
     setPhotoPreviewUrls([]);
-    setSubmitSuccess(false);
+    setSavedSnapshot(null);
+    setSaveError(null);
   }, []);
 
-  // Handle form submission (creates a new report, or updates the one being edited)
+  // Save: queued on the device with its new photos, and sent right away when
+  // online (or as soon as the connection returns). The server creates or
+  // updates the day's report, so a resend never duplicates it.
+  const snapshot = JSON.stringify(form) + `|${photos.length}`;
   const handleSubmit = React.useCallback(async () => {
     if (!form.child_id || !form.mood) return;
 
+    setSaveError(null);
     try {
-      let reportId: string;
-
-      if (editingReportId) {
-        const updated = await updateReport.mutateAsync({
-          reportId: editingReportId,
-          data: {
-            mood: form.mood,
-            meals_eaten: form.meals_eaten,
-            nap_duration_minutes: form.nap_duration_minutes,
-            activities: form.activities,
-            general_note: form.general_note,
-          },
-        });
-        reportId = updated.id;
-      } else {
-        const report = await createReport.mutateAsync({
-          child_id: form.child_id,
-          date: form.date,
-          mood: form.mood,
-          meals_eaten: form.meals_eaten,
-          nap_duration_minutes: form.nap_duration_minutes,
-          activities: form.activities,
-          general_note: form.general_note,
-        });
-        reportId = report.id;
-        // Switch into edit mode for the report we just created, so a second
-        // submit (e.g. adding more photos afterwards) updates it instead of
-        // hitting the "one report per child per day" conflict.
-        setEditingReportId(reportId);
-      }
-
-      // Upload photos if any
-      if (photos.length > 0) {
-        await uploadPhotos.mutateAsync({ reportId, files: photos });
-        photoPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-        setPhotos([]);
-        setPhotoPreviewUrls([]);
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['daily-reports-for-child', form.child_id] });
-
-      setSubmitSuccess(true);
-      setTimeout(() => setSubmitSuccess(false), 2000);
-    } catch {
-      // Error is handled by mutation state
+      await enqueue<DailyReportDayPayload>(DAILY_REPORT, dailyReportKey(form.child_id, form.date), {
+        childId: form.child_id,
+        date: form.date,
+        mood: form.mood,
+        mealsEaten: form.meals_eaten,
+        napDurationMinutes: form.nap_duration_minutes,
+        activities: form.activities || null,
+        generalNote: form.general_note || null,
+        savedAt: new Date().toISOString(),
+        photos: photos.map((file) => ({ clientId: crypto.randomUUID(), blob: file, name: file.name })),
+      });
+      photoPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+      setPhotos([]);
+      setPhotoPreviewUrls([]);
+      setSavedSnapshot(JSON.stringify(form) + '|0');
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : t('dailyReport.submitError', 'Failed to send report. Please try again.'));
     }
-  }, [form, photos, photoPreviewUrls, editingReportId, createReport, updateReport, uploadPhotos, queryClient]);
+  }, [form, photos, photoPreviewUrls, t]);
 
   // Increment/decrement helpers
   const incrementMeals = React.useCallback(() => {
     setForm((prev) => ({ ...prev, meals_eaten: Math.min(prev.meals_eaten + 1, 10) }));
-    setSubmitSuccess(false);
   }, []);
 
   const decrementMeals = React.useCallback(() => {
     setForm((prev) => ({ ...prev, meals_eaten: Math.max(prev.meals_eaten - 1, 0) }));
-    setSubmitSuccess(false);
   }, []);
 
-  const isLoading = classroomLoading || childrenLoading;
-  const isSubmitting = createReport.isPending || updateReport.isPending || uploadPhotos.isPending;
-  const canSubmit = form.child_id && form.mood && !isSubmitting;
-  const isEditing = !!editingReportId;
-  const isEditingPastReport = isEditing && form.date !== getTodayString();
-  const submitError = editingReportId ? updateReport.error : createReport.error;
-  const isSubmitError = editingReportId ? updateReport.isError : createReport.isError;
+  const isFetching = (q: { isPending: boolean; fetchStatus: string }) => q.isPending && q.fetchStatus === 'fetching';
+  const isLoading = isFetching(classroomQuery) || isFetching(childrenQuery);
+  // Offline and never loaded on this device.
+  const unavailableOffline =
+    (classroomQuery.isPending && classroomQuery.fetchStatus === 'paused') ||
+    (!!classroom && childrenQuery.isPending && childrenQuery.fetchStatus === 'paused');
+  const saved = savedSnapshot === snapshot;
+  const canSubmit = !!form.child_id && !!form.mood;
+  const isEditing = !!editingReportId || !!pending;
+  const isEditingPastReport = !!editingReportId && form.date !== getTodayString();
 
   // Get selected child info
   const selectedChild = React.useMemo(
@@ -336,6 +339,17 @@ export function TeacherDailyReportPage() {
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-20 bg-subtle rounded-lg" />
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (unavailableOffline) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
+        <div className="text-center space-y-3 max-w-sm">
+          <CloudOff className="w-10 h-10 text-text-disabled mx-auto" />
+          <p className="text-body text-text-secondary">{t('teacherAttendance.offlineUnavailable')}</p>
         </div>
       </div>
     );
@@ -481,6 +495,22 @@ export function TeacherDailyReportPage() {
           </div>
         )}
 
+        {/* Sent from the device, but the report had been changed meanwhile */}
+        {notice && (
+          <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-muted px-3 py-2.5 text-caption text-text-primary">
+            <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+            <p className="flex-1">{t('dailyReport.conflict')}</p>
+            <button
+              type="button"
+              onClick={() => dismissNotice(notice.id)}
+              className="shrink-0 text-text-secondary hover:text-text-primary"
+              aria-label={t('common.close')}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Mood Selector */}
         <section>
           <label className="block text-label font-medium text-text-primary mb-2">
@@ -493,7 +523,6 @@ export function TeacherDailyReportPage() {
                 type="button"
                 onClick={() => {
                   setForm((prev) => ({ ...prev, mood: option.value }));
-                  setSubmitSuccess(false);
                 }}
                 className={cn(
                   'flex flex-col items-center gap-1 min-h-[72px] p-3 rounded-xl border-2 transition-all duration-150 active:scale-[0.98]',
@@ -562,7 +591,6 @@ export function TeacherDailyReportPage() {
             onChange={(e) => {
               const val = Math.max(0, Math.min(300, parseInt(e.target.value) || 0));
               setForm((prev) => ({ ...prev, nap_duration_minutes: val }));
-              setSubmitSuccess(false);
             }}
             className="w-full max-w-[200px] min-h-[48px] bg-card border border-border rounded-lg px-4 py-3 text-body text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-[var(--color-accent)] focus:shadow-[0_0_0_3px_rgba(79,70,229,0.12)] transition-all duration-150"
             placeholder="0"
@@ -582,7 +610,6 @@ export function TeacherDailyReportPage() {
             value={form.activities}
             onChange={(e) => {
               setForm((prev) => ({ ...prev, activities: e.target.value }));
-              setSubmitSuccess(false);
             }}
             rows={3}
             className="w-full min-h-[96px] bg-card border border-border rounded-lg px-4 py-3 text-body text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-[var(--color-accent)] focus:shadow-[0_0_0_3px_rgba(79,70,229,0.12)] transition-all duration-150 resize-y"
@@ -603,7 +630,6 @@ export function TeacherDailyReportPage() {
             value={form.general_note}
             onChange={(e) => {
               setForm((prev) => ({ ...prev, general_note: e.target.value }));
-              setSubmitSuccess(false);
             }}
             rows={2}
             className="w-full min-h-[72px] bg-card border border-border rounded-lg px-4 py-3 text-body text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-[var(--color-accent)] focus:shadow-[0_0_0_3px_rgba(79,70,229,0.12)] transition-all duration-150 resize-y"
@@ -629,6 +655,26 @@ export function TeacherDailyReportPage() {
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Photos saved on the device, waiting to be sent */}
+        {pendingPhotoUrls.length > 0 && (
+          <section>
+            <label className="flex items-center gap-1.5 text-label font-medium text-text-primary mb-2">
+              <CloudOff className="w-4 h-4 text-warning" />
+              {t('dailyReport.pendingPhotos')}
+            </label>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {pendingPhotoUrls.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="relative aspect-square rounded-lg overflow-hidden border border-dashed border-warning"
+                >
+                  <img src={photo.url} alt="" className="w-full h-full object-cover opacity-80" />
                 </div>
               ))}
             </div>
@@ -693,7 +739,40 @@ export function TeacherDailyReportPage() {
       {/* Fixed bottom submit button */}
       <div className="sticky bottom-[var(--tabbar-h)] lg:bottom-0 bg-card border-t border-border p-4 z-10">
         <div className="max-w-2xl mx-auto">
-          {submitSuccess ? (
+          {saved && pending?.error ? (
+            // The server refused what was saved on the device.
+            <div className="rounded-lg bg-danger-muted px-4 py-3 space-y-2">
+              <p className="text-caption text-danger">{t('dailyReport.syncError', { error: pending.error })}</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => retryAction(pending.id)}
+                  className="inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-lg bg-primary text-primary-foreground text-caption font-medium"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  {t('teacherAttendance.retry')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => discardAction(pending.id)}
+                  className="inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-lg border border-border bg-card text-caption font-medium text-text-secondary"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {t('teacherAttendance.discard')}
+                </button>
+              </div>
+            </div>
+          ) : saved && pending ? (
+            // Saved on the device, waiting for the connection (or being sent).
+            <div className="flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 rounded-lg bg-warning-muted text-text-primary text-caption font-medium text-center">
+              {syncing ? (
+                <RefreshCw className="w-5 h-5 shrink-0 text-warning animate-spin" />
+              ) : (
+                <CloudOff className="w-5 h-5 shrink-0 text-warning" />
+              )}
+              {syncing ? t('dailyReport.sending', 'Sending...') : t('dailyReport.savedOffline')}
+            </div>
+          ) : saved ? (
             <div className="flex flex-wrap items-center justify-center text-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">
               <Check className="w-5 h-5 shrink-0" />
               {isEditing
@@ -708,7 +787,7 @@ export function TeacherDailyReportPage() {
           ) : (
             <button
               type="button"
-              onClick={handleSubmit}
+              onClick={() => void handleSubmit()}
               disabled={!canSubmit}
               className={cn(
                 'w-full flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 font-medium text-body rounded-lg transition-all duration-150 active:scale-[0.98]',
@@ -718,22 +797,14 @@ export function TeacherDailyReportPage() {
               aria-label={isEditing ? t('dailyReport.updateReport', 'Update Report') : t('dailyReport.sendReport', 'Send Report')}
             >
               {isEditing ? <Pencil className="w-5 h-5" /> : <Send className="w-5 h-5" />}
-              {isSubmitting
-                ? isEditing
-                  ? t('dailyReport.updating', 'Updating...')
-                  : t('dailyReport.sending', 'Sending...')
-                : isEditing
-                  ? t('dailyReport.updateReport', 'Update Report')
-                  : t('dailyReport.sendReport', 'Send Report')}
+              {isEditing
+                ? t('dailyReport.updateReport', 'Update Report')
+                : t('dailyReport.sendReport', 'Send Report')}
             </button>
           )}
 
-          {isSubmitError && (
-            <p className="text-caption text-[var(--color-danger)] text-center mt-2">
-              {submitError?.message || (isEditing
-                ? t('dailyReport.updateError', 'Failed to update report. Please try again.')
-                : t('dailyReport.submitError', 'Failed to send report. Please try again.'))}
-            </p>
+          {saveError && (
+            <p className="text-caption text-[var(--color-danger)] text-center mt-2">{saveError}</p>
           )}
         </div>
       </div>

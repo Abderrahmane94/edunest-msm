@@ -403,6 +403,7 @@ model DailyReport {
   generalNote        String?  @map("general_note")
   createdByUserId    String   @map("created_by_user_id")
   createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at")
 
   child  Child              @relation(fields: [childId], references: [id])
   photos DailyReportPhoto[]
@@ -415,6 +416,8 @@ model DailyReportPhoto {
   id                 String   @id @default(uuid())
   dailyReportId      String   @map("daily_report_id")
   cloudinaryPublicId String   @map("cloudinary_public_id")
+  /// The device's id for the photo, so a resend doesn't add it twice.
+  clientId           String?  @unique @map("client_id")
   createdAt          DateTime @default(now()) @map("created_at")
 
   dailyReport DailyReport @relation(fields: [dailyReportId], references: [id])

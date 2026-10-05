@@ -80,7 +80,7 @@ function BalanceSummary({ report }: { report: ReconciliationReport }) {
                 <span className="text-caption text-text-secondary ms-1.5">({c.count})</span>
               </span>
               <span className="text-foreground" dir="ltr">
-                −{money(c.total)}
+                {money(-Number(c.total))}
               </span>
             </li>
           ))}
@@ -91,7 +91,7 @@ function BalanceSummary({ report }: { report: ReconciliationReport }) {
                 <span className="text-caption text-text-secondary ms-1.5">({report.salaries.count})</span>
               </span>
               <span className="text-foreground" dir="ltr">
-                −{money(report.salaries.total)}
+                {money(-Number(report.salaries.total))}
               </span>
             </li>
           )}
@@ -204,10 +204,10 @@ export function ReconciliationPage() {
       {/* Header */}
       <div className="flex items-center justify-between print:justify-center flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <FileBarChart className="w-6 h-6 text-primary print:hidden" />
-          <h1 className="text-page-title font-semibold text-text-heading">
+          <FileBarChart className="w-5 h-5 text-primary print:hidden" />
+          <h2 className="text-section font-semibold text-text-heading">
             {t('payments.reconciliation.title')}
-          </h1>
+          </h2>
         </div>
         <div className="flex items-center gap-2 print:hidden">
           <Button

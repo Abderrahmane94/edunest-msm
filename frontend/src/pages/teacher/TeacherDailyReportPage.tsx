@@ -362,7 +362,7 @@ export function TeacherDailyReportPage() {
             {t('dailyReport.title', 'Daily Report')}
           </h1>
           <p className="text-caption text-text-secondary">
-            {classroom.name} — {form.date}
+            {classroom.name} — <span className="capitalize">{formatReportDate(form.date, i18n.language)}</span>
           </p>
         </div>
       </header>
@@ -395,8 +395,8 @@ export function TeacherDailyReportPage() {
                     name={`${child.first_name} ${child.last_name}`}
                     size="sm"
                   />
-                  <span className="text-caption font-medium text-text-primary text-center leading-tight">
-                    {child.first_name}
+                  <span className="text-caption font-medium text-text-primary text-center leading-tight [overflow-wrap:anywhere]">
+                    {child.first_name} {child.last_name ? `${child.last_name.charAt(0)}.` : ''}
                   </span>
                 </button>
               ))
@@ -464,7 +464,7 @@ export function TeacherDailyReportPage() {
 
         {/* Editing banner */}
         {isEditingPastReport && (
-          <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-[var(--color-accent-muted)] text-text-primary">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 rounded-lg bg-[var(--color-accent-muted)] text-text-primary">
             <span className="text-caption font-medium">
               {t('dailyReport.editingBadge', 'Editing the report from {{date}}', {
                 date: formatReportDate(form.date, i18n.language),
@@ -530,7 +530,7 @@ export function TeacherDailyReportPage() {
             >
               <Minus className="w-5 h-5" />
             </button>
-            <span className="text-section-heading font-semibold text-text-heading min-w-[40px] text-center">
+            <span className="text-section font-semibold text-text-heading min-w-[40px] text-center">
               {form.meals_eaten}
             </span>
             <button
@@ -694,8 +694,8 @@ export function TeacherDailyReportPage() {
       <div className="sticky bottom-[var(--tabbar-h)] lg:bottom-0 bg-card border-t border-border p-4 z-10">
         <div className="max-w-2xl mx-auto">
           {submitSuccess ? (
-            <div className="flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">
-              <Check className="w-5 h-5" />
+            <div className="flex flex-wrap items-center justify-center text-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">
+              <Check className="w-5 h-5 shrink-0" />
               {isEditing
                 ? t('dailyReport.updateSuccess', 'Report updated successfully!')
                 : t('dailyReport.submitSuccess', 'Report sent successfully!')}

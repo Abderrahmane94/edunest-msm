@@ -1393,7 +1393,13 @@
     "title": "Annonces et événements",
     "subtitle": "Suivez l'actualité de l'école",
     "error": "Impossible de charger les annonces. Veuillez réessayer.",
-    "respondToConsent": "Répondre"
+    "respondToConsent": "Répondre",
+    "consent": { "approved": "Autoriser", "declined": "Refuser" },
+    "consentStatus": {
+      "pending": "En attente de votre réponse",
+      "approved": "Vous avez autorisé",
+      "declined": "Vous avez refusé"
+    }
   },
   "parentInvoices": {
     "title": "Factures et consentements",

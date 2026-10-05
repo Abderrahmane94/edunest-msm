@@ -20,7 +20,7 @@ function mapPeriod(raw: Record<string, unknown>): ParentBillingPeriod { return {
 function mapPayment(raw: Record<string, unknown>): ParentPaymentRecord { const allocs = raw.allocations as Record<string, unknown>[] | undefined; return { id: raw.id as string, childName: (raw.childName ?? raw.child_name ?? '') as string, receiptNumber: (raw.receiptNumber ?? raw.receipt_number) as string, totalAmount: String(raw.totalAmount ?? raw.total_amount ?? '0'), channel: (raw.channel as PaymentChannel) ?? 'cash', valueDate: (raw.valueDate ?? raw.value_date) as string, isCorrection: Boolean(raw.isCorrection ?? raw.is_correction), correctsReceiptNumber: (raw.correctsReceiptNumber ?? raw.corrects_receipt_number ?? null) as string | null, allocations: allocs ? allocs.map((a) => ({ periodLabel: (a.periodLabel ?? a.period_label ?? '') as string, amount: String(a.amount ?? '0') })) : [] }; }
 function mapBalance(raw: Record<string, unknown>): ParentChildBalance { return { childId: (raw.childId ?? raw.child_id) as string, childName: (raw.childName ?? raw.child_name ?? '') as string, branchName: (raw.branchName ?? raw.branch_name ?? '') as string, outstanding: String(raw.outstanding ?? '0') }; }
 
-function formatDZD(amount: string | number): string { const num = typeof amount === 'string' ? parseFloat(amount) : amount; if (isNaN(num)) return '0.00 DZD'; return `${num.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} DZD`; }
+function formatDZD(amount: string | number): string { const num = typeof amount === 'string' ? parseFloat(amount) : amount; if (isNaN(num)) return '0.00 DZD'; return `${num.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} DZD`; }
 function fmtDate(dateStr: string): string { try { return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }); } catch { return dateStr; } }
 function statusColor(status: PeriodStatus): string { switch (status) { case 'paid': return 'bg-[var(--color-success-muted)] text-[var(--color-success)]'; case 'partial': return 'bg-[var(--color-warning-muted)] text-[var(--color-warning)]'; case 'late': case 'late_partial': return 'bg-[var(--color-danger-muted)] text-[var(--color-danger)]'; default: return 'bg-subtle text-text-secondary'; } }
 function channelLabel(ch: PaymentChannel, t: ReturnType<typeof useTranslation>['t']): string { return t(`parentPayments.channel.${ch}`, ch); }
@@ -105,10 +105,10 @@ function PeriodCard({ period }: { period: ParentBillingPeriod }) {
           <span className={cn('inline-flex items-center px-2.5 py-1 rounded-full text-micro font-medium shrink-0', statusColor(period.status))}>{t(`parentPayments.status.${period.status}`, period.status)}</span>
         </div>
         <div className="mt-3 space-y-1.5">
-          <p className="text-caption text-text-secondary">{label}</p>
+          <p className="text-caption text-text-secondary"><bdi dir="ltr">{label}</bdi></p>
           <div className="flex items-end justify-between gap-3">
-            <p className="font-mono text-subsection font-semibold text-text-heading">{formatDZD(period.amountDue)}</p>
-            <p className="text-micro text-text-secondary">{t('parentPayments.dueDate', 'Due')}: {fmtDate(period.dueDate)}</p>
+            <p className="font-mono text-subsection font-semibold text-text-heading"><bdi dir="ltr">{formatDZD(period.amountDue)}</bdi></p>
+            <p className="text-micro text-text-secondary">{t('parentPayments.dueDate', 'Due')}: <bdi dir="ltr">{fmtDate(period.dueDate)}</bdi></p>
           </div>
         </div>
       </div>
@@ -135,19 +135,19 @@ function PaymentCard({ payment }: { payment: ParentPaymentRecord }) {
       {payment.isCorrection && <div className="h-1 bg-[var(--color-warning)]" aria-hidden="true" />}
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0"><h3 className="text-body font-medium text-text-heading truncate">{payment.childName}</h3><p className="text-caption text-text-secondary mt-0.5">{t('parentPayments.receipt', 'Receipt')}: {payment.receiptNumber}</p></div>
+          <div className="flex-1 min-w-0"><h3 className="text-body font-medium text-text-heading truncate">{payment.childName}</h3><p className="text-caption text-text-secondary mt-0.5">{t('parentPayments.receipt', 'Receipt')}: <bdi dir="ltr" className="font-mono">{payment.receiptNumber}</bdi></p></div>
           {payment.isCorrection && <span className="inline-flex items-center px-2.5 py-1 rounded-full text-micro font-medium bg-[var(--color-warning-muted)] text-[var(--color-warning)] shrink-0">{t('parentPayments.correction', 'Correction')}</span>}
         </div>
-        <div className="mt-3 flex items-end justify-between gap-3">
+        <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className={cn('font-mono text-subsection font-semibold', isNeg ? 'text-[var(--color-danger)]' : 'text-text-heading')}>{isNeg && '−'}{formatDZD(Math.abs(parseFloat(payment.totalAmount)))}</p>
-            <p className="text-micro text-text-secondary mt-1">{channelLabel(payment.channel, t)} · {fmtDate(payment.valueDate)}</p>
+            <p className={cn('font-mono text-subsection font-semibold', isNeg ? 'text-[var(--color-danger)]' : 'text-text-heading')}><bdi dir="ltr">{isNeg && '−'}{formatDZD(Math.abs(parseFloat(payment.totalAmount)))}</bdi></p>
+            <p className="text-micro text-text-secondary mt-1">{channelLabel(payment.channel, t)} · <bdi dir="ltr">{fmtDate(payment.valueDate)}</bdi></p>
           </div>
           <button type="button" onClick={() => setShowReceipt(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-muted)] transition-colors duration-150" aria-label={t('parentPayments.viewReceipt', 'View Receipt')}>
             <Eye className="w-3.5 h-3.5" aria-hidden="true" /><span>{t('parentPayments.viewReceipt', 'View Receipt')}</span>
           </button>
         </div>
-        {payment.isCorrection && payment.correctsReceiptNumber && <p className="mt-2 text-micro text-text-secondary">{t('parentPayments.correctsReceipt', 'Corrects')}: {payment.correctsReceiptNumber}</p>}
+        {payment.isCorrection && payment.correctsReceiptNumber && <p className="mt-2 text-micro text-text-secondary">{t('parentPayments.correctsReceipt', 'Corrects')}: <bdi dir="ltr" className="font-mono">{payment.correctsReceiptNumber}</bdi></p>}
         {/* Same receipt dialog as staff: full receipt, print / save as PDF. */}
         <ReceiptView paymentRecordId={payment.id} open={showReceipt} onOpenChange={setShowReceipt} />
       </div>
@@ -175,7 +175,7 @@ function BalanceCard({ balance }: { balance: ParentChildBalance }) {
       <div className="p-5"><div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0"><h3 className="text-subsection font-semibold text-text-heading truncate">{balance.childName}</h3><p className="text-caption text-text-secondary mt-0.5">{balance.branchName}</p></div>
         <div className="text-end shrink-0">
-          <p className={cn('font-mono text-subsection font-semibold', isZero ? 'text-[var(--color-success)]' : isOverpaid ? 'text-[var(--color-accent)]' : 'text-text-heading')}>{isOverpaid && '−'}{formatDZD(Math.abs(amt))}</p>
+          <p className={cn('font-mono text-subsection font-semibold', isZero ? 'text-[var(--color-success)]' : isOverpaid ? 'text-[var(--color-accent)]' : 'text-text-heading')}><bdi dir="ltr">{isOverpaid && '−'}{formatDZD(Math.abs(amt))}</bdi></p>
           {isOverpaid && <p className="text-micro text-[var(--color-accent)] mt-0.5">{t('parentPayments.paidInAdvance', 'Paid in advance')}</p>}
           {isZero && <p className="text-micro text-[var(--color-success)] mt-0.5">{t('parentPayments.allPaid', 'All paid')}</p>}
           {!isOverpaid && !isZero && <p className="text-micro text-text-secondary mt-0.5">{t('parentPayments.outstanding', 'Outstanding')}</p>}

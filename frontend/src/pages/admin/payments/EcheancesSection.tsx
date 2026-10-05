@@ -86,7 +86,7 @@ export function EcheancesSection({
 
   /** "−10 %" or "−500,00 DA" for one discount. */
   const discountValue = (d: Discount) =>
-    d.fixedAmount != null ? `−${money(d.fixedAmount)}` : `−${Number(d.percentage)} %`;
+    d.fixedAmount != null ? money(-Number(d.fixedAmount)) : `−${Number(d.percentage)} %`;
 
   const rows = periods.map((period) => {
     const base = Number(period.baseAmount ?? period.amountDue);
@@ -134,7 +134,7 @@ export function EcheancesSection({
     <div className="bg-card border border-border rounded-lg overflow-hidden">
       <div className="p-4 border-b border-border space-y-4">
         <div>
-          <h2 className="text-section-title font-semibold text-text-heading">
+          <h2 className="text-section font-semibold text-text-heading">
             {t('payments.enrollmentDetail.periods.title')}
           </h2>
           <p className="text-caption text-text-secondary mt-1">
@@ -155,7 +155,7 @@ export function EcheancesSection({
           {totalSaved > 0 && (
             <SummaryTile
               label={t('payments.enrollmentDetail.periods.summary.discounts')}
-              value={`−${money(totalSaved)}`}
+              value={money(-totalSaved)}
               tone="discount"
             />
           )}
@@ -193,7 +193,103 @@ export function EcheancesSection({
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        {/* Phones: one card per échéance. */}
+        <ul className="md:hidden divide-y divide-border">
+          {visible.map(({ period, category, base, saved, applied }) => {
+            const style = CATEGORY_STYLE[category];
+            const Icon = style.icon;
+            const cancelled = category === 'cancelled';
+            const partlyPaid = !cancelled && category !== 'paid' && Number(period.totalPaid ?? 0) > 0;
+            const outstanding = outstandingOf(period);
+            const discounted = saved > 0 && !cancelled;
+            return (
+              <li key={period.id} className={cn('border-s-4 px-4 py-3 space-y-2', style.border, cancelled && 'opacity-60')}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p
+                      className={cn(
+                        'text-body font-medium [overflow-wrap:anywhere]',
+                        cancelled ? 'line-through text-text-disabled' : 'text-foreground',
+                      )}
+                    >
+                      {getLabel(period)}
+                    </p>
+                    <p className="text-caption text-text-secondary tabular-nums">
+                      <bdi dir="ltr">
+                        {formatDate(period.periodStart)} — {formatDate(period.periodEnd)}
+                      </bdi>
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      'shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-caption font-medium whitespace-nowrap',
+                      style.pill,
+                    )}
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    {t(`payments.enrollmentDetail.periods.status.${category}`)}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+                  <div className="text-caption">
+                    <p className="text-text-secondary">
+                      {t('payments.enrollmentDetail.periods.columns.dueDate')}{' '}
+                      <bdi dir="ltr" className="text-foreground tabular-nums">{formatDate(period.dueDate)}</bdi>
+                    </p>
+                    {(category === 'due' || category === 'late' || category === 'upcoming') && (
+                      <p className={category === 'upcoming' ? 'text-text-secondary' : 'text-danger font-medium'}>
+                        {relativeDue(period.dueDate)}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-end">
+                    <p className="text-body tabular-nums whitespace-nowrap">
+                      {discounted && (
+                        <bdi dir="ltr" className="text-caption text-text-disabled line-through me-1.5">{money(base)}</bdi>
+                      )}
+                      <bdi dir="ltr" className={cn('font-medium', cancelled ? 'line-through text-text-disabled' : 'text-foreground')}>
+                        {money(period.amountDue)}
+                      </bdi>
+                    </p>
+                    {!cancelled && outstanding > 0 && (outstanding !== Number(period.amountDue) || partlyPaid) && (
+                      <p
+                        className={cn(
+                          'text-caption font-semibold',
+                          category === 'late' || category === 'due' ? 'text-danger' : 'text-foreground',
+                        )}
+                      >
+                        {t('payments.enrollmentDetail.periods.columns.remaining')}{' '}
+                        <bdi dir="ltr" className="tabular-nums">{money(outstanding)}</bdi>
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {(discounted || partlyPaid) && (
+                  <div className="flex flex-wrap gap-2">
+                    {discounted && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-micro font-medium text-primary">
+                        <Percent className="w-3 h-3" />
+                        <bdi dir="ltr">
+                          {applied.length === 1 ? discountValue(applied[0]) : money(-saved)}
+                        </bdi>
+                        {applied.length === 1 && ` ${t(`payments.enrollmentDetail.discounts.types.${applied[0].type}`)}`}
+                      </span>
+                    )}
+                    {partlyPaid && (
+                      <span className="text-micro text-success">
+                        {t('payments.enrollmentDetail.periods.paidPart', { amount: money(period.totalPaid ?? 0) })}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+
+        {/* Wider screens: the table. */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full min-w-[760px] table-fixed">
             <colgroup>
               {COLUMNS.map((col) => (
@@ -300,7 +396,7 @@ export function EcheancesSection({
                             <Percent className="w-3 h-3" />
                             {applied.length === 1
                               ? `${discountValue(applied[0])} ${t(`payments.enrollmentDetail.discounts.types.${applied[0].type}`)}`
-                              : `−${money(saved)}`}
+                              : money(-saved)}
                           </span>
                         )}
                         {partlyPaid && (
@@ -347,6 +443,7 @@ export function EcheancesSection({
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

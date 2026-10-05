@@ -196,11 +196,11 @@ export function BranchCalendarPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <CalendarDays className="w-6 h-6 text-primary" />
+          <CalendarDays className="w-5 h-5 text-primary" />
           <div>
-            <h1 className="text-h2 font-semibold text-text-heading">
+            <h2 className="text-section font-semibold text-text-heading">
               {t('payments.branchCalendar.title')}
-            </h1>
+            </h2>
             <p className="text-caption text-text-secondary mt-0.5">
               {t('payments.branchCalendar.description')}
             </p>

@@ -87,9 +87,9 @@ export function BranchConfigPage() {
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center gap-3">
           <Settings className="w-6 h-6 text-primary" />
-          <h1 className="text-h2 font-semibold text-text-heading">
+          <h2 className="text-section font-semibold text-text-heading">
             {t('payments.branchConfig.title')}
-          </h1>
+          </h2>
         </div>
         <div className="bg-card border border-border rounded-lg p-6">
           <div className="flex items-center justify-center py-12">
@@ -107,9 +107,9 @@ export function BranchConfigPage() {
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center gap-3">
           <Settings className="w-6 h-6 text-primary" />
-          <h1 className="text-h2 font-semibold text-text-heading">
+          <h2 className="text-section font-semibold text-text-heading">
             {t('payments.branchConfig.title')}
-          </h1>
+          </h2>
         </div>
         <div className="bg-card border border-border rounded-lg p-6">
           <p className="text-body text-text-secondary">
@@ -126,9 +126,9 @@ export function BranchConfigPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-3">
         <Settings className="w-6 h-6 text-primary" />
-        <h1 className="text-h2 font-semibold text-text-heading">
+        <h2 className="text-section font-semibold text-text-heading">
           {t('payments.branchConfig.title')}
-        </h1>
+        </h2>
       </div>
       <p className="text-body text-text-secondary">
         {t('payments.branchConfig.description')}

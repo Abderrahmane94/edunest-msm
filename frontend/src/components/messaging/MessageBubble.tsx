@@ -33,7 +33,7 @@ export function MessageBubble({ message, isSent, i18nNamespace }: MessageBubbleP
         )}
       >
         {message.message_type === 'text' && (
-          <p className="whitespace-pre-wrap break-words" dir="auto">{message.content}</p>
+          <p className="whitespace-pre-wrap [overflow-wrap:anywhere]" dir="auto">{message.content}</p>
         )}
 
         {message.message_type === 'photo' && (
@@ -42,12 +42,12 @@ export function MessageBubble({ message, isSent, i18nNamespace }: MessageBubbleP
               <img
                 src={message.file_url}
                 alt={tn('photoMessage', 'Photo')}
-                className="max-w-[240px] rounded-lg object-cover"
+                className="w-full max-w-[240px] rounded-lg object-cover"
                 loading="lazy"
               />
             )}
             {message.content && (
-              <p className="whitespace-pre-wrap break-words">{message.content}</p>
+              <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{message.content}</p>
             )}
             {!message.file_url && !message.content && (
               <div className="flex items-center gap-2">
@@ -66,17 +66,17 @@ export function MessageBubble({ message, isSent, i18nNamespace }: MessageBubbleP
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(
-                  'flex items-center gap-2 underline',
+                  'flex items-center gap-2 underline min-w-0',
                   isSent ? 'text-[var(--color-text-inverse)]' : 'text-[var(--color-accent)]'
                 )}
               >
                 <FileText className="w-4 h-4" />
-                <span>{message.content || tn('documentMessage', 'Document')}</span>
+                <span className="min-w-0 [overflow-wrap:anywhere]">{message.content || tn('documentMessage', 'Document')}</span>
               </a>
             ) : (
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
-                <span>{message.content || tn('documentMessage', 'Document')}</span>
+                <span className="min-w-0 [overflow-wrap:anywhere]">{message.content || tn('documentMessage', 'Document')}</span>
               </div>
             )}
           </div>

@@ -227,6 +227,21 @@ export function useEventConsent(eventId?: string) {
   });
 }
 
+/** Parent: approve or decline the consent form of one of their children for an event. */
+export function useRespondConsent(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ childId, status }: { childId: string; status: 'approved' | 'declined' }) => {
+      const res = await apiClient.patch(`/communication/events/${eventId}/consent/${childId}`, { status });
+      if (!res.success) throw new Error(res.error?.message ?? 'Failed to respond');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['event-consent', eventId] });
+    },
+  });
+}
+
 // ─── Daily Reports (Teacher history + edit) ──────────────────────────────────
 
 export type Mood = 'happy' | 'sad' | 'tired' | 'excited' | 'calm';

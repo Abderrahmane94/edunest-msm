@@ -1,12 +1,14 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-import { Megaphone, Calendar, MapPin, Users, ArrowRight } from 'lucide-react';
+import { Megaphone, Calendar, MapPin, Users, Check, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { formatDate, formatDateTime } from '@/lib/formatters';
 import { StatusBadge } from '@/components/ui';
 import {
   useAnnouncements,
   useEvents,
+  useEventConsent,
+  useRespondConsent,
   type Announcement,
   type SchoolEvent,
 } from '@/hooks/useCommunication';
@@ -141,19 +143,19 @@ function AnnouncementCard({ announcement }: { announcement: Announcement }) {
 
   return (
     <article className="bg-card border border-border rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] p-5">
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-start gap-2 mb-2">
         <div className="w-8 h-8 rounded-full bg-[var(--color-accent-muted)] flex items-center justify-center shrink-0">
           <Megaphone className="w-4 h-4 text-[var(--color-accent)]" />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-subsection font-semibold text-text-heading truncate">{announcement.title}</h2>
+          <h2 className="text-subsection font-semibold text-text-heading [overflow-wrap:anywhere]">{announcement.title}</h2>
           <p className="text-micro text-text-secondary">
             {announcement.classroom_name || t('communication.announcements.allSchool')} ·{' '}
             <span dir="ltr">{formatDate(announcement.published_at)}</span>
           </p>
         </div>
       </div>
-      <p className="text-body text-text-primary leading-relaxed whitespace-pre-wrap">{announcement.body}</p>
+      <p className="text-body text-text-primary leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">{announcement.body}</p>
     </article>
   );
 }
@@ -188,24 +190,22 @@ function EventsFeed() {
 }
 
 function EventCard({ event }: { event: SchoolEvent }) {
-  const { t } = useTranslation();
-
   return (
     <article className="bg-card border border-border rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] p-5">
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-start gap-2 mb-2">
         <div className="w-8 h-8 rounded-full bg-[var(--color-warning-muted)] flex items-center justify-center shrink-0">
           <Calendar className="w-4 h-4 text-[var(--color-warning)]" />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-subsection font-semibold text-text-heading truncate">{event.title}</h2>
-          <p className="text-micro text-text-secondary" dir="ltr">
-            {formatDateTime(event.start_datetime)}
+          <h2 className="text-subsection font-semibold text-text-heading [overflow-wrap:anywhere]">{event.title}</h2>
+          <p className="text-micro text-text-secondary">
+            <bdi dir="ltr">{formatDateTime(event.start_datetime)}</bdi>
           </p>
         </div>
       </div>
 
       {event.description && (
-        <p className="text-body text-text-primary leading-relaxed mb-3">{event.description}</p>
+        <p className="text-body text-text-primary leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere] mb-3">{event.description}</p>
       )}
 
       {event.location && (
@@ -215,21 +215,76 @@ function EventCard({ event }: { event: SchoolEvent }) {
         </p>
       )}
 
-      {event.requires_consent && (
-        <div className="flex items-center justify-between gap-3 mt-2 pt-3 border-t border-border">
-          <StatusBadge variant="sent">
-            <Users className="w-3 h-3 me-1 inline" />
-            {t('communication.events.requiresConsent')}
-          </StatusBadge>
-          <Link
-            to="/parent/invoices?tab=consent"
-            className="text-caption font-medium text-[var(--color-accent)] inline-flex items-center gap-1 hover:underline"
-          >
-            {t('parentAnnouncements.respondToConsent', 'Respond')}
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      )}
+      {event.requires_consent && <EventConsent eventId={event.id} />}
     </article>
+  );
+}
+
+/**
+ * The parent's consent for each of their children, answered right here (it
+ * used to link to a page that doesn't exist).
+ */
+function EventConsent({ eventId }: { eventId: string }) {
+  const { t } = useTranslation();
+  const { data: forms, isLoading } = useEventConsent(eventId);
+  const respond = useRespondConsent(eventId);
+
+  return (
+    <div className="mt-2 pt-3 border-t border-border space-y-2">
+      <StatusBadge variant="sent">
+        <Users className="w-3 h-3 me-1 inline" />
+        {t('communication.events.requiresConsent')}
+      </StatusBadge>
+      {isLoading && <p className="text-caption text-text-secondary">{t('common.loading')}</p>}
+      {forms?.map((form) => {
+        const pending = respond.isPending && respond.variables?.childId === form.child_id;
+        return (
+          <div
+            key={form.child_id}
+            className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-subtle px-3 py-2"
+          >
+            <div className="min-w-0">
+              <p className="text-body font-medium text-text-heading">{form.child_name}</p>
+              <p
+                className={cn(
+                  'text-caption',
+                  form.status === 'approved'
+                    ? 'text-success'
+                    : form.status === 'declined'
+                      ? 'text-danger'
+                      : 'text-text-secondary',
+                )}
+              >
+                {t(`parentAnnouncements.consentStatus.${form.status}`)}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {(['approved', 'declined'] as const).map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  disabled={pending || form.status === status}
+                  onClick={() => respond.mutate({ childId: form.child_id, status })}
+                  className={cn(
+                    'inline-flex items-center gap-1 min-h-[36px] px-3 rounded-lg text-caption font-medium transition-colors duration-150 disabled:opacity-50',
+                    status === 'approved'
+                      ? 'bg-success-muted text-success hover:bg-success hover:text-white'
+                      : 'bg-danger-muted text-danger hover:bg-danger hover:text-white',
+                  )}
+                >
+                  {status === 'approved' ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                  {t(`parentAnnouncements.consent.${status}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+      {respond.isError && (
+        <p className="text-caption text-danger" role="alert">
+          {respond.error instanceof Error ? respond.error.message : t('common.error')}
+        </p>
+      )}
+    </div>
   );
 }

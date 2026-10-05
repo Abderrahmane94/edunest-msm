@@ -119,26 +119,26 @@ function ReportCard({ report, locale }: { report: DailyReport; locale: string })
             <h2 className="text-subsection font-semibold text-text-heading truncate">
               {report.child_name}
             </h2>
-            <p className="text-caption text-text-secondary">
+            <p className="text-caption text-text-secondary capitalize">
               {formatDate(report.date, locale)}
             </p>
           </div>
+        </header>
+
+        {/* Stats row: mood, meals, nap */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
           <div
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-subtle"
+            className="flex flex-col items-center gap-1 p-3 rounded-lg bg-subtle text-center"
             aria-label={t(`parentFeed.mood.${report.mood}`, report.mood)}
           >
-            <span className="text-lg" role="img" aria-hidden="true">
+            <span className="text-xl leading-5" role="img" aria-hidden="true">
               {MOOD_EMOJI[report.mood]}
             </span>
-            <span className="text-caption font-medium text-text-primary capitalize">
+            <span className="text-caption font-semibold text-text-heading capitalize">
               {t(`parentFeed.mood.${report.mood}`, report.mood)}
             </span>
           </div>
-        </header>
-
-        {/* Stats row: meals, nap, activities */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="flex flex-col items-center gap-1 p-3 rounded-lg bg-subtle">
+          <div className="flex flex-col items-center gap-1 p-3 rounded-lg bg-subtle text-center">
             <Utensils className="w-4 h-4 text-text-secondary" aria-hidden="true" />
             <span className="text-subsection font-semibold text-text-heading">
               {report.meals_eaten}
@@ -147,31 +147,35 @@ function ReportCard({ report, locale }: { report: DailyReport; locale: string })
               {t('parentFeed.meals', 'Meals')}
             </span>
           </div>
-          <div className="flex flex-col items-center gap-1 p-3 rounded-lg bg-subtle">
+          <div className="flex flex-col items-center gap-1 p-3 rounded-lg bg-subtle text-center">
             <Moon className="w-4 h-4 text-text-secondary" aria-hidden="true" />
             <span className="text-subsection font-semibold text-text-heading">
-              {report.nap_duration_minutes}
+              {report.nap_duration_minutes ?? "—"}
             </span>
             <span className="text-micro text-text-secondary">
               {t('parentFeed.napMin', 'min nap')}
             </span>
           </div>
-          <div className="flex flex-col items-center gap-1 p-3 rounded-lg bg-subtle">
-            <Activity className="w-4 h-4 text-text-secondary" aria-hidden="true" />
-            <span className="text-subsection font-semibold text-text-heading text-center truncate w-full">
-              {report.activities || '—'}
-            </span>
-            <span className="text-micro text-text-secondary">
-              {t('parentFeed.activities', 'Activities')}
-            </span>
-          </div>
         </div>
+
+        {/* Activities */}
+        {report.activities && (
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-subtle mb-4">
+            <Activity className="w-4 h-4 text-text-secondary mt-0.5 shrink-0" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="text-micro text-text-secondary">{t('parentFeed.activities', 'Activities')}</p>
+              <p className="text-body text-text-primary leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
+                {report.activities}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* General note */}
         {report.general_note && (
           <div className="flex items-start gap-2 p-3 rounded-lg bg-subtle mb-4">
             <FileText className="w-4 h-4 text-text-secondary mt-0.5 shrink-0" aria-hidden="true" />
-            <p className="text-body text-text-primary leading-relaxed">
+            <p className="text-body text-text-primary leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
               {report.general_note}
             </p>
           </div>

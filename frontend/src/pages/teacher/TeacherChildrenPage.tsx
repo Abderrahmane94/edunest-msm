@@ -43,8 +43,8 @@ function MedicalNotesViewDialog({
           <div className="space-y-2 mb-2">
             {notes.map((n) => (
               <div key={n.id} className="p-3 bg-subtle rounded-md">
-                <div className="flex items-center gap-2">
-                  <span className="text-body font-medium text-foreground">{n.title}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-body font-medium text-foreground [overflow-wrap:anywhere]">{n.title}</span>
                   <StatusBadge variant={severityBadgeVariant(n.severity)}>
                     {t(`children.medicalNotes.severities.${n.severity}`)}
                   </StatusBadge>
@@ -133,11 +133,13 @@ export function TeacherChildrenPage() {
                 className="w-full flex items-center gap-3 bg-card border border-border rounded-lg p-4 transition-all duration-150 active:scale-[0.98] text-start"
               >
                 <Avatar src={child.photo_url} name={`${child.first_name} ${child.last_name}`} size="md" />
-                <span className="text-body font-medium text-text-heading flex-1">
-                  {child.first_name} {child.last_name}
-                </span>
-                <HighSeverityBadge childId={child.id} />
-                <HeartPulse className="w-5 h-5 text-text-secondary" />
+                <div className="flex-1 min-w-0 space-y-1">
+                  <p className="text-body font-medium text-text-heading [overflow-wrap:anywhere]">
+                    {child.first_name} {child.last_name}
+                  </p>
+                  <HighSeverityBadge childId={child.id} />
+                </div>
+                <HeartPulse className="w-5 h-5 text-text-secondary shrink-0" />
               </button>
             ))
           ) : (

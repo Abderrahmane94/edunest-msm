@@ -155,7 +155,7 @@ function NotificationItem({ notification }: { notification: AppNotification }) {
           'w-full flex items-start gap-3 p-4 rounded-xl border text-start transition-colors duration-150',
           notification.is_read
             ? 'bg-card border-border hover:bg-hover'
-            : 'bg-card border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-muted)]/30'
+            : 'bg-card border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-subtle)]'
         )}
         aria-label={notification.title}
       >

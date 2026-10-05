@@ -4,6 +4,10 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    // Identifies the deployed build; the offline data cache is discarded when it changes.
+    __BUILD_ID__: JSON.stringify(process.env.VERCEL_GIT_COMMIT_SHA ?? Date.now().toString(36)),
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

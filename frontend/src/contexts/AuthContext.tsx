@@ -1,6 +1,6 @@
 import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { apiClient } from '@/lib/api-client';
-import { queryClient } from '@/lib/query-client';
+import { clearQueryCache } from '@/lib/query-client';
 
 interface User {
   id: string;
@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handleLogout = () => {
       // Clear cached server data and stale local session artifacts.
-      queryClient.clear();
+      clearQueryCache();
       localStorage.removeItem('fcm_token');
       setState({ user: null, isAuthenticated: false, isLoading: false });
     };
@@ -157,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Start the new session from a clean cache so no prior user's data leaks in
     // (covers forced-logout paths that bypass logout()).
-    queryClient.clear();
+    clearQueryCache();
 
     // Let the socket connection pick up the new token immediately.
     window.dispatchEvent(new CustomEvent('auth:login'));
@@ -179,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('fcm_token');
     // Wipe all cached server data so the next user never sees the previous
     // user's notifications, dashboards, lists, etc.
-    queryClient.clear();
+    clearQueryCache();
     setState({ user: null, isAuthenticated: false, isLoading: false });
   }, []);
 

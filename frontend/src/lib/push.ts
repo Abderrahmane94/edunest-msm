@@ -4,7 +4,8 @@
  * Responsibilities:
  * - Lazily initialize the Firebase app + messaging (only when configured).
  * - Request browser notification permission.
- * - Register the app's service worker and obtain an FCM registration token.
+ * - Register the app's service worker (also used for the installable app)
+ *   and obtain an FCM registration token.
  * - Expose a foreground-message subscriber for in-app handling.
  *
  * All functions fail soft: if Firebase env vars are missing, the browser
@@ -67,6 +68,32 @@ async function getMessagingInstance(): Promise<Messaging | null> {
 }
 
 /**
+ * Registers the app's single service worker (push + offline page, see
+ * public/firebase-messaging-sw.js). Called at startup so the app is
+ * installable, and again before asking for a push token — always with the
+ * same URL, so it's one registration either way.
+ */
+export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (!('serviceWorker' in navigator)) return null;
+  // The SW must live at the origin root so it can control the whole app.
+  // A service worker file can't read import.meta.env, so pass the Firebase
+  // config it needs (for background messages) as query params.
+  const swParams = new URLSearchParams({
+    apiKey: firebaseConfig.apiKey ?? '',
+    authDomain: firebaseConfig.authDomain ?? '',
+    projectId: firebaseConfig.projectId ?? '',
+    messagingSenderId: firebaseConfig.messagingSenderId ?? '',
+    appId: firebaseConfig.appId ?? '',
+  });
+  try {
+    return await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${swParams.toString()}`);
+  } catch (err) {
+    console.warn('[sw] Service worker registration failed:', err);
+    return null;
+  }
+}
+
+/**
  * Requests notification permission and returns an FCM registration token,
  * or null if unavailable/denied. Safe to call repeatedly — the browser only
  * prompts once, and getToken reuses the existing token afterward.
@@ -85,19 +112,8 @@ export async function requestPushToken(): Promise<string | null> {
 
     if (permission !== 'granted') return null;
 
-    // The SW must live at the origin root so it can control the whole app.
-    // A service worker file can't read import.meta.env, so pass the Firebase
-    // config it needs (for background messages) as query params.
-    const swParams = new URLSearchParams({
-      apiKey: firebaseConfig.apiKey ?? '',
-      authDomain: firebaseConfig.authDomain ?? '',
-      projectId: firebaseConfig.projectId ?? '',
-      messagingSenderId: firebaseConfig.messagingSenderId ?? '',
-      appId: firebaseConfig.appId ?? '',
-    });
-    const registration = await navigator.serviceWorker.register(
-      `/firebase-messaging-sw.js?${swParams.toString()}`,
-    );
+    const registration = await registerServiceWorker();
+    if (!registration) return null;
 
     const token = await getToken(m, {
       vapidKey: VAPID_KEY,

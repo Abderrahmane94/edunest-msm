@@ -226,6 +226,15 @@
       "created": "Utilisateur créé avec succès"
     }
   },
+  "install": {
+    "button": "Installer l'application",
+    "iosTitle": "Installer EduNest sur votre iPhone",
+    "iosIntro": "Ajoutez EduNest à votre écran d'accueil pour l'ouvrir comme une application et recevoir les notifications.",
+    "iosStep1": "Touchez le bouton Partager",
+    "iosStep2": "Choisissez « Sur l'écran d'accueil »",
+    "iosStep3": "Touchez « Ajouter » en haut à droite",
+    "iosSafariOnly": "Ces étapes se font dans Safari. Si vous utilisez un autre navigateur, ouvrez d'abord EduNest dans Safari."
+  },
   "common": {
     "save": "Enregistrer",
     "saved": "Modifications enregistrées",

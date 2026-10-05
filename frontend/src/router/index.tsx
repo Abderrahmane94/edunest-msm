@@ -38,6 +38,7 @@ import {
 } from '@/pages/admin/payments';
 import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage, TeacherAnnouncementsPage, TeacherChildrenPage } from '@/pages/teacher';
 import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentAnnouncementsPage, ParentPaymentsPage } from '@/pages/parent';
+import { InstallAppButton } from '@/components/InstallAppButton';
 import { AdminLayout, ParentLayout } from '@/components/layout';
 import type { NavItem } from '@/components/layout';
 import { useSchool } from '@/hooks/useSchool';
@@ -222,6 +223,7 @@ function SidebarFooterContent() {
           </div>
         </div>
       )}
+      <InstallAppButton />
       <LanguageSwitcher />
       <button
         type="button"

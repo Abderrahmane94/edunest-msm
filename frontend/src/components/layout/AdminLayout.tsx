@@ -20,7 +20,7 @@ export function AdminLayout({ navItems, sidebarHeader, sidebarFooter }: AdminLay
 
       {/* min-w-0: a wide table scrolls inside its own box instead of
           stretching the whole page past the screen. */}
-      <div className="flex-1 min-w-0 flex flex-col pb-16 lg:pb-0">
+      <div className="flex-1 min-w-0 flex flex-col pb-[calc(var(--tabbar-h)+0.5rem)] lg:pb-0">
         {/* Slim top bar with the notification bell (data-dense admin/teacher UI).
             Below lg the sidebar is hidden, so the bar also carries the school
             name and the account menu (language, logout). */}

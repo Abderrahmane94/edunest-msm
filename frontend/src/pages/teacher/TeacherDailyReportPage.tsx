@@ -691,7 +691,7 @@ export function TeacherDailyReportPage() {
       </div>
 
       {/* Fixed bottom submit button */}
-      <div className="sticky bottom-14 lg:bottom-0 bg-card border-t border-border p-4 z-10">
+      <div className="sticky bottom-[var(--tabbar-h)] lg:bottom-0 bg-card border-t border-border p-4 z-10">
         <div className="max-w-2xl mx-auto">
           {submitSuccess ? (
             <div className="flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">

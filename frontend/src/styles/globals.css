@@ -34,6 +34,9 @@
 /* ─── EduNest Design System — Semantic Color Tokens ─── */
 @layer base {
   :root {
+    /* Mobile bottom tab bar height, plus the iPhone home-bar inset when the
+       app is installed (viewport-fit=cover). */
+    --tabbar-h: calc(3.5rem + env(safe-area-inset-bottom, 0px));
     /* Background Surfaces */
     --color-bg-page: #FAFAF8;
     --color-bg-card: #FFFFFF;

@@ -53,7 +53,7 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
 
   return (
     <>
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-card border-t border-border flex items-center justify-around h-14">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-card border-t border-border flex items-center justify-around h-[var(--tabbar-h)] pb-[env(safe-area-inset-bottom)]">
         {visibleItems.map((item) => (
           <NavLink
             key={item.href}
@@ -101,7 +101,7 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
             aria-modal="true"
             aria-label={t('common.more')}
             className="relative z-50 w-full bg-card rounded-t-xl p-4 shadow-level-4 animate-scale-in max-h-[70vh] overflow-y-auto"
-            style={{ paddingBottom: 'calc(1rem + 56px)' }}
+            style={{ paddingBottom: 'calc(1rem + var(--tabbar-h))' }}
           >
             <div className="flex items-center justify-between mb-3">
               <span className="text-body font-semibold text-text-heading">{t('common.more')}</span>

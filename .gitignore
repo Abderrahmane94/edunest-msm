@@ -35,6 +35,8 @@ backend/prisma/*.db
 # Playwright MCP artifacts
 .playwright-mcp/
 *.png
+# ...but the app icons are part of the app.
+!frontend/public/*.png
 
 # Playwright E2E artifacts
 e2e/test-results/

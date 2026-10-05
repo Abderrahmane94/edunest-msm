@@ -109,15 +109,25 @@ class SocketService implements ISocketService {
   /**
    * Authorizes a client-requested room join. Only conversation rooms can be
    * joined this way (user/school rooms are auto-joined on connect and not
-   * client-requestable), and only by that conversation's participants or an
-   * admin/super_admin of the same school.
+   * client-requestable):
+   * - `conversation:<id>` (teacher ↔ parent): its participants, or an
+   *   admin/super_admin of the same school;
+   * - `staff_conversation:<id>` (between staff): its two participants only,
+   *   as for reading its messages.
    */
-  private async canJoinRoom(
+  async canJoinRoom(
     room: string,
     userId: string,
     schoolId: string | null,
     role: string,
   ): Promise<boolean> {
+    const staff = /^staff_conversation:(.+)$/.exec(room);
+    if (staff) {
+      const conversation = await prisma.staffConversation.findUnique({ where: { id: staff[1] } });
+      if (!conversation || conversation.schoolId !== schoolId) return false;
+      return userId === conversation.initiatorId || userId === conversation.recipientId;
+    }
+
     const match = /^conversation:(.+)$/.exec(room);
     if (!match) return false;
 

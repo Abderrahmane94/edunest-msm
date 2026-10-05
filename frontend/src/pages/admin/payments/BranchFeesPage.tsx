@@ -1226,10 +1226,10 @@ export default function BranchFeesPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <DollarSign className="w-6 h-6 text-primary" />
-          <h1 className="text-heading-md font-semibold text-foreground">
+          <DollarSign className="w-5 h-5 text-primary" />
+          <h2 className="text-section font-semibold text-foreground">
             {t('payments.fees.title')}
-          </h1>
+          </h2>
         </div>
         <CreateButton
           label={t('payments.fees.create')}

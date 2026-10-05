@@ -1398,7 +1398,13 @@
     "title": "الإعلانات والفعاليات",
     "subtitle": "تابع مستجدات المدرسة",
     "error": "تعذر تحميل الإعلانات. يرجى المحاولة مرة أخرى.",
-    "respondToConsent": "الرد"
+    "respondToConsent": "الرد",
+    "consent": { "approved": "موافقة", "declined": "رفض" },
+    "consentStatus": {
+      "pending": "في انتظار ردك",
+      "approved": "لقد وافقت",
+      "declined": "لقد رفضت"
+    }
   },
   "parentInvoices": {
     "title": "الفواتير والموافقات",

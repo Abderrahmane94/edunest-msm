@@ -33,8 +33,18 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
   const language = i18n.language === 'ar' ? 'ar' : 'fr';
   const { data: receipt, isLoading, error } = useReceipt(open ? paymentRecordId : null, language);
 
-  // The receipt document: on-screen preview, print and PDF all come from it.
+  // Print and PDF come from a hidden copy in the full (A4) layout, so they're
+  // the same on every screen; the preview below adapts to narrow screens.
   const contentRef = React.useRef<HTMLDivElement>(null);
+  const previewRef = React.useRef<HTMLDivElement>(null);
+  const [compact, setCompact] = React.useState(false);
+  React.useEffect(() => {
+    const node = previewRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => setCompact(entry.contentRect.width < 560));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [receipt]);
 
   // ─── Send by email ───
   const emailReceipt = useEmailReceipt();
@@ -249,13 +259,20 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
           </div>
         )}
 
-        {/* The receipt document (also what gets printed and attached) */}
+        {/* The receipt document */}
         {receipt && !isLoading && (
-          <div className="rounded-lg bg-subtle p-3 overflow-x-auto">
-            <div ref={contentRef} className="min-w-[600px]">
-              <ReceiptDocument receipt={receipt} />
+          <>
+            <div ref={previewRef} className="rounded-lg bg-subtle p-2 sm:p-3">
+              <ReceiptDocument receipt={receipt} compact={compact} />
             </div>
-          </div>
+            {/* What gets printed and attached: always the full layout. Never
+                displayed — print and PDF render their own copy of its markup. */}
+            <div className="hidden" aria-hidden="true">
+              <div ref={contentRef}>
+                <ReceiptDocument receipt={receipt} />
+              </div>
+            </div>
+          </>
         )}
       </DialogContent>
     </Dialog>

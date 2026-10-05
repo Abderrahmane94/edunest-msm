@@ -200,7 +200,7 @@ function ChildAttendanceCard({ child }: { child: ChildAttendanceSummary }) {
             </p>
           </div>
           <div className="text-end">
-            <p className={cn('text-section-heading font-semibold', percentageColor)}>
+            <p className={cn('text-section font-semibold', percentageColor)}>
               {Math.round(child.attendance_percentage)}%
             </p>
             <p className="text-micro text-text-secondary">

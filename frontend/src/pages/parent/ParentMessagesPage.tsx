@@ -63,9 +63,14 @@ export function ParentMessagesPage() {
     [conversations, activeConversationId]
   );
 
-  // Auto-select first conversation if only one exists (parent typically has one per child)
+  // Open the conversation straight away when there is only one (or on a wide
+  // screen, where the list stays beside it) — once, so "back" can return to
+  // the list on a phone.
+  const autoSelectedRef = React.useRef(!!conversationIdParam);
   React.useEffect(() => {
-    if (conversations.length > 0 && !activeConversationId) {
+    if (autoSelectedRef.current || conversations.length === 0 || activeConversationId) return;
+    autoSelectedRef.current = true;
+    if (conversations.length === 1 || window.matchMedia('(min-width: 1024px)').matches) {
       setActiveConversationId(conversations[0].id);
     }
   }, [conversations, activeConversationId]);
@@ -184,9 +189,11 @@ export function ParentMessagesPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-page flex flex-col">
+    // Fills the screen between the top bar and the bottom tab bar: the message
+    // list scrolls inside, so the input always stays in view.
+    <div className="h-[calc(100dvh-4rem-var(--tabbar-h))] lg:h-[calc(100dvh-3.5rem)] min-h-[360px] bg-page flex flex-col overflow-hidden">
       {/* Page header */}
-      <header className="sticky top-14 z-10 bg-card border-b border-border">
+      <header className="shrink-0 bg-card border-b border-border">
         <div className="max-w-[600px] mx-auto px-4 py-3">
           <h1 className="text-page-title font-semibold text-text-heading">
             {t('parentMessages.title', 'Messages')}
@@ -197,13 +204,13 @@ export function ParentMessagesPage() {
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col max-w-[600px] mx-auto w-full">
+      <div className="flex-1 min-h-0 flex flex-col max-w-[600px] mx-auto w-full">
         {/* Conversation list (shown when no active conversation on mobile, or when multiple conversations) */}
         {conversations.length > 1 && (
           <aside
             className={cn(
-              'border-b border-border bg-card',
-              activeConversationId ? 'hidden lg:block' : 'block'
+              'border-b border-border bg-card overflow-y-auto',
+              activeConversationId ? 'hidden lg:block lg:max-h-48' : 'block flex-1'
             )}
           >
             {conversationsLoading ? (
@@ -260,7 +267,7 @@ export function ParentMessagesPage() {
         )}
 
         {/* Chat area */}
-        <main className="flex-1 flex flex-col min-h-0">
+        <main className={cn('flex-1 flex-col min-h-0', conversations.length > 1 && !activeConversationId ? 'hidden lg:flex' : 'flex')}>
           {conversationsLoading ? (
             <div className="flex-1 flex items-center justify-center p-4">
               <div className="space-y-3 w-full max-w-sm">
@@ -281,7 +288,9 @@ export function ParentMessagesPage() {
                 <MessageCircle className="w-8 h-8 text-text-secondary" />
               </div>
               <p className="text-body text-text-secondary">
-                {t('parentMessages.noConversations', 'No conversations yet. Your teacher will reach out soon!')}
+                {conversations.length === 0
+                  ? t('parentMessages.noConversations', 'No conversations yet. Your teacher will reach out soon!')
+                  : t('messages.selectConversation', 'Sélectionnez une conversation')}
               </p>
             </div>
           ) : (

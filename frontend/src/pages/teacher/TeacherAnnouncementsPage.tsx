@@ -24,7 +24,7 @@ export function TeacherAnnouncementsPage() {
         </h1>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Button
           variant={activeTab === 'announcements' ? 'primary' : 'secondary'}
           size="sm"
@@ -120,7 +120,7 @@ function AnnouncementCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-body font-medium text-text-primary">{announcement.title}</h3>
+            <h3 className="text-body font-medium text-text-primary [overflow-wrap:anywhere]">{announcement.title}</h3>
             <span className="text-micro font-medium text-text-secondary bg-subtle px-2 py-0.5 rounded-full">
               {announcement.classroom_name || t('communication.announcements.allSchool')}
             </span>
@@ -129,7 +129,7 @@ function AnnouncementCard({
             {announcement.created_by_name} · <span dir="ltr">{formatDate(announcement.published_at)}</span>
           </p>
           {expanded && (
-            <p className="text-body text-text-primary mt-3 leading-relaxed whitespace-pre-wrap">
+            <p className="text-body text-text-primary mt-3 leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
               {announcement.body}
             </p>
           )}
@@ -168,11 +168,15 @@ function EventCard({ event }: { event: SchoolEvent }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h3 className="text-body font-medium text-text-primary">{event.title}</h3>
-          <p className="text-body text-text-secondary mt-1 leading-relaxed">{event.description}</p>
+          {event.description && (
+            <p className="text-body text-text-secondary mt-1 leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
+              {event.description}
+            </p>
+          )}
           <div className="flex items-center gap-4 mt-3 flex-wrap">
-            <span className="text-caption text-text-secondary inline-flex items-center gap-1" dir="ltr">
+            <span className="text-caption text-text-secondary inline-flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
-              {formatDateTime(event.start_datetime)}
+              <bdi dir="ltr">{formatDateTime(event.start_datetime)}</bdi>
             </span>
             {event.location && (
               <span className="text-caption text-text-secondary inline-flex items-center gap-1">

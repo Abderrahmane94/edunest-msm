@@ -262,7 +262,7 @@ export function RecordCorrectionDialog({ open, onOpenChange, branchId }: Props) 
                 {t('payments.correction.success.totalCorrected')}
               </span>
               <span className="text-body font-semibold text-danger" dir="ltr">
-                -{formatDZD(totalCorrection, i18n.language)}
+                {formatDZD(-totalCorrection, i18n.language)}
               </span>
             </div>
           </div>
@@ -453,7 +453,7 @@ export function RecordCorrectionDialog({ open, onOpenChange, branchId }: Props) 
                     className="text-body text-danger text-end"
                     dir="ltr"
                   >
-                    -{formatDZD(totalCorrection, i18n.language)}
+                    {formatDZD(-totalCorrection, i18n.language)}
                   </span>
                 </div>
               </div>

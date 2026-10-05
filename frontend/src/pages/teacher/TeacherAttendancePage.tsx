@@ -217,7 +217,7 @@ export function TeacherAttendancePage() {
           </div>
 
           {/* Stats bar */}
-          <div className="flex items-center gap-4 mt-3 text-caption">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-caption">
             <span className="text-text-secondary">
               {stats.marked}/{stats.total} {t('teacherAttendance.marked')}
             </span>
@@ -279,7 +279,7 @@ export function TeacherAttendancePage() {
                       name={`${child.first_name} ${child.last_name}`}
                       size="md"
                     />
-                    <span className="text-body font-medium text-text-heading">
+                    <span className="text-body font-medium text-text-heading min-w-0 [overflow-wrap:anywhere]">
                       {child.first_name} {child.last_name}
                     </span>
                   </div>
@@ -351,7 +351,7 @@ export function TeacherAttendancePage() {
       <div className="sticky bottom-[var(--tabbar-h)] lg:bottom-0 bg-card border-t border-border p-4 z-10">
         <div className="max-w-2xl mx-auto">
           {submitSuccess ? (
-            <div className="flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">
+            <div className="flex flex-wrap items-center justify-center text-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">
               <Check className="w-5 h-5" />
               {t('teacherAttendance.submitSuccess')}
             </div>

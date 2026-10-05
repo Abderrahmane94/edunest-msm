@@ -205,9 +205,9 @@ export function LateDashboardPage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <AlertTriangle className="w-6 h-6 text-danger" />
-        <h1 className="text-page-title font-semibold text-text-heading">
+        <h2 className="text-section font-semibold text-text-heading">
           {t('payments.late.title')}
-        </h1>
+        </h2>
       </div>
 
       <p className="text-body text-text-secondary">

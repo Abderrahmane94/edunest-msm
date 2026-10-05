@@ -408,7 +408,7 @@ function DiscountRow({ discount, enrollmentId }: { discount: Discount; enrollmen
       <td className="px-4 py-3">
         <span className="text-body font-medium text-foreground" dir="ltr">
           {discount.fixedAmount != null
-            ? `−${formatDZD(Number(discount.fixedAmount), i18n.language)}`
+            ? formatDZD(-Number(discount.fixedAmount), i18n.language)
             : `−${Number(discount.percentage)} %`}
         </span>
       </td>
@@ -468,7 +468,7 @@ function DiscountsSection({
     <div className="bg-card border border-border rounded-lg overflow-hidden">
       <div className="p-4 border-b border-border flex items-center justify-between">
         <div>
-          <h2 className="text-section-title font-semibold text-text-heading">
+          <h2 className="text-section font-semibold text-text-heading">
             {t('payments.enrollmentDetail.discounts.title')}
           </h2>
           <p className="text-caption text-text-secondary mt-1">
@@ -682,7 +682,7 @@ export function EnrollmentDetailPage() {
 
       {/* Enrollment Info Card */}
       <div className="bg-card border border-border rounded-lg p-6">
-        <h2 className="text-section-title font-semibold text-text-heading mb-4">
+        <h2 className="text-section font-semibold text-text-heading mb-4">
           {t('payments.enrollmentDetail.info')}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

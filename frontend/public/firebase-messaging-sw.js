@@ -1,9 +1,11 @@
 /* eslint-disable no-undef */
 /**
- * Firebase Cloud Messaging service worker.
+ * The app's service worker: Firebase Cloud Messaging push, plus what makes
+ * EduNest an installable app (PWA) — an offline page when there is no network.
+ * It is the only service worker: a second one at the same scope would replace
+ * this registration and break push.
  *
- * Handles push notifications delivered while the app tab is closed or in the
- * background. Firebase config is passed in as query params by the page during
+ * Firebase config is passed in as query params by the page during
  * registration (a service worker cannot read Vite's import.meta.env), so no
  * secrets are hardcoded here — these are the public web-app identifiers.
  *
@@ -11,23 +13,59 @@
  * whole app scope.
  */
 
-importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+// ─── Offline page ──────────────────────────────────────────────────────────────
 
-const params = new URLSearchParams(self.location.search);
+const CACHE = 'edunest-shell-v1';
+const OFFLINE_URL = '/offline.html';
 
-firebase.initializeApp({
-  apiKey: params.get('apiKey'),
-  authDomain: params.get('authDomain'),
-  projectId: params.get('projectId'),
-  messagingSenderId: params.get('messagingSenderId'),
-  appId: params.get('appId'),
+self.addEventListener('install', (event) => {
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll([OFFLINE_URL, '/icon-192.png'])));
+  self.skipWaiting();
 });
 
-const messaging = firebase.messaging();
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('edunest-') && k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim()),
+  );
+});
+
+// Pages always come from the network (the app is online-only and updates on
+// each deploy); only when that fails is the offline page shown. Other requests
+// (API, assets) are left to the browser.
+self.addEventListener('fetch', (event) => {
+  if (event.request.mode !== 'navigate') return;
+  event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_URL)));
+});
+
+// ─── Push (Firebase Cloud Messaging) ───────────────────────────────────────────
+
+const params = new URLSearchParams(self.location.search);
+let messaging = null;
+
+// Without Firebase config (e.g. push not set up) the worker still serves the
+// offline page.
+if (params.get('apiKey')) {
+  try {
+    importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+    importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+    firebase.initializeApp({
+      apiKey: params.get('apiKey'),
+      authDomain: params.get('authDomain'),
+      projectId: params.get('projectId'),
+      messagingSenderId: params.get('messagingSenderId'),
+      appId: params.get('appId'),
+    });
+    messaging = firebase.messaging();
+  } catch (err) {
+    console.warn('[sw] Firebase messaging unavailable:', err);
+  }
+}
 
 // Background message handler — show the OS notification.
-messaging.onBackgroundMessage((payload) => {
+messaging?.onBackgroundMessage((payload) => {
   const title = payload.notification?.title || 'EduNest';
   const options = {
     body: payload.notification?.body || '',

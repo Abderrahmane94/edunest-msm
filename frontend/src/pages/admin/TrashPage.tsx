@@ -359,7 +359,7 @@ export function TrashPage() {
       </h1>
 
       {/* Entity type tabs */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         {visibleTabs.map((tab) => (
           <Button
             key={tab.key}

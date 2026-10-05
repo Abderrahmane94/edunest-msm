@@ -186,7 +186,7 @@ export function ParentMessagesPage() {
   return (
     <div className="min-h-screen bg-page flex flex-col">
       {/* Page header */}
-      <header className="sticky top-0 z-10 bg-card border-b border-border">
+      <header className="sticky top-14 z-10 bg-card border-b border-border">
         <div className="max-w-[600px] mx-auto px-4 py-3">
           <h1 className="text-page-title font-semibold text-text-heading">
             {t('parentMessages.title', 'Messages')}

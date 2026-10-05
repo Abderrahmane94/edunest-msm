@@ -85,7 +85,7 @@ export function DialogContent({ children, className }: DialogContentProps) {
           role="dialog"
           aria-modal="true"
           className={cn(
-            'relative z-50 bg-card rounded-xl p-6 w-[90vw] max-w-[480px] shadow-level-4 animate-scale-in',
+            'relative z-50 bg-card rounded-xl p-5 sm:p-6 w-full max-w-[480px] shadow-level-4 animate-scale-in',
             className
           )}
         >
@@ -111,7 +111,8 @@ export interface DialogHeaderProps {
 }
 
 export function DialogHeader({ children, className }: DialogHeaderProps) {
-  return <div className={cn('mb-5', className)}>{children}</div>;
+  // pe-8 keeps the title clear of the close button.
+  return <div className={cn('mb-5 pe-8', className)}>{children}</div>;
 }
 
 export interface DialogTitleProps {
@@ -149,7 +150,7 @@ export function DialogFooter({ children, className }: DialogFooterProps) {
   return (
     <div
       className={cn(
-        'flex justify-end gap-2 mt-6 pt-4 border-t border-subtle',
+        'flex flex-wrap justify-end gap-2 mt-6 pt-4 border-t border-subtle',
         className
       )}
     >

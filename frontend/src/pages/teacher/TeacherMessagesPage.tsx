@@ -61,7 +61,9 @@ export function TeacherMessagesPage() {
   }, [tabParam]);
 
   return (
-    <div className="h-screen flex flex-col bg-page">
+    // Fills the screen below the layout's top bar and page padding (and above
+    // the bottom tab bar below lg), so the message box stays in view.
+    <div className="h-[calc(100dvh-9.5rem)] sm:h-[calc(100dvh-10.5rem)] lg:h-[calc(100dvh-6.5rem)] min-h-[420px] flex flex-col bg-page border border-border rounded-lg overflow-hidden">
       {/* Header */}
       <header className="shrink-0 bg-card border-b border-border px-4 py-3">
         <h1 className="text-subsection font-semibold text-text-heading">

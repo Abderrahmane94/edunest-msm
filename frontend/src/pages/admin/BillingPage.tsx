@@ -1320,7 +1320,7 @@ export function BillingPage() {
     <div className="space-y-6 animate-fade-in">
       <h1 className="text-page-title font-semibold text-text-heading">{t('billing.title')}</h1>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         {tabs.map((tab) => (
           <Button key={tab.key} variant={activeTab === tab.key ? 'primary' : 'secondary'} size="sm"
             onClick={() => setActiveTab(tab.key)}>

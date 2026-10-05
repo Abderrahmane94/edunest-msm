@@ -1224,7 +1224,7 @@ export default function BranchFeesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <DollarSign className="w-6 h-6 text-primary" />
           <h1 className="text-heading-md font-semibold text-foreground">

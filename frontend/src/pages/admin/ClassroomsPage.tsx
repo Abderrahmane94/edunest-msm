@@ -408,7 +408,7 @@ export function ClassroomsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <h1 className="text-page-title font-semibold text-text-heading">
             {t('classrooms.title')}
           </h1>
@@ -430,7 +430,7 @@ export function ClassroomsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-page-title font-semibold text-text-heading">
             {t('classrooms.title')}

@@ -202,7 +202,7 @@ export function ReconciliationPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between print:justify-center">
+      <div className="flex items-center justify-between print:justify-center flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <FileBarChart className="w-6 h-6 text-primary print:hidden" />
           <h1 className="text-page-title font-semibold text-text-heading">

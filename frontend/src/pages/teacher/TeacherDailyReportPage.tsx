@@ -331,7 +331,7 @@ export function TeacherDailyReportPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-page flex items-center justify-center p-4">
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
         <div className="animate-pulse space-y-4 w-full max-w-2xl">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-20 bg-subtle rounded-lg" />
@@ -343,7 +343,7 @@ export function TeacherDailyReportPage() {
 
   if (!classroom) {
     return (
-      <div className="min-h-screen bg-page flex items-center justify-center p-4">
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
         <div className="text-center space-y-2">
           <p className="text-body text-text-secondary">
             {t('dailyReport.noClassroom', 'No classroom assigned')}
@@ -354,9 +354,9 @@ export function TeacherDailyReportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-page flex flex-col">
+    <div className="flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
+      <header className="sticky top-14 z-10 bg-card border-b border-border px-4 py-3">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-subsection font-semibold text-text-heading">
             {t('dailyReport.title', 'Daily Report')}
@@ -691,7 +691,7 @@ export function TeacherDailyReportPage() {
       </div>
 
       {/* Fixed bottom submit button */}
-      <div className="sticky bottom-0 bg-card border-t border-border p-4 z-10">
+      <div className="sticky bottom-14 lg:bottom-0 bg-card border-t border-border p-4 z-10">
         <div className="max-w-2xl mx-auto">
           {submitSuccess ? (
             <div className="flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">

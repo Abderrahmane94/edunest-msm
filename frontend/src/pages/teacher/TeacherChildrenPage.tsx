@@ -89,7 +89,7 @@ export function TeacherChildrenPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-page flex items-center justify-center p-4">
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
         <div className="animate-pulse space-y-4 w-full max-w-2xl">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-20 bg-subtle rounded-lg" />
@@ -101,7 +101,7 @@ export function TeacherChildrenPage() {
 
   if (!classroom) {
     return (
-      <div className="min-h-screen bg-page flex items-center justify-center p-4">
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
         <div className="text-center space-y-2">
           <p className="text-body text-text-secondary">{t('teacherAttendance.noClassroom')}</p>
         </div>
@@ -110,8 +110,8 @@ export function TeacherChildrenPage() {
   }
 
   return (
-    <div className="min-h-screen bg-page flex flex-col">
-      <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
+    <div className="flex flex-col">
+      <header className="sticky top-14 z-10 bg-card border-b border-border px-4 py-3">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-subsection font-semibold text-text-heading">
             {t('teacherChildren.title')}

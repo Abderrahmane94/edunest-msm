@@ -55,14 +55,14 @@ export function AnnouncementDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Button variant="ghost" size="sm" onClick={() => navigate('/admin/communication')}>
           <ArrowLeft className="w-4 h-4" />
           {t('common.back')}
         </Button>
-        <div className="flex items-center gap-2 flex-1">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
           <Megaphone className="w-5 h-5 text-primary" />
-          <h1 className="text-page-title font-semibold text-text-heading">{announcement.title}</h1>
+          <h1 className="text-page-title font-semibold text-text-heading break-words min-w-0">{announcement.title}</h1>
         </div>
       </div>
 

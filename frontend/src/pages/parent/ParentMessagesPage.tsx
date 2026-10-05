@@ -13,12 +13,13 @@ import {
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui';
 import { MessageBubble } from '@/components/messaging/MessageBubble';
+import { PendingMessageBubble } from '@/components/messaging/PendingMessageBubble';
+import { sendTextMessage, usePendingMessages } from '@/hooks/useMessageSync';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/hooks/useSocket';
 import {
   useConversations,
   useMessages,
-  useSendMessage,
   useSendFileMessage,
   useMarkMessageRead,
   type Conversation,
@@ -54,7 +55,7 @@ export function ParentMessagesPage() {
     activeConversationId ?? undefined
   );
 
-  const sendMessage = useSendMessage(activeConversationId ?? undefined);
+  const { pending: pendingMessages, syncing } = usePendingMessages('parent', activeConversationId);
   const sendFileMessage = useSendFileMessage(activeConversationId ?? undefined);
   const markRead = useMarkMessageRead();
 
@@ -116,7 +117,7 @@ export function ParentMessagesPage() {
   // Scroll to bottom when messages change
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, pendingMessages.length]);
 
   // Mark unread messages as read when opening a conversation
   const markedReadRef = React.useRef<Set<string>>(new Set());
@@ -151,12 +152,13 @@ export function ParentMessagesPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Sent right away, or kept on the device until the connection returns.
   const handleSendMessage = React.useCallback(() => {
     const trimmed = messageInput.trim();
     if (!trimmed || !activeConversationId) return;
-    sendMessage.mutate({ content: trimmed, message_type: 'text' });
+    void sendTextMessage('parent', activeConversationId, trimmed);
     setMessageInput('');
-  }, [messageInput, activeConversationId, sendMessage]);
+  }, [messageInput, activeConversationId]);
 
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent) => {
@@ -334,21 +336,26 @@ export function ParentMessagesPage() {
                       />
                     ))}
                   </div>
-                ) : messages.length === 0 ? (
+                ) : messages.length === 0 && pendingMessages.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
                     <p className="text-body text-text-secondary">
                       {t('parentMessages.noMessages', 'No messages yet. Say hello!')}
                     </p>
                   </div>
                 ) : (
-                  messages.map((message) => (
-                    <MessageBubble
-                      key={message.id}
-                      message={message}
-                      isSent={message.sender_user_id === user?.id}
-                      i18nNamespace="parentMessages"
-                    />
-                  ))
+                  <>
+                    {messages.map((message) => (
+                      <MessageBubble
+                        key={message.id}
+                        message={message}
+                        isSent={message.sender_user_id === user?.id}
+                        i18nNamespace="parentMessages"
+                      />
+                    ))}
+                    {pendingMessages.map((action) => (
+                      <PendingMessageBubble key={action.id} action={action} syncing={syncing} />
+                    ))}
+                  </>
                 )}
                 <div ref={messagesEndRef} />
               </div>
@@ -405,7 +412,7 @@ export function ParentMessagesPage() {
                   <button
                     type="button"
                     onClick={handleSendMessage}
-                    disabled={!messageInput.trim() || sendMessage.isPending}
+                    disabled={!messageInput.trim()}
                     className={cn(
                       'flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-all duration-150 active:scale-[0.98]',
                       messageInput.trim()

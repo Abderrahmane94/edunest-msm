@@ -1307,7 +1307,12 @@
     "startNewStaffConversation": "بدء محادثة",
     "noColleagues": "لا يوجد زملاء في هذه المدرسة",
     "roleTeacher": "معلم",
-    "roleAdmin": "مدير"
+    "roleAdmin": "مدير",
+    "waiting": "في انتظار الإرسال",
+    "sending": "جارٍ الإرسال…",
+    "notSent": "لم يُرسل",
+    "retry": "إعادة المحاولة",
+    "delete": "حذف"
   },
   "dailyReport": {
     "title": "التقرير اليومي",

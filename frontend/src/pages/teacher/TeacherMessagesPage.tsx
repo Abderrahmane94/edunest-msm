@@ -15,13 +15,15 @@ import {
 import { cn } from '@/lib/utils';
 import { Avatar, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui';
 import { MessageBubble } from '@/components/messaging/MessageBubble';
+import { PendingMessageBubble } from '@/components/messaging/PendingMessageBubble';
+import { sendTextMessage, usePendingMessages, type MessagePayload } from '@/hooks/useMessageSync';
+import type { QueuedAction } from '@/lib/offlineQueue';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/hooks/useSocket';
 import { useTeacherClassroom, useClassroomChildren } from '@/hooks/useTeacherClassroom';
 import {
   useConversations,
   useMessages,
-  useSendMessage,
   useSendFileMessage,
   useMarkMessageRead,
   useCreateConversation,
@@ -29,7 +31,6 @@ import {
 import {
   useStaffConversations,
   useStaffMessages,
-  useSendStaffMessage,
   useSendStaffFileMessage,
   useMarkStaffMessageRead,
   useGetOrCreateStaffConversation,
@@ -133,7 +134,7 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
   const { data: conversations = [], isLoading: conversationsLoading } = useConversations();
   const { data: messages = [], isLoading: messagesLoading } = useMessages(activeConversationId ?? undefined);
 
-  const sendMessage = useSendMessage(activeConversationId ?? undefined);
+  const { pending: pendingMessages, syncing } = usePendingMessages('parent', activeConversationId);
   const sendFileMessage = useSendFileMessage(activeConversationId ?? undefined);
   const markRead = useMarkMessageRead();
 
@@ -167,7 +168,7 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, pendingMessages.length]);
 
   const markedReadRef = React.useRef<Set<string>>(new Set());
   React.useEffect(() => {
@@ -190,12 +191,13 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Sent right away, or kept on the device until the connection returns.
   const handleSendMessage = React.useCallback(() => {
     const trimmed = messageInput.trim();
     if (!trimmed || !activeConversationId) return;
-    sendMessage.mutate({ content: trimmed, message_type: 'text' });
+    void sendTextMessage('parent', activeConversationId, trimmed);
     setMessageInput('');
-  }, [messageInput, activeConversationId, sendMessage]);
+  }, [messageInput, activeConversationId]);
 
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent) => {
@@ -323,7 +325,8 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
             onSend={handleSendMessage}
             onKeyDown={handleKeyDown}
             onFileSelect={handleFileSelect}
-            sendPending={sendMessage.isPending}
+            pendingMessages={pendingMessages}
+            syncing={syncing}
             userId={user?.id}
             messagesEndRef={messagesEndRef}
             attachMenuRef={attachMenuRef}
@@ -372,7 +375,7 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
   const { data: conversations = [], isLoading: conversationsLoading } = useStaffConversations();
   const { data: messages = [], isLoading: messagesLoading } = useStaffMessages(activeConversationId ?? undefined);
 
-  const sendMessage = useSendStaffMessage(activeConversationId ?? undefined);
+  const { pending: pendingMessages, syncing } = usePendingMessages('staff', activeConversationId);
   const sendFileMessage = useSendStaffFileMessage(activeConversationId ?? undefined);
   const markRead = useMarkStaffMessageRead();
 
@@ -417,7 +420,7 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, pendingMessages.length]);
 
   // Auto mark as read
   const markedReadRef = React.useRef<Set<string>>(new Set());
@@ -441,12 +444,13 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Sent right away, or kept on the device until the connection returns.
   const handleSendMessage = React.useCallback(() => {
     const trimmed = messageInput.trim();
     if (!trimmed || !activeConversationId) return;
-    sendMessage.mutate({ content: trimmed, message_type: 'text' });
+    void sendTextMessage('staff', activeConversationId, trimmed);
     setMessageInput('');
-  }, [messageInput, activeConversationId, sendMessage]);
+  }, [messageInput, activeConversationId]);
 
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent) => {
@@ -615,7 +619,8 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
             onSend={handleSendMessage}
             onKeyDown={handleKeyDown}
             onFileSelect={handleFileSelect}
-            sendPending={sendMessage.isPending}
+            pendingMessages={pendingMessages}
+            syncing={syncing}
             userId={user?.id}
             messagesEndRef={messagesEndRef}
             attachMenuRef={attachMenuRef}
@@ -662,7 +667,9 @@ interface ChatAreaProps {
   onSend: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'document') => void;
-  sendPending: boolean;
+  /** Messages written here not sent yet (offline, or refused). */
+  pendingMessages: QueuedAction<MessagePayload>[];
+  syncing: boolean;
   userId?: string;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   attachMenuRef: React.RefObject<HTMLDivElement>;
@@ -682,7 +689,8 @@ function ChatArea({
   onSend,
   onKeyDown,
   onFileSelect,
-  sendPending,
+  pendingMessages,
+  syncing,
   userId,
   messagesEndRef,
   attachMenuRef,
@@ -709,21 +717,26 @@ function ChatArea({
               <div key={i} className={cn('animate-pulse h-10 rounded-2xl bg-subtle', i % 2 === 0 ? 'w-2/3 ms-auto' : 'w-2/3')} />
             ))}
           </div>
-        ) : messages.length === 0 ? (
+        ) : messages.length === 0 && pendingMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-body text-text-secondary">
               {t('messages.noMessages', 'Aucun message. Commencez la conversation !')}
             </p>
           </div>
         ) : (
-          messages.map((message) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              isSent={message.sender_user_id === userId}
-              i18nNamespace={i18nNamespace}
-            />
-          ))
+          <>
+            {messages.map((message) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isSent={message.sender_user_id === userId}
+                i18nNamespace={i18nNamespace}
+              />
+            ))}
+            {pendingMessages.map((action) => (
+              <PendingMessageBubble key={action.id} action={action} syncing={syncing} />
+            ))}
+          </>
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -776,7 +789,7 @@ function ChatArea({
           <button
             type="button"
             onClick={onSend}
-            disabled={!messageInput.trim() || sendPending}
+            disabled={!messageInput.trim()}
             className={cn(
               'flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-all duration-150 active:scale-[0.98]',
               messageInput.trim()

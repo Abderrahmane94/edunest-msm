@@ -1302,7 +1302,12 @@
     "startNewStaffConversation": "Commencer une conversation",
     "noColleagues": "Aucun collègue trouvé dans cette école",
     "roleTeacher": "Enseignant",
-    "roleAdmin": "Directeur"
+    "roleAdmin": "Directeur",
+    "waiting": "En attente d'envoi",
+    "sending": "Envoi…",
+    "notSent": "Non envoyé",
+    "retry": "Réessayer",
+    "delete": "Supprimer"
   },
   "dailyReport": {
     "title": "Rapport quotidien",

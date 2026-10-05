@@ -30,6 +30,7 @@ vi.mock('../../lib/prisma', () => ({
     },
     message: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -144,6 +145,7 @@ const mockPrisma = prisma as unknown as {
   };
   message: {
     findFirst: ReturnType<typeof vi.fn>;
+    findUnique: ReturnType<typeof vi.fn>;
     findMany: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
@@ -1946,6 +1948,66 @@ describe('CommunicationService', () => {
       expect(mockPrisma.dailyReportPhoto.create).toHaveBeenCalledWith({
         data: { dailyReportId: 'report-1', cloudinaryPublicId: 'daily-reports/photo123', clientId: 'new-1' },
       });
+    });
+  });
+
+  describe('sendMessage with a device id', () => {
+    const conversation = { id: 'conv-1', schoolId, childId, teacherUserId, parentUserId };
+    const sent = {
+      id: 'msg-1',
+      conversationId: 'conv-1',
+      senderUserId: parentUserId,
+      content: 'Bonjour',
+      messageType: 'text',
+      cloudinaryPublicId: null,
+      clientId: '7f1c2a9e-1111-4222-8333-944455556666',
+      isRead: false,
+      createdAt: new Date(),
+      sender: { id: parentUserId, firstName: 'Amina', lastName: 'B' },
+    };
+
+    it('returns the message already received instead of saving it again', async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue(conversation);
+      mockPrisma.message.findUnique.mockResolvedValue(sent);
+
+      const result = await communicationService.sendMessage('conv-1', schoolId, parentUserId, 'parent', {
+        content: 'Bonjour',
+        messageType: 'text',
+        clientId: sent.clientId,
+      });
+
+      expect(result.id).toBe('msg-1');
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('saves the device id with a new message', async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue(conversation);
+      mockPrisma.message.findUnique.mockResolvedValue(null);
+      mockPrisma.message.create.mockImplementation((args) => args);
+      mockPrisma.$transaction.mockResolvedValue([sent, {}]);
+
+      await communicationService.sendMessage('conv-1', schoolId, parentUserId, 'parent', {
+        content: 'Bonjour',
+        messageType: 'text',
+        clientId: sent.clientId,
+      });
+
+      expect(mockPrisma.message.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ clientId: sent.clientId }) }),
+      );
+    });
+
+    it('refuses a device id already used in another conversation', async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue(conversation);
+      mockPrisma.message.findUnique.mockResolvedValue({ ...sent, conversationId: 'conv-2' });
+
+      await expect(
+        communicationService.sendMessage('conv-1', schoolId, parentUserId, 'parent', {
+          content: 'Bonjour',
+          messageType: 'text',
+          clientId: sent.clientId,
+        }),
+      ).rejects.toMatchObject({ statusCode: 409 });
     });
   });
 });

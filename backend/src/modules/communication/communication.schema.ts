@@ -94,6 +94,8 @@ export const sendMessageSchema = z
       errorMap: () => ({ message: 'Message type must be one of: text, photo, document' }),
     }),
     cloudinaryPublicId: z.string().max(500, 'Cloudinary public ID must not exceed 500 characters').optional(),
+    // The sending device's id: a message sent again (e.g. written offline) is only saved once.
+    clientId: z.string().uuid().optional(),
   })
   .refine(
     (data) => {

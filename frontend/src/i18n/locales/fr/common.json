@@ -226,6 +226,10 @@
       "created": "Utilisateur créé avec succès"
     }
   },
+  "offline": {
+    "banner": "Vous êtes hors ligne. Les données affichées peuvent ne pas être à jour.",
+    "restored": "Connexion rétablie"
+  },
   "install": {
     "button": "Installer l'application",
     "iosTitle": "Installer EduNest sur votre iPhone",

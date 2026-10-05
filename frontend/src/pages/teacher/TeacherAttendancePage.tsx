@@ -1,78 +1,98 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Clock, X, CheckCheck, Send } from 'lucide-react';
+import { Check, Clock, X, CheckCheck, Send, CloudOff, RefreshCw, AlertTriangle, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatDate } from '@/lib/formatters';
 import { Avatar, Input } from '@/components/ui';
 import { useTeacherClassroom, useClassroomChildren } from '@/hooks/useTeacherClassroom';
 import {
   useClassroomAttendance,
-  useBulkMarkAttendance,
-  useUpdateAttendanceRecord,
+  ATTENDANCE_DAY,
+  attendanceDayKey,
   type AttendanceRecord,
+  type AttendanceStatus,
+  type AttendanceDayPayload,
+  type AttendanceSyncNotice,
 } from '@/hooks/useAttendance';
-
-type AttendanceStatus = 'present' | 'absent' | 'late';
+import {
+  enqueue,
+  retryAction,
+  discardAction,
+  dismissNotice,
+  useOfflineQueue,
+  type QueuedAction,
+} from '@/lib/offlineQueue';
 
 interface ChildAttendanceState {
   child_id: string;
   status: AttendanceStatus | null;
   note?: string;
+  /** Set when the teacher marks the child here: only these are sent. */
+  markedAt?: string;
 }
 
 function getTodayString(): string {
   return new Date().toISOString().split('T')[0];
 }
 
+/**
+ * Daily attendance for the teacher's classroom. Works offline: attendance is
+ * saved on the device and sent when the connection returns (see
+ * lib/offlineQueue); what's waiting is shown on the children concerned.
+ */
 export function TeacherAttendancePage() {
   const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = React.useState<string>(getTodayString());
   const [attendanceMap, setAttendanceMap] = React.useState<Map<string, ChildAttendanceState>>(
     new Map()
   );
-  const [submitSuccess, setSubmitSuccess] = React.useState(false);
+  // Marks not yet saved (sent or queued) since the last save.
+  const [hasChanges, setHasChanges] = React.useState(false);
+  const [submitted, setSubmitted] = React.useState(false);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
 
-  // Fetch teacher's assigned classroom
-  const { data: classroom, isLoading: classroomLoading } = useTeacherClassroom();
+  // Offline, data not cached on this device stays "paused" instead of loading.
+  const classroomQuery = useTeacherClassroom();
+  const classroom = classroomQuery.data;
+  const childrenQuery = useClassroomChildren(classroom?.id);
+  const children = childrenQuery.data;
+  const recordsQuery = useClassroomAttendance(classroom?.id, selectedDate);
+  // A day not cached offline starts empty: the teacher can still mark it.
+  const existingRecords = recordsQuery.data;
 
-  // Fetch children in the classroom
-  const { data: children, isLoading: childrenLoading } = useClassroomChildren(classroom?.id);
-
-  // Fetch existing attendance records for the selected date
-  const { data: existingRecords, isLoading: recordsLoading } = useClassroomAttendance(
-    classroom?.id,
-    selectedDate
+  const { actions, notices, syncing } = useOfflineQueue();
+  const dayKey = classroom ? attendanceDayKey(classroom.id, selectedDate) : null;
+  const pending = actions.find((a) => a.key === dayKey) as QueuedAction<AttendanceDayPayload> | undefined;
+  const notice = notices.find((n) => n.key === dayKey);
+  const pendingChildIds = React.useMemo(
+    () => new Set(pending?.payload.records.map((r) => r.childId) ?? []),
+    [pending],
   );
 
-  // Bulk mark mutation
-  const bulkMark = useBulkMarkAttendance();
-
-  // Single record update mutation
-  const updateRecord = useUpdateAttendanceRecord();
-
-  const justSubmittedRef = React.useRef(false);
-
-  // Initialize attendance map when children or existing records change
+  // Initialize from the saved records, with anything still waiting to be sent on top.
   React.useEffect(() => {
     if (!children) return;
 
     const newMap = new Map<string, ChildAttendanceState>();
     children.forEach((child) => {
       const existing = existingRecords?.find((r: AttendanceRecord) => r.childId === child.id);
+      const queued = pending?.payload.records.find((r) => r.childId === child.id);
       newMap.set(child.id, {
         child_id: child.id,
-        status: existing?.status ?? null,
-        note: existing?.note ?? undefined,
+        status: queued?.status ?? existing?.status ?? null,
+        note: queued?.note ?? existing?.note ?? undefined,
+        markedAt: queued?.markedAt,
       });
     });
     setAttendanceMap(newMap);
+    setHasChanges(false);
+  }, [children, existingRecords, pending]);
 
-    // Don't reset success if we just submitted (refetch after save)
-    if (justSubmittedRef.current) {
-      justSubmittedRef.current = false;
-    } else {
-      setSubmitSuccess(false);
-    }
-  }, [children, existingRecords]);
+  // A new day starts fresh.
+  React.useEffect(() => {
+    setSubmitted(false);
+    setSaveError(null);
+  }, [selectedDate]);
 
   // Mark a single child's attendance
   const markChild = React.useCallback((childId: string, status: AttendanceStatus) => {
@@ -80,79 +100,53 @@ export function TeacherAttendancePage() {
       const next = new Map(prev);
       const current = next.get(childId);
       if (current) {
-        next.set(childId, { ...current, status });
+        next.set(childId, { ...current, status, markedAt: new Date().toISOString() });
       }
       return next;
     });
-    setSubmitSuccess(false);
+    setHasChanges(true);
+    setSubmitted(false);
   }, []);
 
   // Mark all children as present
   const markAllPresent = React.useCallback(() => {
+    const now = new Date().toISOString();
     setAttendanceMap((prev) => {
       const next = new Map(prev);
       next.forEach((value, key) => {
-        next.set(key, { ...value, status: 'present' });
+        next.set(key, { ...value, status: 'present', markedAt: now });
       });
       return next;
     });
-    setSubmitSuccess(false);
+    setHasChanges(true);
+    setSubmitted(false);
   }, []);
 
-  // Submit attendance
+  // Save: queued on the device and sent right away when online (or as soon
+  // as the connection returns).
   const handleSubmit = React.useCallback(async () => {
-    if (!classroom) return;
+    if (!classroom || !dayKey) return;
 
     const records = Array.from(attendanceMap.values())
-      .filter((r) => r.status !== null)
-      .map((r) => ({
-        child_id: r.child_id,
-        status: r.status as AttendanceStatus,
-        note: r.note,
-      }));
-
+      .filter((r): r is ChildAttendanceState & { status: AttendanceStatus; markedAt: string } =>
+        r.status !== null && !!r.markedAt,
+      )
+      .map((r) => ({ childId: r.child_id, status: r.status, note: r.note, markedAt: r.markedAt }));
     if (records.length === 0) return;
 
-    // Split into new records and updates to existing records
-    const newRecords: typeof records = [];
-    const updatedRecords: { recordId: string; status: AttendanceStatus; note?: string }[] = [];
-
-    for (const record of records) {
-      const existing = existingRecords?.find((r: AttendanceRecord) => r.childId === record.child_id);
-      if (existing) {
-        // Only update if status or note changed
-        if (existing.status !== record.status || existing.note !== (record.note ?? null)) {
-          updatedRecords.push({
-            recordId: existing.id,
-            status: record.status,
-            note: record.note,
-          });
-        }
-      } else {
-        newRecords.push(record);
-      }
+    setSaveError(null);
+    try {
+      await enqueue<AttendanceDayPayload>(ATTENDANCE_DAY, dayKey, {
+        classroomId: classroom.id,
+        date: selectedDate,
+        records,
+      });
+      setHasChanges(false);
+      setSubmitted(true);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : t('teacherAttendance.submitError'));
     }
-
-    // Execute updates for existing records
-    const updatePromises = updatedRecords.map((r) =>
-      updateRecord.mutateAsync({ recordId: r.recordId, status: r.status, note: r.note })
-    );
-
-    // Execute bulk-mark for new records
-    const bulkPromise =
-      newRecords.length > 0
-        ? bulkMark.mutateAsync({
-            classroom_id: classroom.id,
-            date: selectedDate,
-            records: newRecords,
-          })
-        : Promise.resolve();
-
-    await Promise.all([...updatePromises, bulkPromise]);
-
-    justSubmittedRef.current = true;
-    setSubmitSuccess(true);
-  }, [classroom, attendanceMap, selectedDate, existingRecords, bulkMark, updateRecord]);
+  }, [classroom, dayKey, attendanceMap, selectedDate, t]);
 
   // Count stats
   const stats = React.useMemo(() => {
@@ -165,8 +159,13 @@ export function TeacherAttendancePage() {
     return { total, marked, present, absent, late };
   }, [attendanceMap]);
 
-  const isLoading = classroomLoading || childrenLoading || recordsLoading;
-  const allMarked = stats.marked === stats.total && stats.total > 0;
+  const isFetching = (q: { isPending: boolean; fetchStatus: string }) => q.isPending && q.fetchStatus === 'fetching';
+  const isLoading = isFetching(classroomQuery) || isFetching(childrenQuery) || isFetching(recordsQuery);
+  // Offline and never loaded on this device.
+  const unavailableOffline =
+    (classroomQuery.isPending && classroomQuery.fetchStatus === 'paused') ||
+    (!!classroom && childrenQuery.isPending && childrenQuery.fetchStatus === 'paused');
+  const hasMarks = Array.from(attendanceMap.values()).some((r) => r.status !== null && r.markedAt);
 
   if (isLoading) {
     return (
@@ -175,6 +174,17 @@ export function TeacherAttendancePage() {
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-20 bg-subtle rounded-lg" />
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (unavailableOffline) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
+        <div className="text-center space-y-3 max-w-sm">
+          <CloudOff className="w-10 h-10 text-text-disabled mx-auto" />
+          <p className="text-body text-text-secondary">{t('teacherAttendance.offlineUnavailable')}</p>
         </div>
       </div>
     );
@@ -191,6 +201,12 @@ export function TeacherAttendancePage() {
       </div>
     );
   }
+
+  const childName = (id: string) => {
+    const child = children?.find((c) => c.id === id);
+    return child ? `${child.first_name} ${child.last_name}` : '';
+  };
+  const skipped = (notice?.data as AttendanceSyncNotice | undefined)?.skipped ?? [];
 
   return (
     <div className="flex flex-col">
@@ -240,6 +256,27 @@ export function TeacherAttendancePage() {
         </div>
       </header>
 
+      {/* Sent from the device, but some children had been changed meanwhile */}
+      {skipped.length > 0 && notice && (
+        <div className="px-4 pt-3 max-w-2xl mx-auto w-full">
+          <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-muted px-3 py-2.5 text-caption text-text-primary">
+            <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+            <p className="flex-1">
+              {t('teacherAttendance.conflict', { date: formatDate(selectedDate) })}{' '}
+              <span className="font-medium">{skipped.map(childName).filter(Boolean).join(', ')}</span>
+            </p>
+            <button
+              type="button"
+              onClick={() => dismissNotice(notice.id)}
+              className="shrink-0 text-text-secondary hover:text-text-primary"
+              aria-label={t('common.close')}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Quick action: Mark all present */}
       <div className="px-4 py-3 max-w-2xl mx-auto w-full">
         <button
@@ -279,9 +316,17 @@ export function TeacherAttendancePage() {
                       name={`${child.first_name} ${child.last_name}`}
                       size="md"
                     />
-                    <span className="text-body font-medium text-text-heading min-w-0 [overflow-wrap:anywhere]">
-                      {child.first_name} {child.last_name}
-                    </span>
+                    <div className="min-w-0">
+                      <p className="text-body font-medium text-text-heading [overflow-wrap:anywhere]">
+                        {child.first_name} {child.last_name}
+                      </p>
+                      {pendingChildIds.has(child.id) && (
+                        <p className="inline-flex items-center gap-1 text-micro font-medium text-warning">
+                          <CloudOff className="w-3 h-3" />
+                          {t('teacherAttendance.pendingBadge')}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Status buttons - large tap targets */}
@@ -349,8 +394,43 @@ export function TeacherAttendancePage() {
 
       {/* Fixed bottom submit button */}
       <div className="sticky bottom-[var(--tabbar-h)] lg:bottom-0 bg-card border-t border-border p-4 z-10">
-        <div className="max-w-2xl mx-auto">
-          {submitSuccess ? (
+        <div className="max-w-2xl mx-auto space-y-2">
+          {!hasChanges && pending?.error ? (
+            // The server refused what was saved on the device.
+            <div className="rounded-lg bg-danger-muted px-4 py-3 space-y-2">
+              <p className="text-caption text-danger">
+                {t('teacherAttendance.syncError', { error: pending.error })}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => retryAction(pending.id)}
+                  className="inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-lg bg-primary text-primary-foreground text-caption font-medium"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  {t('teacherAttendance.retry')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => discardAction(pending.id)}
+                  className="inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-lg border border-border bg-card text-caption font-medium text-text-secondary"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {t('teacherAttendance.discard')}
+                </button>
+              </div>
+            </div>
+          ) : !hasChanges && pending ? (
+            // Saved on the device, waiting for the connection (or being sent).
+            <div className="flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 rounded-lg bg-warning-muted text-text-primary text-caption font-medium text-center">
+              {syncing ? (
+                <RefreshCw className="w-5 h-5 shrink-0 text-warning animate-spin" />
+              ) : (
+                <CloudOff className="w-5 h-5 shrink-0 text-warning" />
+              )}
+              {syncing ? t('teacherAttendance.sending') : t('teacherAttendance.savedOffline')}
+            </div>
+          ) : !hasChanges && submitted ? (
             <div className="flex flex-wrap items-center justify-center text-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">
               <Check className="w-5 h-5" />
               {t('teacherAttendance.submitSuccess')}
@@ -358,23 +438,18 @@ export function TeacherAttendancePage() {
           ) : (
             <button
               type="button"
-              onClick={handleSubmit}
-              disabled={stats.marked === 0 || bulkMark.isPending || updateRecord.isPending}
+              onClick={() => void handleSubmit()}
+              disabled={!hasMarks}
               className={cn(
                 'w-full flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 font-medium text-body rounded-lg transition-all duration-150 active:scale-[0.98]',
-                allMarked
-                  ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
-                  : 'bg-primary text-primary-foreground hover:bg-primary-hover',
-                (stats.marked === 0 || bulkMark.isPending || updateRecord.isPending) &&
-                  'opacity-50 cursor-not-allowed active:scale-100'
+                'bg-primary text-primary-foreground hover:bg-primary-hover',
+                !hasMarks && 'opacity-50 cursor-not-allowed active:scale-100'
               )}
               aria-label={t('teacherAttendance.submit')}
             >
               <Send className="w-5 h-5" />
-              {bulkMark.isPending || updateRecord.isPending
-                ? t('teacherAttendance.submitting')
-                : t('teacherAttendance.submit')}
-              {stats.marked > 0 && !bulkMark.isPending && (
+              {t('teacherAttendance.submit')}
+              {stats.marked > 0 && (
                 <span className="text-caption opacity-80">
                   ({stats.marked}/{stats.total})
                 </span>
@@ -382,9 +457,9 @@ export function TeacherAttendancePage() {
             </button>
           )}
 
-          {(bulkMark.isError || updateRecord.isError) && (
-            <p className="text-caption text-[var(--color-danger)] text-center mt-2">
-              {bulkMark.error?.message || updateRecord.error?.message || t('teacherAttendance.submitError')}
+          {saveError && (
+            <p className="text-caption text-[var(--color-danger)] text-center">
+              {saveError}
             </p>
           )}
         </div>

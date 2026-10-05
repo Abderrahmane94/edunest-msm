@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { attendanceService, AttendanceServiceError } from './attendance.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
-import type { BulkMarkAttendanceInput, UpdateAttendanceInput, AttendanceReportQuery, ClassroomAttendanceQuery, ChildAttendanceQuery, ParentChildrenMonthQuery } from './attendance.schema';
+import type { BulkMarkAttendanceInput, SaveAttendanceDayInput, UpdateAttendanceInput, AttendanceReportQuery, ClassroomAttendanceQuery, ChildAttendanceQuery, ParentChildrenMonthQuery } from './attendance.schema';
 
 export const attendanceController = {
   /**
@@ -16,6 +16,27 @@ export const attendanceController = {
 
       const records = await attendanceService.bulkMark(schoolId, userId, userRole, input);
       res.status(201).json(successResponse(records));
+    } catch (error) {
+      if (error instanceof AttendanceServiceError) {
+        res.status(error.statusCode).json(errorResponse('ATTENDANCE_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * PUT /api/attendance/day — Save a classroom's attendance for a day
+   */
+  async saveDay(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const userId = req.user!.userId;
+      const userRole = req.user!.role;
+      const input = req.body as SaveAttendanceDayInput;
+
+      const result = await attendanceService.saveDay(schoolId, userId, userRole, input);
+      res.status(200).json(successResponse(result));
     } catch (error) {
       if (error instanceof AttendanceServiceError) {
         res.status(error.statusCode).json(errorResponse('ATTENDANCE_ERROR', error.message));

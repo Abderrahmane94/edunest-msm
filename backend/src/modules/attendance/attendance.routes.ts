@@ -4,6 +4,7 @@ import { requireTeacherOrAdmin, requireActiveRole, requireAdmin } from '../../mi
 import { validate, validateParams, validateQuery } from '../../middleware/validation.middleware';
 import {
   bulkMarkAttendanceSchema,
+  saveAttendanceDaySchema,
   updateAttendanceSchema,
   classroomIdParamSchema,
   childIdParamSchema,
@@ -22,6 +23,15 @@ router.post(
   requireTeacherOrAdmin,
   validate(bulkMarkAttendanceSchema),
   attendanceController.bulkMark,
+);
+
+// PUT /api/attendance/day — Save a classroom's attendance for a day, creating
+// or updating each child (safe to send again; used for offline attendance)
+router.put(
+  '/day',
+  requireTeacherOrAdmin,
+  validate(saveAttendanceDaySchema),
+  attendanceController.saveDay,
 );
 
 // GET /api/attendance/tracking — Get marking status for all classrooms (admin only)

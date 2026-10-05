@@ -379,6 +379,7 @@ model AttendanceRecord {
   markedByUserId String           @map("marked_by_user_id")
   note           String?
   createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @default(now()) @updatedAt @map("updated_at")
 
   child     Child     @relation(fields: [childId], references: [id])
   classroom Classroom @relation(fields: [classroomId], references: [id])

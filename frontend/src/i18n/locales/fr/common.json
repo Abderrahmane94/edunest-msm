@@ -44,6 +44,12 @@
     "userDeactivatedHint": "Contactez l'administrateur de votre établissement pour le réactiver.",
     "schoolInactive": "Ce compte école est désactivé.",
     "schoolInactiveHint": "Veuillez contacter l'équipe EduNest pour plus d'informations.",
+    "tooManyAttempts": "Trop de tentatives de connexion.",
+    "tooManyAttemptsHint": "Pour votre sécurité, patientez 15 minutes avant de réessayer.",
+    "serverUnreachable": "Impossible de joindre le serveur.",
+    "serverUnreachableHint": "Vérifiez votre connexion internet, puis réessayez dans un instant.",
+    "serverError": "Le serveur a rencontré une erreur.",
+    "serverErrorHint": "Ce n'est pas lié à votre mot de passe. Réessayez dans un instant.",
     "welcome": "Bienvenue 👋",
     "welcomeSub": "Connectez-vous à votre espace",
     "hero": {

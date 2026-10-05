@@ -45,7 +45,10 @@ function generateAccessToken(payload: TokenPayload): string {
 
 function generateRefreshToken(payload: TokenPayload): string {
   const expiresIn = `${REFRESH_TOKEN_EXPIRY_DAYS}d`;
-  return jwt.sign(payload, getRefreshSecret(), { expiresIn });
+  // A random jti makes every token unique. Without it, two logins (or
+  // refreshes) of the same user within the same second signed identical
+  // tokens, and storing the second hit the unique constraint (a 500).
+  return jwt.sign(payload, getRefreshSecret(), { expiresIn, jwtid: crypto.randomUUID() });
 }
 
 function verifyAccessToken(token: string): TokenPayload {

@@ -50,6 +50,12 @@
     "userDeactivatedHint": "تواصل مع مدير المؤسسة لإعادة تفعيله.",
     "schoolInactive": "حساب المدرسة غير نشط.",
     "schoolInactiveHint": "تواصل مع فريق EduNest للمزيد من المعلومات.",
+    "tooManyAttempts": "محاولات تسجيل دخول كثيرة جداً.",
+    "tooManyAttemptsHint": "لأمانك، انتظر 15 دقيقة قبل المحاولة مرة أخرى.",
+    "serverUnreachable": "تعذّر الاتصال بالخادم.",
+    "serverUnreachableHint": "تحقّق من اتصالك بالإنترنت، ثم أعد المحاولة بعد قليل.",
+    "serverError": "حدث خطأ في الخادم.",
+    "serverErrorHint": "هذا لا يتعلق بكلمة المرور. أعد المحاولة بعد قليل.",
     "welcome": "أهلاً بك 👋",
     "welcomeSub": "سجّل دخولك إلى فضائك",
     "hero": {

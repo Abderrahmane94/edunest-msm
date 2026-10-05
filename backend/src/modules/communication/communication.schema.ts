@@ -20,6 +20,15 @@ export const createDailyReportSchema = z.object({
 });
 
 /**
+ * Schema for saving a child's daily report for a day (create or update).
+ * `savedAt` is when the teacher saved it — for reports saved offline and sent
+ * later.
+ */
+export const saveDailyReportSchema = createDailyReportSchema.extend({
+  savedAt: z.string().datetime().optional(),
+});
+
+/**
  * Schema for updating an existing daily report.
  * All fields optional (partial update); at least one must be provided.
  */
@@ -60,6 +69,7 @@ export const dailyReportsQuerySchema = paginationSchema.extend({
 
 export type CreateDailyReportInput = z.infer<typeof createDailyReportSchema>;
 export type UpdateDailyReportInput = z.infer<typeof updateDailyReportSchema>;
+export type SaveDailyReportInput = z.infer<typeof saveDailyReportSchema>;
 export type DailyReportsQuery = z.infer<typeof dailyReportsQuerySchema>;
 
 /**

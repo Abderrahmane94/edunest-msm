@@ -11,6 +11,7 @@ import {
   messageIdParamSchema,
   messagesQuerySchema,
   createDailyReportSchema,
+  saveDailyReportSchema,
   updateDailyReportSchema,
   childIdParamSchema,
   dailyReportIdParamSchema,
@@ -98,6 +99,15 @@ router.post(
   requireTeacherOrAdmin,
   validate(createDailyReportSchema),
   communicationController.createDailyReport,
+);
+
+// PUT /api/communication/daily-reports/day — Save a child's report for a day,
+// creating or updating it (safe to send again; used for offline reports)
+router.put(
+  '/daily-reports/day',
+  requireTeacherOrAdmin,
+  validate(saveDailyReportSchema),
+  communicationController.saveDailyReport,
 );
 
 // GET /api/communication/daily-reports/my-children — Get reports for parent's linked children

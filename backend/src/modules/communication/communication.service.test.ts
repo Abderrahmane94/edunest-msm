@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { communicationService, CommunicationServiceError } from './communication.service';
 
 // Mock Prisma
@@ -45,6 +45,7 @@ vi.mock('../../lib/prisma', () => ({
     },
     dailyReportPhoto: {
       create: vi.fn(),
+      findFirst: vi.fn(),
     },
     classroom: {
       findFirst: vi.fn(),
@@ -158,6 +159,7 @@ const mockPrisma = prisma as unknown as {
   };
   dailyReportPhoto: {
     create: ReturnType<typeof vi.fn>;
+    findFirst: ReturnType<typeof vi.fn>;
   };
   classroom: {
     findFirst: ReturnType<typeof vi.fn>;
@@ -1822,6 +1824,128 @@ describe('CommunicationService', () => {
       const result = await communicationService.getReportsForParent(schoolId, parentUserId);
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('saveDailyReport', () => {
+    const input = {
+      childId,
+      date: '2026-10-05',
+      mood: 'happy' as const,
+      mealsEaten: 2,
+      napDurationMinutes: 60,
+      activities: 'Peinture',
+      generalNote: null,
+    };
+    const report = { id: 'report-1', childId } as never;
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("creates the day's report when there is none", async () => {
+      mockPrisma.dailyReport.findUnique.mockResolvedValue(null);
+      const create = vi.spyOn(communicationService, 'createDailyReport').mockResolvedValue(report);
+
+      const result = await communicationService.saveDailyReport(schoolId, teacherUserId, 'teacher', input);
+
+      expect(create).toHaveBeenCalledWith(schoolId, teacherUserId, 'teacher', input);
+      expect(result).toEqual({ report, skipped: false });
+    });
+
+    it('updates the report already there (a resend never duplicates it)', async () => {
+      mockPrisma.dailyReport.findUnique.mockResolvedValue({
+        id: 'report-1',
+        schoolId,
+        updatedAt: new Date('2026-10-05T08:00:00Z'),
+      });
+      const update = vi.spyOn(communicationService, 'updateDailyReport').mockResolvedValue(report);
+
+      const result = await communicationService.saveDailyReport(schoolId, teacherUserId, 'teacher', {
+        ...input,
+        savedAt: '2026-10-05T09:00:00Z',
+      });
+
+      expect(update).toHaveBeenCalledWith('report-1', schoolId, teacherUserId, 'teacher', {
+        mood: 'happy',
+        mealsEaten: 2,
+        napDurationMinutes: 60,
+        activities: 'Peinture',
+        generalNote: null,
+      });
+      expect(result.skipped).toBe(false);
+    });
+
+    it('keeps a report changed on the server after it was saved offline', async () => {
+      mockPrisma.dailyReport.findUnique.mockResolvedValue({
+        id: 'report-1',
+        schoolId,
+        updatedAt: new Date('2026-10-05T10:00:00Z'),
+      });
+      const update = vi.spyOn(communicationService, 'updateDailyReport');
+      vi.spyOn(communicationService, 'getDailyReportById').mockResolvedValue(report);
+
+      const result = await communicationService.saveDailyReport(schoolId, teacherUserId, 'teacher', {
+        ...input,
+        savedAt: '2026-10-05T09:00:00Z',
+      });
+
+      expect(update).not.toHaveBeenCalled();
+      expect(result).toEqual({ report, skipped: true });
+    });
+
+    it('updates instead when the report was created at the same moment', async () => {
+      mockPrisma.dailyReport.findUnique
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 'report-1', schoolId, updatedAt: new Date('2026-10-05T08:00:00Z') });
+      vi.spyOn(communicationService, 'createDailyReport').mockRejectedValue(
+        new CommunicationServiceError('A daily report already exists for this child on this date', 409),
+      );
+      const update = vi.spyOn(communicationService, 'updateDailyReport').mockResolvedValue(report);
+
+      const result = await communicationService.saveDailyReport(schoolId, teacherUserId, 'teacher', input);
+
+      expect(update).toHaveBeenCalledTimes(1);
+      expect(result.skipped).toBe(false);
+    });
+  });
+
+  describe('uploadDailyReportPhoto with device ids', () => {
+    it("doesn't upload or add again a photo already received", async () => {
+      mockPrisma.dailyReport.findFirst.mockResolvedValue({ id: 'report-1', schoolId, childId });
+      mockPrisma.classroomEnrollment.findFirst.mockResolvedValue({ id: 'enrollment-1' });
+      mockPrisma.dailyReportPhoto.findFirst.mockImplementation(({ where }) =>
+        Promise.resolve(
+          where.clientId === 'sent-1'
+            ? { id: 'photo-old', dailyReportId: 'report-1', cloudinaryPublicId: 'daily-reports/old', createdAt: new Date() }
+            : null,
+        ),
+      );
+      mockPrisma.dailyReportPhoto.create.mockResolvedValue({
+        id: 'photo-new',
+        dailyReportId: 'report-1',
+        cloudinaryPublicId: 'daily-reports/photo123',
+        createdAt: new Date(),
+      });
+      const files = [
+        { buffer: Buffer.from('a'), originalname: 'a.jpg' },
+        { buffer: Buffer.from('b'), originalname: 'b.jpg' },
+      ] as Express.Multer.File[];
+
+      const result = await communicationService.uploadDailyReportPhoto(
+        'report-1',
+        schoolId,
+        teacherUserId,
+        'teacher',
+        files,
+        ['sent-1', 'new-1'],
+      );
+
+      expect(result.map((p) => p.id)).toEqual(['photo-old', 'photo-new']);
+      expect(mockPrisma.dailyReportPhoto.create).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.dailyReportPhoto.create).toHaveBeenCalledWith({
+        data: { dailyReportId: 'report-1', cloudinaryPublicId: 'daily-reports/photo123', clientId: 'new-1' },
+      });
     });
   });
 });

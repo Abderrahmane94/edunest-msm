@@ -1,9 +1,9 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, type DailyReportPhoto } from '@prisma/client';
 import prisma from '../../lib/prisma';
 import { socketService } from '../../services/socket.service';
 import { notificationService } from '../../services/notification.service';
 import { cloudinaryService } from '../../services/cloudinary.service';
-import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, UpdateDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput } from './communication.schema';
+import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, UpdateDailyReportInput, SaveDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput } from './communication.schema';
 import type {
   ConversationWithParticipants,
   MessageResponse,
@@ -625,6 +625,55 @@ class CommunicationService {
   }
 
   /**
+   * Save a child's daily report for a day: creates it, or updates the one
+   * already there — so it can be sent again safely (reports saved offline are
+   * sent when the connection returns). A report changed on the server after
+   * `savedAt` is kept as it is (`skipped`).
+   */
+  async saveDailyReport(
+    schoolId: string,
+    userId: string,
+    userRole: string,
+    input: SaveDailyReportInput,
+    retried = false,
+  ): Promise<{ report: DailyReportResponse; skipped: boolean }> {
+    const { savedAt, ...fields } = input;
+    const existing = await prisma.dailyReport.findUnique({
+      where: { childId_date: { childId: fields.childId, date: new Date(fields.date + 'T00:00:00.000Z') } },
+    });
+
+    if (!existing) {
+      try {
+        // Checks the child and the teacher's classroom.
+        return { report: await this.createDailyReport(schoolId, userId, userRole, fields), skipped: false };
+      } catch (err) {
+        // Created at the same moment by another send: update it instead, once.
+        const conflict =
+          (err instanceof CommunicationServiceError && err.statusCode === 409) ||
+          (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002');
+        if (conflict && !retried) return this.saveDailyReport(schoolId, userId, userRole, input, true);
+        throw err;
+      }
+    }
+
+    if (existing.schoolId !== schoolId) {
+      throw new CommunicationServiceError('Child not found or does not belong to this school', 404);
+    }
+    if (savedAt && existing.updatedAt > new Date(savedAt)) {
+      return { report: await this.getDailyReportById(existing.id, schoolId, userId, userRole), skipped: true };
+    }
+    // Checks the teacher's classroom.
+    const report = await this.updateDailyReport(existing.id, schoolId, userId, userRole, {
+      mood: fields.mood,
+      mealsEaten: fields.mealsEaten,
+      napDurationMinutes: fields.napDurationMinutes ?? null,
+      activities: fields.activities ?? null,
+      generalNote: fields.generalNote ?? null,
+    });
+    return { report, skipped: false };
+  }
+
+  /**
    * Get daily reports for a child with pagination and optional date filter.
    * Teachers can only view reports for children in their classroom.
    * Parents can only view reports for their linked children.
@@ -912,6 +961,7 @@ class CommunicationService {
     userId: string,
     userRole: string,
     files: Express.Multer.File[],
+    clientIds: (string | undefined)[] = [],
   ): Promise<DailyReportPhotoResponse[]> {
     // Verify the report exists and belongs to this school
     const report = await prisma.dailyReport.findFirst({
@@ -939,21 +989,40 @@ class CommunicationService {
       }
     }
 
+    // A photo already received under the same device id isn't added again.
+    const findSent = (clientId: string | undefined): Promise<DailyReportPhoto | null> =>
+      clientId
+        ? prisma.dailyReportPhoto.findFirst({ where: { clientId, dailyReportId: reportId } })
+        : Promise.resolve(null);
+
     // Upload each photo to Cloudinary and create its photo record
     const photos = await Promise.all(
-      files.map(async (file) => {
-        const result = await cloudinaryService.uploadFile(file.buffer, {
-          folder: `schools/${schoolId}/daily-reports`,
-          resourceType: 'image',
-          accessMode: 'authenticated',
-        });
-
-        const photo = await prisma.dailyReportPhoto.create({
-          data: {
-            dailyReportId: reportId,
-            cloudinaryPublicId: result.publicId,
-          },
-        });
+      files.map(async (file, index) => {
+        const clientId = clientIds[index] || undefined;
+        let photo = await findSent(clientId);
+        if (!photo) {
+          const result = await cloudinaryService.uploadFile(file.buffer, {
+            folder: `schools/${schoolId}/daily-reports`,
+            resourceType: 'image',
+            accessMode: 'authenticated',
+          });
+          try {
+            photo = await prisma.dailyReportPhoto.create({
+              data: {
+                dailyReportId: reportId,
+                cloudinaryPublicId: result.publicId,
+                clientId: clientId ?? null,
+              },
+            });
+          } catch (err) {
+            // Sent twice at the same moment: keep the one already saved.
+            const sent = err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002'
+              ? await findSent(clientId)
+              : null;
+            if (!sent) throw err;
+            photo = sent;
+          }
+        }
 
         return {
           id: photo.id,

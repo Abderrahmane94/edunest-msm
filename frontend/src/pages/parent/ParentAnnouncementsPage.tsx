@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Megaphone, Calendar, MapPin, Users, Check, X } from 'lucide-react';
+import { Megaphone, Calendar, MapPin, Users, Check, X, CloudOff } from 'lucide-react';
+import { useOfflineQueue, retryAction, discardAction, type QueuedAction } from '@/lib/offlineQueue';
 import { cn } from '@/lib/utils';
 import { formatDate, formatDateTime } from '@/lib/formatters';
 import { StatusBadge } from '@/components/ui';
@@ -8,7 +9,9 @@ import {
   useAnnouncements,
   useEvents,
   useEventConsent,
-  useRespondConsent,
+  answerConsent,
+  consentAnswerKey,
+  type ConsentAnswer,
   type Announcement,
   type SchoolEvent,
 } from '@/hooks/useCommunication';
@@ -221,13 +224,14 @@ function EventCard({ event }: { event: SchoolEvent }) {
 }
 
 /**
- * The parent's consent for each of their children, answered right here (it
- * used to link to a page that doesn't exist).
+ * The parent's consent for each of their children, answered right here.
+ * Works offline: the answer is kept on the device and sent when the
+ * connection returns.
  */
 function EventConsent({ eventId }: { eventId: string }) {
   const { t } = useTranslation();
-  const { data: forms, isLoading } = useEventConsent(eventId);
-  const respond = useRespondConsent(eventId);
+  const { data: forms, isPending, fetchStatus } = useEventConsent(eventId);
+  const { actions, syncing } = useOfflineQueue();
 
   return (
     <div className="mt-2 pt-3 border-t border-border space-y-2">
@@ -235,9 +239,19 @@ function EventConsent({ eventId }: { eventId: string }) {
         <Users className="w-3 h-3 me-1 inline" />
         {t('communication.events.requiresConsent')}
       </StatusBadge>
-      {isLoading && <p className="text-caption text-text-secondary">{t('common.loading')}</p>}
+      {isPending && fetchStatus === 'fetching' && (
+        <p className="text-caption text-text-secondary">{t('common.loading')}</p>
+      )}
+      {/* Offline and never loaded on this device. */}
+      {isPending && fetchStatus === 'paused' && (
+        <p className="text-caption text-text-secondary">{t('parentAnnouncements.consentOffline')}</p>
+      )}
       {forms?.map((form) => {
-        const pending = respond.isPending && respond.variables?.childId === form.child_id;
+        const queued = actions.find((a) => a.key === consentAnswerKey(eventId, form.child_id)) as
+          | QueuedAction<ConsentAnswer>
+          | undefined;
+        // The answer waiting to be sent shows as the current one.
+        const status = queued?.payload.status ?? form.status;
         return (
           <div
             key={form.child_id}
@@ -248,43 +262,59 @@ function EventConsent({ eventId }: { eventId: string }) {
               <p
                 className={cn(
                   'text-caption',
-                  form.status === 'approved'
-                    ? 'text-success'
-                    : form.status === 'declined'
-                      ? 'text-danger'
-                      : 'text-text-secondary',
+                  status === 'approved' ? 'text-success' : status === 'declined' ? 'text-danger' : 'text-text-secondary',
                 )}
               >
-                {t(`parentAnnouncements.consentStatus.${form.status}`)}
+                {t(`parentAnnouncements.consentStatus.${status}`)}
               </p>
+              {queued && !queued.error && (
+                <p className="inline-flex items-center gap-1 text-micro text-warning">
+                  <CloudOff className="w-3 h-3" />
+                  {syncing ? t('messages.sending') : t('parentAnnouncements.consentWaiting')}
+                </p>
+              )}
+              {queued?.error && (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-micro">
+                  <span className="text-danger">{t('parentAnnouncements.consentRefused', { error: queued.error })}</span>
+                  <button
+                    type="button"
+                    onClick={() => retryAction(queued.id)}
+                    className="font-medium text-[var(--color-accent)] hover:underline"
+                  >
+                    {t('messages.retry')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => discardAction(queued.id)}
+                    className="font-medium text-text-secondary hover:underline"
+                  >
+                    {t('teacherAttendance.discard')}
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
-              {(['approved', 'declined'] as const).map((status) => (
+              {(['approved', 'declined'] as const).map((choice) => (
                 <button
-                  key={status}
+                  key={choice}
                   type="button"
-                  disabled={pending || form.status === status}
-                  onClick={() => respond.mutate({ childId: form.child_id, status })}
+                  disabled={status === choice}
+                  onClick={() => void answerConsent({ eventId, childId: form.child_id, status: choice })}
                   className={cn(
                     'inline-flex items-center gap-1 min-h-[36px] px-3 rounded-lg text-caption font-medium transition-colors duration-150 disabled:opacity-50',
-                    status === 'approved'
+                    choice === 'approved'
                       ? 'bg-success-muted text-success hover:bg-success hover:text-white'
                       : 'bg-danger-muted text-danger hover:bg-danger hover:text-white',
                   )}
                 >
-                  {status === 'approved' ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                  {t(`parentAnnouncements.consent.${status}`)}
+                  {choice === 'approved' ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                  {t(`parentAnnouncements.consent.${choice}`)}
                 </button>
               ))}
             </div>
           </div>
         );
       })}
-      {respond.isError && (
-        <p className="text-caption text-danger" role="alert">
-          {respond.error instanceof Error ? respond.error.message : t('common.error')}
-        </p>
-      )}
     </div>
   );
 }

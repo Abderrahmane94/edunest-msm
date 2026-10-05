@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
+import { queryClient as sharedQueryClient } from '@/lib/query-client';
+import { enqueue, registerQueueHandler, QueueRejectedError } from '@/lib/offlineQueue';
 
 export interface Announcement {
   id: string;
@@ -227,19 +229,34 @@ export function useEventConsent(eventId?: string) {
   });
 }
 
-/** Parent: approve or decline the consent form of one of their children for an event. */
-export function useRespondConsent(eventId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ childId, status }: { childId: string; status: 'approved' | 'declined' }) => {
-      const res = await apiClient.patch(`/communication/events/${eventId}/consent/${childId}`, { status });
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to respond');
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['event-consent', eventId] });
-    },
-  });
+/** A parent's answer to the consent form of one of their children for an event. */
+export interface ConsentAnswer {
+  eventId: string;
+  childId: string;
+  status: 'approved' | 'declined';
+}
+
+export const CONSENT_ANSWER = 'consent-answer';
+export const consentAnswerKey = (eventId: string, childId: string) => `consent:${eventId}:${childId}`;
+
+// Answers given offline are kept on the device and sent when the connection
+// returns. Sending the same answer again changes nothing, and the parent's
+// latest answer wins.
+registerQueueHandler<ConsentAnswer>(CONSENT_ANSWER, {
+  send: async ({ eventId, childId, status }) => {
+    const res = await apiClient.patch(`/communication/events/${eventId}/consent/${childId}`, { status });
+    if (!res.success) {
+      if (res.error?.code === 'UNAUTHORIZED') throw new Error('UNAUTHORIZED');
+      throw new QueueRejectedError(res.error?.message ?? 'Failed to respond');
+    }
+    // Show the saved answer before dropping the waiting one.
+    await sharedQueryClient.invalidateQueries({ queryKey: ['event-consent', eventId] });
+  },
+});
+
+/** Parent: approve or decline (sent right away, or kept until the connection returns). */
+export function answerConsent(answer: ConsentAnswer): Promise<void> {
+  return enqueue<ConsentAnswer>(CONSENT_ANSWER, consentAnswerKey(answer.eventId, answer.childId), answer);
 }
 
 // ─── Daily Reports (Teacher history + edit) ──────────────────────────────────

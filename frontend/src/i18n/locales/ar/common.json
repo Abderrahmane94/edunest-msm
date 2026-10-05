@@ -1422,7 +1422,10 @@
       "pending": "في انتظار ردك",
       "approved": "لقد وافقت",
       "declined": "لقد رفضت"
-    }
+    },
+    "consentWaiting": "تم حفظ الرد على الجهاز، سيُرسل عند عودة الاتصال",
+    "consentRefused": "رُفض الرد: {{error}}",
+    "consentOffline": "ستظهر الموافقات عند عودة الاتصال."
   },
   "parentInvoices": {
     "title": "الفواتير والموافقات",

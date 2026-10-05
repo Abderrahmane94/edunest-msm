@@ -1417,7 +1417,10 @@
       "pending": "En attente de votre réponse",
       "approved": "Vous avez autorisé",
       "declined": "Vous avez refusé"
-    }
+    },
+    "consentWaiting": "Réponse enregistrée sur l'appareil, envoi au retour de la connexion",
+    "consentRefused": "Réponse refusée : {{error}}",
+    "consentOffline": "Les autorisations s'afficheront avec la connexion."
   },
   "parentInvoices": {
     "title": "Factures et consentements",

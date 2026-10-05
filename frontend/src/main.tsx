@@ -6,10 +6,11 @@ import { registerServiceWorker } from './lib/push';
 // Listens for the browser's install prompt from startup.
 import './lib/install';
 import { startOfflineQueue } from './lib/offlineQueue';
-// Registers how attendance, daily reports and messages saved offline are sent.
+// Registers how attendance, daily reports, messages and consent answers saved offline are sent.
 import './hooks/useAttendance';
 import './hooks/useDailyReportSync';
 import './hooks/useMessageSync';
+import './hooks/useCommunication';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

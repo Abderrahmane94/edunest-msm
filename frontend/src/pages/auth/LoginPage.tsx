@@ -1,8 +1,24 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Mail, Lock, LogIn, GraduationCap, Users, ClipboardCheck, BarChart3, Languages, Eye, EyeOff, AlertCircle, ShieldOff, Building2, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, LogIn, GraduationCap, Users, ClipboardCheck, BarChart3, Languages, Eye, EyeOff, AlertCircle, ShieldOff, Building2, ArrowLeft, Clock, WifiOff } from 'lucide-react';
 import { useAuth, type LoginSchoolOption } from '@/contexts/AuthContext';
+import { ApiRequestError } from '@/lib/api-client';
+
+interface LoginError {
+  /** credentials: wrong email/password · user/school: deactivated · blocked: too many attempts · server: unreachable or failing */
+  type: 'credentials' | 'user' | 'school' | 'blocked' | 'server';
+  title: string;
+  hint?: string;
+}
+
+const ERROR_ICONS: Record<LoginError['type'], typeof AlertCircle> = {
+  credentials: AlertCircle,
+  user: ShieldOff,
+  school: ShieldOff,
+  blocked: Clock,
+  server: WifiOff,
+};
 
 function getDefaultRoute(role?: string): string {
   switch (role) {
@@ -14,6 +30,22 @@ function getDefaultRoute(role?: string): string {
   }
 }
 
+function LoginErrorBanner({ error }: { error: LoginError }) {
+  const Icon = ERROR_ICONS[error.type];
+  return (
+    <div
+      role="alert"
+      className="mb-5 p-4 rounded-xl bg-[var(--color-danger-muted)] border border-danger/20 flex items-start gap-3"
+    >
+      <Icon className="w-5 h-5 text-danger shrink-0 mt-0.5" />
+      <div>
+        <p className="text-body font-medium text-danger">{error.title}</p>
+        {error.hint && <p className="text-caption text-danger/80 mt-0.5">{error.hint}</p>}
+      </div>
+    </div>
+  );
+}
+
 export function LoginPage() {
   const { login, user } = useAuth();
   const navigate = useNavigate();
@@ -23,7 +55,7 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<{ type: 'credentials' | 'user' | 'school'; title: string; hint?: string } | null>(null);
+  const [error, setError] = useState<LoginError | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [schoolChoices, setSchoolChoices] = useState<LoginSchoolOption[] | null>(null);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
@@ -49,15 +81,39 @@ export function LoginPage() {
         setIsSubmitting(false);
       }
     } catch (err) {
-      const msg = (err instanceof Error ? err.message : '').toLowerCase();
-      if (msg.includes('deactivated')) {
-        setError({ type: 'user', title: t('auth.userDeactivated'), hint: t('auth.userDeactivatedHint') });
-      } else if (msg.includes('inactive')) {
-        setError({ type: 'school', title: t('auth.schoolInactive'), hint: t('auth.schoolInactiveHint') });
-      } else {
-        setError({ type: 'credentials', title: t('auth.loginError') });
-      }
+      setError(loginErrorFor(err));
       setIsSubmitting(false);
+    }
+  }
+
+  /**
+   * Names the actual reason a login failed. Only a rejected email/password
+   * says "incorrect credentials" — a lock-out, a server error or a lost
+   * connection each get their own message, so users don't keep retrying a
+   * correct password.
+   */
+  function loginErrorFor(err: unknown): LoginError {
+    const code = err instanceof ApiRequestError ? err.code : 'NETWORK_ERROR';
+    const msg = (err instanceof Error ? err.message : '').toLowerCase();
+    switch (code) {
+      case 'AUTH_ERROR':
+        // The auth service uses one code for every rejection; its message
+        // tells them apart.
+        if (msg.includes('deactivated')) {
+          return { type: 'user', title: t('auth.userDeactivated'), hint: t('auth.userDeactivatedHint') };
+        }
+        if (msg.includes('inactive')) {
+          return { type: 'school', title: t('auth.schoolInactive'), hint: t('auth.schoolInactiveHint') };
+        }
+        return { type: 'credentials', title: t('auth.loginError') };
+      case 'VALIDATION_ERROR':
+        return { type: 'credentials', title: t('auth.loginError') };
+      case 'RATE_LIMIT_EXCEEDED':
+        return { type: 'blocked', title: t('auth.tooManyAttempts'), hint: t('auth.tooManyAttemptsHint') };
+      case 'NETWORK_ERROR':
+        return { type: 'server', title: t('auth.serverUnreachable'), hint: t('auth.serverUnreachableHint') };
+      default:
+        return { type: 'server', title: t('auth.serverError'), hint: t('auth.serverErrorHint') };
     }
   }
 
@@ -68,8 +124,8 @@ export function LoginPage() {
     setIsSubmitting(true);
     try {
       await login(email, password, selectedSchoolId);
-    } catch {
-      setError({ type: 'credentials', title: t('auth.loginError') });
+    } catch (err) {
+      setError(loginErrorFor(err));
       setIsSubmitting(false);
     }
   }
@@ -168,12 +224,7 @@ export function LoginPage() {
                 <p className="text-body text-text-secondary mt-1">{t('auth.schoolSelect.subtitle')}</p>
               </div>
 
-              {error && (
-                <div className="mb-5 p-4 rounded-xl bg-[var(--color-danger-muted)] border border-danger/20 flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
-                  <p className="text-body font-medium text-danger">{error.title}</p>
-                </div>
-              )}
+              {error && <LoginErrorBanner error={error} />}
 
               <form onSubmit={handleSchoolChoiceSubmit} className="space-y-5">
                 <div className="space-y-2">
@@ -221,18 +272,7 @@ export function LoginPage() {
             <p className="text-body text-text-secondary mt-1">{t('auth.welcomeSub')}</p>
           </div>
 
-          {error && (
-            <div className="mb-5 p-4 rounded-xl bg-[var(--color-danger-muted)] border border-danger/20 flex items-start gap-3">
-              {error.type === 'credentials'
-                ? <AlertCircle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
-                : <ShieldOff className="w-5 h-5 text-danger shrink-0 mt-0.5" />
-              }
-              <div>
-                <p className="text-body font-medium text-danger">{error.title}</p>
-                {error.hint && <p className="text-caption text-danger/80 mt-0.5">{error.hint}</p>}
-              </div>
-            </div>
-          )}
+          {error && <LoginErrorBanner error={error} />}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>

@@ -74,17 +74,24 @@ const rateLimiter = rateLimit({
 
 // Stricter limiter for credential-guessing-prone endpoints (login, password reset).
 // Relaxed under NODE_ENV=test so E2E suites can log in repeatedly without tripping it.
-const authRateLimiter = rateLimit({
+const authRateLimitOptions = {
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: process.env.NODE_ENV === 'test' ? 1000 : 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: errorResponse('RATE_LIMIT_EXCEEDED', 'Too many attempts, please try again later'),
-});
+};
+
+// Login counts failed attempts only: a school's staff and parents often share
+// one IP, and counting successful logins locked them all out after 10
+// sign-ins. (Password reset can't do the same — it answers success for every
+// email, so it would never count anything.)
+const loginRateLimiter = rateLimit({ ...authRateLimitOptions, skipSuccessfulRequests: true });
+const passwordResetRateLimiter = rateLimit(authRateLimitOptions);
 
 // Global middleware stack for /api routes (applied in order)
-app.use('/api/auth/login', authRateLimiter);
-app.use('/api/auth/password-reset', authRateLimiter);
+app.use('/api/auth/login', loginRateLimiter);
+app.use('/api/auth/password-reset', passwordResetRateLimiter);
 app.use('/api', rateLimiter);
 app.use('/api', authMiddleware);
 app.use('/api', tenancyMiddleware);

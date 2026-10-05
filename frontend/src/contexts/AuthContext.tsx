@@ -1,5 +1,5 @@
 import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from 'react';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, ApiRequestError } from '@/lib/api-client';
 import { clearQueryCache } from '@/lib/query-client';
 
 interface User {
@@ -110,28 +110,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string, schoolId?: string): Promise<LoginResult> => {
-    const response = await apiClient.post<{
-      choiceRequired?: true;
-      schools?: LoginSchoolOption[];
-      accessToken: string;
-      refreshToken: string;
-      user: {
-        id: string;
-        email: string;
-        firstName: string;
-        lastName: string;
-        role: User['role'];
-        schoolId: string | null;
-        preferredLanguage?: User['preferredLanguage'];
-      };
-    }>(
-      '/auth/login',
-      { email, password, schoolId },
-      { skipAuth: true } as RequestInit,
-    );
+    // Failures throw ApiRequestError with the API code, so the login page can
+    // tell a wrong password from a lock-out, a server error or no connection.
+    let response;
+    try {
+      response = await apiClient.post<{
+        choiceRequired?: true;
+        schools?: LoginSchoolOption[];
+        accessToken: string;
+        refreshToken: string;
+        user: {
+          id: string;
+          email: string;
+          firstName: string;
+          lastName: string;
+          role: User['role'];
+          schoolId: string | null;
+          preferredLanguage?: User['preferredLanguage'];
+          mustChangePassword?: boolean;
+        };
+      }>(
+        '/auth/login',
+        { email, password, schoolId },
+        { skipAuth: true } as RequestInit,
+      );
+    } catch {
+      // fetch failed (offline, server down) or the reply wasn't JSON (e.g. a
+      // proxy error page while the server restarts).
+      throw new ApiRequestError({ code: 'NETWORK_ERROR', message: 'Server unreachable' });
+    }
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Login failed');
+      throw new ApiRequestError(response.error ?? { code: 'UNKNOWN_ERROR', message: 'Login failed' });
     }
 
     if (response.data.choiceRequired) {
@@ -151,7 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: userData.role,
       schoolId: userData.schoolId,
       preferredLanguage: userData.preferredLanguage || 'fr',
-      mustChangePassword: (userData as any).mustChangePassword ?? false,
+      mustChangePassword: userData.mustChangePassword ?? false,
     };
     localStorage.setItem('user', JSON.stringify(user));
 

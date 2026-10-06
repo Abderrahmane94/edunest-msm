@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiClient, ApiRequestError } from '@/lib/api-client';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -21,6 +21,8 @@ export interface LateDashboardEntry {
   totalPaid: string;
   outstanding: string;
   status: LatePeriodStatus;
+  /** When the parents were last sent an overdue notice for this period. */
+  lastReminderAt: string | null;
 }
 
 // ─── Hook ──────────────────────────────────────────────────────────────────────
@@ -54,6 +56,28 @@ export function useLateDashboard(branchId: string, statusFilter?: LatePeriodStat
   });
 }
 
+/**
+ * Remind the parents of a late period (push, email, SMS to the primary
+ * parent). Fails with ApiRequestError: ALREADY_REMINDED (once a day),
+ * NO_PARENTS or NOT_LATE.
+ */
+export function useSendLateReminder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (periodId: string) => {
+      const res = await apiClient.post<{ sentTo: number; sentAt: string }>(`/payments/periods/${periodId}/remind`);
+      if (!res.success || !res.data) {
+        throw new ApiRequestError(res.error ?? { code: 'UNKNOWN_ERROR', message: 'Failed to send the reminder' });
+      }
+      return res.data;
+    },
+    onSettled: () => {
+      // Refresh "last reminded" — also after ALREADY_REMINDED, which means the list was stale.
+      qc.invalidateQueries({ queryKey: ['late-dashboard'] });
+    },
+  });
+}
+
 // ─── Mapper ────────────────────────────────────────────────────────────────────
 
 function mapLateDashboardEntry(raw: Record<string, unknown>): LateDashboardEntry {
@@ -73,5 +97,6 @@ function mapLateDashboardEntry(raw: Record<string, unknown>): LateDashboardEntry
     totalPaid: String(raw.totalPaid ?? raw.total_paid ?? '0'),
     outstanding: String(raw.outstanding ?? '0'),
     status: (raw.status as LatePeriodStatus) ?? 'late',
+    lastReminderAt: (raw.lastReminderAt ?? null) as string | null,
   };
 }

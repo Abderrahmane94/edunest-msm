@@ -28,6 +28,9 @@ router.get('/children/:childId/balance', requireAdmin, paymentsController.getChi
 // PATCH /periods/:id/cancel — Cancel a billing period (staff only)
 router.patch('/periods/:id/cancel', requireAdmin, paymentsController.cancelPeriod);
 
+// POST /periods/:id/remind — Remind the parents of a late period (staff only)
+router.post('/periods/:id/remind', requireAdmin, paymentsController.remindPeriod);
+
 // GET /branches/:branchId/late — Late payments dashboard (staff only)
 router.get('/branches/:branchId/late', requireAdmin, paymentsController.getLateDashboard);
 

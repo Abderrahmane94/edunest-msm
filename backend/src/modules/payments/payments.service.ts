@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, Language } from '@prisma/client';
 import prisma from '../../lib/prisma';
 import { generateReceiptNumber } from './receipt-number.util';
 import { derivePeriodStatus } from './billing-period.service';
@@ -819,6 +819,8 @@ class PaymentService {
       outstanding: Prisma.Decimal;
       status: 'late' | 'late_partial';
       periodId: string;
+      /** When the parents were last sent an overdue notice for this period. */
+      lastReminderAt: Date | null;
     }> = [];
 
     for (const period of billingPeriods) {
@@ -868,7 +870,25 @@ class PaymentService {
         outstanding: derived.outstanding,
         status: derived.status as 'late' | 'late_partial',
         periodId: period.id,
+        lastReminderAt: null,
       });
+    }
+
+    // Last overdue notice per period (manual reminders and automatic ones),
+    // so staff can see who was already chased before sending another.
+    if (lateEntries.length > 0) {
+      const reminders = await prisma.notification.groupBy({
+        by: ['referenceId'],
+        where: {
+          type: 'payment_overdue',
+          referenceId: { in: lateEntries.map((e) => e.periodId) },
+        },
+        _max: { createdAt: true },
+      });
+      const lastByPeriod = new Map(reminders.map((r) => [r.referenceId, r._max.createdAt]));
+      for (const entry of lateEntries) {
+        entry.lastReminderAt = lastByPeriod.get(entry.periodId) ?? null;
+      }
     }
 
     // Sort: grace_end_date ASC, then child name, then period ID (Req 14.9)
@@ -884,6 +904,118 @@ class PaymentService {
 
     return lateEntries;
   }
+
+  /**
+   * Remind a late period's parents: push and email to every linked parent,
+   * plus SMS to the primary one, naming the fee, the period, what's left to
+   * pay and how late it is, in each parent's language.
+   *
+   * At most one overdue notice per period per day (automatic ones included),
+   * so a double click can't send the same SMS twice.
+   */
+  async sendLateReminder(periodId: string): Promise<{ sentTo: number; sentAt: Date }> {
+    const period = await prisma.billingPeriod.findUnique({
+      where: { id: periodId },
+      include: {
+        enrollment: {
+          select: {
+            child: {
+              select: {
+                firstName: true,
+                lastName: true,
+                parentLinks: {
+                  select: { isPrimary: true, parent: { select: { id: true, preferredLanguage: true } } },
+                },
+              },
+            },
+          },
+        },
+        branchFee: { select: { name: true } },
+        paymentAllocations: { select: { amount: true } },
+      },
+    });
+    if (!period) {
+      throw new PaymentServiceError('Billing period not found', 404, 'NOT_FOUND');
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const totalPaid = period.paymentAllocations.reduce(
+      (sum, alloc) => sum.add(alloc.amount),
+      new Prisma.Decimal('0'),
+    );
+    const derived = derivePeriodStatus(period.amountDue, totalPaid, period.graceEndDate, today, period.cancelledAt);
+    if (derived.status !== 'late' && derived.status !== 'late_partial') {
+      throw new PaymentServiceError('This period is not late', 409, 'NOT_LATE');
+    }
+
+    const alreadyToday = await prisma.notification.findFirst({
+      where: { type: 'payment_overdue', referenceId: periodId, createdAt: { gte: today } },
+      select: { id: true },
+    });
+    if (alreadyToday) {
+      throw new PaymentServiceError('The parents were already reminded today', 409, 'ALREADY_REMINDED');
+    }
+
+    const child = period.enrollment.child;
+    if (child.parentLinks.length === 0) {
+      throw new PaymentServiceError('No parent is linked to this child', 422, 'NO_PARENTS');
+    }
+
+    const graceEnd = new Date(period.graceEndDate);
+    graceEnd.setHours(0, 0, 0, 0);
+    const start = new Date(period.periodStart);
+    const details = {
+      childName: `${child.firstName} ${child.lastName}`,
+      feeName: period.isRegistrationPeriod ? null : (period.branchFee?.name ?? null),
+      periodLabel: `${start.getMonth() + 1}/${start.getFullYear()}`,
+      outstanding: derived.outstanding.toFixed(2),
+      daysLate: Math.max(0, Math.floor((today.getTime() - graceEnd.getTime()) / 86_400_000)),
+    };
+
+    // Loaded here so importing the payments service doesn't pull in the
+    // push/email/SMS clients.
+    const { notificationService } = await import('../../services/notification.service');
+    await Promise.all(
+      child.parentLinks.map(({ isPrimary, parent }) =>
+        notificationService.notify({
+          userId: parent.id,
+          type: 'payment_overdue',
+          ...lateReminderMessage(parent.preferredLanguage, details),
+          referenceId: periodId,
+          referenceType: 'billing_period',
+          channels: isPrimary ? ['push', 'email', 'sms'] : ['push', 'email'],
+        }),
+      ),
+    );
+
+    return { sentTo: child.parentLinks.length, sentAt: new Date() };
+  }
+}
+
+/** A late-payment reminder in the parent's language. */
+export function lateReminderMessage(
+  language: Language,
+  d: { childName: string; feeName: string | null; periodLabel: string; outstanding: string; daysLate: number },
+): { title: string; body: string } {
+  if (language === 'ar') {
+    const fee = d.feeName ?? 'رسوم التسجيل';
+    return {
+      title: 'تذكير بالدفع',
+      body:
+        `دفع «${fee}» (${d.periodLabel}) الخاص بـ ${d.childName} متأخر منذ ${d.daysLate} يوم. ` +
+        `المبلغ المتبقي: ${d.outstanding} د.ج. يرجى التسوية لدى المدرسة.`,
+    };
+  }
+  const fee = d.feeName ?? "frais d'inscription";
+  return {
+    title: 'Rappel de paiement',
+    body:
+      `Le paiement « ${fee} » (${d.periodLabel}) de ${d.childName} est en retard de ` +
+      `${d.daysLate} jour${d.daysLate > 1 ? 's' : ''}. Reste à payer : ${d.outstanding} DA. ` +
+      `Merci de régulariser auprès de l'école.`,
+  };
 }
 
 export const paymentService = new PaymentService();

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, BellRing, Wallet, X } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
 import { Button, DataTable, Input } from '@/components/ui';
 import type { Column } from '@/components/ui';
@@ -11,6 +11,8 @@ import {
   type LateDashboardEntry,
   type LatePeriodStatus,
 } from '@/hooks/useLateDashboard';
+import { LateReminderDialog } from './LateReminderDialog';
+import { ChildAccountDialog } from './ChildAccountDialog';
 
 // ─── Status Badge ──────────────────────────────────────────────────────────────
 
@@ -55,6 +57,21 @@ export function LateDashboardPage() {
   const [classroomFilter, setClassroomFilter] = React.useState('');
   const [feeFilter, setFeeFilter] = React.useState('');
   const [minDays, setMinDays] = React.useState('');
+
+  // ─── Row actions ───
+  const [remindEntry, setRemindEntry] = React.useState<LateDashboardEntry | null>(null);
+  const [accountChild, setAccountChild] = React.useState<{ id: string; name: string } | null>(null);
+
+  const feeLabel = (entry: LateDashboardEntry) =>
+    entry.isRegistrationPeriod ? t('payments.late.registrationFee') : (entry.feeName ?? '—');
+
+  /** "Reminded today" / "Reminded 3 days ago". */
+  function remindedLabel(lastReminderAt: string): string {
+    const days = daysLate(lastReminderAt);
+    return days === 0
+      ? t('payments.late.reminder.remindedToday')
+      : t('payments.late.reminder.remindedDaysAgo', { count: days });
+  }
 
   const classroomOptions = React.useMemo(() => {
     const byId = new Map<string, string>();
@@ -120,9 +137,7 @@ export function LateDashboardPage() {
       key: 'fee',
       header: t('payments.late.columns.fee'),
       render: (entry) => (
-        <span className="text-body text-foreground">
-          {entry.isRegistrationPeriod ? t('payments.late.registrationFee') : (entry.feeName ?? '—')}
-        </span>
+        <span className="text-body text-foreground">{feeLabel(entry)}</span>
       ),
     },
     {
@@ -188,14 +203,49 @@ export function LateDashboardPage() {
       key: 'status',
       header: t('payments.late.columns.status'),
       render: (entry) => (
-        <StatusBadge
-          status={entry.status}
-          label={
-            entry.status === 'late'
-              ? t('payments.late.statusLate')
-              : t('payments.late.statusLatePartial')
-          }
-        />
+        <div>
+          <StatusBadge
+            status={entry.status}
+            label={
+              entry.status === 'late'
+                ? t('payments.late.statusLate')
+                : t('payments.late.statusLatePartial')
+            }
+          />
+          {entry.lastReminderAt && (
+            <p className="text-micro text-text-secondary mt-1 whitespace-nowrap">
+              {remindedLabel(entry.lastReminderAt)}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      render: (entry) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            title={t('payments.late.reminder.send')}
+            aria-label={t('payments.late.reminder.send')}
+            onClick={() => setRemindEntry(entry)}
+          >
+            <BellRing className="w-4 h-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            title={t('payments.late.account.open')}
+            aria-label={t('payments.late.account.open')}
+            onClick={() => setAccountChild({ id: entry.childId, name: entry.childName })}
+          >
+            <Wallet className="w-4 h-4" />
+          </Button>
+        </div>
       ),
     },
   ];
@@ -295,6 +345,21 @@ export function LateDashboardPage() {
           data={entries}
           keyExtractor={(entry) => entry.id}
           emptyMessage={t('payments.late.empty')}
+        />
+      )}
+
+      <LateReminderDialog
+        entry={remindEntry}
+        feeLabel={remindEntry ? feeLabel(remindEntry) : ''}
+        daysLate={remindEntry ? daysLate(remindEntry.graceEndDate) : 0}
+        onOpenChange={(open) => !open && setRemindEntry(null)}
+      />
+      {accountChild && (
+        <ChildAccountDialog
+          childId={accountChild.id}
+          childName={accountChild.name}
+          open
+          onOpenChange={(open) => !open && setAccountChild(null)}
         />
       )}
     </div>

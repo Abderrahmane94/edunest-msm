@@ -2061,6 +2061,34 @@
     },
     "late": {
       "registrationFee": "Frais d'inscription",
+      "reminder": {
+        "title": "Envoyer un rappel de paiement",
+        "description": "Les parents reçoivent le montant restant, la période et le nombre de jours de retard.",
+        "channels": "Notification et e-mail à chaque parent, SMS au parent principal.",
+        "lastSent": "Dernier rappel envoyé le {{date}}.",
+        "send": "Envoyer un rappel",
+        "sending": "Envoi…",
+        "sent_one": "Rappel envoyé à {{count}} parent.",
+        "sent_other": "Rappel envoyé à {{count}} parents.",
+        "remindedToday": "Relancé aujourd'hui",
+        "remindedDaysAgo_one": "Relancé il y a {{count}} jour",
+        "remindedDaysAgo_other": "Relancé il y a {{count}} jours",
+        "errors": {
+          "alreadyReminded": "Les parents ont déjà été relancés aujourd'hui pour cette période. Réessayez demain.",
+          "noParents": "Aucun parent n'est lié à cet enfant : ajoutez-en un depuis sa fiche.",
+          "notLate": "Cette période n'est plus en retard.",
+          "failed": "Le rappel n'a pas pu être envoyé. Réessayez dans un instant."
+        }
+      },
+      "account": {
+        "open": "Voir le compte de l'enfant",
+        "title": "Compte de {{name}}",
+        "description": "Toutes les échéances de l'enfant, payées, en retard et à venir.",
+        "parents": "Parents à contacter",
+        "primary": "Principal",
+        "noParents": "Aucun parent lié à cet enfant.",
+        "openChild": "Ouvrir la fiche de l'enfant"
+      },
       "daysLate_one": "{{count}} jour de retard",
       "daysLate_other": "{{count}} jours de retard",
       "filters": {

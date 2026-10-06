@@ -553,6 +553,44 @@ export const paymentsController = {
   },
 
   /**
+   * POST /api/payments/periods/:id/remind
+   * Remind the parents of a late billing period (push, email, SMS to the
+   * primary parent). Staff only; at most once per period per day.
+   */
+  async remindPeriod(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user || !STAFF_ROLES.includes(req.user.role as (typeof STAFF_ROLES)[number])) {
+        res.status(403).json(
+          errorResponse('FORBIDDEN', 'This operation is restricted to Staff users'),
+        );
+        return;
+      }
+
+      const period = await prisma.billingPeriod.findUnique({
+        where: { id: req.params.id },
+        select: { enrollment: { select: { branchId: true } } },
+      });
+      if (!period) {
+        res.status(404).json(errorResponse('NOT_FOUND', 'Billing period not found'));
+        return;
+      }
+
+      // Validate branch access (tenant scoping)
+      const validatedBranch = await validateBranchAccess(period.enrollment.branchId, req, res);
+      if (!validatedBranch) return;
+
+      const result = await paymentService.sendLateReminder(req.params.id);
+      res.status(200).json(successResponse(result));
+    } catch (error) {
+      if (error instanceof PaymentServiceError) {
+        res.status(error.statusCode).json(errorResponse(error.code, error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
    * GET /api/payments/records/:id/receipt
    * Generate a receipt for a payment record.
    * Staff or authorized Parent (parent must own the child associated with the payment).

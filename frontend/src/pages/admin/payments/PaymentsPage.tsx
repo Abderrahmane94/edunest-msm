@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Receipt, Plus, Trash2, CheckCircle, AlertCircle, Minus, Eye, Filter, X } from 'lucide-react';
-import { formatDate, formatDZD, formatMonthYear } from '@/lib/formatters';
+import { Receipt, Plus, Trash2, CheckCircle, AlertCircle, Minus, Eye, Filter, X, WifiOff, CloudUpload } from 'lucide-react';
+import { formatDate, formatDateTime, formatDZD, formatMonthYear } from '@/lib/formatters';
 import {
   Button,
   CreateButton,
@@ -21,16 +21,31 @@ import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import { useBranchFees } from '@/hooks/useBranchFees';
 import {
   useChildBillingPeriods,
-  useRecordPayment,
   usePaymentRecords,
+  type BillingPeriod,
   type PaymentChannel,
-  type PaymentAllocationInput,
   type PaymentRecord,
   type PaymentRecordFilters,
   type RecordPaymentResult,
 } from '@/hooks/usePayments';
+import {
+  useOfflinePaymentsSnapshot,
+  useQueuedPayments,
+  pendingAmountsByPeriod,
+  provisionalRef,
+  sendPayment,
+  savePaymentOffline,
+  paymentRefusalText,
+  type OfflinePaymentPayload,
+} from '@/hooks/useOfflinePayments';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOnline } from '@/lib/online';
+import { ApiRequestError } from '@/lib/api-client';
+import { discardAction, replaceAction, type QueuedAction } from '@/lib/offlineQueue';
 import { RecordCorrectionDialog } from './RecordCorrectionDialog';
 import { ReceiptView } from './ReceiptView';
+import { ProvisionalReceiptDialog } from './ProvisionalReceiptDialog';
+import { OfflinePaymentsPanel } from './OfflinePaymentsPanel';
 import { suggestAllocations as suggestAllocationsUtil } from '@/lib/paymentAllocation';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -68,18 +83,34 @@ function createEmptyAllocation(): AllocationRow {
 
 // ─── Record Payment Dialog ─────────────────────────────────────────────────────
 
+/**
+ * Records a payment. Offline (or when the server can't be reached) the
+ * payment is kept on the device and sent later, with a provisional receipt;
+ * échéances then come from the copy kept on the device. `fixAction` opens a
+ * payment kept on the device to allocate it or correct it.
+ */
 function RecordPaymentDialog({
   open,
   onOpenChange,
   branchId,
+  fixAction = null,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   branchId: string;
+  fixAction?: QueuedAction<OfflinePaymentPayload> | null;
 }) {
   const { t, i18n } = useTranslation();
-  const recordPayment = useRecordPayment(branchId);
+  const { user } = useAuth();
+  const online = useOnline();
   const { data: childrenData } = useChildren({ pageSize: 100 });
+  const snapshot = useOfflinePaymentsSnapshot(branchId);
+  const { queued } = useQueuedPayments();
+  const [clientId, setClientId] = React.useState<string>(() => crypto.randomUUID());
+  const [saving, setSaving] = React.useState(false);
+  // Saved on the device (not yet on the server): shown with its provisional receipt.
+  const [savedOffline, setSavedOffline] = React.useState<OfflinePaymentPayload | null>(null);
+  const [provisionalOpen, setProvisionalOpen] = React.useState(false);
 
   const [childId, setChildId] = React.useState('');
   const [totalAmount, setTotalAmount] = React.useState('');
@@ -91,17 +122,54 @@ function RecordPaymentDialog({
   ]);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [result, setResult] = React.useState<RecordPaymentResult | null>(null);
+  const prevTotalRef = React.useRef('');
 
-  // Fetch billing periods for the selected child
-  const { data: billingPeriods } = useChildBillingPeriods(childId);
+  // A payment kept on the device, opened to allocate or correct it.
+  React.useEffect(() => {
+    if (!open || !fixAction) return;
+    const p = fixAction.payload;
+    setClientId(p.clientId);
+    setChildId(p.childId);
+    setTotalAmount(String(p.totalAmount));
+    setChannel(p.channel);
+    setValueDate(p.valueDate);
+    setReferenceNote(p.referenceNote ?? '');
+    setAllocations(
+      p.allocations.length > 0
+        ? p.allocations.map((a) => ({ id: crypto.randomUUID(), billingPeriodId: a.billingPeriodId, amount: String(a.amount) }))
+        : [createEmptyAllocation()],
+    );
+  }, [open, fixAction]);
+
+  // Billing periods for the selected child: from the server when online,
+  // from the copy kept on the device when offline.
+  const { data: livePeriods } = useChildBillingPeriods(childId);
+  const snapshotChild = snapshot.data?.children.find((c) => c.id === childId);
+  const billingPeriods: BillingPeriod[] | undefined = online
+    ? (livePeriods ?? snapshotChild?.periods)
+    : (snapshotChild?.periods ?? livePeriods);
+  // Offline with nothing kept for this child: the payment is saved "to allocate".
+  const periodsUnavailable = !online && !!childId && !billingPeriods;
+
+  // Amounts taken by payments still on the device: the server doesn't know them yet.
+  const pendingAmounts = React.useMemo(
+    () => pendingAmountsByPeriod(queued, fixAction?.id),
+    [queued, fixAction?.id],
+  );
 
   // Filter to non-cancelled, non-paid periods that still have outstanding amount
   const availablePeriods = React.useMemo(() => {
     if (!billingPeriods) return [];
-    return billingPeriods.filter(
-      (p) => !p.cancelledAt && p.status !== 'paid'
-    );
-  }, [billingPeriods]);
+    return billingPeriods
+      .filter((p) => !p.cancelledAt && p.status !== 'paid')
+      .map((p) => {
+        const taken = pendingAmounts.get(p.id);
+        if (!taken) return p;
+        const left = Math.round((Number(p.outstanding ?? p.amountDue) - taken) * 100) / 100;
+        return { ...p, outstanding: String(left) };
+      })
+      .filter((p) => Number(p.outstanding ?? p.amountDue) > 0.005);
+  }, [billingPeriods, pendingAmounts]);
 
   /**
    * Sort available periods by priority:
@@ -145,7 +213,7 @@ function RecordPaymentDialog({
     Math.abs(allocationSum - totalAmountNum) < 0.005;
 
   // Auto-suggest allocations when total amount changes and a child is selected
-  const prevTotalRef = React.useRef('');
+  // (prevTotalRef is declared above, with the state.)
   React.useEffect(() => {
     const amount = Number(totalAmount);
     if (
@@ -167,6 +235,10 @@ function RecordPaymentDialog({
   }, [totalAmount, childId, sortedPeriodsByPriority]);
 
   function resetForm() {
+    setClientId(crypto.randomUUID());
+    setSavedOffline(null);
+    setProvisionalOpen(false);
+    prevTotalRef.current = '';
     setChildId('');
     setTotalAmount('');
     setChannel('cash');
@@ -219,6 +291,12 @@ function RecordPaymentDialog({
       newErrors.referenceNote = t('payments.recording.errors.referenceRequired');
     }
 
+    // Offline without this child's échéances: saved "to allocate", without any.
+    if (periodsUnavailable) {
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    }
+
     // Validate allocations
     const validAllocations = allocations.filter(
       (row) => row.billingPeriodId && row.amount
@@ -266,28 +344,58 @@ function RecordPaymentDialog({
     e.preventDefault();
     if (!validate()) return;
 
-    const validAllocations: PaymentAllocationInput[] = allocations
-      .filter((row) => row.billingPeriodId && row.amount)
-      .map((row) => ({
-        billingPeriodId: row.billingPeriodId,
-        amount: Number(row.amount),
-      }));
+    const payload: OfflinePaymentPayload = {
+      clientId,
+      branchId,
+      childId,
+      childName: childOptions.find((c) => c.value === childId)?.label ?? '',
+      totalAmount: Number(totalAmount),
+      channel,
+      valueDate,
+      referenceNote: referenceNote.trim() || undefined,
+      allocations: periodsUnavailable
+        ? []
+        : allocations
+            .filter((row) => row.billingPeriodId && row.amount)
+            .map((row) => {
+              const period = availablePeriods.find((p) => p.id === row.billingPeriodId);
+              return {
+                billingPeriodId: row.billingPeriodId,
+                amount: Number(row.amount),
+                label: period ? periodLabel(period) : '',
+              };
+            }),
+      recordedAt: new Date().toISOString(),
+      recordedByName: user ? `${user.firstName} ${user.lastName}` : '',
+    };
 
+    setSaving(true);
     try {
-      const res = await recordPayment.mutateAsync({
-        childId,
-        totalAmount: Number(totalAmount),
-        channel,
-        valueDate,
-        referenceNote: referenceNote.trim() || undefined,
-        allocations: validAllocations,
-      });
-      setResult(res);
-    } catch (err) {
-      setErrors((prev) => ({
-        ...prev,
-        form: err instanceof Error ? err.message : t('common.error'),
-      }));
+      if (online && payload.allocations.length > 0) {
+        try {
+          const res = await sendPayment(payload);
+          if (fixAction) discardAction(fixAction.id);
+          setResult(res);
+          return;
+        } catch (err) {
+          if (err instanceof ApiRequestError) {
+            const reason = err.meta?.reason;
+            setErrors((prev) => ({
+              ...prev,
+              form: typeof reason === 'string' ? paymentRefusalText(t, `reason:${reason}`) : err.message,
+            }));
+            return;
+          }
+          // The server couldn't be reached: keep the payment on the device.
+        }
+      }
+      if (fixAction) replaceAction(fixAction.id, payload);
+      else await savePaymentOffline(payload);
+      setSavedOffline(payload);
+    } catch {
+      setErrors((prev) => ({ ...prev, form: t('common.error') }));
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -297,19 +405,17 @@ function RecordPaymentDialog({
     return Math.max(0, Math.round((Number(p.baseAmount) - Number(p.amountDue)) * 100) / 100);
   }
 
+  /** Names an échéance: its fee and month, "registration", or its dates. */
+  function periodLabel(p: BillingPeriod): string {
+    if (p.branchFeeName) return `${p.branchFeeName} (${formatMonthYear(p.periodStart, i18n.language)})`;
+    if (p.isRegistrationPeriod) return t('payments.recording.registrationPeriod');
+    return `${formatDate(p.periodStart)} - ${formatDate(p.periodEnd)}`;
+  }
+
   // Build period options for select — sorted by priority (late first, then closest)
   const periodOptions = React.useMemo(() => {
     return sortedPeriodsByPriority.map((p) => {
-      let label: string;
-      if (p.branchFeeName) {
-        // Fee period: show the fee name and its month
-        label = `${p.branchFeeName} (${formatMonthYear(p.periodStart, i18n.language)})`;
-      } else if (p.isRegistrationPeriod) {
-        label = t('payments.recording.registrationPeriod');
-      } else {
-        // Monthly/recurring period: show date range
-        label = `${formatDate(p.periodStart)} - ${formatDate(p.periodEnd)}`;
-      }
+      const label = periodLabel(p);
       const outstanding = Number(p.outstanding ?? p.amountDue);
       const suffix = p.isLate
         ? ` ⚠ ${formatDZD(outstanding, i18n.language)}`
@@ -322,17 +428,76 @@ function RecordPaymentDialog({
         label: `${label}${suffix}${discountNote}`,
       };
     });
-  }, [sortedPeriodsByPriority, t, i18n.language]);
+  }, [sortedPeriodsByPriority, t, i18n.language]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const childOptions = (childrenData?.children ?? []).map((c) => ({
-    value: c.id,
-    label: `${c.first_name} ${c.last_name}`,
-  }));
+  // Every billed child (kept on the device) and the school's children list,
+  // so a child added a moment ago is there too.
+  const childOptions = React.useMemo(() => {
+    const options = new Map<string, string>();
+    for (const c of snapshot.data?.children ?? []) options.set(c.id, `${c.firstName} ${c.lastName}`);
+    for (const c of childrenData?.children ?? []) {
+      if (!options.has(c.id)) options.set(c.id, `${c.first_name} ${c.last_name}`);
+    }
+    return [...options].map(([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [snapshot.data, childrenData]);
 
   const channelOptions = CHANNELS.map((ch) => ({
     value: ch,
     label: t(`payments.recording.channels.${ch}`),
   }));
+
+  // Saved on the device: sent when the connection returns.
+  if (savedOffline) {
+    return (
+      <>
+        <Dialog open={open && !provisionalOpen} onOpenChange={handleClose}>
+          <DialogContent className="max-w-[480px]">
+            <DialogHeader>
+              <DialogTitle>
+                <span className="inline-flex items-center gap-2">
+                  <CloudUpload className="w-5 h-5 text-warning" />
+                  {t('payments.offline.saved.title')}
+                </span>
+              </DialogTitle>
+              <DialogDescription>
+                {savedOffline.allocations.length > 0
+                  ? t('payments.offline.saved.text')
+                  : t('payments.offline.saved.toAllocate')}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3 bg-subtle rounded-lg p-4">
+              <div className="flex justify-between gap-3">
+                <span className="text-body text-text-secondary">{t('payments.offline.saved.reference')}</span>
+                <span className="text-body font-semibold text-foreground" dir="ltr">
+                  {provisionalRef(savedOffline)}
+                </span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-body text-text-secondary">{savedOffline.childName}</span>
+                <span className="text-body font-medium text-foreground">
+                  {formatDZD(savedOffline.totalAmount, i18n.language)}
+                </span>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="secondary" onClick={() => setProvisionalOpen(true)}>
+                <Receipt className="w-4 h-4" />
+                {t('payments.offline.actions.provisionalReceipt')}
+              </Button>
+              <Button onClick={() => handleClose(false)}>{t('common.close')}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <ProvisionalReceiptDialog
+          payment={savedOffline}
+          open={open && provisionalOpen}
+          onOpenChange={setProvisionalOpen}
+        />
+      </>
+    );
+  }
 
   // Success view
   if (result) {
@@ -389,11 +554,30 @@ function RecordPaymentDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-[640px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t('payments.recording.title')}</DialogTitle>
+          <DialogTitle>
+            {fixAction
+              ? t(fixAction.error === 'NEEDS_ALLOCATION' ? 'payments.offline.allocateTitle' : 'payments.offline.fixTitle', {
+                  ref: provisionalRef(fixAction.payload),
+                })
+              : t('payments.recording.title')}
+          </DialogTitle>
           <DialogDescription>
-            {t('payments.recording.description')}
+            {fixAction?.error ? paymentRefusalText(t, fixAction.error) : t('payments.recording.description')}
           </DialogDescription>
         </DialogHeader>
+
+        {!online && (
+          <div className="mb-4 flex items-start gap-2 rounded-md border border-warning/40 bg-warning/5 px-3 py-2 text-caption text-foreground">
+            <WifiOff className="w-4 h-4 mt-0.5 shrink-0 text-warning" />
+            <span>
+              {periodsUnavailable
+                ? t('payments.offline.noSnapshot')
+                : snapshot.data
+                  ? t('payments.offline.snapshotDate', { date: formatDateTime(snapshot.data.generatedAt) })
+                  : t('payments.offline.offlineForm')}
+            </span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           {/* Child selection */}
@@ -488,8 +672,8 @@ function RecordPaymentDialog({
             </FormField>
           </div>
 
-          {/* Allocations section */}
-          <div className="mt-2 mb-4">
+          {/* Allocations section (not offline without this child's échéances) */}
+          <div className={periodsUnavailable ? 'hidden' : 'mt-2 mb-4'}>
             <div className="flex items-center justify-between mb-2">
               <label className="text-label font-medium text-foreground">
                 {t('payments.recording.fields.allocations')}
@@ -643,10 +827,12 @@ function RecordPaymentDialog({
             >
               {t('common.cancel')}
             </Button>
-            <Button type="submit" disabled={recordPayment.isPending}>
-              {recordPayment.isPending
+            <Button type="submit" disabled={saving}>
+              {saving
                 ? t('common.loading')
-                : t('payments.recording.submit')}
+                : online
+                  ? t('payments.recording.submit')
+                  : t('payments.offline.submitOffline')}
             </Button>
           </DialogFooter>
         </form>
@@ -884,6 +1070,9 @@ export function PaymentsPage() {
   const [receiptDialogOpen, setReceiptDialogOpen] = React.useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = React.useState<string | null>(null);
   const [filters, setFilters] = React.useState<PaymentRecordFilters>({});
+  // A payment kept on the device, opened to allocate or correct it.
+  const [fixAction, setFixAction] = React.useState<QueuedAction<OfflinePaymentPayload> | null>(null);
+  const [provisionalPayment, setProvisionalPayment] = React.useState<OfflinePaymentPayload | null>(null);
 
   const { data: records, isLoading } = usePaymentRecords(selectedBranchId, filters);
 
@@ -1026,6 +1215,16 @@ export function PaymentsPage() {
         {t('payments.records.description')}
       </p>
 
+      {/* Payments kept on the device (recorded offline) */}
+      <OfflinePaymentsPanel
+        onFix={(action) => setFixAction(action)}
+        onShowProvisional={(payment) => setProvisionalPayment(payment)}
+        onShowReceipt={(paymentId) => {
+          setSelectedPaymentId(paymentId);
+          setReceiptDialogOpen(true);
+        }}
+      />
+
       {/* Filters */}
       <PaymentHistoryFilters
         filters={filters}
@@ -1072,6 +1271,22 @@ export function PaymentsPage() {
           branchId={selectedBranchId}
         />
       )}
+
+      {/* Allocate / correct a payment kept on the device */}
+      {selectedBranchId && fixAction && (
+        <RecordPaymentDialog
+          open
+          onOpenChange={(isOpen) => !isOpen && setFixAction(null)}
+          branchId={fixAction.payload.branchId || selectedBranchId}
+          fixAction={fixAction}
+        />
+      )}
+
+      <ProvisionalReceiptDialog
+        payment={provisionalPayment}
+        open={!!provisionalPayment}
+        onOpenChange={(isOpen) => !isOpen && setProvisionalPayment(null)}
+      />
 
       {/* Record Correction Dialog */}
       {selectedBranchId && (

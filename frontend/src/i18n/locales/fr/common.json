@@ -1659,6 +1659,63 @@
     }
   },
   "payments": {
+    "offline": {
+      "snapshotDate": "Hors ligne · échéances à jour au {{date}}. Le paiement sera envoyé au retour de la connexion.",
+      "offlineForm": "Hors ligne · le paiement sera enregistré sur cet appareil et envoyé au retour de la connexion.",
+      "noSnapshot": "Hors ligne · les échéances de cet élève ne sont pas disponibles sur cet appareil. Le paiement sera enregistré « à imputer » : vous choisirez les échéances au retour de la connexion.",
+      "submitOffline": "Enregistrer sur l'appareil",
+      "fixTitle": "Corriger le paiement {{ref}}",
+      "allocateTitle": "Imputer le paiement {{ref}}",
+      "needsAllocation": "Échéances pas encore choisies : choisissez-les pour envoyer ce paiement.",
+      "reasons": {
+        "exceeds_outstanding": "Le montant dépasse le reste à payer d'une échéance : elle a peut-être été payée entre-temps sur un autre appareil.",
+        "period_cancelled": "Une des échéances a été annulée entre-temps.",
+        "period_not_found": "Une des échéances n'existe plus.",
+        "child_not_enrolled": "L'élève n'existe plus ou n'est plus inscrit.",
+        "future_date": "La date de valeur est dans le futur.",
+        "other": "Le serveur a refusé ce paiement."
+      },
+      "saved": {
+        "title": "Paiement enregistré sur cet appareil",
+        "text": "Il sera envoyé automatiquement au retour de la connexion. Le reçu officiel numéroté sera alors disponible dans l'historique des paiements.",
+        "toAllocate": "Au retour de la connexion, choisissez les échéances de ce paiement (section « Paiements enregistrés sur cet appareil »).",
+        "reference": "Référence provisoire"
+      },
+      "status": {
+        "pending": "En attente d'envoi",
+        "sending": "Envoi en cours…",
+        "toAllocate": "À imputer",
+        "toFix": "À corriger",
+        "sent": "Envoyé"
+      },
+      "actions": {
+        "provisionalReceipt": "Reçu provisoire",
+        "allocate": "Imputer",
+        "fix": "Corriger",
+        "delete": "Supprimer",
+        "dismiss": "Masquer"
+      },
+      "panel": {
+        "title": "Paiements enregistrés sur cet appareil",
+        "description": "Enregistrés sans connexion. Ils sont envoyés automatiquement dès que la connexion revient.",
+        "confirmDelete": "Supprimer ce paiement ? Il n'a pas été enregistré par le serveur.",
+        "needsOnline": "Nécessite la connexion internet",
+        "officialReceipt": "reçu officiel"
+      },
+      "receipt": {
+        "title": "Reçu provisoire",
+        "heading": "Reçu provisoire",
+        "fileName": "Reçu provisoire",
+        "notice": "Reçu provisoire, établi sans connexion. Un reçu officiel numéroté le remplacera dès l'enregistrement du paiement par le serveur.",
+        "recordedBy": "Encaissé par",
+        "echeance": "Échéance",
+        "amount": "Montant",
+        "toAllocate": "Échéances à préciser.",
+        "paidAmount": "Montant payé",
+        "recordedAt": "Enregistré le",
+        "pdfUnavailable": "Le PDF n'est pas disponible hors ligne sur cet appareil : utilisez « Imprimer »."
+      }
+    },
     "branchConfig": {
       "title": "Configuration de facturation",
       "description": "Configurer les notifications de paiement",

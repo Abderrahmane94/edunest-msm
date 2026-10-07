@@ -936,6 +936,8 @@ model PaymentRecord {
   referenceNote     String?        @map("reference_note")
   isCorrection      Boolean        @default(false) @map("is_correction")
   correctsPaymentId String?        @map("corrects_payment_id")
+  /// Set by the device that recorded it (payments entered offline): sending it again saves it once.
+  clientId          String?        @unique @map("client_id")
   createdAt         DateTime       @default(now()) @map("created_at")
 
   branch           Branch              @relation(fields: [branchId], references: [id])

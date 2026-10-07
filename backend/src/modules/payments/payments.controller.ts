@@ -66,9 +66,31 @@ export const paymentsController = {
       res.status(201).json(successResponse(result));
     } catch (error) {
       if (error instanceof PaymentServiceError) {
-        res.status(error.statusCode).json(errorResponse(error.code, error.message));
+        // `reason` lets the client explain a refused payment in its language.
+        res
+          .status(error.statusCode)
+          .json(errorResponse(error.code, error.message, undefined, error.reason ? { reason: error.reason } : undefined));
         return;
       }
+      next(error);
+    }
+  },
+
+  /**
+   * GET /api/payments/branches/:branchId/offline-snapshot
+   * The branch's children and unpaid échéances, kept on the device so
+   * payments can be recorded offline. Staff only.
+   */
+  async getOfflineSnapshot(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user || !STAFF_ROLES.includes(req.user.role as (typeof STAFF_ROLES)[number])) {
+        res.status(403).json(errorResponse('FORBIDDEN', 'This operation is restricted to Staff users'));
+        return;
+      }
+      const branchId = await validateBranchAccess(req.params.branchId, req, res);
+      if (!branchId) return;
+      res.status(200).json(successResponse(await paymentService.getOfflineSnapshot(branchId)));
+    } catch (error) {
       next(error);
     }
   },

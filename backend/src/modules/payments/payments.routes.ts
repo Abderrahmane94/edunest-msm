@@ -34,6 +34,9 @@ router.post('/periods/:id/remind', requireAdmin, paymentsController.remindPeriod
 // GET /branches/:branchId/late — Late payments dashboard (staff only)
 router.get('/branches/:branchId/late', requireAdmin, paymentsController.getLateDashboard);
 
+// GET /branches/:branchId/offline-snapshot — Unpaid échéances, kept for offline recording (staff only)
+router.get('/branches/:branchId/offline-snapshot', requireAdmin, paymentsController.getOfflineSnapshot);
+
 // GET /branches/:branchId/reconciliation — Reconciliation report (admin only)
 router.get('/branches/:branchId/reconciliation', requireAdmin, paymentsController.getReconciliationReport);
 

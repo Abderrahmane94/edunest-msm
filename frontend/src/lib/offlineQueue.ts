@@ -176,6 +176,13 @@ export function retryAction(id: string): void {
   void persist().then(flushQueue);
 }
 
+/** Replaces a kept action's content (e.g. corrected by the user) and sends it again. */
+export function replaceAction<P>(id: string, payload: P): void {
+  actions = actions.map((a) => (a.id === id ? { ...a, payload, error: undefined, queuedAt: new Date().toISOString() } : a));
+  emit();
+  void persist().then(flushQueue);
+}
+
 /** Drops an action (the user gave up on it). */
 export function discardAction(id: string): void {
   actions = actions.filter((a) => a.id !== id);

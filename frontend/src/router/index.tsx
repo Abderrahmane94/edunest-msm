@@ -2,6 +2,8 @@ import { Navigate, Outlet, type RouteObject } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLogoutWithConfirm } from '@/components/LogoutConfirm';
+import { usePreloadOfflinePayments } from '@/hooks/useOfflinePayments';
+import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import {
   LoginPage,
   RegisterPage,
@@ -253,28 +255,38 @@ function SchoolSidebarHeader() {
   );
 }
 
+/** Keeps the échéances on an admin's device, for recording payments offline. */
+function OfflinePaymentsPreloader() {
+  const { branchId } = useDefaultBranch();
+  usePreloadOfflinePayments(branchId, true);
+  return null;
+}
+
 function AdminLayoutWrapper() {
   const { user } = useAuth();
   const navItems = getAdminNavItems(user?.role || 'admin');
   const isAdmin = user?.role === 'admin';
 
   return (
-    <AdminLayout
-      navItems={navItems}
-      sidebarHeader={
-        isAdmin ? (
-          <SchoolSidebarHeader />
-        ) : (
-          <div className="flex items-center gap-2 px-1">
-            <div className="w-8 h-8 rounded-lg bg-[var(--color-accent)] flex items-center justify-center">
-              <span className="text-[var(--color-text-inverse)] text-label font-semibold">E</span>
+    <>
+      {isAdmin && <OfflinePaymentsPreloader />}
+      <AdminLayout
+        navItems={navItems}
+        sidebarHeader={
+          isAdmin ? (
+            <SchoolSidebarHeader />
+          ) : (
+            <div className="flex items-center gap-2 px-1">
+              <div className="w-8 h-8 rounded-lg bg-[var(--color-accent)] flex items-center justify-center">
+                <span className="text-[var(--color-text-inverse)] text-label font-semibold">E</span>
+              </div>
+              <span className="text-body font-semibold text-text-heading">EduNest</span>
             </div>
-            <span className="text-body font-semibold text-text-heading">EduNest</span>
-          </div>
-        )
-      }
-      sidebarFooter={<SidebarFooterContent />}
-    />
+          )
+        }
+        sidebarFooter={<SidebarFooterContent />}
+      />
+    </>
   );
 }
 

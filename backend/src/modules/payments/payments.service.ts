@@ -4,15 +4,50 @@ import { generateReceiptNumber } from './receipt-number.util';
 import { derivePeriodStatus } from './billing-period.service';
 import type { RecordPaymentInput } from './payments.types';
 
+/**
+ * Why a payment was refused, for the client to explain it (e.g. a payment
+ * entered offline that can't be saved as is once sent).
+ */
+export type PaymentRefusalReason =
+  | 'child_not_enrolled'
+  | 'future_date'
+  | 'period_not_found'
+  | 'period_cancelled'
+  | 'exceeds_outstanding';
+
 export class PaymentServiceError extends Error {
   constructor(
     message: string,
     public statusCode: number = 400,
     public code: string = 'VALIDATION_ERROR',
+    public reason?: PaymentRefusalReason,
   ) {
     super(message);
     this.name = 'PaymentServiceError';
   }
+}
+
+/** Unpaid échéances of the branch's children, for recording payments offline. */
+export interface OfflinePaymentsSnapshot {
+  generatedAt: string;
+  children: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    periods: Array<{
+      id: string;
+      /** Dates as YYYY-MM-DD: the snapshot is kept small for slow connections. */
+      periodStart: string;
+      periodEnd: string;
+      dueDate: string;
+      amountDue: string;
+      baseAmount: string | null;
+      isRegistrationPeriod: boolean;
+      branchFeeName: string | null;
+      isLate: boolean;
+      outstanding: string;
+    }>;
+  }>;
 }
 
 class PaymentService {
@@ -36,6 +71,44 @@ class PaymentService {
     input: RecordPaymentInput,
     branchId: string,
   ) {
+    const { childId, clientId } = input;
+
+    // Sent again (e.g. a payment entered offline whose first send lost its
+    // answer): it's already saved, return it instead of recording it twice.
+    if (clientId) {
+      const existing = await this.findByClientId(clientId, childId);
+      if (existing) return existing;
+    }
+
+    try {
+      return await this.recordPaymentTransaction(input, branchId);
+    } catch (error) {
+      // Two sends of the same payment at once: the other one saved it.
+      if (
+        clientId &&
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002' &&
+        String(error.meta?.target ?? '').includes('client_id')
+      ) {
+        const existing = await this.findByClientId(clientId, childId);
+        if (existing) return existing;
+      }
+      throw error;
+    }
+  }
+
+  private async findByClientId(clientId: string, childId: string) {
+    const existing = await prisma.paymentRecord.findUnique({
+      where: { clientId },
+      include: { allocations: true },
+    });
+    if (existing && existing.childId !== childId) {
+      throw new PaymentServiceError('This client ID belongs to another payment', 409, 'CONFLICT');
+    }
+    return existing;
+  }
+
+  private async recordPaymentTransaction(input: RecordPaymentInput, branchId: string) {
     const {
       childId,
       totalAmount,
@@ -44,6 +117,7 @@ class PaymentService {
       recordedBy,
       referenceNote,
       allocations,
+      clientId,
     } = input;
 
     return await prisma.$transaction(async (tx) => {
@@ -64,6 +138,7 @@ class PaymentService {
           'Target child not found or has no enrollments',
           404,
           'NOT_FOUND',
+          'child_not_enrolled',
         );
       }
 
@@ -78,6 +153,7 @@ class PaymentService {
           'Value date cannot be in the future',
           400,
           'VALIDATION_ERROR',
+          'future_date',
         );
       }
 
@@ -167,6 +243,7 @@ class PaymentService {
           `Billing period(s) not found: ${missing.join(', ')}`,
           404,
           'NOT_FOUND',
+          'period_not_found',
         );
       }
 
@@ -177,6 +254,7 @@ class PaymentService {
             `Billing period ${period.id} does not belong to the target child`,
             400,
             'VALIDATION_ERROR',
+            'period_not_found',
           );
         }
       }
@@ -188,6 +266,7 @@ class PaymentService {
             `Billing period ${period.id} is cancelled and cannot receive payments`,
             400,
             'VALIDATION_ERROR',
+            'period_cancelled',
           );
         }
       }
@@ -211,6 +290,7 @@ class PaymentService {
             `Allocation amount (${alloc.amount.toString()} DZD) exceeds outstanding balance (${outstanding.toString()} DZD) for billing period ${alloc.billingPeriodId}`,
             400,
             'VALIDATION_ERROR',
+            'exceeds_outstanding',
           );
         }
       }
@@ -273,6 +353,7 @@ class PaymentService {
           referenceNote: referenceNote?.trim() || null,
           isCorrection: false,
           correctsPaymentId: null,
+          clientId: clientId ?? null,
         },
       });
 
@@ -617,6 +698,69 @@ class PaymentService {
    *
    * Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8
    */
+  /**
+   * Everything needed to record payments without a connection: the branch's
+   * billed children and their unpaid échéances (outstanding amount included).
+   * Children without unpaid échéances are listed too, with none.
+   */
+  async getOfflineSnapshot(branchId: string): Promise<OfflinePaymentsSnapshot> {
+    const enrollments = await prisma.enrollment.findMany({
+      // Deleted children (in the trash) aren't offered.
+      where: { branchId, child: { deletedAt: null } },
+      select: {
+        child: { select: { id: true, firstName: true, lastName: true } },
+        billingPeriods: {
+          where: { cancelledAt: null },
+          select: {
+            id: true,
+            periodStart: true,
+            periodEnd: true,
+            dueDate: true,
+            graceEndDate: true,
+            amountDue: true,
+            baseAmount: true,
+            isRegistrationPeriod: true,
+            cancelledAt: true,
+            branchFee: { select: { name: true } },
+            paymentAllocations: { select: { amount: true } },
+          },
+          orderBy: { periodStart: 'asc' },
+        },
+      },
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const day = (d: Date) => d.toISOString().slice(0, 10);
+    const byChild = new Map<string, OfflinePaymentsSnapshot['children'][number]>();
+    for (const enrollment of enrollments) {
+      const entry = byChild.get(enrollment.child.id) ?? { ...enrollment.child, periods: [] };
+      byChild.set(enrollment.child.id, entry);
+      for (const period of enrollment.billingPeriods) {
+        const paid = period.paymentAllocations.reduce((sum, a) => sum.add(a.amount), new Prisma.Decimal(0));
+        const derived = derivePeriodStatus(period.amountDue, paid, period.graceEndDate, today, period.cancelledAt);
+        if (new Prisma.Decimal(derived.outstanding).lte(0)) continue;
+        entry.periods.push({
+          id: period.id,
+          periodStart: day(period.periodStart),
+          periodEnd: day(period.periodEnd),
+          dueDate: day(period.dueDate),
+          amountDue: period.amountDue.toString(),
+          baseAmount: period.baseAmount?.toString() ?? null,
+          isRegistrationPeriod: period.isRegistrationPeriod,
+          branchFeeName: period.branchFee?.name ?? null,
+          isLate: derived.isLate,
+          outstanding: new Prisma.Decimal(derived.outstanding).toString(),
+        });
+      }
+    }
+
+    const children = [...byChild.values()].sort((a, b) =>
+      `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`, 'fr'),
+    );
+    return { generatedAt: new Date().toISOString(), children };
+  }
+
   async getOutstandingBalance(childId: string): Promise<Prisma.Decimal> {
     // Validate child exists
     const child = await prisma.child.findUnique({

@@ -11,6 +11,7 @@ import './hooks/useAttendance';
 import './hooks/useDailyReportSync';
 import './hooks/useMessageSync';
 import './hooks/useCommunication';
+import './hooks/useOfflinePayments';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

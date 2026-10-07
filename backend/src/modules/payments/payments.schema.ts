@@ -80,6 +80,7 @@ export const recordPaymentSchema = z.object({
   allocations: z
     .array(paymentAllocationSchema)
     .min(1, 'At least one allocation is required'),
+  clientId: z.string().uuid('Invalid client ID').optional(),
 });
 
 export const recordCorrectionSchema = z.object({

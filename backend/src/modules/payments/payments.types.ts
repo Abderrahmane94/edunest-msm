@@ -37,6 +37,8 @@ export interface RecordPaymentInput {
   referenceNote?: string;
   isCorrection: false;
   allocations: PaymentAllocationInput[];
+  /** Id made by the recording device: the same payment sent twice is saved once. */
+  clientId?: string;
 }
 
 export interface PaymentAllocationInput {

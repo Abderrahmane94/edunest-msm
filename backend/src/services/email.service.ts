@@ -72,23 +72,64 @@ class EmailService {
     }
   }
 
+  /** Password reset link, in the user's language (French or Arabic). */
   async sendPasswordResetEmail(
     to: string,
-    firstName: string,
-    resetUrl: string
+    options: {
+      firstName: string;
+      resetUrl: string;
+      language: 'fr' | 'ar';
+      expiresInHours: number;
+      /** Set when the email has accounts in several schools. */
+      schoolName?: string | null;
+    },
   ): Promise<void> {
+    const e = escapeHtml;
+    const ar = options.language === 'ar';
+    const hours = options.expiresInHours;
+    const text = ar
+      ? {
+          subject: 'EduNest - إعادة تعيين كلمة المرور',
+          title: 'إعادة تعيين كلمة المرور',
+          hello: `مرحبًا ${e(options.firstName)}،`,
+          intro: options.schoolName
+            ? `طلبت إعادة تعيين كلمة مرور حسابك في EduNest لدى <strong>${e(options.schoolName)}</strong>.`
+            : 'طلبت إعادة تعيين كلمة مرور حسابك في EduNest.',
+          action: 'اختيار كلمة مرور جديدة',
+          expiry: hours === 1 ? 'هذا الرابط صالح لمدة ساعة واحدة ولا يُستعمل إلا مرة واحدة.' : `هذا الرابط صالح لمدة ${hours} ساعات ولا يُستعمل إلا مرة واحدة.`,
+          ignore: 'إذا لم تطلب ذلك، تجاهل هذه الرسالة: كلمة مرورك لن تتغير.',
+          team: '— فريق EduNest',
+        }
+      : {
+          subject: 'EduNest - Réinitialisation du mot de passe',
+          title: 'Réinitialisation du mot de passe',
+          hello: `Bonjour ${e(options.firstName)},`,
+          intro: options.schoolName
+            ? `Vous avez demandé à réinitialiser le mot de passe de votre compte EduNest chez <strong>${e(options.schoolName)}</strong>.`
+            : 'Vous avez demandé à réinitialiser le mot de passe de votre compte EduNest.',
+          action: 'Choisir un nouveau mot de passe',
+          expiry: `Ce lien est valable ${hours} heure${hours > 1 ? 's' : ''} et ne peut servir qu'une fois.`,
+          ignore: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : votre mot de passe ne changera pas.",
+          team: "— L'équipe EduNest",
+        };
+    const dir = ar ? 'rtl' : 'ltr';
+    const align = ar ? 'right' : 'left';
+
     await this.send({
       to,
-      subject: 'EduNest - Password Reset Request',
+      subject: text.subject,
       html: `
-        <h2>Password Reset</h2>
-        <p>Hello ${firstName},</p>
-        <p>You requested a password reset for your EduNest account.</p>
-        <p>Click the link below to reset your password. This link expires in 1 hour.</p>
-        <p><a href="${resetUrl}">Reset Password</a></p>
-        <p>If you did not request this reset, please ignore this email.</p>
-        <br/>
-        <p>— The EduNest Team</p>
+        <div dir="${dir}" style="font-family:Arial,Helvetica,sans-serif;color:#111827;text-align:${align};max-width:520px;">
+          <h2 style="margin:0 0 16px;">${text.title}</h2>
+          <p>${text.hello}</p>
+          <p>${text.intro}</p>
+          <p style="margin:24px 0;">
+            <a href="${e(options.resetUrl)}" style="background:#4F46E5;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;display:inline-block;font-weight:600;">${text.action}</a>
+          </p>
+          <p style="color:#6B7280;font-size:13px;">${text.expiry}</p>
+          <p style="color:#6B7280;font-size:13px;">${text.ignore}</p>
+          <p>${text.team}</p>
+        </div>
       `,
     });
   }

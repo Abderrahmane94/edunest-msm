@@ -246,6 +246,8 @@
     }
   },
   "offline": {
+    "badge": "Hors ligne",
+    "details": "Vous pouvez continuer à consulter les pages déjà ouvertes et à faire vos enregistrements : ils seront envoyés automatiquement au retour de la connexion.",
     "banner": "Vous êtes hors ligne. Les données affichées peuvent ne pas être à jour.",
     "restored": "Connexion rétablie",
     "pending": "Enregistrements en attente d'envoi : {{count}}"

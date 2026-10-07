@@ -6,6 +6,7 @@ import { Sidebar, type NavItem } from './Sidebar';
 import { PageContainer } from './PageContainer';
 import { BottomTabBar } from './BottomTabBar';
 import { NotificationBell } from '@/components/NotificationBell';
+import { OfflineStatus } from '@/components/OfflineStatus';
 
 interface AdminLayoutProps {
   navItems: NavItem[];
@@ -26,6 +27,7 @@ export function AdminLayout({ navItems, sidebarHeader, sidebarFooter }: AdminLay
             name and the account menu (language, logout). */}
         <header className="h-14 bg-card border-b border-border px-4 lg:px-6 flex items-center justify-end gap-2 sticky top-0 z-30">
           {sidebarHeader && <div className="lg:hidden min-w-0 flex-1">{sidebarHeader}</div>}
+          <OfflineStatus />
           <NotificationBell />
           {sidebarFooter && <MobileAccountMenu>{sidebarFooter}</MobileAccountMenu>}
         </header>

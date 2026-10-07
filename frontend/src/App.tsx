@@ -4,7 +4,6 @@ import { queryClient, queryPersister, OFFLINE_MAX_AGE } from '@/lib/query-client
 import { AuthProvider } from '@/contexts/AuthContext';
 import { useDirection } from '@/hooks/useDirection';
 import { NotificationsManager } from '@/components/NotificationsManager';
-import { OfflineBanner } from '@/components/OfflineBanner';
 import { routes } from '@/router';
 import '@/i18n';
 
@@ -36,7 +35,6 @@ function App() {
           <DirectionManager>
             <NotificationsManager />
             <AppRoutes />
-            <OfflineBanner />
           </DirectionManager>
         </AuthProvider>
       </BrowserRouter>

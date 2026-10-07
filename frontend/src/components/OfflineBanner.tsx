@@ -3,15 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { WifiOff, Wifi } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOfflineQueue } from '@/lib/offlineQueue';
-
-function subscribe(listener: () => void) {
-  window.addEventListener('online', listener);
-  window.addEventListener('offline', listener);
-  return () => {
-    window.removeEventListener('online', listener);
-    window.removeEventListener('offline', listener);
-  };
-}
+import { useOnline } from '@/lib/online';
 
 /** How long "connection restored" stays up once back online. */
 const RESTORED_MS = 3000;
@@ -24,7 +16,7 @@ const RESTORED_MS = 3000;
  */
 export function OfflineBanner() {
   const { t } = useTranslation();
-  const online = React.useSyncExternalStore(subscribe, () => navigator.onLine);
+  const online = useOnline();
   const { actions } = useOfflineQueue();
   const waiting = actions.filter((a) => !a.error).length;
   const [restored, setRestored] = React.useState(false);

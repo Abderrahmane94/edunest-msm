@@ -19,7 +19,15 @@ import type {
 } from './auth.schema';
 
 const ACCESS_TOKEN_EXPIRY = '15m';
-const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+/**
+ * A session lasts this long after its last use online: each refresh issues a
+ * new refresh token (at most once per REFRESH_TOKEN_RENEW_AFTER_HOURS), so
+ * someone who uses the app stays signed in — and can open it offline.
+ */
+const REFRESH_TOKEN_EXPIRY_DAYS = 30;
+const REFRESH_TOKEN_RENEW_AFTER_HOURS = 24;
+/** The replaced token keeps working briefly, for requests already in flight. */
+const REPLACED_REFRESH_TOKEN_GRACE_MS = 2 * 60 * 1000;
 const PASSWORD_RESET_EXPIRY_HOURS = 1;
 const BCRYPT_SALT_ROUNDS = 10;
 
@@ -187,15 +195,34 @@ export const authService = {
       }
     }
 
-    const newAccessToken = generateAccessToken({
+    const tokenPayload: TokenPayload = {
       userId: user.id,
       schoolId: user.schoolId,
       branchId: payload.branchId,
       role: user.role,
       mustChangePassword: user.mustChangePassword,
-    });
+    };
+    const newAccessToken = generateAccessToken(tokenPayload);
 
-    return { accessToken: newAccessToken };
+    // Extend the session: a new refresh token, valid REFRESH_TOKEN_EXPIRY_DAYS
+    // from now. The old one stops working after a short grace period.
+    const renewAfter = new Date(Date.now() - REFRESH_TOKEN_RENEW_AFTER_HOURS * 60 * 60 * 1000);
+    if (storedToken.createdAt > renewAfter) {
+      return { accessToken: newAccessToken };
+    }
+    const newRefreshToken = generateRefreshToken(tokenPayload);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
+    const graceEnd = new Date(Date.now() + REPLACED_REFRESH_TOKEN_GRACE_MS);
+    await prisma.$transaction([
+      prisma.refreshToken.create({ data: { userId: user.id, token: newRefreshToken, expiresAt } }),
+      prisma.refreshToken.updateMany({
+        where: { id: storedToken.id, expiresAt: { gt: graceEnd } },
+        data: { expiresAt: graceEnd },
+      }),
+    ]);
+
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   },
 
   async logout(input: LogoutInput): Promise<void> {

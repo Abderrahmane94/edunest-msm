@@ -66,11 +66,15 @@ class ApiClient {
         body: JSON.stringify({ refreshToken }),
       });
 
-      if (!response.ok) {
+      // Only a rejected session signs the user out - not a server error
+      // (e.g. a 502 while it restarts) or rate limiting: then the tokens are
+      // kept and the refresh is tried again later.
+      if (response.status === 400 || response.status === 401 || response.status === 403) {
         this.clearTokens();
         window.dispatchEvent(new CustomEvent('auth:logout'));
         return null;
       }
+      if (!response.ok) return null;
 
       const data = await response.json();
       if (data.success && data.data.accessToken) {

@@ -1,8 +1,9 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LogOut, Languages } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLogoutWithConfirm } from '@/components/LogoutConfirm';
 import { NotificationBell } from '@/components/NotificationBell';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { BottomTabBar } from './BottomTabBar';
@@ -14,14 +15,9 @@ interface ParentLayoutProps {
 }
 
 export function ParentLayout({ navItems }: ParentLayoutProps) {
-  const { logout, user } = useAuth();
+  const { user } = useAuth();
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-
-  async function handleLogout() {
-    await logout();
-    navigate('/login', { replace: true });
-  }
+  const { requestLogout, dialog: logoutDialog } = useLogoutWithConfirm();
 
   function toggleLanguage() {
     const newLang = i18n.language === 'ar' ? 'fr' : 'ar';
@@ -86,7 +82,7 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
             </button>
             <button
               type="button"
-              onClick={handleLogout}
+              onClick={requestLogout}
               className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-subtle text-text-secondary hover:text-danger transition-colors duration-150"
               aria-label={t('auth.logout')}
             >
@@ -96,6 +92,7 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
         </div>
       </header>
 
+      {logoutDialog}
       <Outlet />
       {navItems && <BottomTabBar items={navItems} />}
     </div>

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Mail, Lock, LogIn, GraduationCap, Users, ClipboardCheck, BarChart3, Languages, Eye, EyeOff, AlertCircle, ShieldOff, Building2, ArrowLeft, Clock, WifiOff } from 'lucide-react';
 import { useAuth, type LoginSchoolOption } from '@/contexts/AuthContext';
 import { ApiRequestError } from '@/lib/api-client';
+import { useOnline } from '@/lib/online';
 
 interface LoginError {
   /** credentials: wrong email/password · user/school: deactivated · blocked: too many attempts · server: unreachable or failing */
@@ -51,6 +52,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isRtl = i18n.language === 'ar';
+  // Signing in needs the server: while offline, say so and wait.
+  const online = useOnline();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -92,6 +95,10 @@ export function LoginPage() {
    * connection each get their own message, so users don't keep retrying a
    * correct password.
    */
+  function offlineError(): LoginError {
+    return { type: 'server', title: t('auth.loginOffline'), hint: t('auth.loginOfflineHint') };
+  }
+
   function loginErrorFor(err: unknown): LoginError {
     const code = err instanceof ApiRequestError ? err.code : 'NETWORK_ERROR';
     const msg = (err instanceof Error ? err.message : '').toLowerCase();
@@ -111,6 +118,7 @@ export function LoginPage() {
       case 'RATE_LIMIT_EXCEEDED':
         return { type: 'blocked', title: t('auth.tooManyAttempts'), hint: t('auth.tooManyAttemptsHint') };
       case 'NETWORK_ERROR':
+        if (!navigator.onLine) return offlineError();
         return { type: 'server', title: t('auth.serverUnreachable'), hint: t('auth.serverUnreachableHint') };
       default:
         return { type: 'server', title: t('auth.serverError'), hint: t('auth.serverErrorHint') };
@@ -224,7 +232,7 @@ export function LoginPage() {
                 <p className="text-body text-text-secondary mt-1">{t('auth.schoolSelect.subtitle')}</p>
               </div>
 
-              {error && <LoginErrorBanner error={error} />}
+              {!online ? <LoginErrorBanner error={offlineError()} /> : error && <LoginErrorBanner error={error} />}
 
               <form onSubmit={handleSchoolChoiceSubmit} className="space-y-5">
                 <div className="space-y-2">
@@ -251,7 +259,7 @@ export function LoginPage() {
 
                 <button
                   type="submit"
-                  disabled={isSubmitting || !selectedSchoolId}
+                  disabled={isSubmitting || !selectedSchoolId || !online}
                   className="w-full h-11 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1"
                 >
                   {isSubmitting ? (
@@ -272,7 +280,7 @@ export function LoginPage() {
             <p className="text-body text-text-secondary mt-1">{t('auth.welcomeSub')}</p>
           </div>
 
-          {error && <LoginErrorBanner error={error} />}
+          {!online ? <LoginErrorBanner error={offlineError()} /> : error && <LoginErrorBanner error={error} />}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
@@ -331,7 +339,7 @@ export function LoginPage() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !online}
               className="w-full h-11 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1"
             >
               {isSubmitting ? (

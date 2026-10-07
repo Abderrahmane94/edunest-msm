@@ -48,6 +48,15 @@
     "tooManyAttemptsHint": "Pour votre sécurité, patientez 15 minutes avant de réessayer.",
     "serverUnreachable": "Impossible de joindre le serveur.",
     "serverUnreachableHint": "Vérifiez votre connexion internet, puis réessayez dans un instant.",
+    "loginOffline": "Pas de connexion internet.",
+    "loginOfflineHint": "La connexion à votre compte nécessite internet. Une fois connecté, l'application reste ouverte et fonctionne aussi hors ligne.",
+    "offlineLogout": {
+      "title": "Vous êtes hors ligne",
+      "message": "Si vous vous déconnectez maintenant, vous ne pourrez pas vous reconnecter avant le retour de la connexion internet.",
+      "pending": "{{count}} enregistrement(s) pas encore envoyé(s). Ils ne seront pas perdus : ils partiront quand vous vous reconnecterez avec ce compte.",
+      "cancel": "Rester connecté",
+      "confirm": "Se déconnecter quand même"
+    },
     "serverError": "Le serveur a rencontré une erreur.",
     "serverErrorHint": "Ce n'est pas lié à votre mot de passe. Réessayez dans un instant.",
     "welcome": "Bienvenue 👋",

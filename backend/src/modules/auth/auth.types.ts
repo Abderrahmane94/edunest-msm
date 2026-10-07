@@ -37,6 +37,8 @@ export interface UserInfo {
 
 export interface RefreshResponse {
   accessToken: string;
+  /** Set when the session was extended: the client replaces its refresh token. */
+  refreshToken?: string;
 }
 
 export interface PasswordResetRequestResponse {

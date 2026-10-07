@@ -1,6 +1,7 @@
-import { Navigate, Outlet, useNavigate, type RouteObject } from 'react-router-dom';
+import { Navigate, Outlet, type RouteObject } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLogoutWithConfirm } from '@/components/LogoutConfirm';
 import {
   LoginPage,
   RegisterPage,
@@ -199,14 +200,9 @@ function LanguageSwitcher() {
 }
 
 function SidebarFooterContent() {
-  const { logout, user } = useAuth();
+  const { user } = useAuth();
   const { t } = useTranslation();
-  const navigate = useNavigate();
-
-  async function handleLogout() {
-    await logout();
-    navigate('/login', { replace: true });
-  }
+  const { requestLogout, dialog: logoutDialog } = useLogoutWithConfirm();
 
   return (
     <div className="space-y-2">
@@ -227,12 +223,13 @@ function SidebarFooterContent() {
       <LanguageSwitcher />
       <button
         type="button"
-        onClick={handleLogout}
+        onClick={requestLogout}
         className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-body font-medium text-text-secondary hover:bg-subtle hover:text-danger transition-all duration-150"
       >
         <LogOut className="w-5 h-5 shrink-0" />
         <span>{t('auth.logout')}</span>
       </button>
+      {logoutDialog}
     </div>
   );
 }

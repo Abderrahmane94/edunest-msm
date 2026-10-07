@@ -5,6 +5,13 @@ import { apiClient } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
+/** Server codes for a link that can't be used: the page offers a new one. */
+const LINK_ERRORS: Record<string, string> = {
+  RESET_LINK_INVALID: 'auth.resetPasswordConfirm.linkInvalid',
+  RESET_LINK_USED: 'auth.resetPasswordConfirm.linkUsed',
+  RESET_LINK_EXPIRED: 'auth.resetPasswordConfirm.linkExpired',
+};
+
 export function ResetPasswordConfirmPage() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -15,6 +22,8 @@ export function ResetPasswordConfirmPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  // The link can't be used (unknown, used or expired): only a new one helps.
+  const [linkError, setLinkError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -23,6 +32,7 @@ export function ResetPasswordConfirmPage() {
     const errors: Record<string, string> = {};
 
     if (password.length < 8) errors.password = t('auth.resetPasswordConfirm.passwordMinLength');
+    else if (password.length > 128) errors.password = t('auth.resetPasswordConfirm.passwordMaxLength');
     if (password !== confirmPassword) errors.confirmPassword = t('auth.resetPasswordConfirm.passwordMismatch');
 
     setFieldErrors(errors);
@@ -46,8 +56,10 @@ export function ResetPasswordConfirmPage() {
 
       if (response.success) {
         setIsSuccess(true);
+      } else if (response.error?.code && LINK_ERRORS[response.error.code]) {
+        setLinkError(t(LINK_ERRORS[response.error.code]));
       } else {
-        setError(response.error?.message || t('auth.resetPasswordConfirm.genericError'));
+        setError(t('auth.resetPasswordConfirm.genericError'));
       }
     } catch {
       setError(t('auth.resetPasswordConfirm.unexpectedError'));
@@ -56,7 +68,7 @@ export function ResetPasswordConfirmPage() {
     }
   }
 
-  if (!token) {
+  if (!token || linkError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-page px-4">
         <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6 text-center">
@@ -64,7 +76,7 @@ export function ResetPasswordConfirmPage() {
             {t('auth.resetPasswordConfirm.invalidLinkTitle')}
           </h1>
           <p className="text-body text-text-secondary mb-4">
-            {t('auth.resetPasswordConfirm.invalidLinkMessage')}
+            {linkError || t('auth.resetPasswordConfirm.invalidLinkMessage')}
           </p>
           <Link to="/reset-password">
             <Button variant="secondary">{t('auth.resetPasswordConfirm.requestNewLink')}</Button>

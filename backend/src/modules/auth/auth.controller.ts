@@ -80,7 +80,7 @@ export const authController = {
       if (error instanceof AuthError) {
         res.status(error.statusCode).json({
           success: false,
-          error: { code: 'AUTH_ERROR', message: error.message },
+          error: { code: error.code, message: error.message },
         });
         return;
       }

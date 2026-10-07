@@ -35,6 +35,11 @@ function getRefreshSecret(): string {
   return secret;
 }
 
+/** Reset links are stored hashed: a leaked database holds no usable link. */
+function hashResetToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
 function getFrontendUrl(): string {
   return process.env.FRONTEND_URL || 'http://localhost:5173';
 }
@@ -61,8 +66,9 @@ function verifyRefreshToken(token: string): TokenPayload {
 
 export const authService = {
   async login(input: LoginInput): Promise<LoginResponse | LoginChoiceRequired> {
+    // Emails match regardless of case: an account saved as "Fatima@…" signs in with "fatima@…".
     const candidates = await prisma.user.findMany({
-      where: { email: input.email, deletedAt: null },
+      where: { email: { equals: input.email.trim(), mode: 'insensitive' }, deletedAt: null },
     });
 
     if (candidates.length === 0) {
@@ -199,65 +205,79 @@ export const authService = {
     });
   },
 
-  async requestPasswordReset(input: PasswordResetRequestInput): Promise<void> {
-    // Email can now belong to more than one account (one per school). Reset
-    // links are account-specific, so when ambiguous this resets whichever
-    // matching account was created first — a rare edge case; the affected
-    // user can always request again after distinguishing accounts via login.
-    const user = await prisma.user.findFirst({
-      where: { email: input.email },
+  /**
+   * Starts a password reset. Always answers the same way, at once: whether
+   * an account exists isn't revealed, not even by how long it takes — the
+   * links are sent in the background.
+   */
+  requestPasswordReset(input: PasswordResetRequestInput): Promise<void> {
+    void authService.sendPasswordResetLinks(input.email).catch((err) => {
+      console.error('[AuthService] Failed to send password reset links:', err);
+    });
+    return Promise.resolve();
+  },
+
+  /**
+   * Emails a reset link to every account using this email (case-insensitive),
+   * one per school when the email has accounts in several. Each link is
+   * single-use and expires after PASSWORD_RESET_EXPIRY_HOURS; only a hash of
+   * it is stored. Returns how many links were sent.
+   */
+  async sendPasswordResetLinks(email: string): Promise<number> {
+    const users = await prisma.user.findMany({
+      where: { email: { equals: email.trim(), mode: 'insensitive' } },
+      include: { school: { select: { name: true } } },
       orderBy: { createdAt: 'asc' },
     });
 
-    // Always return success to prevent email enumeration
-    if (!user) return;
+    for (const user of users) {
+      // Earlier links for this account stop working.
+      await prisma.passwordResetToken.updateMany({
+        where: { userId: user.id, usedAt: null },
+        data: { usedAt: new Date() },
+      });
 
-    // Invalidate any existing reset tokens for this user
-    await prisma.passwordResetToken.updateMany({
-      where: { userId: user.id, usedAt: null },
-      data: { usedAt: new Date() },
-    });
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + PASSWORD_RESET_EXPIRY_HOURS);
+      await prisma.passwordResetToken.create({
+        data: { userId: user.id, token: hashResetToken(token), expiresAt },
+      });
 
-    // Generate a secure one-time token
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + PASSWORD_RESET_EXPIRY_HOURS);
-
-    await prisma.passwordResetToken.create({
-      data: {
-        userId: user.id,
-        token,
-        expiresAt,
-      },
-    });
-
-    // Send password reset email. The token is already persisted regardless —
-    // don't let a transient email-provider failure surface as a 500 and leak
-    // that this account exists (the whole point of the always-succeed contract above).
-    const resetUrl = `${getFrontendUrl()}/reset-password/confirm?token=${token}`;
-    try {
-      await emailService.sendPasswordResetEmail(user.email, user.firstName, resetUrl);
-    } catch (err) {
-      console.error('[AuthService] Failed to send password reset email:', err);
+      // The token is saved either way: a failed email only means asking again.
+      try {
+        await emailService.sendPasswordResetEmail(user.email, {
+          firstName: user.firstName,
+          resetUrl: `${getFrontendUrl()}/reset-password/confirm?token=${token}`,
+          language: user.preferredLanguage,
+          expiresInHours: PASSWORD_RESET_EXPIRY_HOURS,
+          // Tells the accounts apart when the email has several.
+          schoolName: users.length > 1 ? (user.school?.name ?? null) : null,
+        });
+      } catch (err) {
+        console.error('[AuthService] Failed to send password reset email:', err);
+      }
     }
+    return users.length;
   },
 
   async confirmPasswordReset(input: PasswordResetConfirmInput): Promise<void> {
     const resetToken = await prisma.passwordResetToken.findUnique({
-      where: { token: input.token },
+      where: { token: hashResetToken(input.token) },
       include: { user: true },
     });
 
+    // Codes let the page explain what happened and offer a new link.
     if (!resetToken) {
-      throw new AuthError('Invalid or expired reset token', 400);
+      throw new AuthError('Invalid or expired reset token', 400, 'RESET_LINK_INVALID');
     }
 
     if (resetToken.usedAt) {
-      throw new AuthError('Reset token has already been used', 400);
+      throw new AuthError('Reset token has already been used', 400, 'RESET_LINK_USED');
     }
 
     if (resetToken.expiresAt < new Date()) {
-      throw new AuthError('Reset token has expired', 400);
+      throw new AuthError('Reset token has expired', 400, 'RESET_LINK_EXPIRED');
     }
 
     // Hash the new password
@@ -267,7 +287,9 @@ export const authService = {
     await prisma.$transaction([
       prisma.user.update({
         where: { id: resetToken.userId },
-        data: { passwordHash },
+        // The user chose this password: no need to change it again at login
+        // (e.g. an invited user who forgot the temporary one).
+        data: { passwordHash, mustChangePassword: false },
       }),
       prisma.passwordResetToken.update({
         where: { id: resetToken.id },
@@ -310,10 +332,13 @@ export const authService = {
 
 export class AuthError extends Error {
   statusCode: number;
+  /** API error code (the client maps it to a message). */
+  code: string;
 
-  constructor(message: string, statusCode: number) {
+  constructor(message: string, statusCode: number, code = 'AUTH_ERROR') {
     super(message);
     this.name = 'AuthError';
     this.statusCode = statusCode;
+    this.code = code;
   }
 }

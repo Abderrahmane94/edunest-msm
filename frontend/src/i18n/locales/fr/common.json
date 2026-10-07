@@ -143,7 +143,11 @@
       "submit": "Mettre à jour le mot de passe",
       "submitting": "Mise à jour…",
       "genericError": "Impossible de réinitialiser le mot de passe. Le lien a peut-être expiré.",
-      "unexpectedError": "Une erreur inattendue s'est produite. Veuillez réessayer."
+      "unexpectedError": "Une erreur inattendue s'est produite. Veuillez réessayer.",
+      "linkInvalid": "Ce lien de réinitialisation n'est pas valide. Il a peut-être été remplacé par un lien plus récent : utilisez le dernier e-mail reçu, ou demandez un nouveau lien.",
+      "linkUsed": "Ce lien a déjà servi à changer le mot de passe. Demandez un nouveau lien si nécessaire.",
+      "linkExpired": "Ce lien a expiré (il est valable 1 heure). Demandez un nouveau lien.",
+      "passwordMaxLength": "Le mot de passe ne doit pas dépasser 128 caractères"
     }
   },
   "nav": {

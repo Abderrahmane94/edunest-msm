@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLogoutWithConfirm } from '@/components/LogoutConfirm';
 import { NotificationBell } from '@/components/NotificationBell';
+import { OfflineStatus } from '@/components/OfflineStatus';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { BottomTabBar } from './BottomTabBar';
 import type { NavItem } from './Sidebar';
@@ -69,6 +70,7 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
                 {user.firstName}
               </span>
             )}
+            <OfflineStatus />
             <NotificationBell />
             <InstallAppButton variant="icon" />
             <button

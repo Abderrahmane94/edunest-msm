@@ -58,7 +58,7 @@ describe('password reset', () => {
       expect(sendEmail).not.toHaveBeenCalled();
     });
 
-    it('stores only a hash of the link token and emails the link in the user’s language', async () => {
+    it('stores only a hash of the link token and emails the link', async () => {
       mockPrisma.user.findMany.mockResolvedValue([account('u1', 'Crèche A', 'ar')]);
 
       expect(await authService.sendPasswordResetLinks('fatima@school.dz')).toBe(1);
@@ -66,7 +66,7 @@ describe('password reset', () => {
       const [, options] = sendEmail.mock.calls[0];
       const token = new URL(options.resetUrl).searchParams.get('token')!;
       expect(options.resetUrl.startsWith('https://app.example/reset-password/confirm?token=')).toBe(true);
-      expect(options).toMatchObject({ firstName: 'Fatima', language: 'ar', schoolName: null });
+      expect(options).toMatchObject({ firstName: 'Fatima', schoolName: null, expiresInHours: 1 });
       expect(mockPrisma.passwordResetToken.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ userId: 'u1', token: sha256(token) }),
       });

@@ -72,65 +72,77 @@ class EmailService {
     }
   }
 
-  /** Password reset link, in the user's language (French or Arabic). */
+  /** Password reset link, in Arabic then French (the same link in both). */
   async sendPasswordResetEmail(
     to: string,
     options: {
       firstName: string;
       resetUrl: string;
-      language: 'fr' | 'ar';
       expiresInHours: number;
       /** Set when the email has accounts in several schools. */
       schoolName?: string | null;
     },
   ): Promise<void> {
     const e = escapeHtml;
-    const ar = options.language === 'ar';
     const hours = options.expiresInHours;
-    const text = ar
-      ? {
-          subject: 'EduNest - إعادة تعيين كلمة المرور',
-          title: 'إعادة تعيين كلمة المرور',
-          hello: `مرحبًا ${e(options.firstName)}،`,
-          intro: options.schoolName
-            ? `طلبت إعادة تعيين كلمة مرور حسابك في EduNest لدى <strong>${e(options.schoolName)}</strong>.`
-            : 'طلبت إعادة تعيين كلمة مرور حسابك في EduNest.',
-          action: 'اختيار كلمة مرور جديدة',
-          expiry: hours === 1 ? 'هذا الرابط صالح لمدة ساعة واحدة ولا يُستعمل إلا مرة واحدة.' : `هذا الرابط صالح لمدة ${hours} ساعات ولا يُستعمل إلا مرة واحدة.`,
-          ignore: 'إذا لم تطلب ذلك، تجاهل هذه الرسالة: كلمة مرورك لن تتغير.',
-          team: '— فريق EduNest',
-        }
-      : {
-          subject: 'EduNest - Réinitialisation du mot de passe',
-          title: 'Réinitialisation du mot de passe',
-          hello: `Bonjour ${e(options.firstName)},`,
-          intro: options.schoolName
-            ? `Vous avez demandé à réinitialiser le mot de passe de votre compte EduNest chez <strong>${e(options.schoolName)}</strong>.`
-            : 'Vous avez demandé à réinitialiser le mot de passe de votre compte EduNest.',
-          action: 'Choisir un nouveau mot de passe',
-          expiry: `Ce lien est valable ${hours} heure${hours > 1 ? 's' : ''} et ne peut servir qu'une fois.`,
-          ignore: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : votre mot de passe ne changera pas.",
-          team: "— L'équipe EduNest",
-        };
-    const dir = ar ? 'rtl' : 'ltr';
-    const align = ar ? 'right' : 'left';
+    const school = options.schoolName ? e(options.schoolName) : null;
+    const url = e(options.resetUrl);
+
+    const sections = [
+      {
+        dir: 'rtl',
+        align: 'right',
+        lang: 'ar',
+        title: 'إعادة تعيين كلمة المرور',
+        hello: `مرحبًا ${e(options.firstName)}،`,
+        intro: school
+          ? `طلبت إعادة تعيين كلمة مرور حسابك في EduNest لدى <strong>${school}</strong>.`
+          : 'طلبت إعادة تعيين كلمة مرور حسابك في EduNest.',
+        action: 'اختيار كلمة مرور جديدة',
+        expiry:
+          hours === 1
+            ? 'هذا الرابط صالح لمدة ساعة واحدة ولا يُستعمل إلا مرة واحدة.'
+            : `هذا الرابط صالح لمدة ${hours} ساعات ولا يُستعمل إلا مرة واحدة.`,
+        ignore: 'إذا لم تطلب ذلك، تجاهل هذه الرسالة: كلمة مرورك لن تتغير.',
+        team: '— فريق EduNest',
+      },
+      {
+        dir: 'ltr',
+        align: 'left',
+        lang: 'fr',
+        title: 'Réinitialisation du mot de passe',
+        hello: `Bonjour ${e(options.firstName)},`,
+        intro: school
+          ? `Vous avez demandé à réinitialiser le mot de passe de votre compte EduNest chez <strong>${school}</strong>.`
+          : 'Vous avez demandé à réinitialiser le mot de passe de votre compte EduNest.',
+        action: 'Choisir un nouveau mot de passe',
+        expiry: `Ce lien est valable ${hours} heure${hours > 1 ? 's' : ''} et ne peut servir qu'une fois.`,
+        ignore: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : votre mot de passe ne changera pas.",
+        team: "— L'équipe EduNest",
+      },
+    ];
+
+    const html = sections
+      .map(
+        (t) => `
+        <div dir="${t.dir}" lang="${t.lang}" style="text-align:${t.align};">
+          <h2 style="margin:0 0 16px;">${t.title}</h2>
+          <p>${t.hello}</p>
+          <p>${t.intro}</p>
+          <p style="margin:24px 0;">
+            <a href="${url}" style="background:#4F46E5;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;display:inline-block;font-weight:600;">${t.action}</a>
+          </p>
+          <p style="color:#6B7280;font-size:13px;">${t.expiry}</p>
+          <p style="color:#6B7280;font-size:13px;">${t.ignore}</p>
+          <p>${t.team}</p>
+        </div>`,
+      )
+      .join('<hr style="border:none;border-top:1px solid #E5E7EB;margin:28px 0;" />');
 
     await this.send({
       to,
-      subject: text.subject,
-      html: `
-        <div dir="${dir}" style="font-family:Arial,Helvetica,sans-serif;color:#111827;text-align:${align};max-width:520px;">
-          <h2 style="margin:0 0 16px;">${text.title}</h2>
-          <p>${text.hello}</p>
-          <p>${text.intro}</p>
-          <p style="margin:24px 0;">
-            <a href="${e(options.resetUrl)}" style="background:#4F46E5;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;display:inline-block;font-weight:600;">${text.action}</a>
-          </p>
-          <p style="color:#6B7280;font-size:13px;">${text.expiry}</p>
-          <p style="color:#6B7280;font-size:13px;">${text.ignore}</p>
-          <p>${text.team}</p>
-        </div>
-      `,
+      subject: 'EduNest - إعادة تعيين كلمة المرور / Réinitialisation du mot de passe',
+      html: `<div style="font-family:Arial,Helvetica,sans-serif;color:#111827;max-width:520px;">${html}</div>`,
     });
   }
 

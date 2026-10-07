@@ -218,7 +218,7 @@ export const authService = {
   },
 
   /**
-   * Emails a reset link to every account using this email (case-insensitive),
+   * Emails a reset link (Arabic and French) to every account using this email (case-insensitive),
    * one per school when the email has accounts in several. Each link is
    * single-use and expires after PASSWORD_RESET_EXPIRY_HOURS; only a hash of
    * it is stored. Returns how many links were sent.
@@ -249,7 +249,6 @@ export const authService = {
         await emailService.sendPasswordResetEmail(user.email, {
           firstName: user.firstName,
           resetUrl: `${getFrontendUrl()}/reset-password/confirm?token=${token}`,
-          language: user.preferredLanguage,
           expiresInHours: PASSWORD_RESET_EXPIRY_HOURS,
           // Tells the accounts apart when the email has several.
           schoolName: users.length > 1 ? (user.school?.name ?? null) : null,

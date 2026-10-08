@@ -40,7 +40,7 @@ function PickupContactWarning({ child }: { child: Child }) {
   const { t } = useTranslation();
   if (child.has_authorized_pickup !== false) return null;
   return (
-    <StatusBadge variant="absent" title={t('children.emergencyContacts.noPickupContact')}>
+    <StatusBadge variant="absent" className="whitespace-normal max-w-full" title={t('children.emergencyContacts.noPickupContact')}>
       {t('children.emergencyContacts.noPickupContact')}
     </StatusBadge>
   );
@@ -52,7 +52,7 @@ function HighSeverityMedicalWarning({ childId }: { childId: string }) {
   const { data: notes } = useMedicalNotes(childId);
   if (!notes || !notes.some((n) => n.severity === 'high')) return null;
   return (
-    <StatusBadge variant="absent" title={t('children.medicalNotes.highSeverityWarning')}>
+    <StatusBadge variant="absent" className="whitespace-normal max-w-full" title={t('children.medicalNotes.highSeverityWarning')}>
       {t('children.medicalNotes.highSeverityWarning')}
     </StatusBadge>
   );
@@ -227,17 +227,21 @@ export function ChildrenPage() {
       header: t('children.columns.name'),
       sortable: true,
       render: (child) => (
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[var(--color-accent-muted)] text-primary flex items-center justify-center text-label font-semibold">
-            {child.first_name.charAt(0)}{child.last_name.charAt(0)}
-          </div>
-          <div>
-            <p className="text-body font-medium text-foreground">
-              {child.first_name} {child.last_name}
-            </p>
-            <p className="text-caption text-text-secondary" dir="ltr">
-              {formatDate(child.date_of_birth)}
-            </p>
+        // The warnings wrap under the name when space runs out (on a phone,
+        // beside the action icons) instead of running over them.
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 shrink-0 rounded-full bg-[var(--color-accent-muted)] text-primary flex items-center justify-center text-label font-semibold">
+              {child.first_name.charAt(0)}{child.last_name.charAt(0)}
+            </div>
+            <div className="min-w-0">
+              <p className="text-body font-medium text-foreground [overflow-wrap:anywhere]">
+                {child.first_name} {child.last_name}
+              </p>
+              <p className="text-caption text-text-secondary" dir="ltr">
+                {formatDate(child.date_of_birth)}
+              </p>
+            </div>
           </div>
           <PickupContactWarning child={child} />
           <HighSeverityMedicalWarning childId={child.id} />

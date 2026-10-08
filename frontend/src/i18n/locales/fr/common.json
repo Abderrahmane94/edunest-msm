@@ -48,6 +48,8 @@
     "tooManyAttemptsHint": "Pour votre sécurité, patientez 15 minutes avant de réessayer.",
     "serverUnreachable": "Impossible de joindre le serveur.",
     "serverUnreachableHint": "Vérifiez votre connexion internet, puis réessayez dans un instant.",
+    "sessionExpired": "Votre session a expiré.",
+    "sessionExpiredHint": "Pour votre sécurité, reconnectez-vous pour continuer.",
     "loginOffline": "Pas de connexion internet.",
     "loginOfflineHint": "La connexion à votre compte nécessite internet. Une fois connecté, l'application reste ouverte et fonctionne aussi hors ligne.",
     "offlineLogout": {

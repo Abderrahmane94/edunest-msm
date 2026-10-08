@@ -54,6 +54,16 @@ export function LoginPage() {
   const isRtl = i18n.language === 'ar';
   // Signing in needs the server: while offline, say so and wait.
   const online = useOnline();
+  // Sent back here because the session expired (not by logging out): say so, once.
+  const [sessionExpired, setSessionExpired] = useState(() => {
+    try {
+      const expired = sessionStorage.getItem('session-expired') === '1';
+      sessionStorage.removeItem('session-expired');
+      return expired;
+    } catch {
+      return false;
+    }
+  });
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -76,6 +86,7 @@ export function LoginPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setSessionExpired(false);
     setIsSubmitting(true);
     try {
       const result = await login(email, password);
@@ -280,6 +291,15 @@ export function LoginPage() {
             <p className="text-body text-text-secondary mt-1">{t('auth.welcomeSub')}</p>
           </div>
 
+          {sessionExpired && online && !error && (
+            <div role="status" className="mb-5 p-4 rounded-xl bg-[var(--color-accent-subtle)] border border-primary/20 flex items-start gap-3">
+              <Clock className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="text-body font-medium text-foreground">{t('auth.sessionExpired')}</p>
+                <p className="text-caption text-text-secondary mt-0.5">{t('auth.sessionExpiredHint')}</p>
+              </div>
+            </div>
+          )}
           {!online ? <LoginErrorBanner error={offlineError()} /> : error && <LoginErrorBanner error={error} />}
 
           <form onSubmit={handleSubmit} className="space-y-5">

@@ -238,8 +238,8 @@ export function ChildrenPage() {
               <p className="text-body font-medium text-foreground [overflow-wrap:anywhere]">
                 {child.first_name} {child.last_name}
               </p>
-              <p className="text-caption text-text-secondary" dir="ltr">
-                {formatDate(child.date_of_birth)}
+              <p className="text-caption text-text-secondary">
+                <span dir="ltr">{formatDate(child.date_of_birth)}</span>
               </p>
             </div>
           </div>

@@ -328,7 +328,7 @@ export function ChildDetailPage() {
                       )}
                     </div>
                     {!!parent?.email && (
-                      <p className="text-caption text-text-secondary" dir="ltr">{parent.email as string}</p>
+                      <p className="text-caption text-text-secondary"><span dir="ltr">{parent.email as string}</span></p>
                     )}
                     {isEditing && (
                       <label className="flex items-center gap-2 mt-2 cursor-pointer">

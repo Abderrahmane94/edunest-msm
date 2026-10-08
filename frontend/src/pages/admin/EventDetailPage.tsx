@@ -79,7 +79,7 @@ export function EventDetailPage() {
             <Calendar className="w-4 h-4 shrink-0" />
             <div>
               <p className="text-caption text-text-secondary">{t('communication.events.form.startDatetime')}</p>
-              <p className="text-body text-foreground" dir="ltr">{formatDateTime(event.start_datetime)}</p>
+              <p className="text-body text-foreground"><span dir="ltr">{formatDateTime(event.start_datetime)}</span></p>
             </div>
           </div>
           {event.end_datetime && (
@@ -87,7 +87,7 @@ export function EventDetailPage() {
               <Calendar className="w-4 h-4 shrink-0 text-text-secondary" />
               <div>
                 <p className="text-caption text-text-secondary">{t('communication.events.form.endDatetime')}</p>
-                <p className="text-body text-foreground" dir="ltr">{formatDateTime(event.end_datetime)}</p>
+                <p className="text-body text-foreground"><span dir="ltr">{formatDateTime(event.end_datetime)}</span></p>
               </div>
             </div>
           )}

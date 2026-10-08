@@ -1073,6 +1073,21 @@
     }
   },
   "staff": {
+  "filters": {
+    "searchPlaceholder": "Nom ou e-mail…",
+    "contract": "Contrat",
+    "allContracts": "Tous les contrats",
+    "profile": "Fiche",
+    "allProfiles": "Toutes",
+    "withProfile": "Complétée",
+    "withoutProfile": "Pas encore créée",
+    "contractEnd": "Fin de contrat",
+    "allContractEnds": "Toutes",
+    "endingSoon": "Expire dans les 30 jours",
+    "expired": "Déjà expiré",
+    "summary": "{{count}} employé(s)",
+    "noMatch": "Aucun employé ne correspond à cette recherche ou à ces filtres."
+  },
     "title": "Personnel",
     "profile": "Profil du personnel",
     "searchPlaceholder": "Rechercher par nom...",

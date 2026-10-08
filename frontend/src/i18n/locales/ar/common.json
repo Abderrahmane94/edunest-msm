@@ -1078,6 +1078,21 @@
     }
   },
   "staff": {
+  "filters": {
+    "searchPlaceholder": "الاسم أو البريد الإلكتروني…",
+    "contract": "العقد",
+    "allContracts": "كل العقود",
+    "profile": "الملف",
+    "allProfiles": "الكل",
+    "withProfile": "مكتمل",
+    "withoutProfile": "لم يُنشأ بعد",
+    "contractEnd": "نهاية العقد",
+    "allContractEnds": "الكل",
+    "endingSoon": "ينتهي خلال 30 يوماً",
+    "expired": "منتهٍ",
+    "summary": "{{count}} موظف",
+    "noMatch": "لا يوجد موظف يطابق هذا البحث أو هذه الفلاتر."
+  },
     "title": "الموظفون",
     "profile": "ملف الموظف",
     "searchPlaceholder": "البحث بالاسم...",

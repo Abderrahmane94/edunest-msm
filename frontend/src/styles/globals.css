@@ -280,3 +280,48 @@
 @keyframes nest-spin {
   to { transform: rotate(360deg); }
 }
+
+/* A detail page in read mode (ReadOnlyFieldset): its form fields are
+   disabled and read as plain text under their labels. */
+.read-mode :is(input, select, textarea, [data-date-trigger]) {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding-inline: 0 !important;
+  opacity: 1 !important;
+  cursor: default !important;
+  color: var(--color-text-primary) !important;
+  -webkit-text-fill-color: var(--color-text-primary);
+  resize: none;
+}
+.read-mode :is(input, textarea)::placeholder {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+/* No select arrow or calendar icon, and no "Choose…" placeholder for an empty value. */
+.read-mode select + svg,
+.read-mode [data-date-trigger] svg {
+  display: none;
+}
+/* An empty field reads "—" (React mirrors a controlled input's value into its attribute). */
+.read-mode input[value=""],
+.read-mode select:has(> option[value=""]:checked),
+.read-mode [data-date-trigger][data-empty] {
+  display: none !important;
+}
+.read-mode div:has(> input[value=""])::after,
+.read-mode div:has(> select > option[value=""]:checked)::after,
+.read-mode div:has(> [data-date-trigger][data-empty])::after {
+  content: '—';
+  display: block;
+  padding-block: 0.5rem;
+  color: var(--color-text-disabled);
+}
+/* Phone numbers and other left-to-right values still line up with the labels in Arabic. */
+[dir='rtl'] .read-mode :is(input, textarea) {
+  text-align: right;
+}
+/* "Required" marks only matter while editing. */
+.read-mode label > .text-danger {
+  display: none;
+}

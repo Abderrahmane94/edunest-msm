@@ -3,7 +3,15 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { Upload, FileText, Download, Trash2 } from 'lucide-react';
-import { Button, PageHeader, useConfirm } from '@/components/ui';
+import {
+  Button,
+  EditButton,
+  EditFormActions,
+  PageHeader,
+  ReadOnlyFieldset,
+  useConfirm,
+  useEditMode,
+} from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import { useUser } from '@/hooks/useUsers';
@@ -41,16 +49,26 @@ export function StaffProfilePage() {
   const [downloading, setDownloading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const toForm = React.useCallback(
+    (p: NonNullable<typeof profile>) => ({
+      position: p.position,
+      contract_type: p.contract_type,
+      contract_start: p.contract_start?.split('T')[0] ?? '',
+      contract_end: p.contract_end?.split('T')[0] ?? '',
+    }),
+    [],
+  );
+  const edit = useEditMode(() => {
+    if (profile) setFormData(toForm(profile));
+    setSaveError(null);
+  });
+  // Without a profile yet, the form is there to create one.
+  const editing = edit.editing || !profile;
+
+  // Follow the saved profile while reading; never overwrite what is being typed.
   React.useEffect(() => {
-    if (profile) {
-      setFormData({
-        position: profile.position,
-        contract_type: profile.contract_type,
-        contract_start: profile.contract_start?.split('T')[0] ?? '',
-        contract_end: profile.contract_end?.split('T')[0] ?? '',
-      });
-    }
-  }, [profile]);
+    if (profile && !edit.editing) setFormData(toForm(profile));
+  }, [profile, edit.editing, toForm]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -73,6 +91,7 @@ export function StaffProfilePage() {
       } else {
         await createProfile.mutateAsync({ user_id: userId!, ...formData });
       }
+      edit.finishEditing();
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -182,10 +201,14 @@ export function StaffProfilePage() {
       {/* Contract Details Form */}
       <form onSubmit={handleSubmit}>
         <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-subsection font-semibold text-text-heading mb-4">
-            {t('staff.contractDetails')}
-          </h2>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <h2 className="text-subsection font-semibold text-text-heading">
+              {t('staff.contractDetails')}
+            </h2>
+            <EditButton onClick={edit.startEditing} hidden={editing} />
+          </div>
 
+          <ReadOnlyFieldset readOnly={!editing}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
             <FormField label={t('staff.position')} htmlFor="position" required>
               <Input
@@ -225,11 +248,17 @@ export function StaffProfilePage() {
               />
             </FormField>
           </div>
+          </ReadOnlyFieldset>
 
-          <div className="flex items-center gap-3 mt-4">
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? t('common.loading') : profile ? t('common.save') : t('staff.createProfile')}
-            </Button>
+          <div className="flex items-center gap-3 flex-wrap mt-4 empty:hidden">
+            {editing &&
+              (profile ? (
+                <EditFormActions saving={isSaving} onCancel={edit.cancelEditing} />
+              ) : (
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? t('common.loading') : t('staff.createProfile')}
+                </Button>
+              ))}
             {saveSuccess && (
               <span className="text-body text-success animate-fade-in">
                 {t('staff.saved')}

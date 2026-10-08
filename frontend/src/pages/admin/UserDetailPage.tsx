@@ -2,15 +2,37 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Shield, ShieldOff, Save } from 'lucide-react';
+import { Shield, ShieldOff } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { Button, EntityDeleteButton, PageHeader, StatusBadge, useConfirm } from '@/components/ui';
+import {
+  Button,
+  EditButton,
+  EditFormActions,
+  EntityDeleteButton,
+  PageHeader,
+  ReadOnlyFieldset,
+  StatusBadge,
+  useConfirm,
+  useEditMode,
+} from '@/components/ui';
 import { userToggleConfirm } from './UsersPage';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
-import { useUser, useUpdateUser, useToggleUserActive } from '@/hooks/useUsers';
+import { useUser, useUpdateUser, useToggleUserActive, type User } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
 import { Building2 } from 'lucide-react';
+
+function toForm(user: User) {
+  return {
+    first_name: user.first_name,
+    last_name: user.last_name,
+    role: user.role,
+    preferred_language: user.preferred_language,
+    phone: user.phone ?? '',
+    address: user.address ?? '',
+    national_id: user.national_id ?? '',
+  };
+}
 
 export function UserDetailPage() {
   const { t } = useTranslation();
@@ -42,17 +64,14 @@ export function UserDetailPage() {
     // status) — otherwise in-progress unsaved edits get silently discarded.
     if (user && loadedUserId.current !== user.id) {
       loadedUserId.current = user.id;
-      setFormData({
-        first_name: user.first_name,
-        last_name: user.last_name,
-        role: user.role,
-        preferred_language: user.preferred_language,
-        phone: user.phone ?? '',
-        address: user.address ?? '',
-        national_id: user.national_id ?? '',
-      });
+      setFormData(toForm(user));
     }
   }, [user]);
+
+  const edit = useEditMode(() => {
+    if (user) setFormData(toForm(user));
+    setSaveError(null);
+  });
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -70,6 +89,7 @@ export function UserDetailPage() {
     setSaveError(null);
     try {
       await updateUser.mutateAsync({ id: userId!, ...formData });
+      edit.finishEditing();
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -137,10 +157,14 @@ export function UserDetailPage() {
       {/* Edit form */}
       <form onSubmit={handleSave} className="space-y-6">
         <div className="bg-card border border-border rounded-lg p-6 space-y-4">
-          <h2 className="text-subsection font-semibold text-text-heading">
-            {t('users.detail.profile')}
-          </h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-subsection font-semibold text-text-heading">
+              {t('users.detail.profile')}
+            </h2>
+            <EditButton onClick={edit.startEditing} hidden={edit.editing} />
+          </div>
 
+          <ReadOnlyFieldset readOnly={!edit.editing}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
             <FormField label={t('users.detail.firstName')} htmlFor="u-first-name" required>
               <Input
@@ -198,6 +222,7 @@ export function UserDetailPage() {
           <FormField label={t('users.detail.address')} htmlFor="u-address">
             <Input id="u-address" name="address" value={formData.address} onChange={handleChange} />
           </FormField>
+          </ReadOnlyFieldset>
 
           <p className="text-caption text-text-secondary">
             {t('users.detail.joined')}: <span dir="ltr" className="inline">{formatDate(user.created_at)}</span>
@@ -236,11 +261,10 @@ export function UserDetailPage() {
 
         {/* Actions */}
         <div className="flex items-center gap-3 flex-wrap">
-          <Button type="submit" disabled={updateUser.isPending}>
-            <Save className="w-4 h-4" />
-            {updateUser.isPending ? t('common.loading') : t('common.save')}
-          </Button>
-
+          {edit.editing ? (
+            <EditFormActions saving={updateUser.isPending} onCancel={edit.cancelEditing} />
+          ) : (
+          <>
           <Button
             type="button"
             variant="secondary"
@@ -261,6 +285,8 @@ export function UserDetailPage() {
             onDeleted={() => navigate('/admin/users')}
             hidden={!!user.deletedAt}
           />
+          </>
+          )}
 
           {saveSuccess && (
             <span className="text-body text-success animate-fade-in">{t('common.saved')}</span>

@@ -59,7 +59,10 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
 
   // Maps a stored relationship string back to a preset value (for editing), or 'other' with the raw text preserved.
   function relationshipToForm(relationship: string): { option: string; other: string } {
-    const match = RELATIONSHIP_VALUES.find((v) => t(`children.emergencyContacts.relationships.${v}`) === relationship);
+    // Stored as the preset's key (e.g. "uncleAunt") or as its label in the language it was saved in.
+    const match = RELATIONSHIP_VALUES.find(
+      (v) => v === relationship || t(`children.emergencyContacts.relationships.${v}`) === relationship
+    );
     return match ? { option: match, other: '' } : { option: 'other', other: relationship };
   }
 
@@ -284,7 +287,7 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
                 <div>
                   <p className="text-body font-medium text-foreground">{contact.name}</p>
                   <p className="text-caption text-text-secondary">
-                    {contact.relationship} • {contact.phone}
+                    {t(`children.emergencyContacts.relationships.${contact.relationship}`, { defaultValue: contact.relationship })} • {contact.phone}
                   </p>
                   {(contact.address || contact.national_id) && (
                     <p className="text-caption text-text-secondary">

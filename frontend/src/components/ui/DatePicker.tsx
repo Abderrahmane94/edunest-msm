@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatDate } from '@/lib/formatters';
 
 // Algerian French-derived month names are the everyday convention for Arabic
 // in this app's audience (matches the DZD/Western-digit choices already made
@@ -51,9 +52,8 @@ function buildMonthGrid(year: number, month: number): Date[] {
 function formatDisplay(value: string): string {
   const date = parseISODate(value);
   if (!date) return value;
-  const d = String(date.getDate()).padStart(2, '0');
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  return `${d}/${m}/${date.getFullYear()}`;
+  // Same order as dates elsewhere in the app (day on the right in Arabic).
+  return formatDate(`${value.slice(0, 10)}T00:00:00`);
 }
 
 type ViewMode = 'days' | 'months' | 'years';
@@ -180,6 +180,8 @@ export function DatePickerInput({
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => !disabled && setOpen((o) => !o)}
+        data-date-trigger=""
+        data-empty={value ? undefined : ''}
         className={cn(
           'w-full flex items-center justify-between gap-2 bg-card border border-border rounded-md px-3 py-2 text-body text-start',
           'transition-all duration-150',

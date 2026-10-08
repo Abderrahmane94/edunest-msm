@@ -2,9 +2,9 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Save, Shield, ShieldOff, Users, UserPlus, Settings } from 'lucide-react';
+import { Shield, ShieldOff, Users, UserPlus, Settings } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { Button, DangerZone, DataTable, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, EmptyState, EntityDeleteButton, ErrorAlert, Input, ListSkeleton, PageHeader, RoleBadge, StatusBadge, Tabs, useConfirm } from '@/components/ui';
+import { Button, DangerZone, DataTable, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, EditButton, EditFormActions, EmptyState, EntityDeleteButton, ErrorAlert, Input, ListSkeleton, PageHeader, ReadOnlyFieldset, RoleBadge, StatusBadge, Tabs, useConfirm, useEditMode } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { apiClient, apiError } from '@/lib/api-client';
@@ -101,14 +101,21 @@ export function SchoolDetailPage() {
   const [saveError, setSaveError] = React.useState<string | null>(null);
   const [toggleError, setToggleError] = React.useState<string | null>(null);
 
+  const toForm = React.useCallback(
+    (s: NonNullable<typeof school>) => ({
+      name: s.name, address: s.address, wilaya: s.wilaya, contactEmail: s.contactEmail, contactPhone: s.contactPhone,
+    }),
+    [],
+  );
+  const edit = useEditMode(() => {
+    if (school) setFormData(toForm(school));
+    setSaveError(null);
+  });
+
+  // Follow the saved school while reading; never overwrite what is being typed.
   React.useEffect(() => {
-    if (school) {
-      setFormData({
-        name: school.name, address: school.address,
-        wilaya: school.wilaya, contactEmail: school.contactEmail, contactPhone: school.contactPhone,
-      });
-    }
-  }, [school]);
+    if (school && !edit.editing) setFormData(toForm(school));
+  }, [school, edit.editing, toForm]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -120,6 +127,7 @@ export function SchoolDetailPage() {
     setSaveError(null);
     try {
       await updateSchool.mutateAsync({ id: schoolId!, ...formData });
+      edit.finishEditing();
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -187,7 +195,11 @@ export function SchoolDetailPage() {
           {/* Edit form */}
           <form onSubmit={handleSave}>
             <div className="bg-card border border-border rounded-lg p-4 sm:p-6 space-y-4">
-              <h2 className="text-subsection font-semibold text-text-heading">{t('schools.detail.info')}</h2>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-subsection font-semibold text-text-heading">{t('schools.detail.info')}</h2>
+                <EditButton onClick={edit.startEditing} hidden={edit.editing} />
+              </div>
+              <ReadOnlyFieldset readOnly={!edit.editing}>
               <FormField label={t('schoolSettings.name')} htmlFor="sd-name" required>
                 <Input id="sd-name" name="name" value={formData.name} onChange={handleChange} placeholder={t('schools.form.namePlaceholder')} />
               </FormField>
@@ -205,11 +217,10 @@ export function SchoolDetailPage() {
                   <Input id="sd-phone" name="contactPhone" type="tel" value={formData.contactPhone} onChange={handleChange} placeholder={t('schoolSettings.contactPhonePlaceholder')} />
                 </FormField>
               </div>
+              </ReadOnlyFieldset>
             </div>
-            <div className="flex items-center gap-3 flex-wrap mt-4">
-              <Button type="submit" disabled={updateSchool.isPending}>
-                <Save className="w-4 h-4" />{updateSchool.isPending ? t('common.loading') : t('common.save')}
-              </Button>
+            <div className="flex items-center gap-3 flex-wrap mt-4 empty:hidden">
+              {edit.editing && <EditFormActions saving={updateSchool.isPending} onCancel={edit.cancelEditing} />}
 
               {saveSuccess && <span className="text-body text-success animate-fade-in">{t('common.saved')}</span>}
               {saveError && <span className="text-body text-danger animate-fade-in">{saveError}</span>}

@@ -516,6 +516,9 @@
     }
   },
   "common": {
+    "filters": "Filtres",
+    "resetFilters": "Réinitialiser les filtres",
+    "clearSearch": "Effacer la recherche",
     "save": "Enregistrer",
     "saved": "Modifications enregistrées",
     "cancel": "Annuler",

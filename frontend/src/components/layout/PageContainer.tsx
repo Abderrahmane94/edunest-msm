@@ -11,7 +11,8 @@ export function PageContainer({ children, className }: PageContainerProps) {
     // pages' sticky headers and save bars from sticking. overflow-x-clip still
     // keeps anything too wide from widening the page.
     <main className={cn('flex-1 min-w-0 p-4 sm:p-6 overflow-x-clip', className)}>
-      {children}
+      {/* Lines stay readable on very wide screens. */}
+      <div className="mx-auto w-full max-w-[1440px]">{children}</div>
     </main>
   );
 }

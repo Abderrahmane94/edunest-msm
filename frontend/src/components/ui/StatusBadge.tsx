@@ -17,6 +17,12 @@ const statusBadgeVariants = cva(
         draft: 'bg-subtle text-text-secondary',
         cancelled: 'bg-subtle text-text-disabled',
         partial: 'bg-warning-muted text-pending',
+        // General tones, for any other state
+        success: 'bg-success-muted text-success',
+        warning: 'bg-warning-muted text-warning',
+        danger: 'bg-danger-muted text-danger',
+        info: 'bg-accent-muted text-primary',
+        neutral: 'bg-subtle text-text-secondary',
       },
     },
     defaultVariants: {

@@ -30,8 +30,8 @@ export function PaymentManagementPage() {
     { key: 'records', label: t('nav.paymentsRecords'), icon: <Receipt className="w-4 h-4" /> },
     { key: 'late', label: t('nav.paymentsLate'), icon: <Clock className="w-4 h-4" /> },
     { key: 'reconciliation', label: t('nav.paymentsRecon'), icon: <BarChart2 className="w-4 h-4" /> },
-    { key: 'expenses', label: t('finance.tabs.expenses', 'Dépenses'), icon: <Wallet className="w-4 h-4" /> },
-    { key: 'config', label: t('payments.branchConfig.title', 'Configuration'), icon: <Settings className="w-4 h-4" /> },
+    { key: 'expenses', label: t('finance.tabs.expenses'), icon: <Wallet className="w-4 h-4" /> },
+    { key: 'config', label: t('payments.branchConfig.title'), icon: <Settings className="w-4 h-4" /> },
   ];
 
   return (

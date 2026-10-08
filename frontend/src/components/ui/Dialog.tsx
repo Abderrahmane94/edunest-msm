@@ -94,7 +94,7 @@ export function DialogContent({ children, className }: DialogContentProps) {
             size="icon"
             className="absolute top-4 end-4"
             onClick={() => onOpenChange(false)}
-            aria-label={t('common.closeDialog', 'Close dialog')}
+            aria-label={t('common.closeDialog')}
           >
             <X className="w-4 h-4" />
           </Button>

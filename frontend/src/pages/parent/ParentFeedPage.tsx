@@ -144,7 +144,7 @@ function ReportCard({ report, locale }: { report: DailyReport; locale: string })
               {report.meals_eaten}
             </span>
             <span className="text-micro text-text-secondary">
-              {t('parentFeed.meals', 'Meals')}
+              {t('parentFeed.meals')}
             </span>
           </div>
           <div className="flex flex-col items-center gap-1 p-3 rounded-lg bg-subtle text-center">
@@ -153,7 +153,7 @@ function ReportCard({ report, locale }: { report: DailyReport; locale: string })
               {report.nap_duration_minutes ?? "—"}
             </span>
             <span className="text-micro text-text-secondary">
-              {t('parentFeed.napMin', 'min nap')}
+              {t('parentFeed.napMin')}
             </span>
           </div>
         </div>
@@ -163,7 +163,7 @@ function ReportCard({ report, locale }: { report: DailyReport; locale: string })
           <div className="flex items-start gap-2 p-3 rounded-lg bg-subtle mb-4">
             <Activity className="w-4 h-4 text-text-secondary mt-0.5 shrink-0" aria-hidden="true" />
             <div className="min-w-0">
-              <p className="text-micro text-text-secondary">{t('parentFeed.activities', 'Activities')}</p>
+              <p className="text-micro text-text-secondary">{t('parentFeed.activities')}</p>
               <p className="text-body text-text-primary leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
                 {report.activities}
               </p>
@@ -228,7 +228,7 @@ export function ParentFeedPage() {
       <div className="min-h-screen bg-page flex items-center justify-center px-4">
         <div className="text-center space-y-2">
           <p className="text-body text-text-secondary">
-            {t('parentFeed.error', 'Unable to load reports. Please try again.')}
+            {t('parentFeed.error')}
           </p>
         </div>
       </div>
@@ -241,10 +241,10 @@ export function ParentFeedPage() {
       <header className="sticky top-14 z-10 bg-card border-b border-border">
         <div className="max-w-[600px] mx-auto px-4 py-3">
           <h1 className="text-page-title font-semibold text-text-heading">
-            {t('parentFeed.title', 'Daily Reports')}
+            {t('parentFeed.title')}
           </h1>
           <p className="text-caption text-text-secondary">
-            {t('parentFeed.subtitle', "See how your child's day went")}
+            {t('parentFeed.subtitle')}
           </p>
         </div>
       </header>
@@ -261,7 +261,7 @@ export function ParentFeedPage() {
               <FileText className="w-8 h-8 text-text-secondary" />
             </div>
             <p className="text-body text-text-secondary">
-              {t('parentFeed.empty', 'No reports yet. Check back later!')}
+              {t('parentFeed.empty')}
             </p>
           </div>
         )}

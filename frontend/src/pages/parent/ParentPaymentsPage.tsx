@@ -34,8 +34,8 @@ export function ParentPaymentsPage() {
     <div className="min-h-screen bg-page">
       <header className="sticky top-14 z-10 bg-card border-b border-border">
         <div className="max-w-[600px] mx-auto px-4 py-3">
-          <h1 className="text-page-title font-semibold text-text-heading">{t('parentPayments.title', 'Payments')}</h1>
-          <p className="text-caption text-text-secondary">{t('parentPayments.subtitle', "View your children's charges and payments")}</p>
+          <h1 className="text-page-title font-semibold text-text-heading">{t('parentPayments.title')}</h1>
+          <p className="text-caption text-text-secondary">{t('parentPayments.subtitle')}</p>
         </div>
         <div className="max-w-[600px] mx-auto px-4"><TabBar activeTab={activeTab} onTabChange={setActiveTab} /></div>
       </header>
@@ -52,9 +52,9 @@ export function ParentPaymentsPage() {
 function TabBar({ activeTab, onTabChange }: { activeTab: TabId; onTabChange: (id: TabId) => void }) {
   const { t } = useTranslation();
   const tabs: { id: TabId; label: string; icon: React.ElementType }[] = [
-    { id: 'periods', label: t('parentPayments.tabs.periods', 'Charges'), icon: CalendarDays },
-    { id: 'history', label: t('parentPayments.tabs.history', 'Payments'), icon: Receipt },
-    { id: 'balances', label: t('parentPayments.tabs.balances', 'Balance'), icon: Wallet },
+    { id: 'periods', label: t('parentPayments.tabs.periods'), icon: CalendarDays },
+    { id: 'history', label: t('parentPayments.tabs.history'), icon: Receipt },
+    { id: 'balances', label: t('parentPayments.tabs.balances'), icon: Wallet },
   ];
   return (
     <div className="flex border-b border-border overflow-x-auto" role="tablist">
@@ -71,8 +71,8 @@ function NoChildren() {
   return (
     <div className="text-center py-16 space-y-3">
       <div className="w-16 h-16 mx-auto rounded-full bg-subtle flex items-center justify-center"><Users className="w-8 h-8 text-text-secondary" /></div>
-      <p className="text-body text-text-secondary">{t('parentPayments.noChildren', 'No children linked to your account.')}</p>
-      <p className="text-caption text-text-secondary">{t('parentPayments.noChildrenHint', 'Contact your school to link your children.')}</p>
+      <p className="text-body text-text-secondary">{t('parentPayments.noChildren')}</p>
+      <p className="text-caption text-text-secondary">{t('parentPayments.noChildrenHint')}</p>
     </div>
   );
 }
@@ -88,14 +88,14 @@ function BillingPeriodsTab() {
   const { t } = useTranslation();
   const { data, isLoading, isError } = useParentPeriods();
   if (isLoading) return <SkeletonCards count={4} />;
-  if (isError) return <p className="text-center py-16 text-body text-text-secondary">{t('parentPayments.error', 'Unable to load data.')}</p>;
+  if (isError) return <p className="text-center py-16 text-body text-text-secondary">{t('parentPayments.error.periods')}</p>;
   if (!data || data.length === 0) return <NoChildren />;
   return (<ul role="list" className="space-y-3">{data.map((p) => <PeriodCard key={p.id} period={p} />)}</ul>);
 }
 
 function PeriodCard({ period }: { period: ParentBillingPeriod }) {
   const { t } = useTranslation();
-  const label = period.isRegistrationPeriod ? t('parentPayments.registrationFee', 'Registration Fee') : `${fmtDate(period.periodStart)} — ${fmtDate(period.periodEnd)}`;
+  const label = period.isRegistrationPeriod ? t('parentPayments.registrationFee') : `${fmtDate(period.periodStart)} — ${fmtDate(period.periodEnd)}`;
   return (
     <li><article className={cn('bg-card border rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]', period.isLate ? 'border-[var(--color-danger-muted)]' : 'border-border')}>
       {period.isLate && <div className="h-1 bg-[var(--color-danger)]" aria-hidden="true" />}
@@ -108,7 +108,7 @@ function PeriodCard({ period }: { period: ParentBillingPeriod }) {
           <p className="text-caption text-text-secondary"><bdi dir="ltr">{label}</bdi></p>
           <div className="flex items-end justify-between gap-3">
             <p className="font-mono text-subsection font-semibold text-text-heading"><bdi dir="ltr">{formatDZD(period.amountDue)}</bdi></p>
-            <p className="text-micro text-text-secondary">{t('parentPayments.dueDate', 'Due')}: <bdi dir="ltr">{fmtDate(period.dueDate)}</bdi></p>
+            <p className="text-micro text-text-secondary">{t('parentPayments.dueDate')}: <bdi dir="ltr">{fmtDate(period.dueDate)}</bdi></p>
           </div>
         </div>
       </div>
@@ -121,8 +121,8 @@ function PaymentHistoryTab() {
   const { t } = useTranslation();
   const { data, isLoading, isError } = useParentHistory();
   if (isLoading) return <SkeletonCards count={4} />;
-  if (isError) return <p className="text-center py-16 text-body text-text-secondary">{t('parentPayments.error', 'Unable to load data.')}</p>;
-  if (!data || data.length === 0) return (<div className="text-center py-16 space-y-3"><div className="w-16 h-16 mx-auto rounded-full bg-subtle flex items-center justify-center"><Receipt className="w-8 h-8 text-text-secondary" /></div><p className="text-body text-text-secondary">{t('parentPayments.noPayments', 'No payments recorded yet.')}</p></div>);
+  if (isError) return <p className="text-center py-16 text-body text-text-secondary">{t('parentPayments.error.history')}</p>;
+  if (!data || data.length === 0) return (<div className="text-center py-16 space-y-3"><div className="w-16 h-16 mx-auto rounded-full bg-subtle flex items-center justify-center"><Receipt className="w-8 h-8 text-text-secondary" /></div><p className="text-body text-text-secondary">{t('parentPayments.noPayments')}</p></div>);
   return (<ul role="list" className="space-y-3">{data.map((p) => <PaymentCard key={p.id} payment={p} />)}</ul>);
 }
 
@@ -135,19 +135,19 @@ function PaymentCard({ payment }: { payment: ParentPaymentRecord }) {
       {payment.isCorrection && <div className="h-1 bg-[var(--color-warning)]" aria-hidden="true" />}
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0"><h3 className="text-body font-medium text-text-heading truncate">{payment.childName}</h3><p className="text-caption text-text-secondary mt-0.5">{t('parentPayments.receipt', 'Receipt')}: <bdi dir="ltr" className="font-mono">{payment.receiptNumber}</bdi></p></div>
-          {payment.isCorrection && <span className="inline-flex items-center px-2.5 py-1 rounded-full text-micro font-medium bg-[var(--color-warning-muted)] text-[var(--color-warning)] shrink-0">{t('parentPayments.correction', 'Correction')}</span>}
+          <div className="flex-1 min-w-0"><h3 className="text-body font-medium text-text-heading truncate">{payment.childName}</h3><p className="text-caption text-text-secondary mt-0.5">{t('parentPayments.receipt')}: <bdi dir="ltr" className="font-mono">{payment.receiptNumber}</bdi></p></div>
+          {payment.isCorrection && <span className="inline-flex items-center px-2.5 py-1 rounded-full text-micro font-medium bg-[var(--color-warning-muted)] text-[var(--color-warning)] shrink-0">{t('parentPayments.correction')}</span>}
         </div>
         <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className={cn('font-mono text-subsection font-semibold', isNeg ? 'text-[var(--color-danger)]' : 'text-text-heading')}><bdi dir="ltr">{isNeg && '−'}{formatDZD(Math.abs(parseFloat(payment.totalAmount)))}</bdi></p>
             <p className="text-micro text-text-secondary mt-1">{channelLabel(payment.channel, t)} · <bdi dir="ltr">{fmtDate(payment.valueDate)}</bdi></p>
           </div>
-          <button type="button" onClick={() => setShowReceipt(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-muted)] transition-colors duration-150" aria-label={t('parentPayments.viewReceipt', 'View Receipt')}>
-            <Eye className="w-3.5 h-3.5" aria-hidden="true" /><span>{t('parentPayments.viewReceipt', 'View Receipt')}</span>
+          <button type="button" onClick={() => setShowReceipt(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-muted)] transition-colors duration-150" aria-label={t('parentPayments.viewReceipt')}>
+            <Eye className="w-3.5 h-3.5" aria-hidden="true" /><span>{t('parentPayments.viewReceipt')}</span>
           </button>
         </div>
-        {payment.isCorrection && payment.correctsReceiptNumber && <p className="mt-2 text-micro text-text-secondary">{t('parentPayments.correctsReceipt', 'Corrects')}: <bdi dir="ltr" className="font-mono">{payment.correctsReceiptNumber}</bdi></p>}
+        {payment.isCorrection && payment.correctsReceiptNumber && <p className="mt-2 text-micro text-text-secondary">{t('parentPayments.correctsReceipt')}: <bdi dir="ltr" className="font-mono">{payment.correctsReceiptNumber}</bdi></p>}
         {/* Same receipt dialog as staff: full receipt, print / save as PDF. */}
         <ReceiptView paymentRecordId={payment.id} open={showReceipt} onOpenChange={setShowReceipt} />
       </div>
@@ -160,7 +160,7 @@ function BalancesTab() {
   const { t } = useTranslation();
   const { data, isLoading, isError } = useParentBalances();
   if (isLoading) return <SkeletonCards count={2} />;
-  if (isError) return <p className="text-center py-16 text-body text-text-secondary">{t('parentPayments.error', 'Unable to load data.')}</p>;
+  if (isError) return <p className="text-center py-16 text-body text-text-secondary">{t('parentPayments.error.balances')}</p>;
   if (!data || data.length === 0) return <NoChildren />;
   return (<ul role="list" className="space-y-3">{data.map((b) => <BalanceCard key={b.childId} balance={b} />)}</ul>);
 }
@@ -176,9 +176,9 @@ function BalanceCard({ balance }: { balance: ParentChildBalance }) {
         <div className="flex-1 min-w-0"><h3 className="text-subsection font-semibold text-text-heading truncate">{balance.childName}</h3><p className="text-caption text-text-secondary mt-0.5">{balance.branchName}</p></div>
         <div className="text-end shrink-0">
           <p className={cn('font-mono text-subsection font-semibold', isZero ? 'text-[var(--color-success)]' : isOverpaid ? 'text-[var(--color-accent)]' : 'text-text-heading')}><bdi dir="ltr">{isOverpaid && '−'}{formatDZD(Math.abs(amt))}</bdi></p>
-          {isOverpaid && <p className="text-micro text-[var(--color-accent)] mt-0.5">{t('parentPayments.paidInAdvance', 'Paid in advance')}</p>}
-          {isZero && <p className="text-micro text-[var(--color-success)] mt-0.5">{t('parentPayments.allPaid', 'All paid')}</p>}
-          {!isOverpaid && !isZero && <p className="text-micro text-text-secondary mt-0.5">{t('parentPayments.outstanding', 'Outstanding')}</p>}
+          {isOverpaid && <p className="text-micro text-[var(--color-accent)] mt-0.5">{t('parentPayments.paidInAdvance')}</p>}
+          {isZero && <p className="text-micro text-[var(--color-success)] mt-0.5">{t('parentPayments.allPaid')}</p>}
+          {!isOverpaid && !isZero && <p className="text-micro text-text-secondary mt-0.5">{t('parentPayments.outstanding')}</p>}
         </div>
       </div></div>
     </article></li>

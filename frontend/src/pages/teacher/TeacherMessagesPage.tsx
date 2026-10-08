@@ -41,6 +41,7 @@ import {
   type StaffConversation,
   type StaffMessage,
 } from '@/hooks/useStaffMessaging';
+import { messagePreview } from '@/components/messaging/messagePreview';
 
 // ─── Tab type ────────────────────────────────────────────────────────────────
 
@@ -71,7 +72,7 @@ export function TeacherMessagesPage() {
       {/* Header */}
       <header className="shrink-0 bg-card border-b border-border px-4 py-3">
         <h1 className="text-subsection font-semibold text-text-heading">
-          {t('messages.title', 'Messages')}
+          {t('messages.title')}
         </h1>
         {/* Tab switcher */}
         <div className="flex items-center gap-1 mt-2">
@@ -86,7 +87,7 @@ export function TeacherMessagesPage() {
             )}
           >
             <Baby className="w-3.5 h-3.5" />
-            {t('messages.tabParents', 'Parents')}
+            {t('messages.tabParents')}
           </button>
           <button
             type="button"
@@ -99,7 +100,7 @@ export function TeacherMessagesPage() {
             )}
           >
             <Users className="w-3.5 h-3.5" />
-            {t('messages.tabColleagues', 'Collègues')}
+            {t('messages.tabColleagues')}
           </button>
         </div>
       </header>
@@ -231,13 +232,13 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
       )}>
         <div className="p-3 border-b border-border flex items-center justify-between">
           <span className="text-caption text-text-secondary font-medium">
-            {t('messages.parentConversations', 'Conversations parents')}
+            {t('messages.parentConversations')}
           </span>
           <button
             type="button"
             onClick={() => setShowNewConversationDialog(true)}
             className="flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] transition-all duration-150"
-            aria-label={t('messages.newConversation', 'Nouvelle conversation')}
+            aria-label={t('messages.newConversation')}
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -258,7 +259,7 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
         ) : conversations.length === 0 ? (
           <div className="flex items-center justify-center h-32 p-4">
             <p className="text-body text-text-secondary text-center">
-              {t('messages.noConversations', 'Aucune conversation')}
+              {t('messages.noConversations')}
             </p>
           </div>
         ) : (
@@ -285,7 +286,7 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
                     </div>
                     <p className="text-caption text-text-secondary truncate mt-0.5">{conv.child_name}</p>
                     {conv.last_message && (
-                      <p className="text-caption text-text-secondary truncate mt-0.5">{conv.last_message}</p>
+                      <p className="text-caption text-text-secondary truncate mt-0.5">{messagePreview(conv.last_message, t)}</p>
                     )}
                   </div>
                 </button>
@@ -300,7 +301,7 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
         {!activeConversationId ? (
           <div className="flex-1 flex items-center justify-center p-4">
             <p className="text-body text-text-secondary">
-              {t('messages.selectConversation', 'Sélectionnez une conversation')}
+              {t('messages.selectConversation')}
             </p>
           </div>
         ) : (
@@ -311,7 +312,7 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
                   type="button"
                   onClick={() => setActiveConversationId(null)}
                   className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg hover:bg-hover transition-colors duration-150"
-                  aria-label={t('messages.back', 'Retour')}
+                  aria-label={t('messages.back')}
                 >
                   <ArrowLeft className="w-5 h-5 text-text-primary rtl:rotate-180" />
                 </button>
@@ -504,13 +505,13 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
       )}>
         <div className="p-3 border-b border-border flex items-center justify-between">
           <span className="text-caption text-text-secondary font-medium">
-            {t('messages.staffConversations', 'Collègues')}
+            {t('messages.staffConversations')}
           </span>
           <button
             type="button"
             onClick={() => setShowNewDialog(true)}
             className="flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] transition-all duration-150"
-            aria-label={t('messages.newStaffConversation', 'Nouvelle conversation')}
+            aria-label={t('messages.newStaffConversation')}
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -531,14 +532,14 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
         ) : conversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 p-4 gap-2">
             <p className="text-body text-text-secondary text-center">
-              {t('messages.noStaffConversations', 'Aucune conversation avec un collègue')}
+              {t('messages.noStaffConversations')}
             </p>
             <button
               type="button"
               onClick={() => setShowNewDialog(true)}
               className="text-caption text-[var(--color-accent)] hover:underline"
             >
-              {t('messages.startNewStaffConversation', 'Commencer une conversation')}
+              {t('messages.startNewStaffConversation')}
             </button>
           </div>
         ) : (
@@ -568,11 +569,11 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
                       </div>
                       <p className="text-caption text-text-secondary truncate mt-0.5">
                         {other.role === 'admin'
-                          ? t('messages.roleAdmin', 'Directeur')
-                          : t('messages.roleTeacher', 'Enseignant')}
+                          ? t('messages.roleAdmin')
+                          : t('messages.roleTeacher')}
                       </p>
                       {conv.last_message && (
-                        <p className="text-caption text-text-secondary truncate mt-0.5">{conv.last_message}</p>
+                        <p className="text-caption text-text-secondary truncate mt-0.5">{messagePreview(conv.last_message, t)}</p>
                       )}
                     </div>
                   </button>
@@ -588,7 +589,7 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
         {!activeConversationId ? (
           <div className="flex-1 flex items-center justify-center p-4">
             <p className="text-body text-text-secondary">
-              {t('messages.selectConversation', 'Sélectionnez une conversation')}
+              {t('messages.selectConversation')}
             </p>
           </div>
         ) : (
@@ -599,7 +600,7 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
                   type="button"
                   onClick={() => setActiveConversationId(null)}
                   className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg hover:bg-hover transition-colors duration-150"
-                  aria-label={t('messages.back', 'Retour')}
+                  aria-label={t('messages.back')}
                 >
                   <ArrowLeft className="w-5 h-5 text-text-primary rtl:rotate-180" />
                 </button>
@@ -613,8 +614,8 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
                   </p>
                   <p className="text-caption text-text-secondary truncate">
                     {activeOther?.role === 'admin'
-                      ? t('messages.roleAdmin', 'Directeur')
-                      : t('messages.roleTeacher', 'Enseignant')}
+                      ? t('messages.roleAdmin')
+                      : t('messages.roleTeacher')}
                   </p>
                 </div>
               </div>
@@ -734,7 +735,7 @@ function ChatArea({
         ) : messages.length === 0 && pendingMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-body text-text-secondary">
-              {t('messages.noMessages', 'Aucun message. Commencez la conversation !')}
+              {t('messages.noMessages')}
             </p>
           </div>
         ) : (
@@ -764,7 +765,7 @@ function ChatArea({
               type="button"
               onClick={() => setShowAttachMenu(!showAttachMenu)}
               className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-hover text-text-secondary hover:text-text-primary transition-colors duration-150"
-              aria-label={t('messages.attach', 'Joindre un fichier')}
+              aria-label={t('messages.attach')}
               aria-expanded={showAttachMenu}
             >
               <Paperclip className="w-5 h-5" />
@@ -777,7 +778,7 @@ function ChatArea({
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-body text-text-primary hover:bg-hover transition-colors duration-150"
                 >
                   <Image className="w-4 h-4 text-text-secondary" />
-                  {t('messages.sendPhoto', 'Photo')}
+                  {t('messages.sendPhoto')}
                 </button>
                 <button
                   type="button"
@@ -785,7 +786,7 @@ function ChatArea({
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-body text-text-primary hover:bg-hover transition-colors duration-150"
                 >
                   <FileText className="w-4 h-4 text-text-secondary" />
-                  {t('messages.sendDocument', 'Document')}
+                  {t('messages.sendDocument')}
                 </button>
               </div>
             )}
@@ -795,10 +796,10 @@ function ChatArea({
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder={t('messages.placeholder', 'Écrivez un message...')}
+            placeholder={t('messages.placeholder')}
             rows={1}
             className="flex-1 min-h-[44px] max-h-[120px] bg-subtle border border-border rounded-lg px-4 py-3 text-body text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-[var(--color-accent)] focus:shadow-[0_0_0_3px_rgba(79,70,229,0.12)] transition-all duration-150 resize-none"
-            aria-label={t('messages.inputLabel', 'Zone de saisie du message')}
+            aria-label={t('messages.inputLabel')}
           />
 
           <button
@@ -811,7 +812,7 @@ function ChatArea({
                 ? 'bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)]'
                 : 'bg-subtle text-text-disabled cursor-not-allowed'
             )}
-            aria-label={t('messages.send', 'Envoyer')}
+            aria-label={t('messages.send')}
           >
             <Send className="w-5 h-5" />
           </button>
@@ -861,9 +862,9 @@ function NewParentConversationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('messages.newConversation', 'Nouvelle conversation')}</DialogTitle>
+          <DialogTitle>{t('messages.newConversation')}</DialogTitle>
           <DialogDescription>
-            {t('messages.selectChildForConversation', 'Sélectionnez un enfant pour démarrer une conversation avec son parent')}
+            {t('messages.selectChildForConversation')}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-2 max-h-[60vh] overflow-y-auto">
@@ -890,7 +891,7 @@ function NewParentConversationDialog({
             ))
           ) : (
             <p className="text-body text-text-secondary text-center py-4">
-              {t('messages.noChildrenAvailable', 'Aucun enfant disponible')}
+              {t('messages.noChildrenAvailable')}
             </p>
           )}
           {createConversation.isError && (
@@ -934,9 +935,9 @@ function NewStaffConversationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('messages.newStaffConversationTitle', 'Nouvelle conversation')}</DialogTitle>
+          <DialogTitle>{t('messages.newStaffConversationTitle')}</DialogTitle>
           <DialogDescription>
-            {t('messages.selectColleague', 'Sélectionnez un collègue pour démarrer une conversation')}
+            {t('messages.selectColleague')}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-2 max-h-[60vh] overflow-y-auto">
@@ -962,15 +963,15 @@ function NewStaffConversationDialog({
                   </p>
                   <p className="text-caption text-text-secondary">
                     {colleague.role === 'admin'
-                      ? t('messages.roleAdmin', 'Directeur')
-                      : t('messages.roleTeacher', 'Enseignant')}
+                      ? t('messages.roleAdmin')
+                      : t('messages.roleTeacher')}
                   </p>
                 </div>
               </button>
             ))
           ) : (
             <p className="text-body text-text-secondary text-center py-4">
-              {t('messages.noColleagues', 'Aucun collègue trouvé')}
+              {t('messages.noColleagues')}
             </p>
           )}
           {getOrCreate.isError && (

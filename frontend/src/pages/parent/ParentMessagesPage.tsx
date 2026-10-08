@@ -26,6 +26,7 @@ import {
   useMarkMessageRead,
   type Conversation,
 } from '@/hooks/useMessaging';
+import { messagePreview } from '@/components/messaging/messagePreview';
 
 export function ParentMessagesPage() {
   const { t } = useTranslation();
@@ -201,10 +202,10 @@ export function ParentMessagesPage() {
       <header className="shrink-0 bg-card border-b border-border">
         <div className="max-w-[600px] mx-auto px-4 py-3">
           <h1 className="text-page-title font-semibold text-text-heading">
-            {t('parentMessages.title', 'Messages')}
+            {t('parentMessages.title')}
           </h1>
           <p className="text-caption text-text-secondary">
-            {t('parentMessages.subtitle', 'Chat with your child\'s teacher')}
+            {t('parentMessages.subtitle')}
           </p>
         </div>
       </header>
@@ -259,7 +260,7 @@ export function ParentMessagesPage() {
                         </div>
                         {conversation.last_message && (
                           <p className="text-caption text-text-secondary truncate mt-0.5">
-                            {conversation.last_message}
+                            {messagePreview(conversation.last_message, t)}
                           </p>
                         )}
                       </div>
@@ -294,8 +295,8 @@ export function ParentMessagesPage() {
               </div>
               <p className="text-body text-text-secondary">
                 {conversations.length === 0
-                  ? t('parentMessages.noConversations', 'No conversations yet. Your teacher will reach out soon!')
-                  : t('messages.selectConversation', 'Sélectionnez une conversation')}
+                  ? t('parentMessages.noConversations')
+                  : t('messages.selectConversation')}
               </p>
             </div>
           ) : (
@@ -307,7 +308,7 @@ export function ParentMessagesPage() {
                     type="button"
                     onClick={handleBack}
                     className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg hover:bg-hover transition-colors duration-150"
-                    aria-label={t('parentMessages.back', 'Back')}
+                    aria-label={t('parentMessages.back')}
                   >
                     <ArrowLeft className="w-5 h-5 text-text-primary rtl:rotate-180" />
                   </button>
@@ -318,7 +319,7 @@ export function ParentMessagesPage() {
                     {activeConversation?.child_name}
                   </p>
                   <p className="text-caption text-text-secondary truncate">
-                    {t('parentMessages.teacher', 'Teacher')}
+                    {t('parentMessages.teacher')}
                   </p>
                 </div>
               </div>
@@ -342,7 +343,7 @@ export function ParentMessagesPage() {
                 ) : messages.length === 0 && pendingMessages.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
                     <p className="text-body text-text-secondary">
-                      {t('parentMessages.noMessages', 'No messages yet. Say hello!')}
+                      {t('parentMessages.noMessages')}
                     </p>
                   </div>
                 ) : (
@@ -373,7 +374,7 @@ export function ParentMessagesPage() {
                       type="button"
                       onClick={() => setShowAttachMenu(!showAttachMenu)}
                       className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-hover text-text-secondary hover:text-text-primary transition-colors duration-150"
-                      aria-label={t('parentMessages.attach', 'Attach file')}
+                      aria-label={t('parentMessages.attach')}
                       aria-expanded={showAttachMenu}
                     >
                       <Paperclip className="w-5 h-5" />
@@ -387,7 +388,7 @@ export function ParentMessagesPage() {
                           className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-body text-text-primary hover:bg-hover transition-colors duration-150"
                         >
                           <Image className="w-4 h-4 text-text-secondary" />
-                          {t('parentMessages.sendPhoto', 'Photo')}
+                          {t('parentMessages.sendPhoto')}
                         </button>
                         <button
                           type="button"
@@ -395,7 +396,7 @@ export function ParentMessagesPage() {
                           className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-body text-text-primary hover:bg-hover transition-colors duration-150"
                         >
                           <FileText className="w-4 h-4 text-text-secondary" />
-                          {t('parentMessages.sendDocument', 'Document')}
+                          {t('parentMessages.sendDocument')}
                         </button>
                       </div>
                     )}
@@ -406,10 +407,10 @@ export function ParentMessagesPage() {
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={t('parentMessages.placeholder', 'Type a message...')}
+                    placeholder={t('parentMessages.placeholder')}
                     rows={1}
                     className="flex-1 min-h-[44px] max-h-[120px] bg-subtle border border-border rounded-lg px-4 py-3 text-body text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-[var(--color-accent)] focus:shadow-[0_0_0_3px_rgba(79,70,229,0.12)] transition-all duration-150 resize-none"
-                    aria-label={t('parentMessages.inputLabel', 'Message input')}
+                    aria-label={t('parentMessages.inputLabel')}
                   />
 
                   {/* Send button */}
@@ -423,7 +424,7 @@ export function ParentMessagesPage() {
                         ? 'bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)]'
                         : 'bg-subtle text-text-disabled cursor-not-allowed'
                     )}
-                    aria-label={t('parentMessages.send', 'Send message')}
+                    aria-label={t('parentMessages.send')}
                   >
                     <Send className="w-5 h-5" />
                   </button>

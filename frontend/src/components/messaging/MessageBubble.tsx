@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, FileText, CheckCheck, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatTime } from '@/lib/formatters';
 import type { Message } from '@/hooks/useMessaging';
 
 interface MessageBubbleProps {
@@ -15,10 +16,7 @@ export function MessageBubble({ message, isSent, i18nNamespace }: MessageBubbleP
   const { t } = useTranslation();
   const tn = (key: string, defaultValue: string) => t(`${i18nNamespace}.${key}`, defaultValue);
 
-  const formattedTime = React.useMemo(() => {
-    const date = new Date(message.created_at);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }, [message.created_at]);
+  const formattedTime = React.useMemo(() => formatTime(message.created_at), [message.created_at]);
 
   return (
     <div

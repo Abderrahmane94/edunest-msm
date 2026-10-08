@@ -2,6 +2,7 @@ import { Prisma, type DailyReportPhoto } from '@prisma/client';
 import prisma from '../../lib/prisma';
 import { socketService } from '../../services/socket.service';
 import { notificationService } from '../../services/notification.service';
+import { newMessageNotificationText } from './message-notification';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, UpdateDailyReportInput, SaveDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput } from './communication.schema';
 import type {
@@ -426,22 +427,18 @@ class CommunicationService {
     const recipientUserId =
       userId === conversation.teacherUserId ? conversation.parentUserId : conversation.teacherUserId;
     const senderName = `${message.sender.firstName} ${message.sender.lastName}`.trim();
-    const preview =
-      input.messageType === 'text'
-        ? (input.content || '').slice(0, 200)
-        : input.messageType === 'photo'
-          ? '📷 Photo'
-          : '📎 Document';
-    notificationService
-      .notify({
-        userId: recipientUserId,
-        title: senderName || 'New message',
-        body: preview,
-        type: 'message_new',
-        referenceId: conversation.id,
-        referenceType: 'conversation',
-        channels: ['push'],
-      })
+    newMessageNotificationText(recipientUserId, senderName, input.messageType, input.content)
+      .then(({ title, body }) =>
+        notificationService.notify({
+          userId: recipientUserId,
+          title,
+          body,
+          type: 'message_new',
+          referenceId: conversation.id,
+          referenceType: 'conversation',
+          channels: ['push'],
+        }),
+      )
       .catch((err) => {
         console.error('[CommunicationService] Failed to notify message recipient:', err);
       });

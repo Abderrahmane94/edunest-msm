@@ -361,7 +361,7 @@ export function TeacherDailyReportPage() {
       <div className="min-h-[60vh] flex items-center justify-center p-4">
         <div className="text-center space-y-2">
           <p className="text-body text-text-secondary">
-            {t('dailyReport.noClassroom', 'No classroom assigned')}
+            {t('dailyReport.noClassroom')}
           </p>
         </div>
       </div>
@@ -374,7 +374,7 @@ export function TeacherDailyReportPage() {
       <header className="sticky top-14 z-10 bg-card border-b border-border px-4 py-3">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-subsection font-semibold text-text-heading">
-            {t('dailyReport.title', 'Daily Report')}
+            {t('dailyReport.title')}
           </h1>
           <p className="text-caption text-text-secondary">
             {classroom.name} — <span className="capitalize">{formatReportDate(form.date, i18n.language)}</span>
@@ -387,7 +387,7 @@ export function TeacherDailyReportPage() {
         {/* Child Selector */}
         <section>
           <label className="block text-label font-medium text-text-primary mb-2">
-            {t('dailyReport.selectChild', 'Select Child')}
+            {t('dailyReport.selectChild')}
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {children && children.length > 0 ? (
@@ -417,7 +417,7 @@ export function TeacherDailyReportPage() {
               ))
             ) : (
               <p className="col-span-full text-body text-text-secondary text-center py-4">
-                {t('dailyReport.noChildren', 'No children in classroom')}
+                {t('dailyReport.noChildren')}
               </p>
             )}
           </div>
@@ -429,7 +429,7 @@ export function TeacherDailyReportPage() {
             <div className="flex items-center gap-2 mb-2">
               <Clock className="w-4 h-4 text-text-secondary" aria-hidden="true" />
               <label className="block text-label font-medium text-text-primary">
-                {t('dailyReport.history', 'Previous Reports')}
+                {t('dailyReport.history')}
               </label>
             </div>
 
@@ -461,7 +461,7 @@ export function TeacherDailyReportPage() {
                       </span>
                       <span className="flex-1 text-caption font-medium text-text-primary capitalize">
                         {report.date === getTodayString()
-                          ? t('dailyReport.today', "Today")
+                          ? t('dailyReport.today')
                           : formatReportDate(report.date, i18n.language)}
                       </span>
                       <Pencil className="w-3.5 h-3.5 text-text-secondary shrink-0" aria-hidden="true" />
@@ -471,7 +471,7 @@ export function TeacherDailyReportPage() {
               </div>
             ) : (
               <p className="text-caption text-text-secondary py-1">
-                {t('dailyReport.noHistory', 'No previous reports for this child')}
+                {t('dailyReport.noHistory')}
               </p>
             )}
           </section>
@@ -481,7 +481,7 @@ export function TeacherDailyReportPage() {
         {isEditingPastReport && (
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 rounded-lg bg-[var(--color-accent-muted)] text-text-primary">
             <span className="text-caption font-medium">
-              {t('dailyReport.editingBadge', 'Editing the report from {{date}}', {
+              {t('dailyReport.editingBadge', {
                 date: formatReportDate(form.date, i18n.language),
               })}
             </span>
@@ -491,7 +491,7 @@ export function TeacherDailyReportPage() {
               className="flex items-center gap-1.5 text-caption font-medium text-[var(--color-accent)] hover:underline shrink-0"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              {t('dailyReport.backToToday', "Back to today's report")}
+              {t('dailyReport.backToToday')}
             </button>
           </div>
         )}
@@ -515,7 +515,7 @@ export function TeacherDailyReportPage() {
         {/* Mood Selector */}
         <section>
           <label className="block text-label font-medium text-text-primary mb-2">
-            {t('dailyReport.mood', 'Mood')}
+            {t('dailyReport.mood')}
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {MOOD_OPTIONS.map((option) => (
@@ -548,7 +548,7 @@ export function TeacherDailyReportPage() {
         {/* Meals Eaten */}
         <section>
           <label className="block text-label font-medium text-text-primary mb-2">
-            {t('dailyReport.mealsEaten', 'Meals Eaten')}
+            {t('dailyReport.mealsEaten')}
           </label>
           <div className="flex items-center gap-4">
             <button
@@ -556,7 +556,7 @@ export function TeacherDailyReportPage() {
               onClick={decrementMeals}
               disabled={form.meals_eaten <= 0}
               className="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-lg border border-border bg-card text-text-primary hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 active:scale-[0.98]"
-              aria-label={t('dailyReport.decreaseMeals', 'Decrease meals')}
+              aria-label={t('dailyReport.decreaseMeals')}
             >
               <Minus className="w-5 h-5" />
             </button>
@@ -568,7 +568,7 @@ export function TeacherDailyReportPage() {
               onClick={incrementMeals}
               disabled={form.meals_eaten >= 10}
               className="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-lg border border-border bg-card text-text-primary hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 active:scale-[0.98]"
-              aria-label={t('dailyReport.increaseMeals', 'Increase meals')}
+              aria-label={t('dailyReport.increaseMeals')}
             >
               <Plus className="w-5 h-5" />
             </button>
@@ -581,7 +581,7 @@ export function TeacherDailyReportPage() {
             htmlFor="nap-duration"
             className="block text-label font-medium text-text-primary mb-2"
           >
-            {t('dailyReport.napDuration', 'Nap Duration (minutes)')}
+            {t('dailyReport.napDuration')}
           </label>
           <input
             id="nap-duration"
@@ -604,7 +604,7 @@ export function TeacherDailyReportPage() {
             htmlFor="activities"
             className="block text-label font-medium text-text-primary mb-2"
           >
-            {t('dailyReport.activities', 'Activities')}
+            {t('dailyReport.activities')}
           </label>
           <textarea
             id="activities"
@@ -614,7 +614,7 @@ export function TeacherDailyReportPage() {
             }}
             rows={3}
             className="w-full min-h-[96px] bg-card border border-border rounded-lg px-4 py-3 text-body text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-[var(--color-accent)] focus:shadow-[0_0_0_3px_rgba(79,70,229,0.12)] transition-all duration-150 resize-y"
-            placeholder={t('dailyReport.activitiesPlaceholder', 'What activities did the child do today?')}
+            placeholder={t('dailyReport.activitiesPlaceholder')}
           />
         </section>
 
@@ -624,7 +624,7 @@ export function TeacherDailyReportPage() {
             htmlFor="general-note"
             className="block text-label font-medium text-text-primary mb-2"
           >
-            {t('dailyReport.generalNote', 'General Note')}
+            {t('dailyReport.generalNote')}
           </label>
           <textarea
             id="general-note"
@@ -634,7 +634,7 @@ export function TeacherDailyReportPage() {
             }}
             rows={2}
             className="w-full min-h-[72px] bg-card border border-border rounded-lg px-4 py-3 text-body text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-[var(--color-accent)] focus:shadow-[0_0_0_3px_rgba(79,70,229,0.12)] transition-all duration-150 resize-y"
-            placeholder={t('dailyReport.generalNotePlaceholder', 'Any additional notes for the parents...')}
+            placeholder={t('dailyReport.generalNotePlaceholder')}
           />
         </section>
 
@@ -642,7 +642,7 @@ export function TeacherDailyReportPage() {
         {existingPhotos.length > 0 && (
           <section>
             <label className="block text-label font-medium text-text-primary mb-2">
-              {t('dailyReport.existingPhotos', 'Already Uploaded')}
+              {t('dailyReport.existingPhotos')}
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
               {existingPhotos.map((photo) => (
@@ -685,7 +685,7 @@ export function TeacherDailyReportPage() {
         {/* Photo Upload Grid */}
         <section>
           <label className="block text-label font-medium text-text-primary mb-2">
-            {t('dailyReport.photos', 'Photos')}
+            {t('dailyReport.photos')}
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
             {/* Photo previews */}
@@ -696,14 +696,14 @@ export function TeacherDailyReportPage() {
               >
                 <img
                   src={url}
-                  alt={t('dailyReport.photoAlt', `Photo ${index + 1}`)}
+                  alt={t('dailyReport.photoAlt', { index: index + 1 })}
                   className="w-full h-full object-cover"
                 />
                 <button
                   type="button"
                   onClick={() => removePhoto(index)}
                   className="absolute top-1 end-1 flex items-center justify-center w-6 h-6 rounded-full bg-[rgba(15,23,42,0.6)] text-[var(--color-text-inverse)] hover:bg-[rgba(15,23,42,0.8)] transition-all duration-150"
-                  aria-label={t('dailyReport.removePhoto', 'Remove photo')}
+                  aria-label={t('dailyReport.removePhoto')}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -715,11 +715,11 @@ export function TeacherDailyReportPage() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="flex flex-col items-center justify-center gap-1 aspect-square min-h-[80px] rounded-lg border-2 border-dashed border-[var(--color-border-strong)] bg-subtle text-text-secondary hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-all duration-150 active:scale-[0.98]"
-              aria-label={t('dailyReport.addPhoto', 'Add photo')}
+              aria-label={t('dailyReport.addPhoto')}
             >
               <Camera className="w-6 h-6" />
               <span className="text-micro font-medium">
-                {t('dailyReport.addPhoto', 'Add')}
+                {t('dailyReport.addPhoto')}
               </span>
             </button>
           </div>
@@ -771,14 +771,14 @@ export function TeacherDailyReportPage() {
               ) : (
                 <CloudOff className="w-5 h-5 shrink-0 text-warning" />
               )}
-              {syncing ? t('dailyReport.sending', 'Sending...') : t('dailyReport.savedOffline')}
+              {syncing ? t('dailyReport.sending') : t('dailyReport.savedOffline')}
             </div>
           ) : saved ? (
             <div className="flex flex-wrap items-center justify-center text-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">
               <Check className="w-5 h-5 shrink-0" />
               {isEditing
-                ? t('dailyReport.updateSuccess', 'Report updated successfully!')
-                : t('dailyReport.submitSuccess', 'Report sent successfully!')}
+                ? t('dailyReport.updateSuccess')
+                : t('dailyReport.submitSuccess')}
               {selectedChild && (
                 <span className="text-caption opacity-80">
                   — {selectedChild.first_name} {selectedChild.last_name}
@@ -795,12 +795,12 @@ export function TeacherDailyReportPage() {
                 'bg-primary text-primary-foreground hover:bg-primary-hover',
                 !canSubmit && 'opacity-50 cursor-not-allowed active:scale-100'
               )}
-              aria-label={isEditing ? t('dailyReport.updateReport', 'Update Report') : t('dailyReport.sendReport', 'Send Report')}
+              aria-label={isEditing ? t('dailyReport.updateReport') : t('dailyReport.sendReport')}
             >
               {isEditing ? <Pencil className="w-5 h-5" /> : <Send className="w-5 h-5" />}
               {isEditing
-                ? t('dailyReport.updateReport', 'Update Report')
-                : t('dailyReport.sendReport', 'Send Report')}
+                ? t('dailyReport.updateReport')
+                : t('dailyReport.sendReport')}
             </button>
           )}
 

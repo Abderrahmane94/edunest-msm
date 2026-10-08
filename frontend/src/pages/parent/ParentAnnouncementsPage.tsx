@@ -29,10 +29,10 @@ export function ParentAnnouncementsPage() {
       <header className="sticky top-14 z-10 bg-card border-b border-border">
         <div className="max-w-[600px] mx-auto px-4 py-3">
           <h1 className="text-page-title font-semibold text-text-heading">
-            {t('parentAnnouncements.title', 'Announcements & Events')}
+            {t('parentAnnouncements.title')}
           </h1>
           <p className="text-caption text-text-secondary">
-            {t('parentAnnouncements.subtitle', "What's happening at school")}
+            {t('parentAnnouncements.subtitle')}
           </p>
         </div>
         <div className="max-w-[600px] mx-auto px-4">
@@ -124,7 +124,7 @@ function AnnouncementsFeed() {
   if (isError) {
     return (
       <p className="text-body text-text-secondary text-center py-8">
-        {t('parentAnnouncements.error', 'Unable to load announcements. Please try again.')}
+        {t('parentAnnouncements.error')}
       </p>
     );
   }
@@ -175,7 +175,7 @@ function EventsFeed() {
   if (isError) {
     return (
       <p className="text-body text-text-secondary text-center py-8">
-        {t('parentAnnouncements.error', 'Unable to load announcements. Please try again.')}
+        {t('parentAnnouncements.error')}
       </p>
     );
   }

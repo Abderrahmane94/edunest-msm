@@ -3,7 +3,21 @@ import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { UserCog } from 'lucide-react';
-import { Button, EditButton, EditFormActions, EntityDeleteButton, PageHeader, ReadOnlyFieldset, useEditMode } from '@/components/ui';
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  EditButton,
+  EditFormActions,
+  EntityDeleteButton,
+  PageHeader,
+  ReadOnlyFieldset,
+  useEditMode,
+} from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import {
@@ -36,6 +50,7 @@ export function ClassroomDetailPage() {
   const [saveSuccess, setSaveSuccess] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
   const [teacherError, setTeacherError] = React.useState<string | null>(null);
+  const [teacherDialogOpen, setTeacherDialogOpen] = React.useState(false);
 
   const toForm = React.useCallback(
     (c: NonNullable<typeof classroom>) => ({
@@ -55,10 +70,6 @@ export function ClassroomDetailPage() {
   React.useEffect(() => {
     if (classroom && !edit.editing) setFormData(toForm(classroom));
   }, [classroom, edit.editing, toForm]);
-
-  React.useEffect(() => {
-    if (classroom) setTeacherId(classroom.teacher_id ?? '');
-  }, [classroom]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -88,6 +99,7 @@ export function ClassroomDetailPage() {
     setTeacherError(null);
     try {
       await assignTeacher.mutateAsync({ classroomId: classroomId!, teacherId: teacherId || null });
+      setTeacherDialogOpen(false);
     } catch (err) {
       setTeacherError(errorMessage(err, t));
     }
@@ -165,24 +177,57 @@ export function ClassroomDetailPage() {
 
       {/* Teacher assignment */}
       <div className="bg-card border border-border rounded-lg p-6 space-y-3">
-        <h2 className="text-subsection font-semibold text-text-heading">{t('classrooms.assignTeacher.title')}</h2>
-        <div className="flex items-end gap-3">
-          <div className="flex-1">
-            <FormSelect
-              label={t('classrooms.form.teacher')}
-              name="teacher"
-              value={teacherId}
-              onChange={(e) => setTeacherId(e.target.value)}
-              options={teacherOptions}
-            />
-          </div>
-          <Button type="button" variant="secondary" onClick={handleAssignTeacher} disabled={assignTeacher.isPending}>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-subsection font-semibold text-text-heading">{t('classrooms.form.teacher')}</h2>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setTeacherId(classroom.teacher_id ?? '');
+              setTeacherError(null);
+              setTeacherDialogOpen(true);
+            }}
+          >
             <UserCog className="w-4 h-4" />
-            {assignTeacher.isPending ? t('common.loading') : t('classrooms.detail.assign')}
+            {classroom.teacher_name ? t('classrooms.detail.changeTeacher') : t('classrooms.assignTeacher.title')}
           </Button>
         </div>
-        {teacherError && <p className="text-body text-danger">{teacherError}</p>}
+        <p className={classroom.teacher_name ? 'text-body text-foreground' : 'text-body text-text-secondary'}>
+          {classroom.teacher_name ?? t('classrooms.form.noTeacher')}
+        </p>
       </div>
+
+      <Dialog open={teacherDialogOpen} onOpenChange={setTeacherDialogOpen}>
+        <DialogContent className="max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>
+              {classroom.teacher_name ? t('classrooms.detail.changeTeacher') : t('classrooms.assignTeacher.title')}
+            </DialogTitle>
+            <DialogDescription>{t('classrooms.assignTeacher.description', { name: classroom.name })}</DialogDescription>
+          </DialogHeader>
+          <FormSelect
+            label={t('classrooms.form.teacher')}
+            name="teacher"
+            value={teacherId}
+            onChange={(e) => setTeacherId(e.target.value)}
+            options={teacherOptions}
+          />
+          {teacherError && <p className="text-body text-danger">{teacherError}</p>}
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setTeacherDialogOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleAssignTeacher}
+              disabled={assignTeacher.isPending || teacherId === (classroom.teacher_id ?? '')}
+            >
+              {assignTeacher.isPending ? t('common.loading') : t('classrooms.detail.assign')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Assigned fees */}
       <ClassroomFeesSection classroomId={classroomId!} />

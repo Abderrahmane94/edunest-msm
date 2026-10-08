@@ -807,6 +807,7 @@
     "noTeacher": "Non assigné",
     "notFound": "Classe introuvable",
     "detail": {
+      "changeTeacher": "Changer d'enseignant",
       "info": "Informations",
       "assign": "Enregistrer",
       "dangerZone": "Zone dangereuse",
@@ -877,6 +878,9 @@
     "active": "Actif",
     "inactive": "Inactif",
     "detail": {
+      "classroomDialogDescription": "Choisissez la classe de {{name}} pour l'année en cours.",
+      "parentsDialogDescription": "Lier, modifier ou retirer les parents de {{name}}.",
+      "manageParents": "Gérer les parents",
       "info": "Informations",
       "classroom": "Classe actuelle",
       "noClassroom": "Aucune classe assignée",

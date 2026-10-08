@@ -10,6 +10,7 @@ interface CreateButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement
 export function CreateButton({ label, className, ...props }: CreateButtonProps) {
   return (
     <Button
+      type="button"
       variant="primary"
       className={cn('gap-2 px-4 py-2 text-body font-semibold text-white hover:text-white shadow-level-1 hover:shadow-level-2 hover:scale-[1.02]', className)}
       {...props}

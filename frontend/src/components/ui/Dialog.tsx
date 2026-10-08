@@ -93,6 +93,7 @@ export function DialogContent({ children, className }: DialogContentProps) {
           )}
         >
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             className="absolute top-4 end-4"

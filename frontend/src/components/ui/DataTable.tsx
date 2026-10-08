@@ -198,6 +198,7 @@ export function DataTable<T>({
             </span>
             <div className="flex items-center gap-1">
               <Button
+                type="button"
                 variant="ghost"
                 size="icon"
                 onClick={() => onPageChange?.(page - 1)}
@@ -207,6 +208,7 @@ export function DataTable<T>({
                 <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
               </Button>
               <Button
+                type="button"
                 variant="ghost"
                 size="icon"
                 onClick={() => onPageChange?.(page + 1)}

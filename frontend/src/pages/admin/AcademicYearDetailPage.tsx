@@ -2,9 +2,18 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Save, Trash2, CheckCircle, Circle } from 'lucide-react';
+import { Trash2, CheckCircle, Circle } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { Button, PageHeader, StatusBadge, useConfirm } from '@/components/ui';
+import {
+  Button,
+  EditButton,
+  EditFormActions,
+  PageHeader,
+  ReadOnlyFieldset,
+  StatusBadge,
+  useConfirm,
+  useEditMode,
+} from '@/components/ui';
 import { yearActivateConfirm } from './AcademicYearsPage';
 import { FormField } from '@/components/forms';
 import { Input } from '@/components/ui';
@@ -32,15 +41,23 @@ export function AcademicYearDetailPage() {
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
 
+  const toForm = React.useCallback(
+    (y: NonNullable<typeof year>) => ({
+      name: y.name,
+      start_date: y.start_date.split('T')[0],
+      end_date: y.end_date.split('T')[0],
+    }),
+    [],
+  );
+  const edit = useEditMode(() => {
+    if (year) setFormData(toForm(year));
+    setSaveError(null);
+  });
+
+  // Follow the saved year while reading; never overwrite what is being typed.
   React.useEffect(() => {
-    if (year) {
-      setFormData({
-        name: year.name,
-        start_date: year.start_date.split('T')[0],
-        end_date: year.end_date.split('T')[0],
-      });
-    }
-  }, [year]);
+    if (year && !edit.editing) setFormData(toForm(year));
+  }, [year, edit.editing, toForm]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -52,6 +69,7 @@ export function AcademicYearDetailPage() {
     setSaveError(null);
     try {
       await updateYear.mutateAsync({ id: yearId!, ...formData });
+      edit.finishEditing();
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -123,10 +141,14 @@ export function AcademicYearDetailPage() {
       {/* Edit form */}
       <form onSubmit={handleSave}>
         <div className="bg-card border border-border rounded-lg p-6 space-y-4">
-          <h2 className="text-subsection font-semibold text-text-heading">
-            {t('academicYears.detail.info')}
-          </h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-subsection font-semibold text-text-heading">
+              {t('academicYears.detail.info')}
+            </h2>
+            <EditButton onClick={edit.startEditing} hidden={edit.editing} />
+          </div>
 
+          <ReadOnlyFieldset readOnly={!edit.editing}>
           <FormField label={t('academicYears.form.name')} htmlFor="ay-name" required>
             <Input
               id="ay-name"
@@ -158,16 +180,14 @@ export function AcademicYearDetailPage() {
               />
             </FormField>
           </div>
+          </ReadOnlyFieldset>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-3 flex-wrap mt-4">
-          <Button type="submit" disabled={updateYear.isPending}>
-            <Save className="w-4 h-4" />
-            {updateYear.isPending ? t('common.loading') : t('common.save')}
-          </Button>
+          {edit.editing && <EditFormActions saving={updateYear.isPending} onCancel={edit.cancelEditing} />}
 
-          {!year.is_active && (
+          {!edit.editing && !year.is_active && (
             <Button
               type="button"
               variant="secondary"
@@ -179,7 +199,7 @@ export function AcademicYearDetailPage() {
             </Button>
           )}
 
-          {year.is_active && (
+          {!edit.editing && year.is_active && (
             <div className="flex items-center gap-2 text-body text-success">
               <Circle className="w-4 h-4" />
               {t('academicYears.currentlyActive')}

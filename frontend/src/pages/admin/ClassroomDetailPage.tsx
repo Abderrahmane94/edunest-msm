@@ -2,8 +2,8 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Save, UserCog } from 'lucide-react';
-import { Button, EntityDeleteButton, PageHeader } from '@/components/ui';
+import { UserCog } from 'lucide-react';
+import { Button, EditButton, EditFormActions, EntityDeleteButton, PageHeader, ReadOnlyFieldset, useEditMode } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import {
@@ -37,16 +37,27 @@ export function ClassroomDetailPage() {
   const [saveError, setSaveError] = React.useState<string | null>(null);
   const [teacherError, setTeacherError] = React.useState<string | null>(null);
 
+  const toForm = React.useCallback(
+    (c: NonNullable<typeof classroom>) => ({
+      name: c.name,
+      capacity: String(c.capacity),
+      room_number: c.room_number ?? '',
+      level: c.level ?? '',
+    }),
+    [],
+  );
+  const edit = useEditMode(() => {
+    if (classroom) setFormData(toForm(classroom));
+    setSaveError(null);
+  });
+
+  // Follow the saved class while reading; never overwrite what is being typed.
   React.useEffect(() => {
-    if (classroom) {
-      setFormData({
-        name: classroom.name,
-        capacity: String(classroom.capacity),
-        room_number: classroom.room_number ?? '',
-        level: classroom.level ?? '',
-      });
-      setTeacherId(classroom.teacher_id ?? '');
-    }
+    if (classroom && !edit.editing) setFormData(toForm(classroom));
+  }, [classroom, edit.editing, toForm]);
+
+  React.useEffect(() => {
+    if (classroom) setTeacherId(classroom.teacher_id ?? '');
   }, [classroom]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -65,6 +76,7 @@ export function ClassroomDetailPage() {
         room_number: formData.room_number || null,
         level: formData.level || null,
       });
+      edit.finishEditing();
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -122,7 +134,11 @@ export function ClassroomDetailPage() {
       {/* Edit form */}
       <form onSubmit={handleSave}>
         <div className="bg-card border border-border rounded-lg p-6 space-y-4">
-          <h2 className="text-subsection font-semibold text-text-heading">{t('classrooms.detail.info')}</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-subsection font-semibold text-text-heading">{t('classrooms.detail.info')}</h2>
+            <EditButton onClick={edit.startEditing} hidden={edit.editing} />
+          </div>
+          <ReadOnlyFieldset readOnly={!edit.editing}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
             <FormField label={t('classrooms.form.name')} htmlFor="cr-name" required>
               <Input id="cr-name" name="name" value={formData.name} onChange={handleChange} />
@@ -137,13 +153,11 @@ export function ClassroomDetailPage() {
               <Input id="cr-room" name="room_number" value={formData.room_number} onChange={handleChange} placeholder={t('classrooms.form.roomNumberPlaceholder')} />
             </FormField>
           </div>
+          </ReadOnlyFieldset>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap mt-4">
-          <Button type="submit" disabled={updateClassroom.isPending}>
-            <Save className="w-4 h-4" />
-            {updateClassroom.isPending ? t('common.loading') : t('common.save')}
-          </Button>
+        <div className="flex items-center gap-3 flex-wrap mt-4 empty:hidden">
+          {edit.editing && <EditFormActions saving={updateClassroom.isPending} onCancel={edit.cancelEditing} />}
           {saveSuccess && <span className="text-body text-success animate-fade-in">{t('common.saved')}</span>}
           {saveError && <span className="text-body text-danger animate-fade-in">{saveError}</span>}
         </div>

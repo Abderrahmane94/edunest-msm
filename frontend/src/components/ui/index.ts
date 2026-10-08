@@ -29,3 +29,4 @@ export { RoleBadge } from './RoleBadge';
 export { DangerZone } from './DangerZone';
 export { SectionHeader } from './SectionHeader';
 export { useConfirm, type ConfirmOptions } from './ConfirmDialog';
+export { useEditMode, ReadOnlyFieldset, EditButton, EditFormActions } from './EditMode';

@@ -2,8 +2,18 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Save, UserPlus, X, Star, Pencil, Check } from 'lucide-react';
-import { Button, EntityDeleteButton, PageHeader, StatusBadge, useConfirm } from '@/components/ui';
+import { UserPlus, X, Star, Pencil, Check } from 'lucide-react';
+import {
+  Button,
+  EditButton,
+  EditFormActions,
+  EntityDeleteButton,
+  PageHeader,
+  ReadOnlyFieldset,
+  StatusBadge,
+  useConfirm,
+  useEditMode,
+} from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import {
@@ -73,21 +83,29 @@ export function ChildDetailPage() {
   const [editLinkRelationship, setEditLinkRelationship] = React.useState('mother');
   const [editLinkCanPickup, setEditLinkCanPickup] = React.useState(true);
 
+  const toForm = React.useCallback(
+    (c: NonNullable<typeof child>) => ({
+      first_name: c.first_name,
+      last_name: c.last_name,
+      date_of_birth: c.date_of_birth?.split('T')[0] ?? '',
+      gender: c.gender,
+      enrollment_date: c.enrollment_date?.split('T')[0] ?? '',
+      national_id: c.national_id ?? '',
+      address: c.address ?? '',
+      place_of_birth: c.place_of_birth ?? '',
+      blood_type: (c.blood_type ?? '') as BloodType | '',
+    }),
+    [],
+  );
+  const edit = useEditMode(() => {
+    if (child) setFormData(toForm(child));
+    setSaveError(null);
+  });
+
+  // Follow the saved child while reading; never overwrite what is being typed.
   React.useEffect(() => {
-    if (child) {
-      setFormData({
-        first_name: child.first_name,
-        last_name: child.last_name,
-        date_of_birth: child.date_of_birth?.split('T')[0] ?? '',
-        gender: child.gender,
-        enrollment_date: child.enrollment_date?.split('T')[0] ?? '',
-        national_id: child.national_id ?? '',
-        address: child.address ?? '',
-        place_of_birth: child.place_of_birth ?? '',
-        blood_type: child.blood_type ?? '',
-      });
-    }
-  }, [child]);
+    if (child && !edit.editing) setFormData(toForm(child));
+  }, [child, edit.editing, toForm]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -102,7 +120,16 @@ export function ChildDetailPage() {
     setSaveSuccess(false);
     setSaveError(null);
     try {
-      await updateChild.mutateAsync({ id: childId!, ...formData, blood_type: formData.blood_type || undefined });
+      // Optional fields left empty are not sent: the server refuses an empty string.
+      await updateChild.mutateAsync({
+        id: childId!,
+        ...formData,
+        national_id: formData.national_id || undefined,
+        address: formData.address || undefined,
+        place_of_birth: formData.place_of_birth || undefined,
+        blood_type: formData.blood_type || undefined,
+      });
+      edit.finishEditing();
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -201,7 +228,11 @@ export function ChildDetailPage() {
       {/* Edit form */}
       <form onSubmit={handleSave}>
         <div className="bg-card border border-border rounded-lg p-6 space-y-4">
-          <h2 className="text-subsection font-semibold text-text-heading">{t('children.detail.info')}</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-subsection font-semibold text-text-heading">{t('children.detail.info')}</h2>
+            <EditButton onClick={edit.startEditing} hidden={edit.editing} />
+          </div>
+          <ReadOnlyFieldset readOnly={!edit.editing}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
             <FormField label={t('children.form.firstName')} htmlFor="c-first-name" required>
               <Input id="c-first-name" name="first_name" value={formData.first_name} onChange={handleChange} />
@@ -238,13 +269,11 @@ export function ChildDetailPage() {
           <FormField label={t('children.form.address')} htmlFor="c-address">
             <Input id="c-address" name="address" value={formData.address} onChange={handleChange} />
           </FormField>
+          </ReadOnlyFieldset>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap mt-4">
-          <Button type="submit" disabled={updateChild.isPending}>
-            <Save className="w-4 h-4" />
-            {updateChild.isPending ? t('common.loading') : t('common.save')}
-          </Button>
+        <div className="flex items-center gap-3 flex-wrap mt-4 empty:hidden">
+          {edit.editing && <EditFormActions saving={updateChild.isPending} onCancel={edit.cancelEditing} />}
           {saveSuccess && <span className="text-body text-success animate-fade-in">{t('common.saved')}</span>}
           {saveError && <span className="text-body text-danger animate-fade-in">{saveError}</span>}
         </div>
@@ -314,7 +343,9 @@ export function ChildDetailPage() {
                           />
                         </div>
                       ) : (
-                        <span className="text-caption text-text-secondary">({link.relationship as string})</span>
+                        <span className="text-caption text-text-secondary">
+                          ({t(`children.linkParent.${link.relationship as string}`, { defaultValue: link.relationship as string })})
+                        </span>
                       )}
                       {!!link.isPrimary && (
                         <span className="flex items-center gap-0.5 text-micro text-success font-medium">
@@ -468,7 +499,9 @@ export function ChildDetailPage() {
                   <div>
                     <div>
                       <span className="text-body font-medium text-foreground">{c.name}</span>
-                      <span className="text-caption text-text-secondary ms-2">({c.relationship})</span>
+                      <span className="text-caption text-text-secondary ms-2">
+                        ({t(`children.emergencyContacts.relationships.${c.relationship}`, { defaultValue: c.relationship })})
+                      </span>
                       <span className="text-caption text-text-secondary ms-2">{c.phone}</span>
                       {c.is_authorized_pickup && <span className="ms-2 text-micro text-success font-medium">{t('children.emergencyContacts.authorizedPickup')}</span>}
                     </div>

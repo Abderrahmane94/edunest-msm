@@ -5,17 +5,71 @@
   },
   "dashboard": {
     "title": "Tableau de bord",
-    "enrollment": "Enfants inscrits",
-    "attendanceRate": "Taux de présence",
-    "outstandingPayments": "Paiements en retard",
-    "unreadMessages": "Messages en attente",
     "admin": {
-      "overview": "Vue d'ensemble",
       "welcome": "Bonjour, {{name}} 👋",
-      "activeChildren": "Enfants actifs",
-      "last30Days": "30 derniers jours",
-      "sentOrOverdue": "Échéance dépassée",
-      "pendingReply": "En attente de réponse"
+      "todo": {
+        "title": "À faire",
+        "allGood": "Tout est à jour. Bonne journée !",
+        "attendance": "Appel non fait : {{classes}}",
+        "latePayments": "Impayés en retard : {{amount}} — enfants concernés : {{children}}",
+        "waitingParents": "Parents sans réponse depuis plus de 3 h : {{count}}",
+        "pendingConsents": "Autorisations parentales en attente : {{count}}"
+      },
+      "sections": {
+        "today": "Aujourd'hui",
+        "finance": "Finances — {{month}}",
+        "enrollment": "Effectifs",
+        "communication": "Communication"
+      },
+      "today": {
+        "noSchool": "Pas de classe aujourd'hui.",
+        "presence": "Présence",
+        "presentOf": "présents sur {{expected}} attendus",
+        "present": "Présents",
+        "late": "En retard",
+        "absent": "Absents",
+        "notMarked": "Non pointés",
+        "rollCall": "Appel",
+        "classesDone": "classes pointées sur {{total}}",
+        "rollCallDone": "Appel fait dans toutes les classes",
+        "reports": "Rapports du jour",
+        "reportsOf": "envoyés sur {{expected}} enfants présents",
+        "reportsNone": "Aucun enfant pointé présent pour l'instant"
+      },
+      "finance": {
+        "collected": "Encaissé ce mois",
+        "vsLastMonth": "vs mois dernier",
+        "noPrevious": "Rien encaissé le mois dernier",
+        "late": "Impayés en retard",
+        "lateChildren": "Enfants concernés : {{count}}",
+        "noLate": "Aucun retard",
+        "recovery": "Taux de recouvrement",
+        "recoveryHint": "Payé sur ce qui est arrivé à échéance cette année",
+        "recoveryNone": "Rien n'est encore arrivé à échéance",
+        "net": "Résultat du mois",
+        "netDetail": "Dépenses {{expenses}} · Salaires {{salaries}}",
+        "chart": "Encaissements des 6 derniers mois"
+      },
+      "attendanceChart": {
+        "title": "Présence des 4 dernières semaines",
+        "hint": "Présents et en retard, sur 7 jours glissants",
+        "noData": "Pas de pointage"
+      },
+      "enrollment": {
+        "active": "Enfants actifs",
+        "newThisMonth": "Nouveaux ce mois : {{count}}",
+        "fill": "Remplissage des classes",
+        "noClassrooms": "Aucune classe pour l'année en cours",
+        "full": "Complète"
+      },
+      "communication": {
+        "waiting": "Parents en attente",
+        "waitingHint": "Sans réponse depuis plus de 3 h",
+        "consents": "Autorisations en attente",
+        "consentsHint": "Pour les événements à venir",
+        "events": "Événements des 7 prochains jours",
+        "noEvents": "Aucun événement prévu"
+      }
     },
     "platform": {
       "overview": "Vue d'ensemble",

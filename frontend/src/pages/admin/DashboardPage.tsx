@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import {
-  Users, ClipboardCheck, FileText, MessageCircle,
+  Users,
   Building2, Baby, PowerOff, School, CheckCircle,
 } from 'lucide-react';
-import { usePlatformStats, useAdminDashboard } from '@/hooks/useAdminDashboard';
+import { usePlatformStats } from '@/hooks/useAdminDashboard';
+import { AdminDashboard } from './dashboard/AdminDashboard';
 import { useAuth } from '@/contexts/AuthContext';
 
 /* ─── Shared stat card ─── */
@@ -29,61 +30,6 @@ function StatCard({
         <p className="text-caption text-text-secondary truncate">{label}</p>
         <p className="text-section font-bold text-text-heading mt-0.5">{value}</p>
         {sub && <p className="text-micro text-text-disabled mt-0.5">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Admin (school director) dashboard ─── */
-function AdminDashboard() {
-  const { t } = useTranslation();
-  const { data: stats, isLoading, isError } = useAdminDashboard();
-
-  // Not loaded: no zeros that look like real figures (the page's banner says what failed).
-  if (isError && !stats) return null;
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-hover rounded-xl h-[88px] animate-pulse" />
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-8">
-      {/* KPI grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard
-          label={t('dashboard.enrollment')}
-          value={stats?.enrollmentCount ?? 0}
-          icon={<Users className="w-5 h-5 text-primary" />}
-          accent="bg-accent-muted"
-          sub={t('dashboard.admin.activeChildren')}
-        />
-        <StatCard
-          label={t('dashboard.attendanceRate')}
-          value={stats?.attendanceRate != null ? `${stats.attendanceRate}%` : '—'}
-          icon={<ClipboardCheck className="w-5 h-5 text-success" />}
-          accent="bg-success-muted"
-          sub={t('dashboard.admin.last30Days')}
-        />
-        <StatCard
-          label={t('dashboard.outstandingPayments')}
-          value={stats?.outstandingPayments ?? 0}
-          icon={<FileText className="w-5 h-5 text-warning" />}
-          accent="bg-warning-muted"
-          sub={t('dashboard.admin.sentOrOverdue')}
-        />
-        <StatCard
-          label={t('dashboard.unreadMessages')}
-          value={stats?.unreadMessages ?? 0}
-          icon={<MessageCircle className="w-5 h-5 text-text-secondary" />}
-          accent="bg-subtle"
-          sub={t('dashboard.admin.pendingReply')}
-        />
       </div>
     </div>
   );
@@ -173,12 +119,20 @@ export function DashboardPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
 
+  if (user?.role !== 'super_admin') {
+    return (
+      <div className="animate-fade-in">
+        <AdminDashboard />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-fade-in">
       <h1 className="text-page-title font-semibold text-text-heading">
         {t('dashboard.title')}
       </h1>
-      {user?.role === 'super_admin' ? <SuperAdminDashboard /> : <AdminDashboard />}
+      <SuperAdminDashboard />
     </div>
   );
 }

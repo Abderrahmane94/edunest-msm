@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDateIn } from '@/lib/formatters';
 import { ClipboardCheck, Calendar, BarChart2, Users, Eye } from 'lucide-react';
-import { Button, DataTable, StatusBadge, KPICard, Input } from '@/components/ui';
+import { DataTable, Input, KPICard, PageHeader, StatusBadge, Tabs } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useClassrooms, type Classroom } from '@/hooks/useClassrooms';
@@ -14,8 +14,10 @@ import {
   type AttendanceRecord,
   type ChildAttendanceReportItem,
 } from '@/hooks/useAttendance';
+import { useTabParam } from '@/hooks/useTabParam';
 
 type ViewMode = 'daily' | 'monthly' | 'tracking';
+const VIEW_MODES: ViewMode[] = ['daily', 'monthly', 'tracking'];
 
 function getTodayString(): string {
   const today = new Date();
@@ -49,7 +51,7 @@ function getMonthOptions(t: (key: string) => string) {
 
 export function AttendancePage() {
   const { t, i18n } = useTranslation();
-  const [viewMode, setViewMode] = React.useState<ViewMode>('daily');
+  const [viewMode, setViewMode] = useTabParam<ViewMode>(VIEW_MODES, 'daily');
   const [selectedClassroomId, setSelectedClassroomId] = React.useState<string>('');
   const [selectedDate, setSelectedDate] = React.useState<string>(getTodayString());
   const [selectedMonth, setSelectedMonth] = React.useState<number>(getCurrentMonth());
@@ -60,7 +62,7 @@ export function AttendancePage() {
   // Fetch classrooms for the active academic year
   const { data: academicYears } = useAcademicYears();
   const activeYear = (academicYears ?? []).find((y) => y.is_active);
-  const { data: classrooms, isLoading: classroomsLoading } = useClassrooms(activeYear?.id);
+  const { data: classrooms } = useClassrooms(activeYear?.id);
 
   // Auto-select first classroom when data loads
   React.useEffect(() => {
@@ -234,66 +236,20 @@ export function AttendancePage() {
     ];
   }, []);
 
-  if (classroomsLoading) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <h1 className="text-page-title font-semibold text-text-heading">
-          {t('attendance.title')}
-        </h1>
-        <div className="bg-card border border-border rounded-lg p-6">
-          <div className="animate-pulse space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-12 bg-hover rounded-md" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Page header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-page-title font-semibold text-text-heading">
-            {t('attendance.title')}
-          </h1>
-          {activeYear && (
-            <p className="text-caption text-text-secondary mt-1">
-              {activeYear.name}
-            </p>
-          )}
-        </div>
-      </div>
+      <PageHeader title={t('attendance.title')} description={activeYear?.name} />
 
-      {/* View mode tabs */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Button
-          variant={viewMode === 'daily' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setViewMode('daily')}
-        >
-          <Calendar className="w-4 h-4" />
-          {t('attendance.dailyView')}
-        </Button>
-        <Button
-          variant={viewMode === 'monthly' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setViewMode('monthly')}
-        >
-          <BarChart2 className="w-4 h-4" />
-          {t('attendance.monthlyView')}
-        </Button>
-        <Button
-          variant={viewMode === 'tracking' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setViewMode('tracking')}
-        >
-          <Eye className="w-4 h-4" />
-          {t('attendance.trackingView')}
-        </Button>
-      </div>
+      <Tabs
+        value={viewMode}
+        onChange={setViewMode}
+        items={[
+          { value: 'daily', label: t('attendance.dailyView'), icon: <Calendar /> },
+          { value: 'monthly', label: t('attendance.monthlyView'), icon: <BarChart2 /> },
+          { value: 'tracking', label: t('attendance.trackingView'), icon: <Eye /> },
+        ]}
+      />
 
       {/* Filters */}
       <div className="bg-card border border-border rounded-lg p-4">

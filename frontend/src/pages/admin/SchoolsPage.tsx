@@ -109,7 +109,7 @@ export function SchoolsPage() {
       key: 'isActive',
       header: t('schools.columns.status'),
       render: (school) => (
-        <StatusBadge variant={school.isActive ? 'present' : 'cancelled'}>
+        <StatusBadge variant={school.isActive ? 'success' : 'neutral'}>
           {school.isActive ? t('schools.active') : t('schools.inactive')}
         </StatusBadge>
       ),

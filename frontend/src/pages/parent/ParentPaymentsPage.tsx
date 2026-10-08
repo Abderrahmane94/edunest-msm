@@ -5,6 +5,8 @@ import { Receipt, CalendarDays, Wallet, Eye, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiClient, apiError } from '@/lib/api-client';
 import { ReceiptView } from '@/pages/admin/payments/ReceiptView';
+import { EmptyState, Tabs } from '@/components/ui';
+import { useTabParam } from '@/hooks/useTabParam';
 
 type PeriodStatus = 'unpaid' | 'partial' | 'late_partial' | 'late' | 'paid';
 type PaymentChannel = 'cash' | 'ccp' | 'baridimob';
@@ -29,7 +31,7 @@ type TabId = 'periods' | 'history' | 'balances';
 
 export function ParentPaymentsPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = React.useState<TabId>('periods');
+  const [activeTab, setActiveTab] = useTabParam<TabId>(['periods', 'history', 'balances'], 'periods');
   return (
     <div className="min-h-screen bg-page">
       <header className="sticky top-14 z-10 bg-card border-b border-border">
@@ -37,7 +39,18 @@ export function ParentPaymentsPage() {
           <h1 className="text-page-title font-semibold text-text-heading">{t('parentPayments.title')}</h1>
           <p className="text-caption text-text-secondary">{t('parentPayments.subtitle')}</p>
         </div>
-        <div className="max-w-[600px] mx-auto px-4"><TabBar activeTab={activeTab} onTabChange={setActiveTab} /></div>
+        <div className="max-w-[600px] mx-auto px-4">
+          <Tabs
+            className="border-b-0"
+            value={activeTab}
+            onChange={setActiveTab}
+            items={[
+              { value: 'periods', label: t('parentPayments.tabs.periods'), icon: <CalendarDays /> },
+              { value: 'history', label: t('parentPayments.tabs.history'), icon: <Receipt /> },
+              { value: 'balances', label: t('parentPayments.tabs.balances'), icon: <Wallet /> },
+            ]}
+          />
+        </div>
       </header>
       <main className="max-w-[600px] mx-auto px-4 py-6" role="tabpanel" aria-labelledby={`tab-${activeTab}`}>
         {activeTab === 'periods' && <BillingPeriodsTab />}
@@ -49,37 +62,15 @@ export function ParentPaymentsPage() {
 }
 
 
-function TabBar({ activeTab, onTabChange }: { activeTab: TabId; onTabChange: (id: TabId) => void }) {
+/** No billing yet: the school hasn't billed this family's children (or none is linked). */
+function NoBilling() {
   const { t } = useTranslation();
-  const tabs: { id: TabId; label: string; icon: React.ElementType }[] = [
-    { id: 'periods', label: t('parentPayments.tabs.periods'), icon: CalendarDays },
-    { id: 'history', label: t('parentPayments.tabs.history'), icon: Receipt },
-    { id: 'balances', label: t('parentPayments.tabs.balances'), icon: Wallet },
-  ];
-  return (
-    <div className="flex border-b border-border overflow-x-auto" role="tablist">
-      {tabs.map((tab) => { const Icon = tab.icon; const isActive = activeTab === tab.id; return (
-        <button key={tab.id} id={`tab-${tab.id}`} type="button" role="tab" aria-selected={isActive} onClick={() => onTabChange(tab.id)} className={cn('flex items-center gap-2 px-4 py-3 text-body font-medium whitespace-nowrap shrink-0 transition-colors duration-150 border-b-2 -mb-px', isActive ? 'border-[var(--color-accent)] text-[var(--color-accent)]' : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border-strong')}>
-          <Icon className="w-4 h-4" aria-hidden="true" /><span>{tab.label}</span>
-        </button>); })}
-    </div>
-  );
-}
-
-function NoChildren() {
-  const { t } = useTranslation();
-  return (
-    <div className="text-center py-16 space-y-3">
-      <div className="w-16 h-16 mx-auto rounded-full bg-subtle flex items-center justify-center"><Users className="w-8 h-8 text-text-secondary" /></div>
-      <p className="text-body text-text-secondary">{t('parentPayments.noChildren')}</p>
-      <p className="text-caption text-text-secondary">{t('parentPayments.noChildrenHint')}</p>
-    </div>
-  );
+  return <EmptyState bare icon={<Users />} title={t('parentPayments.noBilling')} message={t('parentPayments.noBillingHint')} />;
 }
 
 function SkeletonCards({ count }: { count: number }) {
   return (<div className="space-y-3">{Array.from({ length: count }).map((_, i) => (
-    <div key={i} className="animate-pulse bg-card border border-border rounded-xl p-4"><div className="flex items-center gap-3"><div className="flex-1 space-y-2"><div className="h-4 bg-subtle rounded w-2/3" /><div className="h-3 bg-subtle rounded w-1/3" /></div><div className="h-6 w-16 bg-subtle rounded-full" /></div></div>
+    <div key={i} className="animate-pulse bg-card border border-border rounded-lg p-4"><div className="flex items-center gap-3"><div className="flex-1 space-y-2"><div className="h-4 bg-subtle rounded w-2/3" /><div className="h-3 bg-subtle rounded w-1/3" /></div><div className="h-6 w-16 bg-subtle rounded-full" /></div></div>
   ))}</div>);
 }
 
@@ -89,7 +80,7 @@ function BillingPeriodsTab() {
   const { data, isLoading, isError } = useParentPeriods();
   if (isLoading) return <SkeletonCards count={4} />;
   if (isError) return <p className="text-center py-16 text-body text-text-secondary">{t('parentPayments.error.periods')}</p>;
-  if (!data || data.length === 0) return <NoChildren />;
+  if (!data || data.length === 0) return <NoBilling />;
   return (<ul role="list" className="space-y-3">{data.map((p) => <PeriodCard key={p.id} period={p} />)}</ul>);
 }
 
@@ -97,7 +88,7 @@ function PeriodCard({ period }: { period: ParentBillingPeriod }) {
   const { t } = useTranslation();
   const label = period.isRegistrationPeriod ? t('parentPayments.registrationFee') : `${fmtDate(period.periodStart)} — ${fmtDate(period.periodEnd)}`;
   return (
-    <li><article className={cn('bg-card border rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]', period.isLate ? 'border-[var(--color-danger-muted)]' : 'border-border')}>
+    <li><article className={cn('bg-card border rounded-lg overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]', period.isLate ? 'border-[var(--color-danger-muted)]' : 'border-border')}>
       {period.isLate && <div className="h-1 bg-[var(--color-danger)]" aria-hidden="true" />}
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
@@ -131,7 +122,7 @@ function PaymentCard({ payment }: { payment: ParentPaymentRecord }) {
   const [showReceipt, setShowReceipt] = React.useState(false);
   const isNeg = parseFloat(payment.totalAmount) < 0;
   return (
-    <li><article className={cn('bg-card border rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]', payment.isCorrection ? 'border-[var(--color-warning-muted)]' : 'border-border')}>
+    <li><article className={cn('bg-card border rounded-lg overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]', payment.isCorrection ? 'border-[var(--color-warning-muted)]' : 'border-border')}>
       {payment.isCorrection && <div className="h-1 bg-[var(--color-warning)]" aria-hidden="true" />}
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
@@ -161,7 +152,7 @@ function BalancesTab() {
   const { data, isLoading, isError } = useParentBalances();
   if (isLoading) return <SkeletonCards count={2} />;
   if (isError) return <p className="text-center py-16 text-body text-text-secondary">{t('parentPayments.error.balances')}</p>;
-  if (!data || data.length === 0) return <NoChildren />;
+  if (!data || data.length === 0) return <NoBilling />;
   return (<ul role="list" className="space-y-3">{data.map((b) => <BalanceCard key={b.childId} balance={b} />)}</ul>);
 }
 
@@ -171,7 +162,7 @@ function BalanceCard({ balance }: { balance: ParentChildBalance }) {
   const isOverpaid = amt < 0;
   const isZero = amt === 0;
   return (
-    <li><article className="bg-card border border-border rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
+    <li><article className="bg-card border border-border rounded-lg overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
       <div className="p-5"><div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0"><h3 className="text-subsection font-semibold text-text-heading truncate">{balance.childName}</h3><p className="text-caption text-text-secondary mt-0.5">{balance.branchName}</p></div>
         <div className="text-end shrink-0">

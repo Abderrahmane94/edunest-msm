@@ -20,7 +20,7 @@ export function EmptyState({ icon, title, message, action, bare, className }: Em
     <div
       className={cn(
         'flex flex-col items-center justify-center text-center gap-3 px-6 py-10',
-        !bare && 'bg-card border border-border rounded-xl',
+        !bare && 'bg-card border border-border rounded-lg',
         className,
       )}
     >

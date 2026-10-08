@@ -94,7 +94,7 @@ export function OfflineStatus() {
       {open && (
         <div
           className={cn(
-            'absolute end-0 mt-2 w-[300px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-xl p-4 z-50',
+            'absolute end-0 mt-2 w-[300px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-lg p-4 z-50',
             'shadow-[0_10px_30px_rgba(15,23,42,0.12),0_4px_8px_rgba(15,23,42,0.06)]',
           )}
         >

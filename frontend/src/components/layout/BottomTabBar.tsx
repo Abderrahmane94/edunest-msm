@@ -68,7 +68,10 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
             }
           >
             <item.icon className="w-5 h-5" />
-            <span className="text-micro font-medium truncate max-w-[64px]">{t(item.label, item.label)}</span>
+            {/* A short name when the full one wouldn't fit (e.g. "Accueil" for the dashboard). */}
+            <span className="text-micro font-medium truncate max-w-[72px]">
+              {t(item.label.replace(/^nav./, 'navShort.'), { defaultValue: t(item.label, item.label) })}
+            </span>
           </NavLink>
         ))}
 

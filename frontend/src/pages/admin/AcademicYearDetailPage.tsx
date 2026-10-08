@@ -2,9 +2,9 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Save, Trash2, CheckCircle, Circle } from 'lucide-react';
+import { Save, Trash2, CheckCircle, Circle } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { Button, StatusBadge } from '@/components/ui';
+import { Button, PageHeader, StatusBadge } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { Input } from '@/components/ui';
 import {
@@ -93,36 +93,28 @@ export function AcademicYearDetailPage() {
 
   if (!year) {
     return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/academic-years')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <p className="text-body text-danger">{t('academicYears.notFound')}</p>
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader back="/admin/academic-years" title={t('academicYears.notFound')} />
       </div>
     );
   }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/academic-years')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-page-title font-semibold text-text-heading break-words">{year.name}</h1>
-          <p className="text-body text-text-secondary flex items-center gap-1">
-            <span dir="ltr">{formatDate(year.start_date)}</span>
-            <span>–</span>
-            <span dir="ltr">{formatDate(year.end_date)}</span>
-          </p>
-        </div>
-        <StatusBadge variant={year.is_active ? 'present' : 'draft'}>
-          {year.is_active ? t('academicYears.active') : t('academicYears.inactive')}
-        </StatusBadge>
-      </div>
+      <PageHeader
+        back="/admin/academic-years"
+        title={year.name}
+        description={
+          <>
+            <span dir="ltr">{formatDate(year.start_date)}</span> – <span dir="ltr">{formatDate(year.end_date)}</span>
+          </>
+        }
+        badge={
+          <StatusBadge variant={year.is_active ? 'success' : 'neutral'}>
+            {year.is_active ? t('academicYears.active') : t('academicYears.inactive')}
+          </StatusBadge>
+        }
+      />
 
       {/* Edit form */}
       <form onSubmit={handleSave}>

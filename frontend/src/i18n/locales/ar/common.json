@@ -295,6 +295,12 @@
       "passwordMaxLength": "يجب ألا تتجاوز كلمة المرور 128 حرفًا"
     }
   },
+  "navShort": {
+    "dashboard": "الرئيسية",
+    "users": "الحسابات",
+    "timetable": "الأيام",
+    "communication": "التواصل"
+  },
   "nav": {
     "dashboard": "لوحة التحكم",
     "schools": "المدارس",
@@ -516,6 +522,7 @@
     }
   },
   "common": {
+    "dangerZone": "منطقة الخطر",
     "filters": "التصفية",
     "resetFilters": "إعادة ضبط التصفية",
     "clearSearch": "مسح البحث",
@@ -2625,6 +2632,8 @@
     "outstanding": "المستحق",
     "noChildren": "لا يوجد أطفال مرتبطون بحسابك.",
     "noChildrenHint": "تواصل مع المدرسة لربط أطفالك.",
+    "noBilling": "لا توجد فوترة حتى الآن.",
+    "noBillingHint": "ستظهر المستحقات هنا بمجرد أن تسجّل المدرسة طفلك في الرسوم.",
     "noPayments": "لا توجد مدفوعات مسجلة بعد.",
     "status": {
       "unpaid": "غير مدفوع",

@@ -86,7 +86,7 @@ function MobileAccountMenu({ children }: { children: React.ReactNode }) {
         <CircleUserRound className="w-5 h-5" />
       </button>
       {open && (
-        <div className="absolute end-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-card border border-border rounded-xl shadow-level-4 p-3 z-50">
+        <div className="absolute end-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-card border border-border rounded-lg shadow-level-4 p-3 z-50">
           {children}
         </div>
       )}

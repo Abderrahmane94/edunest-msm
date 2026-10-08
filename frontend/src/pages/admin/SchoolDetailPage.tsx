@@ -2,15 +2,16 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Save, Shield, ShieldOff, Users, UserPlus, Settings } from 'lucide-react';
+import { Save, Shield, ShieldOff, Users, UserPlus, Settings } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { Button, StatusBadge, DataTable, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Input, EntityDeleteButton } from '@/components/ui';
+import { Button, DangerZone, DataTable, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, EmptyState, EntityDeleteButton, ErrorAlert, Input, ListSkeleton, PageHeader, RoleBadge, StatusBadge, Tabs } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { apiClient, apiError } from '@/lib/api-client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToggleSchoolActive } from './SchoolsPage';
 import type { SchoolItem } from '@/hooks/useSchools';
+import { useTabParam } from '@/hooks/useTabParam';
 
 type Tab = 'info' | 'users';
 
@@ -91,7 +92,7 @@ export function SchoolDetailPage() {
   const updateSchool = useUpdateSchoolAdmin();
   const toggleSchool = useToggleSchoolActive();
 
-  const [activeTab, setActiveTab] = React.useState<Tab>('info');
+  const [activeTab, setActiveTab] = useTabParam<Tab>(['info', 'users'], 'info');
   const [formData, setFormData] = React.useState({
     name: '', address: '', wilaya: '', contactEmail: '', contactPhone: '',
   });
@@ -137,83 +138,53 @@ export function SchoolDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="h-8 bg-hover rounded-md w-48 animate-pulse" />
-        <div className="bg-card border border-border rounded-lg p-6 space-y-4 animate-pulse">
-          <div className="h-10 bg-hover rounded-md" /><div className="h-10 bg-hover rounded-md w-1/2" />
-        </div>
+        <PageHeader back="/admin/schools" title={<span className="inline-block h-8 w-48 bg-hover rounded-md animate-pulse" />} />
+        <ListSkeleton rows={3} />
       </div>
     );
   }
 
   if (!school) {
     return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/schools')}>
-          <ArrowLeft className="w-4 h-4" />{t('common.back')}
-        </Button>
-        <p className="text-body text-danger">{t('schools.notFound')}</p>
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader back="/admin/schools" title={t('schools.title')} />
+        <EmptyState message={t('schools.notFound')} />
       </div>
     );
   }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/schools')}>
-          <ArrowLeft className="w-4 h-4" />{t('common.back')}
-        </Button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-page-title font-semibold text-text-heading break-words">{school.name}</h1>
-          <p className="text-body text-text-secondary">{school.wilaya}</p>
-        </div>
-        <StatusBadge variant={school.isActive ? 'present' : 'cancelled'}>
-          {school.isActive ? t('schools.active') : t('schools.inactive')}
-        </StatusBadge>
-      </div>
+      <PageHeader
+        back="/admin/schools"
+        title={school.name}
+        description={
+          <>
+            {school.wilaya} · {t('schools.columns.createdAt')} <span dir="ltr">{formatDate(school.createdAt)}</span>
+          </>
+        }
+        badge={
+          <StatusBadge variant={school.isActive ? 'success' : 'neutral'}>
+            {school.isActive ? t('schools.active') : t('schools.inactive')}
+          </StatusBadge>
+        }
+      />
 
-      {/* Tab switcher */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant={activeTab === 'info' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setActiveTab('info')}
-        >
-          <Settings className="w-4 h-4" />
-          {t('schools.tabs.info')}
-        </Button>
-        <Button
-          variant={activeTab === 'users' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setActiveTab('users')}
-        >
-          <Users className="w-4 h-4" />
-          {t('schools.tabs.users')}
-        </Button>
-      </div>
+      <Tabs
+        value={activeTab}
+        onChange={setActiveTab}
+        items={[
+          { value: 'info', label: t('schools.tabs.info'), icon: <Settings /> },
+          { value: 'users', label: t('schools.tabs.users'), icon: <Users /> },
+        ]}
+      />
 
       {/* Info tab */}
       {activeTab === 'info' && (
         <>
-          {/* Stats row */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div className="bg-card border border-border rounded-lg p-4">
-              <p className="text-caption text-text-secondary">{t('schools.columns.createdAt')}</p>
-              <p className="text-body font-medium text-foreground mt-1" dir="ltr">{formatDate(school.createdAt)}</p>
-            </div>
-            <div className="bg-card border border-border rounded-lg p-4">
-              <p className="text-caption text-text-secondary">{t('schools.columns.status')}</p>
-              <p className="text-body font-medium mt-1">
-                {school.isActive
-                  ? <span className="text-success">{t('schools.active')}</span>
-                  : <span className="text-danger">{t('schools.inactive')}</span>}
-              </p>
-            </div>
-          </div>
-
           {/* Edit form */}
           <form onSubmit={handleSave}>
-            <div className="bg-card border border-border rounded-lg p-6 space-y-4">
+            <div className="bg-card border border-border rounded-lg p-4 sm:p-6 space-y-4">
               <h2 className="text-subsection font-semibold text-text-heading">{t('schools.detail.info')}</h2>
               <FormField label={t('schoolSettings.name')} htmlFor="sd-name" required>
                 <Input id="sd-name" name="name" value={formData.name} onChange={handleChange} placeholder={t('schools.form.namePlaceholder')} />
@@ -238,30 +209,26 @@ export function SchoolDetailPage() {
                 <Save className="w-4 h-4" />{updateSchool.isPending ? t('common.loading') : t('common.save')}
               </Button>
 
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleToggle}
-                disabled={toggleSchool.isPending}
-              >
-                {school.isActive
-                  ? <><ShieldOff className="w-4 h-4 text-danger" />{t('schools.deactivate')}</>
-                  : <><Shield className="w-4 h-4 text-success" />{t('schools.activate')}</>}
-              </Button>
-
-              <EntityDeleteButton
-                entityType="schools"
-                entityId={schoolId!}
-                entityDisplayName={school.name}
-                onDeleted={() => navigate('/admin/schools')}
-                hidden={!!school.deletedAt}
-              />
-
               {saveSuccess && <span className="text-body text-success animate-fade-in">{t('common.saved')}</span>}
               {saveError && <span className="text-body text-danger animate-fade-in">{saveError}</span>}
-              {toggleError && <span className="text-body text-danger animate-fade-in">{toggleError}</span>}
             </div>
           </form>
+
+          <DangerZone description={school.isActive ? t('schools.detail.deactivateWarning') : t('schools.detail.activateHint')}>
+            <Button type="button" variant="secondary" onClick={handleToggle} disabled={toggleSchool.isPending}>
+              {school.isActive
+                ? <><ShieldOff className="w-4 h-4 text-danger" />{t('schools.deactivate')}</>
+                : <><Shield className="w-4 h-4 text-success" />{t('schools.activate')}</>}
+            </Button>
+            <EntityDeleteButton
+              entityType="schools"
+              entityId={schoolId!}
+              entityDisplayName={school.name}
+              onDeleted={() => navigate('/admin/schools')}
+              hidden={!!school.deletedAt}
+            />
+            <ErrorAlert message={toggleError} className="w-full" />
+          </DangerZone>
         </>
       )}
 
@@ -280,12 +247,6 @@ function UsersTab({ schoolId }: { schoolId: string }) {
   const navigate = useNavigate();
   const { data: users, isLoading } = useSchoolUsers(schoolId);
   const [inviteOpen, setInviteOpen] = React.useState(false);
-
-  const ROLE_COLORS: Record<string, string> = {
-    admin: 'bg-[#EDE9FE] text-[#5B21B6]',
-    teacher: 'bg-[#DBEAFE] text-[#1D4ED8]',
-    parent: 'bg-[#FCE7F3] text-[#9D174D]',
-  };
 
   const columns: Column<SchoolUser>[] = [
     {
@@ -306,17 +267,13 @@ function UsersTab({ schoolId }: { schoolId: string }) {
     {
       key: 'role',
       header: t('users.columns.role'),
-      render: (u) => (
-        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-micro font-medium ${ROLE_COLORS[u.role] ?? 'bg-subtle text-text-secondary'}`}>
-          {t(`users.roles.${u.role}`)}
-        </span>
-      ),
+      render: (u) => <RoleBadge role={u.role} />,
     },
     {
       key: 'isActive',
       header: t('users.columns.status'),
       render: (u) => (
-        <StatusBadge variant={u.isActive ? 'present' : 'cancelled'}>
+        <StatusBadge variant={u.isActive ? 'success' : 'neutral'}>
           {u.isActive ? t('users.active') : t('users.inactive')}
         </StatusBadge>
       ),

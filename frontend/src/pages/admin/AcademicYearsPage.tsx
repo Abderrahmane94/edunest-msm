@@ -200,7 +200,7 @@ export function AcademicYearsPage() {
           {years.map((year) => (
             <div
               key={year.id}
-              className="bg-card border border-border rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-hover transition-colors duration-150 cursor-pointer"
+              className="bg-card border border-border rounded-lg p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-hover transition-colors duration-150 cursor-pointer"
               onClick={() => navigate(`/admin/academic-years/${year.id}`)}
             >
               <div className="flex items-center gap-3">

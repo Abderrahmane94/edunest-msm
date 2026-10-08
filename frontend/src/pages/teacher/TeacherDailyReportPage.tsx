@@ -397,7 +397,7 @@ export function TeacherDailyReportPage() {
                   type="button"
                   onClick={() => selectChild(child.id)}
                   className={cn(
-                    'flex flex-col items-center gap-2 min-h-[80px] p-3 rounded-xl border-2 transition-all duration-150 active:scale-[0.98]',
+                    'flex flex-col items-center gap-2 min-h-[80px] p-3 rounded-lg border-2 transition-all duration-150 active:scale-[0.98]',
                     form.child_id === child.id
                       ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)]'
                       : 'border-border bg-card hover:border-[var(--color-border-strong)] hover:bg-hover'
@@ -526,7 +526,7 @@ export function TeacherDailyReportPage() {
                   setForm((prev) => ({ ...prev, mood: option.value }));
                 }}
                 className={cn(
-                  'flex flex-col items-center gap-1 min-h-[72px] p-3 rounded-xl border-2 transition-all duration-150 active:scale-[0.98]',
+                  'flex flex-col items-center gap-1 min-h-[72px] p-3 rounded-lg border-2 transition-all duration-150 active:scale-[0.98]',
                   form.mood === option.value
                     ? MOOD_COLORS[option.value]
                     : 'border-border bg-card hover:border-[var(--color-border-strong)]'

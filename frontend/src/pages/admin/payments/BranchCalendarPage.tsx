@@ -4,11 +4,11 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { formatDateIn } from '@/lib/formatters';
-import { CalendarDays, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button, DataTable, type Column } from '@/components/ui';
+import { Button, DataTable, SectionHeader, type Column } from '@/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -215,26 +215,18 @@ export function BranchCalendarPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <CalendarDays className="w-5 h-5 text-primary" />
-          <div>
-            <h2 className="text-section font-semibold text-text-heading">
-              {t('payments.branchCalendar.title')}
-            </h2>
-            <p className="text-caption text-text-secondary mt-0.5">
-              {t('payments.branchCalendar.description')}
-            </p>
-          </div>
-        </div>
-        {isReady && (
-          <Button onClick={handleOpenCreate}>
-            <Plus className="w-4 h-4" />
-            {t('payments.branchCalendar.addEntry')}
-          </Button>
-        )}
-      </div>
+      <SectionHeader
+        title={t('payments.branchCalendar.title')}
+        description={t('payments.branchCalendar.description')}
+        actions={
+          isReady && (
+            <Button onClick={handleOpenCreate}>
+              <Plus className="w-4 h-4" />
+              {t('payments.branchCalendar.addEntry')}
+            </Button>
+          )
+        }
+      />
 
       {/* Content */}
       {!yearLoading && !activeAcademicYear ? (

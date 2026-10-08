@@ -109,7 +109,7 @@ export function StaffListPage() {
       key: 'is_active',
       header: t('staff.columns.status'),
       render: (row) => (
-        <StatusBadge variant={row.user.is_active ? 'present' : 'cancelled'}>
+        <StatusBadge variant={row.user.is_active ? 'success' : 'neutral'}>
           {row.user.is_active ? t('users.active') : t('users.inactive')}
         </StatusBadge>
       ),

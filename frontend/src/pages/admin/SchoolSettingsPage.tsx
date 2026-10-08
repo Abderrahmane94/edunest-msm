@@ -2,7 +2,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Building2, Upload, Camera } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Button, PageHeader } from '@/components/ui';
 import { Input } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { useSchool, useUpdateSchool, useUploadSchoolLogo } from '@/hooks/useSchool';
@@ -83,9 +83,7 @@ export function SchoolSettingsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <h1 className="text-page-title font-semibold text-text-heading">
-          {t('schoolSettings.title')}
-        </h1>
+        <PageHeader title={t('schoolSettings.title')} />
         <div className="bg-card border border-border rounded-lg p-6">
           <div className="animate-pulse space-y-4">
             <div className="h-20 w-20 rounded-full bg-hover" />
@@ -99,9 +97,7 @@ export function SchoolSettingsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="text-page-title font-semibold text-text-heading">
-        {t('schoolSettings.title')}
-      </h1>
+      <PageHeader title={t('schoolSettings.title')} />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Logo Upload Section */}

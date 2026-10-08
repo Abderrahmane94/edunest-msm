@@ -1,8 +1,9 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { AuthShell } from '@/components/layout/AuthShell';
 import { KeyRound } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Button, ErrorAlert } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { Input } from '@/components/ui';
 import { apiClient, apiError } from '@/lib/api-client';
@@ -49,17 +50,8 @@ export function ChangePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-subtle flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-9 h-9 rounded-lg bg-[var(--color-accent)] flex items-center justify-center">
-            <span className="text-[var(--color-text-inverse)] text-label font-semibold">E</span>
-          </div>
-          <span className="text-section font-semibold text-text-heading">EduNest</span>
-        </div>
-
-        <div className="bg-card border border-border rounded-xl p-8 shadow-level-2 space-y-6">
+    <AuthShell>
+        <div className="space-y-6">
           <div className="flex flex-col items-center gap-3 text-center">
             <div className="w-12 h-12 rounded-full bg-[var(--color-warning-muted)] flex items-center justify-center">
               <KeyRound className="w-6 h-6 text-warning" />
@@ -96,9 +88,7 @@ export function ChangePasswordPage() {
               />
             </FormField>
 
-            {error && (
-              <p className="text-body text-danger">{error}</p>
-            )}
+            <ErrorAlert message={error} />
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? t('common.loading') : t('auth.changePassword.submit')}
@@ -113,7 +103,6 @@ export function ChangePasswordPage() {
             {t('auth.changePassword.logout')}
           </button>
         </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

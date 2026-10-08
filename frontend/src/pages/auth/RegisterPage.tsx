@@ -2,9 +2,11 @@ import { errorMessage } from '@/lib/errorMessage';
 import { useState, useEffect, type FormEvent } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { AuthShell } from '@/components/layout/AuthShell';
 import { apiClient, apiError } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { ErrorAlert } from '@/components/ui';
 
 interface InvitationInfo {
   email: string;
@@ -108,8 +110,8 @@ export function RegisterPage() {
 
   if (!invitation) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-page px-4">
-        <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6 text-center">
+      <AuthShell>
+        <div className="text-center">
           <h1 className="text-display font-bold text-text-heading mb-4">
             {t('auth.register.invalidTitle')}
           </h1>
@@ -118,14 +120,14 @@ export function RegisterPage() {
             {t('auth.register.goToLogin')}
           </Button>
         </div>
-      </div>
+      </AuthShell>
     );
   }
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-page px-4">
-        <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6 text-center">
+      <AuthShell>
+        <div className="text-center">
           <h1 className="text-display font-bold text-text-heading mb-4">
             {t('auth.register.successTitle')}
           </h1>
@@ -136,13 +138,13 @@ export function RegisterPage() {
             {t('auth.register.goToLoginButton')}
           </Button>
         </div>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-page px-4">
-      <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6">
+    <AuthShell>
+      <div>
         <h1 className="text-display font-bold text-text-heading mb-2">
           {t('auth.register.title')}
         </h1>
@@ -151,11 +153,7 @@ export function RegisterPage() {
           {invitation.schoolName && <> {t('auth.register.at')} <span className="font-medium text-foreground">{invitation.schoolName}</span></>}
         </p>
 
-        {error && (
-          <div className="mb-4 p-3 rounded-md bg-[var(--color-danger-muted)] border-s-[3px] border-danger">
-            <p className="text-body text-danger">{error}</p>
-          </div>
-        )}
+        <ErrorAlert message={error} className="mb-4" />
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input
@@ -226,6 +224,6 @@ export function RegisterPage() {
           </Button>
         </form>
       </div>
-    </div>
+    </AuthShell>
   );
 }

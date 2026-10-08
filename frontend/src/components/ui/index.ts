@@ -26,3 +26,5 @@ export { SearchInput, type SearchInputProps } from './SearchInput';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { ListSkeleton } from './ListSkeleton';
 export { RoleBadge } from './RoleBadge';
+export { DangerZone } from './DangerZone';
+export { SectionHeader } from './SectionHeader';

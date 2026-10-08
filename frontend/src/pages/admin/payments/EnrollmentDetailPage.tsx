@@ -2,7 +2,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, UserX, Calendar, Plus, Trash2, Percent } from 'lucide-react';
+import { UserX, Plus, Trash2, Percent } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
 import {
   ErrorAlert,
@@ -31,6 +31,7 @@ import {
   type Discount,
   type DiscountType,
 } from '@/hooks/useDiscounts';
+import { EmptyState, ListSkeleton, PageHeader } from '@/components/ui';
 
 // ─── Withdrawal Dialog ─────────────────────────────────────────────────────────
 
@@ -607,25 +608,8 @@ export function EnrollmentDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={goBack}
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <h1 className="text-page-title font-semibold text-text-heading">
-            {t('payments.enrollmentDetail.title')}
-          </h1>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-6">
-          <div className="animate-pulse space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-12 bg-hover rounded-md" />
-            ))}
-          </div>
-        </div>
+        <PageHeader back={goBack} title={t('payments.enrollmentDetail.title')} />
+        <ListSkeleton />
       </div>
     );
   }
@@ -633,23 +617,8 @@ export function EnrollmentDetailPage() {
   if (!enrollment) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={goBack}
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <h1 className="text-page-title font-semibold text-text-heading">
-            {t('payments.enrollmentDetail.title')}
-          </h1>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-6 text-center">
-          <p className="text-body text-text-secondary">
-            {t('payments.enrollmentDetail.notFound')}
-          </p>
-        </div>
+        <PageHeader back={goBack} title={t('payments.enrollmentDetail.title')} />
+        <EmptyState message={t('payments.enrollmentDetail.notFound')} />
       </div>
     );
   }
@@ -658,31 +627,18 @@ export function EnrollmentDetailPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={goBack}
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <Calendar className="w-6 h-6 text-primary" />
-          <h1 className="text-page-title font-semibold text-text-heading">
-            {t('payments.enrollmentDetail.title')}
-          </h1>
-        </div>
-        {enrollment.status === 'active' && (
-          <Button
-            variant="danger"
-            onClick={() => setWithdrawDialogOpen(true)}
-          >
-            <UserX className="w-4 h-4 ltr:mr-2 rtl:ml-2" />
-            {t('payments.enrollmentDetail.withdraw')}
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        back={goBack}
+        title={t('payments.enrollmentDetail.title')}
+        actions={
+          enrollment.status === 'active' && (
+            <Button variant="danger" onClick={() => setWithdrawDialogOpen(true)}>
+              <UserX className="w-4 h-4" />
+              {t('payments.enrollmentDetail.withdraw')}
+            </Button>
+          )
+        }
+      />
 
       {/* Enrollment Info Card */}
       <div className="bg-card border border-border rounded-lg p-6">

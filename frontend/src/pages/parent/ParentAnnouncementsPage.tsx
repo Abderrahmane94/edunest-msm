@@ -1,11 +1,10 @@
 import { errorMessage } from '@/lib/errorMessage';
-import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Megaphone, Calendar, MapPin, Users, Check, X, CloudOff } from 'lucide-react';
 import { useOfflineQueue, retryAction, discardAction, type QueuedAction } from '@/lib/offlineQueue';
 import { cn } from '@/lib/utils';
 import { formatDate, formatDateTime } from '@/lib/formatters';
-import { StatusBadge } from '@/components/ui';
+import { EmptyState, StatusBadge, Tabs } from '@/components/ui';
 import {
   useAnnouncements,
   useEvents,
@@ -16,12 +15,13 @@ import {
   type Announcement,
   type SchoolEvent,
 } from '@/hooks/useCommunication';
+import { useTabParam } from '@/hooks/useTabParam';
 
 type TabMode = 'announcements' | 'events';
 
 export function ParentAnnouncementsPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = React.useState<TabMode>('announcements');
+  const [activeTab, setActiveTab] = useTabParam<TabMode>(['announcements', 'events'], 'announcements');
 
   return (
     <div className="min-h-screen bg-page">
@@ -36,7 +36,15 @@ export function ParentAnnouncementsPage() {
           </p>
         </div>
         <div className="max-w-[600px] mx-auto px-4">
-          <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+          <Tabs
+            className="border-b-0"
+            value={activeTab}
+            onChange={setActiveTab}
+            items={[
+              { value: 'announcements', label: t('communication.announcements.tab'), icon: <Megaphone /> },
+              { value: 'events', label: t('communication.events.tab'), icon: <Calendar /> },
+            ]}
+          />
         </div>
       </header>
 
@@ -48,55 +56,8 @@ export function ParentAnnouncementsPage() {
   );
 }
 
-function TabBar({
-  activeTab,
-  onTabChange,
-}: {
-  activeTab: TabMode;
-  onTabChange: (tab: TabMode) => void;
-}) {
-  const { t } = useTranslation();
-  const tabs: { id: TabMode; label: string; icon: typeof Megaphone }[] = [
-    { id: 'announcements', label: t('communication.announcements.tab'), icon: Megaphone },
-    { id: 'events', label: t('communication.events.tab'), icon: Calendar },
-  ];
-
-  return (
-    <div className="flex items-center gap-1" role="tablist">
-      {tabs.map((tab) => {
-        const isActive = activeTab === tab.id;
-        return (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            id={`tab-${tab.id}`}
-            aria-selected={isActive}
-            onClick={() => onTabChange(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-body font-medium border-b-2 transition-all duration-150 ${
-              isActive
-                ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
-                : 'border-transparent text-text-secondary hover:text-text-primary'
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function EmptyFeed({ icon: Icon, message }: { icon: typeof Megaphone; message: string }) {
-  return (
-    <div className="text-center py-16 space-y-3">
-      <div className="w-16 h-16 mx-auto rounded-full bg-subtle flex items-center justify-center">
-        <Icon className="w-8 h-8 text-text-secondary" />
-      </div>
-      <p className="text-body text-text-secondary">{message}</p>
-    </div>
-  );
+  return <EmptyState bare className="py-16" icon={<Icon />} message={message} />;
 }
 
 function FeedSkeleton() {

@@ -85,7 +85,7 @@ export function DialogContent({ children, className }: DialogContentProps) {
           role="dialog"
           aria-modal="true"
           className={cn(
-            'relative z-50 bg-card rounded-xl p-5 sm:p-6 w-full max-w-[480px] shadow-level-4 animate-scale-in',
+            'relative z-50 bg-card rounded-lg p-5 sm:p-6 w-full max-w-[480px] shadow-level-4 animate-scale-in',
             className
           )}
         >

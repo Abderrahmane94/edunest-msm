@@ -2,46 +2,33 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Megaphone, Calendar, MapPin, Users } from 'lucide-react';
 import { formatDate, formatDateTime } from '@/lib/formatters';
-import { Button, StatusBadge } from '@/components/ui';
+import { EmptyState, PageHeader, StatusBadge, Tabs } from '@/components/ui';
 import {
   useAnnouncements,
   useEvents,
   type Announcement,
   type SchoolEvent,
 } from '@/hooks/useCommunication';
+import { useTabParam } from '@/hooks/useTabParam';
 
 type TabMode = 'announcements' | 'events';
 
 export function TeacherAnnouncementsPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = React.useState<TabMode>('announcements');
+  const [activeTab, setActiveTab] = useTabParam<TabMode>(['announcements', 'events'], 'announcements');
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-page-title font-semibold text-text-heading">
-          {t('teacherCommunication.title')}
-        </h1>
-      </div>
+      <PageHeader title={t('teacherCommunication.title')} />
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <Button
-          variant={activeTab === 'announcements' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setActiveTab('announcements')}
-        >
-          <Megaphone className="w-4 h-4" />
-          {t('communication.announcements.tab')}
-        </Button>
-        <Button
-          variant={activeTab === 'events' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setActiveTab('events')}
-        >
-          <Calendar className="w-4 h-4" />
-          {t('communication.events.tab')}
-        </Button>
-      </div>
+      <Tabs
+        value={activeTab}
+        onChange={setActiveTab}
+        items={[
+          { value: 'announcements', label: t('communication.announcements.tab'), icon: <Megaphone /> },
+          { value: 'events', label: t('communication.events.tab'), icon: <Calendar /> },
+        ]}
+      />
 
       {activeTab === 'announcements' ? <AnnouncementsList /> : <EventsList />}
     </div>
@@ -60,13 +47,8 @@ function LoadingSkeleton() {
   );
 }
 
-function EmptyState({ icon: Icon, message }: { icon: typeof Megaphone; message: string }) {
-  return (
-    <div className="bg-card border border-border rounded-lg p-8 text-center">
-      <Icon className="w-10 h-10 text-text-disabled mx-auto mb-3" />
-      <p className="text-body text-text-secondary">{message}</p>
-    </div>
-  );
+function Empty({ icon: Icon, message }: { icon: typeof Megaphone; message: string }) {
+  return <EmptyState icon={<Icon />} message={message} />;
 }
 
 /* ─── Announcements ─── */
@@ -79,7 +61,7 @@ function AnnouncementsList() {
   if (isLoading) return <LoadingSkeleton />;
 
   if (!announcements || announcements.length === 0) {
-    return <EmptyState icon={Megaphone} message={t('communication.announcements.noAnnouncements')} />;
+    return <Empty icon={Megaphone} message={t('communication.announcements.noAnnouncements')} />;
   }
 
   return (
@@ -121,9 +103,9 @@ function AnnouncementCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-body font-medium text-text-primary [overflow-wrap:anywhere]">{announcement.title}</h3>
-            <span className="text-micro font-medium text-text-secondary bg-subtle px-2 py-0.5 rounded-full">
+            <StatusBadge variant="neutral">
               {announcement.classroom_name || t('communication.announcements.allSchool')}
-            </span>
+            </StatusBadge>
           </div>
           <p className="text-caption text-text-secondary mt-1">
             {announcement.created_by_name} · <span dir="ltr">{formatDate(announcement.published_at)}</span>
@@ -148,7 +130,7 @@ function EventsList() {
   if (isLoading) return <LoadingSkeleton />;
 
   if (!events || events.length === 0) {
-    return <EmptyState icon={Calendar} message={t('communication.events.noEvents')} />;
+    return <Empty icon={Calendar} message={t('communication.events.noEvents')} />;
   }
 
   return (

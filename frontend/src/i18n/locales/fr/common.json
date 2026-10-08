@@ -295,6 +295,12 @@
       "passwordMaxLength": "Le mot de passe ne doit pas dépasser 128 caractères"
     }
   },
+  "navShort": {
+    "dashboard": "Accueil",
+    "users": "Comptes",
+    "timetable": "Jours",
+    "communication": "Échanges"
+  },
   "nav": {
     "dashboard": "Tableau de bord",
     "schools": "Écoles",
@@ -516,6 +522,7 @@
     }
   },
   "common": {
+    "dangerZone": "Zone dangereuse",
     "filters": "Filtres",
     "resetFilters": "Réinitialiser les filtres",
     "clearSearch": "Effacer la recherche",
@@ -2596,6 +2603,8 @@
     "outstanding": "Restant dû",
     "noChildren": "Aucun enfant lié à votre compte.",
     "noChildrenHint": "Contactez votre école pour lier vos enfants.",
+    "noBilling": "Aucune facturation pour l’instant.",
+    "noBillingHint": "Les échéances apparaîtront ici dès que l’école aura inscrit votre enfant à des frais.",
     "noPayments": "Aucun paiement enregistré.",
     "status": {
       "unpaid": "Impayé",

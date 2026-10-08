@@ -29,6 +29,7 @@ import {
   useExpenseReceiptFile,
   type Expense,
 } from '@/hooks/useExpenses';
+import { FilterBar, SectionHeader } from '@/components/ui';
 
 // ─── Shared receipt file picker ─────────────────────────────────────────────
 
@@ -266,10 +267,11 @@ export function ExpensesTab() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-end">
-        <CreateButton label={t('finance.expenses.create')} onClick={() => setShowCreateDialog(true)} />
-      </div>
+    <div className="space-y-6">
+      <SectionHeader
+        title={t('finance.tabs.expenses')}
+        actions={<CreateButton label={t('finance.expenses.create')} onClick={() => setShowCreateDialog(true)} />}
+      />
 
       {receipt.error && (
         <p className="text-caption text-danger" role="alert">
@@ -277,15 +279,19 @@ export function ExpensesTab() {
         </p>
       )}
 
-      {/* Filter bar */}
-      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <Input
-            label={t('finance.expenses.filters.search')}
-            placeholder={t('finance.expenses.filters.searchPlaceholder')}
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
+      <FilterBar
+        search={{ onSearch: setSearchInput, placeholder: t('finance.expenses.filters.searchPlaceholder'), defaultValue: searchInput }}
+        activeCount={[filters.category, filters.hasReceipt, filters.from, filters.to].filter(Boolean).length}
+        summary={t('finance.expenses.filters.summary', {
+          count: data?.total ?? 0,
+          amount: formatDZD(Number(data?.totalAmount ?? 0)),
+        })}
+        onReset={() => {
+          setSearchInput('');
+          setFilters({});
+          setPage(1);
+        }}
+      >
           <FormSelect
             label={t('finance.expenses.filters.category')}
             name="expense-filter-category"
@@ -323,32 +329,7 @@ export function ExpensesTab() {
             min={filters.from}
             error={dateError ? t('finance.expenses.filters.invalidRange') : undefined}
           />
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-caption text-text-secondary">
-            {t('finance.expenses.filters.summary', {
-              count: data?.total ?? 0,
-              amount: formatDZD(Number(data?.totalAmount ?? 0)),
-            })}
-          </p>
-          {hasFilters && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSearchInput('');
-                setFilters({});
-                setPage(1);
-              }}
-            >
-              <X className="w-4 h-4" />
-              {t('finance.expenses.filters.reset')}
-            </Button>
-          )}
-        </div>
-      </div>
+      </FilterBar>
 
       <DataTable<Expense>
         columns={columns}

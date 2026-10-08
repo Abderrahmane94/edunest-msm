@@ -92,7 +92,7 @@ export function DataTable<T>({
         <SearchInput onSearch={onSearch} placeholder={searchPlaceholder} className="max-w-xs" />
       )}
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-card border border-border rounded-lg overflow-hidden">
         {data.length === 0 ? (
           <EmptyState bare message={emptyMessage ?? t('common.noData')} />
         ) : (

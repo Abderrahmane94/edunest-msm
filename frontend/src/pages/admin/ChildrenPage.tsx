@@ -277,7 +277,7 @@ export function ChildrenPage() {
       key: 'is_active',
       header: t('children.columns.status'),
       render: (child) => (
-        <StatusBadge variant={child.is_active ? 'present' : 'cancelled'}>
+        <StatusBadge variant={child.is_active ? 'success' : 'neutral'}>
           {child.is_active ? t('children.active') : t('children.inactive')}
         </StatusBadge>
       ),

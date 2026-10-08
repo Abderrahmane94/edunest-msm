@@ -2,9 +2,9 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Shield, ShieldOff, Save } from 'lucide-react';
+import { Shield, ShieldOff, Save } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { Button, StatusBadge, EntityDeleteButton } from '@/components/ui';
+import { Button, EntityDeleteButton, PageHeader, StatusBadge } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import { useUser, useUpdateUser, useToggleUserActive } from '@/hooks/useUsers';
@@ -111,34 +111,24 @@ export function UserDetailPage() {
 
   if (!user) {
     return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/users')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <p className="text-body text-danger">{t('users.notFound')}</p>
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader back="/admin/users" title={t('users.notFound')} />
       </div>
     );
   }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/users')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-page-title font-semibold text-text-heading break-words">
-            {user.first_name} {user.last_name}
-          </h1>
-          <p className="text-body text-text-secondary">{user.email}</p>
-        </div>
-        <StatusBadge variant={user.is_active ? 'present' : 'cancelled'}>
-          {user.is_active ? t('users.active') : t('users.inactive')}
-        </StatusBadge>
-      </div>
+      <PageHeader
+        back="/admin/users"
+        title={`${user.first_name} ${user.last_name}`}
+        description={user.email}
+        badge={
+          <StatusBadge variant={user.is_active ? 'success' : 'neutral'}>
+            {user.is_active ? t('users.active') : t('users.inactive')}
+          </StatusBadge>
+        }
+      />
 
       {/* Edit form */}
       <form onSubmit={handleSave} className="space-y-6">

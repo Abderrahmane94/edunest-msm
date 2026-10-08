@@ -23,7 +23,8 @@ import {
 } from '@/hooks/useTrash';
 import { useDeletedPayments, useRestorePayment, type SchoolPaymentRecord } from '@/hooks/useBilling';
 import { useAuth } from '@/contexts/AuthContext';
-import { ErrorAlert } from '@/components/ui';
+import { ErrorAlert, PageHeader, Tabs } from '@/components/ui';
+import { useTabParam } from '@/hooks/useTabParam';
 
 type EntityTab = TrashEntityType | 'payments';
 
@@ -219,7 +220,10 @@ export function TrashPage() {
   const { user } = useAuth();
   const isSuperAdmin = user?.role === 'super_admin';
   const visibleTabs = isSuperAdmin ? ENTITY_TABS : ENTITY_TABS.filter((tab) => tab.key !== 'schools');
-  const [activeTab, setActiveTab] = React.useState<EntityTab>(isSuperAdmin ? 'schools' : 'users');
+  const [activeTab, setActiveTab] = useTabParam<EntityTab>(
+    visibleTabs.map((tab) => tab.key),
+    isSuperAdmin ? 'schools' : 'users',
+  );
   const [page, setPage] = React.useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [selectedItem, setSelectedItem] = React.useState<TrashItem | null>(null);
@@ -354,24 +358,13 @@ export function TrashPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="text-page-title font-semibold text-text-heading">
-        {t('trash.title')}
-      </h1>
+      <PageHeader title={t('trash.title')} />
 
-      {/* Entity type tabs */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {visibleTabs.map((tab) => (
-          <Button
-            key={tab.key}
-            variant={activeTab === tab.key ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => handleTabChange(tab.key)}
-          >
-            {tab.icon}
-            {t(`trash.tabs.${tab.key}`)}
-          </Button>
-        ))}
-      </div>
+      <Tabs
+        value={activeTab}
+        onChange={handleTabChange}
+        items={visibleTabs.map((tab) => ({ value: tab.key, label: t(`trash.tabs.${tab.key}`), icon: tab.icon }))}
+      />
 
       {/* Error banner (non-payments tabs) */}
       {!isPaymentsTab && <ErrorAlert message={actionError} onDismiss={() => setActionError(null)} />}

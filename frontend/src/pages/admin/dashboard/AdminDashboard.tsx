@@ -86,7 +86,7 @@ function TodaySection({ data }: { data: Dashboard }) {
 
   if (!a.isSchoolDay) {
     return (
-      <div className="flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-4">
+      <div className="flex items-center gap-3 bg-card border border-border rounded-lg px-4 py-4">
         <CalendarDays className="w-5 h-5 text-text-secondary" />
         <p className="text-body text-text-secondary">{t('dashboard.admin.today.noSchool')}</p>
       </div>
@@ -347,7 +347,7 @@ function EnrollmentSection({ data }: { data: Dashboard }) {
         </p>
       </Tile>
 
-      <div className="lg:col-span-2 bg-card border border-border rounded-xl p-4 sm:p-5">
+      <div className="lg:col-span-2 bg-card border border-border rounded-lg p-4 sm:p-5">
         <div className="flex items-center gap-3">
           <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', TONE_ICON.accent)}>
             <School className="w-[18px] h-[18px]" />
@@ -417,7 +417,7 @@ function CommunicationSection({ data }: { data: Dashboard }) {
         <p className="mt-2 text-caption text-text-secondary">{t('dashboard.admin.communication.consentsHint')}</p>
       </Tile>
 
-      <div className="sm:col-span-2 lg:col-span-1 bg-card border border-border rounded-xl p-4 sm:p-5">
+      <div className="sm:col-span-2 lg:col-span-1 bg-card border border-border rounded-lg p-4 sm:p-5">
         <div className="flex items-center gap-3">
           <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', TONE_ICON.accent)}>
             <CalendarDays className="w-[18px] h-[18px]" />
@@ -466,15 +466,15 @@ function DashboardSkeleton() {
         <div className="h-7 w-64 bg-hover rounded-md animate-pulse" />
         <div className="h-4 w-48 bg-hover rounded-md animate-pulse" />
       </div>
-      <div className="h-14 bg-hover rounded-xl animate-pulse" />
+      <div className="h-14 bg-hover rounded-lg animate-pulse" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-40 bg-hover rounded-xl animate-pulse" />
+          <div key={i} className="h-40 bg-hover rounded-lg animate-pulse" />
         ))}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-32 bg-hover rounded-xl animate-pulse" />
+          <div key={i} className="h-32 bg-hover rounded-lg animate-pulse" />
         ))}
       </div>
     </div>

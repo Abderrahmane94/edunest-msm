@@ -96,7 +96,7 @@ export function NotificationBell() {
 
       {open && (
         <div
-          className="absolute end-0 mt-2 w-[360px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-xl shadow-[0_10px_30px_rgba(15,23,42,0.12),0_4px_8px_rgba(15,23,42,0.06)] overflow-hidden z-50"
+          className="absolute end-0 mt-2 w-[360px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-lg shadow-[0_10px_30px_rgba(15,23,42,0.12),0_4px_8px_rgba(15,23,42,0.06)] overflow-hidden z-50"
           role="menu"
         >
           {/* Header */}

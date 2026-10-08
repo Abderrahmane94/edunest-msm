@@ -2,7 +2,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, Edit2, Eye, DollarSign, Users, CalendarDays, Plus } from 'lucide-react';
+import { Trash2, Edit2, Eye, Users, CalendarDays, Plus } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -40,6 +40,7 @@ import {
   type ChangeFeeScopeResult,
   type OutOfScopeAction,
 } from '@/hooks/useBranchFees';
+import { SectionHeader, StatusBadge } from '@/components/ui';
 
 // ─── New Period (inline, inside the fee dialog) ──────────────────────────────
 
@@ -1168,9 +1169,9 @@ export default function BranchFeesPage() {
       header: t('payments.fees.fields.recurring'),
       render: (fee) =>
         fee.billingCycle ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-accent-muted text-accent text-caption font-medium">
+          <StatusBadge variant="info">
             {t(`payments.branchConfig.cycle${fee.billingCycle.charAt(0).toUpperCase()}${fee.billingCycle.slice(1)}`)}
-          </span>
+          </StatusBadge>
         ) : (
           <span className="text-caption text-text-disabled">{t('payments.fees.oneShot')}</span>
         ),
@@ -1181,17 +1182,13 @@ export default function BranchFeesPage() {
       render: (fee) => {
         if (fee.appliesToSchool) {
           return (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-caption font-medium">
-              {t('payments.fees.scopeSchool')}
-            </span>
+            <StatusBadge variant="info">{t('payments.fees.scopeSchool')}</StatusBadge>
           );
         }
         const classrooms = fee.classrooms ?? [];
         if (classrooms.length === 0) {
           return (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-subtle text-text-secondary text-caption font-medium">
-              {t('payments.fees.scopeGeneral')}
-            </span>
+            <StatusBadge variant="neutral">{t('payments.fees.scopeGeneral')}</StatusBadge>
           );
         }
         const names = classrooms.map((c) => c.name).join(', ');
@@ -1231,20 +1228,10 @@ export default function BranchFeesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <DollarSign className="w-5 h-5 text-primary" />
-          <h2 className="text-section font-semibold text-foreground">
-            {t('payments.fees.title')}
-          </h2>
-        </div>
-        <CreateButton
-          label={t('payments.fees.create')}
-          onClick={handleCreate}
-          disabled={!selectedBranchId}
-        />
-      </div>
+      <SectionHeader
+        title={t('payments.fees.title')}
+        actions={<CreateButton label={t('payments.fees.create')} onClick={handleCreate} disabled={!selectedBranchId} />}
+      />
 
       {/* Fees table */}
       <ErrorAlert message={deleteError} onDismiss={() => setDeleteError(null)} />

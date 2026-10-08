@@ -76,7 +76,7 @@ export function ParentNotificationsPage() {
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="animate-pulse flex gap-3 p-4 bg-card border border-border rounded-xl">
+              <div key={i} className="animate-pulse flex gap-3 p-4 bg-card border border-border rounded-lg">
                 <div className="w-10 h-10 rounded-full bg-subtle shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="h-4 bg-subtle rounded w-3/4" />
@@ -152,7 +152,7 @@ function NotificationItem({ notification }: { notification: AppNotification }) {
         type="button"
         onClick={handleClick}
         className={cn(
-          'w-full flex items-start gap-3 p-4 rounded-xl border text-start transition-colors duration-150',
+          'w-full flex items-start gap-3 p-4 rounded-lg border text-start transition-colors duration-150',
           notification.is_read
             ? 'bg-card border-border hover:bg-hover'
             : 'bg-card border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-subtle)]'

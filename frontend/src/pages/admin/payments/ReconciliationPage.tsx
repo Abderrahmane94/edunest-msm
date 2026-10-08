@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileBarChart, Printer, FileDown, TrendingUp, TrendingDown, Scale, CalendarRange } from 'lucide-react';
 import { formatDZD } from '@/lib/formatters';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, SectionHeader } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
@@ -201,37 +201,23 @@ export function ReconciliationPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between print:justify-center flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <FileBarChart className="w-5 h-5 text-primary print:hidden" />
-          <h2 className="text-section font-semibold text-text-heading">
-            {t('payments.reconciliation.title')}
-          </h2>
-        </div>
-        <div className="flex items-center gap-2 print:hidden">
-          <Button
-            variant="secondary"
-            onClick={handleExport}
-            disabled={!report || !hasData}
-          >
-            <FileDown className="w-4 h-4" />
-            {t('payments.reconciliation.export')}
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={handlePrint}
-            disabled={!report}
-          >
-            <Printer className="w-4 h-4" />
-            {t('payments.reconciliation.print')}
-          </Button>
-        </div>
-      </div>
-
-      <p className="text-body text-text-secondary print:hidden">
-        {t('payments.reconciliation.description')}
-      </p>
+      <SectionHeader
+        className="print:block print:text-center"
+        title={t('payments.reconciliation.title')}
+        description={<span className="print:hidden">{t('payments.reconciliation.description')}</span>}
+        actions={
+          <div className="flex flex-wrap items-center gap-2 print:hidden">
+            <Button variant="secondary" onClick={handleExport} disabled={!report || !hasData}>
+              <FileDown className="w-4 h-4" />
+              {t('payments.reconciliation.export')}
+            </Button>
+            <Button variant="secondary" onClick={handlePrint} disabled={!report}>
+              <Printer className="w-4 h-4" />
+              {t('payments.reconciliation.print')}
+            </Button>
+          </div>
+        }
+      />
 
       {/* Filters */}
       <div className="bg-card border border-border rounded-lg p-4 space-y-3 print:border-0 print:p-0">

@@ -2,7 +2,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Banknote, Pencil, Trash2, Download, X } from 'lucide-react';
+import { Banknote, Pencil, Trash2, Download, Users } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { formatDate } from '@/lib/formatters';
@@ -31,6 +31,8 @@ import {
   type EmployeeRecord,
   type SalaryPayment,
 } from '@/hooks/usePayroll';
+import { FilterBar, PageHeader, RoleBadge, Tabs } from '@/components/ui';
+import { useTabParam } from '@/hooks/useTabParam';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -362,7 +364,7 @@ function RecordPaymentDialog({
               value={form.userId}
               onChange={(e) => handleEmployeeChange(e.target.value)}
               required
-              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
             >
               <option value="">{t('payroll.recordDialog.employeePlaceholder')}</option>
               {employees.map((emp) => (
@@ -379,7 +381,7 @@ function RecordPaymentDialog({
                 id="rp-month"
                 value={form.month}
                 onChange={(e) => setForm((p) => ({ ...p, month: parseInt(e.target.value) }))}
-                className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+                className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
               >
                 {monthOptions.map((m) => (
                   <option key={m} value={m}>
@@ -393,7 +395,7 @@ function RecordPaymentDialog({
                 id="rp-year"
                 value={form.year}
                 onChange={(e) => setForm((p) => ({ ...p, year: parseInt(e.target.value) }))}
-                className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+                className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
               >
                 {yearOptions.map((y) => (
                   <option key={y} value={y}>
@@ -594,7 +596,7 @@ function EmployeesTab() {
       key: 'role',
       header: t('payroll.columns.role'),
       render: (emp) => (
-        <span className="text-body text-text-secondary capitalize">{emp.role}</span>
+        <RoleBadge role={emp.role} />
       ),
     },
     {
@@ -665,20 +667,24 @@ function EmployeesTab() {
 
   return (
     <>
-      <div className="bg-card border border-border rounded-lg p-4 space-y-3 mb-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <Input
-            label={t('payroll.filters.search')}
-            placeholder={t('payroll.filters.searchPlaceholder')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <FilterBar
+        className="mb-4"
+        search={{ onSearch: setSearch, placeholder: t('payroll.filters.searchPlaceholder'), defaultValue: search }}
+        activeCount={[roleFilter, salaryFilter, paidFilter].filter(Boolean).length}
+        summary={t('payroll.filters.employeesSummary', { count: filteredEmployees.length, unpaid: unpaidCount })}
+        onReset={() => {
+          setRoleFilter('');
+          setSalaryFilter('');
+          setPaidFilter('');
+        }}
+        columns={3}
+      >
           <FormField label={t('payroll.columns.role')} htmlFor="payroll-filter-role">
             <select
               id="payroll-filter-role"
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
             >
               <option value="">{t('payroll.filters.allRoles')}</option>
               <option value="admin">{t('users.roles.admin')}</option>
@@ -690,7 +696,7 @@ function EmployeesTab() {
               id="payroll-filter-salary"
               value={salaryFilter}
               onChange={(e) => setSalaryFilter(e.target.value as '' | 'fixed' | 'per_student' | 'none')}
-              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
             >
               <option value="">{t('payroll.filters.allSalaryTypes')}</option>
               <option value="fixed">{t('payroll.filters.fixed')}</option>
@@ -703,36 +709,14 @@ function EmployeesTab() {
               id="payroll-filter-paid"
               value={paidFilter}
               onChange={(e) => setPaidFilter(e.target.value as '' | 'paid' | 'unpaid')}
-              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
             >
               <option value="">{t('payroll.filters.allPaymentStatuses')}</option>
               <option value="paid">{t('payroll.filters.paid')}</option>
               <option value="unpaid">{t('payroll.filters.unpaid')}</option>
             </select>
           </FormField>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-caption text-text-secondary">
-            {t('payroll.filters.employeesSummary', { count: filteredEmployees.length, unpaid: unpaidCount })}
-          </p>
-          {hasEmployeeFilters && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSearch('');
-                setRoleFilter('');
-                setSalaryFilter('');
-                setPaidFilter('');
-              }}
-            >
-              <X className="w-4 h-4" />
-              {t('payroll.filters.reset')}
-            </Button>
-          )}
-        </div>
-      </div>
+      </FilterBar>
       <DataTable<EmployeeRecord>
         columns={columns}
         data={filteredEmployees}
@@ -844,7 +828,7 @@ function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean, 
 
   <div style="padding:28px 32px;">
     <div dir="${dir}" style="font-size:20px;font-weight:700;color:#111827;margin-bottom:2px;text-align:${startAlign};">${p.employeeName}</div>
-    <div dir="${dir}" style="font-size:11px;color:#6b7280;margin-bottom:24px;text-align:${startAlign};">${p.role} — ${monthLabel}</div>
+    <div dir="${dir}" style="font-size:11px;color:#6b7280;margin-bottom:24px;text-align:${startAlign};">${t(`users.roles.${p.role}`)} — ${monthLabel}</div>
 
     <div style="background:#f9fafb;border-radius:12px;padding:20px 24px;margin-bottom:20px;">
       <table style="width:100%;border-collapse:collapse;">
@@ -1165,14 +1149,26 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
       </div>
 
       {/* Filters — same layout as the Employees tab */}
-      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+      <FilterBar
+        activeCount={[filterUserId, filterYear, filterMonth, filterRole, filterPaidFrom, filterPaidTo].filter((v) => v !== '' && v != null).length}
+        summary={t('payroll.filters.paymentsSummary', { count: data?.total ?? 0, amount: fmtDZD(data?.totalNet ?? 0) })}
+        onReset={() => {
+          setFilterUserId('');
+          setFilterYear(undefined);
+          setFilterMonth(undefined);
+          setFilterRole('');
+          setFilterPaidFrom('');
+          setFilterPaidTo('');
+          setPage(1);
+        }}
+        columns={3}
+      >
           <FormField label={t('payroll.payments.filterEmployee')} htmlFor="pay-filter-employee">
             <select
               id="pay-filter-employee"
               value={filterUserId}
               onChange={(e) => { setFilterUserId(e.target.value); setPage(1); }}
-              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
             >
               <option value="">{t('payroll.payments.allEmployees')}</option>
               {employees.map((emp) => (
@@ -1187,7 +1183,7 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
               id="pay-filter-role"
               value={filterRole}
               onChange={(e) => { setFilterRole(e.target.value as '' | 'admin' | 'teacher'); setPage(1); }}
-              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
             >
               <option value="">{t('payroll.filters.allRoles')}</option>
               <option value="admin">{t('users.roles.admin')}</option>
@@ -1199,7 +1195,7 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
               id="pay-filter-year"
               value={filterYear ?? ''}
               onChange={(e) => { setFilterYear(e.target.value ? parseInt(e.target.value) : undefined); setPage(1); }}
-              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
             >
               <option value="">{t('payroll.filters.allYears')}</option>
               {yearOptions.map((y) => (
@@ -1212,7 +1208,7 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
               id="pay-filter-month"
               value={filterMonth ?? ''}
               onChange={(e) => { setFilterMonth(e.target.value ? parseInt(e.target.value) : undefined); setPage(1); }}
-              className="w-full h-9 rounded-md border border-border bg-card px-3 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
             >
               <option value="">{t('payroll.payments.allMonths')}</option>
               {monthOptions.map((m) => (
@@ -1233,31 +1229,7 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
             onChange={(e) => { setFilterPaidTo(e.target.value); setPage(1); }}
             min={filterPaidFrom || undefined}
           />
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-caption text-text-secondary">
-            {t('payroll.filters.paymentsSummary', { count: data?.total ?? 0, amount: fmtDZD(data?.totalNet ?? 0) })}
-          </p>
-          {hasPaymentFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setFilterUserId('');
-                setFilterYear(undefined);
-                setFilterMonth(undefined);
-                setFilterRole('');
-                setFilterPaidFrom('');
-                setFilterPaidTo('');
-                setPage(1);
-              }}
-            >
-              <X className="w-4 h-4" />
-              {t('payroll.filters.reset')}
-            </Button>
-          )}
-        </div>
-      </div>
+      </FilterBar>
 
       {isLoading ? (
         <div className="animate-pulse space-y-3">
@@ -1292,29 +1264,21 @@ type Tab = 'employees' | 'payments';
 
 export function PayrollPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = React.useState<Tab>('employees');
+  const [activeTab, setActiveTab] = useTabParam<Tab>(['employees', 'payments'], 'employees');
   const { data: employees } = usePayrollEmployees();
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center gap-3">
-        <Banknote className="w-6 h-6 text-text-secondary" />
-        <h1 className="text-page-title font-semibold text-text-heading">{t('payroll.title')}</h1>
-      </div>
+      <PageHeader title={t('payroll.title')} />
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {(['employees', 'payments'] as Tab[]).map((tab) => (
-          <Button
-            key={tab}
-            variant={activeTab === tab ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => setActiveTab(tab)}
-          >
-            {t(`payroll.tabs.${tab}`)}
-          </Button>
-        ))}
-      </div>
+      <Tabs
+        value={activeTab}
+        onChange={setActiveTab}
+        items={[
+          { value: 'employees', label: t('payroll.tabs.employees'), icon: <Users /> },
+          { value: 'payments', label: t('payroll.tabs.payments'), icon: <Banknote /> },
+        ]}
+      />
 
       {activeTab === 'employees' ? (
         <EmployeesTab />

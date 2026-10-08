@@ -92,7 +92,7 @@ export function ParentAttendancePage() {
 
       <main className="max-w-[600px] mx-auto px-4 py-6">
         {/* Month selector */}
-        <div className="flex items-center justify-between mb-6 bg-card border border-border rounded-xl px-4 py-3">
+        <div className="flex items-center justify-between mb-6 bg-card border border-border rounded-lg px-4 py-3">
           <button
             type="button"
             onClick={handlePreviousMonth}

@@ -1,10 +1,11 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Mail, Lock, LogIn, GraduationCap, Users, ClipboardCheck, BarChart3, Languages, Eye, EyeOff, AlertCircle, ShieldOff, Building2, ArrowLeft, Clock, WifiOff } from 'lucide-react';
+import { Mail, Lock, LogIn, Eye, EyeOff, AlertCircle, ShieldOff, Building2, ArrowLeft, Clock, WifiOff } from 'lucide-react';
 import { useAuth, type LoginSchoolOption } from '@/contexts/AuthContext';
 import { ApiRequestError } from '@/lib/api-client';
 import { useOnline } from '@/lib/online';
+import { AuthShell } from '@/components/layout/AuthShell';
 
 interface LoginError {
   /** credentials: wrong email/password · user/school: deactivated · blocked: too many attempts · server: unreachable or failing */
@@ -36,7 +37,7 @@ function LoginErrorBanner({ error }: { error: LoginError }) {
   return (
     <div
       role="alert"
-      className="mb-5 p-4 rounded-xl bg-[var(--color-danger-muted)] border border-danger/20 flex items-start gap-3"
+      className="mb-5 p-4 rounded-lg bg-[var(--color-danger-muted)] border border-danger/20 flex items-start gap-3"
     >
       <Icon className="w-5 h-5 text-danger shrink-0 mt-0.5" />
       <div>
@@ -50,8 +51,7 @@ function LoginErrorBanner({ error }: { error: LoginError }) {
 export function LoginPage() {
   const { login, user } = useAuth();
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
-  const isRtl = i18n.language === 'ar';
+  const { t } = useTranslation();
   // Signing in needs the server: while offline, say so and wait.
   const online = useOnline();
   // Sent back here because the session expired (not by logging out): say so, once.
@@ -72,12 +72,6 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [schoolChoices, setSchoolChoices] = useState<LoginSchoolOption[] | null>(null);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
-
-  function toggleLanguage() {
-    const newLang = i18n.language === 'ar' ? 'fr' : 'ar';
-    i18n.changeLanguage(newLang);
-    localStorage.setItem('preferred_language', newLang);
-  }
 
   useEffect(() => {
     if (user) navigate(getDefaultRoute(user.role), { replace: true });
@@ -155,79 +149,8 @@ export function LoginPage() {
     setError(null);
   }
 
-  const features = [
-    { icon: GraduationCap, label: t('auth.features.students') },
-    { icon: Users,          label: t('auth.features.people') },
-    { icon: ClipboardCheck, label: t('auth.features.attendance') },
-    { icon: BarChart3,      label: t('auth.features.finance') },
-  ];
-
   return (
-    <div className="min-h-screen flex" dir={isRtl ? 'rtl' : 'ltr'}>
-
-      {/* ── Left panel (branding) ── */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 bg-[var(--color-accent)] relative overflow-hidden">
-        <div className="absolute -top-24 -start-24 w-96 h-96 rounded-full bg-white/5" />
-        <div className="absolute -bottom-32 -end-16 w-[500px] h-[500px] rounded-full bg-white/5" />
-        <div className="absolute top-1/2 start-1/3 w-64 h-64 rounded-full bg-white/5" />
-
-        {/* Brand */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            <span className="text-white text-lg font-bold">E</span>
-          </div>
-          <span className="text-white text-xl font-bold tracking-tight">{t('app.name')}</span>
-        </div>
-
-        {/* Hero */}
-        <div className="relative z-10 space-y-8">
-          <div>
-            <h2 className="text-4xl font-bold text-white leading-tight mb-3">
-              {t('auth.hero.title')}
-            </h2>
-            <p className="text-white/70 text-lg leading-relaxed">
-              {t('auth.hero.subtitle')}
-            </p>
-          </div>
-          <ul className="space-y-4">
-            {features.map(({ icon: Icon, label }) => (
-              <li key={label} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
-                  <Icon className="w-4 h-4 text-white" />
-                </div>
-                <span className="text-white/90 text-body">{label}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <p className="relative z-10 text-white/40 text-caption">
-          © {new Date().getFullYear()} EduNest
-        </p>
-      </div>
-
-      {/* ── Right panel (form) ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-page relative">
-
-        {/* Language toggle */}
-        <button
-          onClick={toggleLanguage}
-          className="absolute top-4 end-4 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-hover text-text-secondary hover:text-foreground text-label font-medium transition"
-          title={isRtl ? 'Français' : 'العربية'}
-        >
-          <Languages className="w-4 h-4" />
-          <span>{isRtl ? 'FR' : 'ع'}</span>
-        </button>
-
-        {/* Mobile brand */}
-        <div className="lg:hidden flex items-center gap-2 mb-8">
-          <div className="w-9 h-9 rounded-xl bg-[var(--color-accent)] flex items-center justify-center">
-            <span className="text-white font-bold">E</span>
-          </div>
-          <span className="text-text-heading text-lg font-bold">{t('app.name')}</span>
-        </div>
-
-        <div className="w-full max-w-[400px]">
+    <AuthShell>
           {schoolChoices ? (
             <>
               <button
@@ -250,7 +173,7 @@ export function LoginPage() {
                   {schoolChoices.map((school) => (
                     <label
                       key={school.schoolId ?? 'none'}
-                      className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:bg-hover cursor-pointer transition has-[:checked]:border-[var(--color-accent)] has-[:checked]:bg-[var(--color-accent-muted)]"
+                      className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-hover cursor-pointer transition has-[:checked]:border-[var(--color-accent)] has-[:checked]:bg-[var(--color-accent-muted)]"
                     >
                       <input
                         type="radio"
@@ -271,7 +194,7 @@ export function LoginPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting || !selectedSchoolId || !online}
-                  className="w-full h-11 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1"
+                  className="w-full h-11 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1"
                 >
                   {isSubmitting ? (
                     <span className="animate-pulse">{t('common.loading')}</span>
@@ -292,7 +215,7 @@ export function LoginPage() {
           </div>
 
           {sessionExpired && online && !error && (
-            <div role="status" className="mb-5 p-4 rounded-xl bg-[var(--color-accent-subtle)] border border-primary/20 flex items-start gap-3">
+            <div role="status" className="mb-5 p-4 rounded-lg bg-[var(--color-accent-subtle)] border border-primary/20 flex items-start gap-3">
               <Clock className="w-5 h-5 text-primary shrink-0 mt-0.5" />
               <div>
                 <p className="text-body font-medium text-foreground">{t('auth.sessionExpired')}</p>
@@ -317,7 +240,7 @@ export function LoginPage() {
                   placeholder={t('auth.emailPlaceholder')}
                   required
                   autoComplete="email"
-                  className="w-full h-11 ps-10 pe-4 rounded-xl border border-border bg-card text-foreground text-body placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition"
+                  className="w-full h-11 ps-10 pe-4 rounded-lg border border-border bg-card text-foreground text-body placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition"
                 />
               </div>
             </div>
@@ -344,7 +267,7 @@ export function LoginPage() {
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
-                  className="w-full h-11 ps-10 pe-10 rounded-xl border border-border bg-card text-foreground text-body placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition"
+                  className="w-full h-11 ps-10 pe-10 rounded-lg border border-border bg-card text-foreground text-body placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition"
                 />
                 <button
                   type="button"
@@ -360,7 +283,7 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting || !online}
-              className="w-full h-11 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1"
+              className="w-full h-11 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1"
             >
               {isSubmitting ? (
                 <span className="animate-pulse">{t('common.loading')}</span>
@@ -374,8 +297,6 @@ export function LoginPage() {
           </form>
           </>
           )}
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

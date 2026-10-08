@@ -47,7 +47,7 @@ export function Tile({
       <div className="mt-3">{children}</div>
     </>
   );
-  const base = 'group block bg-card border border-border rounded-xl p-4 sm:p-5';
+  const base = 'group block bg-card border border-border rounded-lg p-4 sm:p-5';
   return to ? (
     <Link
       to={to}
@@ -157,7 +157,7 @@ export interface ActionItem {
 export function ActionList({ title, allGood, items }: { title: string; allGood: string; items: ActionItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="flex items-center gap-3 bg-[var(--color-success-subtle)] border border-[var(--color-success-muted)] rounded-xl px-4 py-3">
+      <div className="flex items-center gap-3 bg-[var(--color-success-subtle)] border border-[var(--color-success-muted)] rounded-lg px-4 py-3">
         <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
         <p className="text-body font-medium text-success">{allGood}</p>
       </div>
@@ -165,7 +165,7 @@ export function ActionList({ title, allGood, items }: { title: string; allGood: 
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <div className="bg-card border border-border rounded-lg overflow-hidden">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
         <AlertTriangle className="w-4 h-4 text-warning" />
         <h2 className="text-label font-semibold text-text-heading">{title}</h2>

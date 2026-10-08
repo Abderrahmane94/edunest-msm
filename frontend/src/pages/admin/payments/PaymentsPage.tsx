@@ -1,7 +1,7 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Receipt, Plus, Trash2, CheckCircle, AlertCircle, Minus, Eye, Filter, X, WifiOff, CloudUpload } from 'lucide-react';
+import { Receipt, Plus, Trash2, CheckCircle, AlertCircle, Minus, Eye, WifiOff, CloudUpload } from 'lucide-react';
 import { formatDate, formatDateTime, formatDZD, formatMonthYear } from '@/lib/formatters';
 import {
   Button,
@@ -48,6 +48,7 @@ import { ReceiptView } from './ReceiptView';
 import { ProvisionalReceiptDialog } from './ProvisionalReceiptDialog';
 import { OfflinePaymentsPanel } from './OfflinePaymentsPanel';
 import { suggestAllocations as suggestAllocationsUtil } from '@/lib/paymentAllocation';
+import { FilterBar, SectionHeader } from '@/components/ui';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -717,7 +718,7 @@ function RecordPaymentDialog({
                       onChange={(e) =>
                         updateAllocation(row.id, 'billingPeriodId', e.target.value)
                       }
-                      className="w-full appearance-none bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
+                      className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
                       disabled={!childId}
                     >
                       <option value="" disabled>
@@ -883,7 +884,7 @@ function PaymentHistoryFilters({
   ];
 
   const selectClassName =
-    'w-full appearance-none bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring';
+    'w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring';
 
   const childOptions = [
     { value: '', label: t('payments.filters.allChildren') },
@@ -900,28 +901,8 @@ function PaymentHistoryFilters({
     { value: 'baridimob', label: t('payments.recording.channels.baridimob') },
   ];
 
-  const hasActiveFilters = Object.values(filters).some(Boolean);
-
   return (
-    <div className="bg-card border border-border rounded-lg p-4">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-label font-medium text-foreground flex items-center gap-2">
-          <Filter className="w-4 h-4 text-text-secondary" />
-          {t('payments.filters.title')}
-        </span>
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onReset}
-            className="text-text-secondary"
-          >
-            <X className="w-3 h-3 me-1" />
-            {t('payments.filters.clear')}
-          </Button>
-        )}
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <FilterBar activeCount={Object.values(filters).filter(Boolean).length} onReset={onReset}>
         {/* Date start */}
         <div className="flex flex-col gap-1">
           <label
@@ -970,7 +951,7 @@ function PaymentHistoryFilters({
             onChange={(e) =>
               onFiltersChange({ ...filters, channel: e.target.value || undefined })
             }
-            className="w-full appearance-none bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
+            className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
           >
             {channelOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -993,7 +974,7 @@ function PaymentHistoryFilters({
             onChange={(e) =>
               onFiltersChange({ ...filters, childId: e.target.value || undefined })
             }
-            className="w-full appearance-none bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
+            className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
           >
             {childOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -1056,8 +1037,7 @@ function PaymentHistoryFilters({
             ))}
           </select>
         </div>
-      </div>
-    </div>
+    </FilterBar>
   );
 }
 
@@ -1189,32 +1169,19 @@ export function PaymentsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <Receipt className="w-5 h-5 text-primary" />
-          <h2 className="text-section font-semibold text-text-heading">
-            {t('nav.paymentsRecords')}
-          </h2>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => setCorrectionDialogOpen(true)}
-          >
-            <Minus className="w-4 h-4" />
-            {t('payments.correction.openButton')}
-          </Button>
-          <CreateButton
-            label={t('payments.recording.record')}
-            onClick={() => setRecordDialogOpen(true)}
-          />
-        </div>
-      </div>
-
-      <p className="text-body text-text-secondary">
-        {t('payments.records.description')}
-      </p>
+      <SectionHeader
+        title={t('nav.paymentsRecords')}
+        description={t('payments.records.description')}
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setCorrectionDialogOpen(true)}>
+              <Minus className="w-4 h-4" />
+              {t('payments.correction.openButton')}
+            </Button>
+            <CreateButton label={t('payments.recording.record')} onClick={() => setRecordDialogOpen(true)} />
+          </>
+        }
+      />
 
       {/* Payments kept on the device (recorded offline) */}
       <OfflinePaymentsPanel

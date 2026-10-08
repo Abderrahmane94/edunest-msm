@@ -3,8 +3,8 @@ import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatDateTime } from '@/lib/formatters';
-import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, Clock, XCircle, Trash2 } from 'lucide-react';
-import { Button, StatusBadge } from '@/components/ui';
+import { Calendar, MapPin, Users, CheckCircle, Clock, XCircle, Trash2 } from 'lucide-react';
+import { Button, PageHeader, StatusBadge } from '@/components/ui';
 import { useEvent, useDeleteEvent, useEventConsent } from '@/hooks/useCommunication';
 
 export function EventDetailPage() {
@@ -54,32 +54,23 @@ export function EventDetailPage() {
 
   if (!event) {
     return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/communication')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <p className="text-body text-danger">{t('communication.events.notFound')}</p>
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader back="/admin/communication" title={t('communication.events.notFound')} />
       </div>
     );
   }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/communication')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <Calendar className="w-5 h-5 text-primary" />
-          <h1 className="text-page-title font-semibold text-text-heading break-words min-w-0">{event.title}</h1>
-        </div>
-        {event.requires_consent && (
-          <StatusBadge variant="sent">{t('communication.events.requiresConsent')}</StatusBadge>
-        )}
-      </div>
+      <PageHeader
+        back="/admin/communication?tab=events"
+        title={event.title}
+        badge={
+          event.requires_consent && (
+            <StatusBadge variant="info">{t('communication.events.requiresConsent')}</StatusBadge>
+          )
+        }
+      />
 
       {/* Event details */}
       <div className="bg-card border border-border rounded-lg p-6 space-y-4">

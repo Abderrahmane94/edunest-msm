@@ -2,8 +2,8 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Save, UserPlus, X, Star, Pencil, Check } from 'lucide-react';
-import { Button, StatusBadge, EntityDeleteButton } from '@/components/ui';
+import { Save, UserPlus, X, Star, Pencil, Check } from 'lucide-react';
+import { Button, EntityDeleteButton, PageHeader, StatusBadge } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import {
@@ -177,36 +177,24 @@ export function ChildDetailPage() {
 
   if (!child) {
     return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/children')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <p className="text-body text-danger">{t('children.notFound')}</p>
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader back="/admin/children" title={t('children.notFound')} />
       </div>
     );
   }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/children')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-page-title font-semibold text-text-heading break-words">
-            {child.first_name} {child.last_name}
-          </h1>
-          {child.classroom_name && (
-            <p className="text-body text-text-secondary">{child.classroom_name}</p>
-          )}
-        </div>
-        <StatusBadge variant={child.is_active ? 'success' : 'neutral'}>
-          {child.is_active ? t('children.active') : t('children.inactive')}
-        </StatusBadge>
-      </div>
+      <PageHeader
+        back="/admin/children"
+        title={`${child.first_name} ${child.last_name}`}
+        description={child.classroom_name}
+        badge={
+          <StatusBadge variant={child.is_active ? 'success' : 'neutral'}>
+            {child.is_active ? t('children.active') : t('children.inactive')}
+          </StatusBadge>
+        }
+      />
 
       {/* Edit form */}
       <form onSubmit={handleSave}>

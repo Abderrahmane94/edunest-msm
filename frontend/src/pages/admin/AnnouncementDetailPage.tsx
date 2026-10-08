@@ -3,8 +3,8 @@ import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/lib/formatters';
-import { ArrowLeft, Megaphone, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Trash2 } from 'lucide-react';
+import { Button, PageHeader } from '@/components/ui';
 import { useAnnouncement, useDeleteAnnouncement } from '@/hooks/useCommunication';
 
 export function AnnouncementDetailPage() {
@@ -43,29 +43,18 @@ export function AnnouncementDetailPage() {
 
   if (!announcement) {
     return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/communication')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <p className="text-body text-danger">{t('communication.announcements.notFound')}</p>
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader back="/admin/communication" title={t('communication.announcements.notFound')} />
       </div>
     );
   }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/communication')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <Megaphone className="w-5 h-5 text-primary" />
-          <h1 className="text-page-title font-semibold text-text-heading break-words min-w-0">{announcement.title}</h1>
-        </div>
-      </div>
+      <PageHeader
+        back="/admin/communication"
+        title={announcement.title}
+      />
 
       {/* Content card */}
       <div className="bg-card border border-border rounded-lg p-6 space-y-4">

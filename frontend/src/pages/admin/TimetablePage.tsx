@@ -2,7 +2,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Button, PageHeader } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useClassrooms } from '@/hooks/useClassrooms';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
@@ -76,15 +76,7 @@ export function TimetablePage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div>
-        <h1 className="text-page-title font-semibold text-text-heading">
-          {t('timetable.title')}
-        </h1>
-        <p className="text-caption text-text-secondary mt-1">
-          {t('timetable.description')}
-        </p>
-      </div>
+      <PageHeader title={t('timetable.title')} description={t('timetable.description')} />
 
       {/* Classroom selector */}
       <div className="max-w-xs">

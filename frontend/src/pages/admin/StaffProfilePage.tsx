@@ -1,9 +1,9 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Upload, FileText, Download, Trash2, UserCog } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { useParams } from 'react-router-dom';
+import { Upload, FileText, Download, Trash2 } from 'lucide-react';
+import { Button, PageHeader } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import { useUser } from '@/hooks/useUsers';
@@ -19,7 +19,6 @@ import {
 
 export function StaffProfilePage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
 
   const { data: user, isLoading: userLoading } = useUser(userId!);
@@ -150,12 +149,8 @@ export function StaffProfilePage() {
 
   if (!user) {
     return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/staff')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <p className="text-body text-danger">{t('staff.notFound')}</p>
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader back="/admin/staff" title={t('staff.notFound')} />
       </div>
     );
   }
@@ -164,22 +159,11 @@ export function StaffProfilePage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/staff')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <div className="w-14 h-14 rounded-full bg-[var(--color-accent-muted)] text-primary flex items-center justify-center shrink-0">
-          <UserCog className="w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-page-title font-semibold text-text-heading">
-            {user.first_name} {user.last_name}
-          </h1>
-          <p className="text-body text-text-secondary">{profile?.position || t('staff.noPosition')}</p>
-        </div>
-      </div>
+      <PageHeader
+        back="/admin/staff"
+        title={`${user.first_name} ${user.last_name}`}
+        description={profile?.position || t('staff.noPosition')}
+      />
 
       {!profile && (
         <p className="text-body text-warning bg-warning-muted rounded-lg px-4 py-2">

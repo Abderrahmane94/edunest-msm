@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, BellRing, Wallet, X } from 'lucide-react';
+import { AlertTriangle, BellRing, Wallet } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
-import { Button, DataTable, Input } from '@/components/ui';
+import { Button, DataTable, FilterBar, SectionHeader } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
@@ -252,27 +252,18 @@ export function LateDashboardPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <AlertTriangle className="w-6 h-6 text-danger" />
-        <h2 className="text-section font-semibold text-text-heading">
-          {t('payments.late.title')}
-        </h2>
-      </div>
+      <SectionHeader title={t('payments.late.title')} description={t('payments.late.description')} />
 
-      <p className="text-body text-text-secondary">
-        {t('payments.late.description')}
-      </p>
-
-      {/* Filters */}
-      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <Input
-            label={t('payments.late.filters.search')}
-            placeholder={t('payments.late.filters.searchPlaceholder')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <FilterBar
+        search={{ onSearch: setSearch, placeholder: t('payments.late.filters.searchPlaceholder'), defaultValue: search }}
+        activeCount={[classroomFilter, feeFilter, minDays, statusFilter].filter(Boolean).length}
+        summary={t('payments.late.filters.summary', {
+          periods: entries.length,
+          children: childCount,
+          amount: formatDZD(totalOutstanding, i18n.language),
+        })}
+        onReset={resetFilters}
+      >
           <FormSelect
             label={t('payments.late.filters.classroom')}
             name="classroomFilter"
@@ -304,24 +295,7 @@ export function LateDashboardPage() {
               ...MIN_DAYS_OPTIONS.map((d) => ({ value: d, label: t('payments.late.filters.moreThanDays', { count: Number(d) }) })),
             ]}
           />
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-caption text-text-secondary">
-            {t('payments.late.filters.summary', {
-              periods: entries.length,
-              children: childCount,
-              amount: formatDZD(totalOutstanding, i18n.language),
-            })}
-          </p>
-          {hasFilters && (
-            <Button type="button" variant="ghost" size="sm" onClick={resetFilters}>
-              <X className="w-4 h-4" />
-              {t('payments.late.filters.reset')}
-            </Button>
-          )}
-        </div>
-      </div>
+      </FilterBar>
 
       {/* Data Table */}
       {isLoading ? (

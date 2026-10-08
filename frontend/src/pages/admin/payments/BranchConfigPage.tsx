@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Settings, Loader2, CheckCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Loader2, CheckCircle2 } from 'lucide-react';
+import { Button, SectionHeader } from '@/components/ui';
 import {
   useBranches,
   useBranchBillingConfig,
@@ -86,12 +86,7 @@ export function BranchConfigPage() {
   if (branchesLoading || configLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <Settings className="w-6 h-6 text-primary" />
-          <h2 className="text-section font-semibold text-text-heading">
-            {t('payments.branchConfig.title')}
-          </h2>
-        </div>
+        <SectionHeader title={t('payments.branchConfig.title')} />
         <div className="bg-card border border-border rounded-lg p-6">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 text-text-secondary animate-spin" />
@@ -106,12 +101,7 @@ export function BranchConfigPage() {
   if (!branchId) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <Settings className="w-6 h-6 text-primary" />
-          <h2 className="text-section font-semibold text-text-heading">
-            {t('payments.branchConfig.title')}
-          </h2>
-        </div>
+        <SectionHeader title={t('payments.branchConfig.title')} />
         <div className="bg-card border border-border rounded-lg p-6">
           <p className="text-body text-text-secondary">
             {t('payments.branchConfig.noBranch')}
@@ -125,15 +115,7 @@ export function BranchConfigPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center gap-3">
-        <Settings className="w-6 h-6 text-primary" />
-        <h2 className="text-section font-semibold text-text-heading">
-          {t('payments.branchConfig.title')}
-        </h2>
-      </div>
-      <p className="text-body text-text-secondary">
-        {t('payments.branchConfig.description')}
-      </p>
+      <SectionHeader title={t('payments.branchConfig.title')} description={t('payments.branchConfig.description')} />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Notification Setting */}

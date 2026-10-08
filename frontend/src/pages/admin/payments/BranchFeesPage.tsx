@@ -2,7 +2,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, Edit2, Eye, DollarSign, Users, CalendarDays, Plus } from 'lucide-react';
+import { Trash2, Edit2, Eye, Users, CalendarDays, Plus } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -40,6 +40,7 @@ import {
   type ChangeFeeScopeResult,
   type OutOfScopeAction,
 } from '@/hooks/useBranchFees';
+import { SectionHeader } from '@/components/ui';
 
 // ─── New Period (inline, inside the fee dialog) ──────────────────────────────
 
@@ -1231,20 +1232,10 @@ export default function BranchFeesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <DollarSign className="w-5 h-5 text-primary" />
-          <h2 className="text-section font-semibold text-foreground">
-            {t('payments.fees.title')}
-          </h2>
-        </div>
-        <CreateButton
-          label={t('payments.fees.create')}
-          onClick={handleCreate}
-          disabled={!selectedBranchId}
-        />
-      </div>
+      <SectionHeader
+        title={t('payments.fees.title')}
+        actions={<CreateButton label={t('payments.fees.create')} onClick={handleCreate} disabled={!selectedBranchId} />}
+      />
 
       {/* Fees table */}
       <ErrorAlert message={deleteError} onDismiss={() => setDeleteError(null)} />

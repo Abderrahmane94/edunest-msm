@@ -2,8 +2,8 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Save, UserCog } from 'lucide-react';
-import { Button, EntityDeleteButton } from '@/components/ui';
+import { Save, UserCog } from 'lucide-react';
+import { Button, EntityDeleteButton, PageHeader } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import {
@@ -100,32 +100,24 @@ export function ClassroomDetailPage() {
 
   if (!classroom) {
     return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/classrooms')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <p className="text-body text-danger">{t('classrooms.notFound')}</p>
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader back="/admin/classrooms" title={t('classrooms.notFound')} />
       </div>
     );
   }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/classrooms')}>
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-page-title font-semibold text-text-heading break-words">{classroom.name}</h1>
-          <p className="text-body text-text-secondary">
+      <PageHeader
+        back="/admin/classrooms"
+        title={classroom.name}
+        description={
+          <>
             {classroom.enrolled_count}/{classroom.capacity} {t('classrooms.columns.capacity').toLowerCase()}
             {classroom.teacher_name && ` · ${classroom.teacher_name}`}
-          </p>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Edit form */}
       <form onSubmit={handleSave}>

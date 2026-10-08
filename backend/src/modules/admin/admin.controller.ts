@@ -1,15 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import { adminService } from './admin.service';
+import { dashboardService } from './dashboard.service';
 import { successResponse } from '../../utils/response';
 
 export const adminController = {
   /**
-   * GET /api/admin/dashboard — School-level KPI stats (admin)
+   * GET /api/admin/dashboard — The school director's dashboard (admin)
    */
   async getDashboard(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const schoolId = req.user!.schoolId!;
-      const stats = await adminService.getDashboardStats(schoolId);
+      const stats = await dashboardService.getAdminDashboard(schoolId);
       res.status(200).json(successResponse(stats));
     } catch (error) {
       next(error);

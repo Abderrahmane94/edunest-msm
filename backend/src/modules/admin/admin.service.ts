@@ -1,12 +1,4 @@
-import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
-
-interface DashboardStats {
-  enrollmentCount: number;
-  attendanceRate: number;
-  outstandingPayments: number;
-  unreadMessages: number;
-}
 
 interface PlatformStats {
   totalSchools: number;
@@ -34,93 +26,6 @@ class AdminService {
       inactiveSchools: totalSchools - activeSchools,
       totalUsers,
       totalChildren,
-    };
-  }
-
-  /**
-   * Get dashboard KPI stats for the admin's school.
-   */
-  async getDashboardStats(schoolId: string): Promise<DashboardStats> {
-    // 1. Enrollment count: active children in the school
-    const enrollmentCount = await prisma.child.count({
-      where: { schoolId, isActive: true },
-    });
-
-    // 2. Attendance rate: percentage of present+late records in the last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const recentAttendance = await prisma.attendanceRecord.findMany({
-      where: {
-        schoolId,
-        date: { gte: thirtyDaysAgo },
-      },
-      select: { status: true },
-    });
-
-    let attendanceRate = 0;
-    if (recentAttendance.length > 0) {
-      const presentOrLate = recentAttendance.filter(
-        (r) => r.status === 'present' || r.status === 'late',
-      ).length;
-      attendanceRate = Math.round((presentOrLate / recentAttendance.length) * 100 * 100) / 100;
-    }
-
-    // 3. Outstanding payments: non-cancelled billing periods past their due
-    // date that aren't fully paid yet (status is derived, not stored — see
-    // billing-period.service.ts).
-    const overduePeriods = await prisma.billingPeriod.findMany({
-      where: {
-        enrollment: { branch: { schoolId } },
-        cancelledAt: null,
-        dueDate: { lt: new Date() },
-      },
-      select: {
-        amountDue: true,
-        paymentAllocations: { select: { amount: true } },
-      },
-    });
-
-    const outstandingPayments = overduePeriods.filter((period) => {
-      const totalPaid = period.paymentAllocations.reduce(
-        (sum, alloc) => sum.add(alloc.amount),
-        new Prisma.Decimal(0),
-      );
-      return totalPaid.lt(period.amountDue);
-    }).length;
-
-    // 4. Unread messages: conversations where parent is waiting 3+ hours for teacher reply
-    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
-    const conversations = await prisma.conversation.findMany({
-      where: { schoolId },
-      select: {
-        parentUserId: true,
-        teacherUserId: true,
-        messages: {
-          orderBy: { createdAt: 'desc' },
-          take: 5,
-          select: { senderUserId: true, createdAt: true },
-        },
-      },
-    });
-
-    let unreadMessages = 0;
-    for (const conv of conversations) {
-      if (conv.messages.length === 0) continue;
-      const lastParentMsg = conv.messages.find((m) => m.senderUserId === conv.parentUserId);
-      if (!lastParentMsg) continue;
-      const lastTeacherMsg = conv.messages.find((m) => m.senderUserId === conv.teacherUserId);
-      if (lastTeacherMsg && lastTeacherMsg.createdAt > lastParentMsg.createdAt) continue;
-      if (lastParentMsg.createdAt <= threeHoursAgo) {
-        unreadMessages++;
-      }
-    }
-
-    return {
-      enrollmentCount,
-      attendanceRate,
-      outstandingPayments,
-      unreadMessages,
     };
   }
 }

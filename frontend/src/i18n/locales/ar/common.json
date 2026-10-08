@@ -5,17 +5,71 @@
   },
   "dashboard": {
     "title": "لوحة التحكم",
-    "enrollment": "الأطفال المسجلون",
-    "attendanceRate": "نسبة الحضور",
-    "outstandingPayments": "المدفوعات المتأخرة",
-    "unreadMessages": "رسائل في الانتظار",
     "admin": {
-      "overview": "نظرة عامة",
-      "welcome": "مرحباً، {{name}} 👋",
-      "activeChildren": "أطفال نشطون",
-      "last30Days": "آخر 30 يوماً",
-      "sentOrOverdue": "تجاوزت الموعد",
-      "pendingReply": "في انتظار الرد"
+      "welcome": "مرحبًا، {{name}} 👋",
+      "todo": {
+        "title": "مهام اليوم",
+        "allGood": "كل شيء على ما يرام. يومًا موفقًا!",
+        "attendance": "لم يُسجَّل الحضور في: {{classes}}",
+        "latePayments": "مستحقات متأخرة: {{amount}} — عدد الأطفال المعنيين: {{children}}",
+        "waitingParents": "أولياء بلا رد منذ أكثر من 3 ساعات: {{count}}",
+        "pendingConsents": "موافقات الأولياء المنتظرة: {{count}}"
+      },
+      "sections": {
+        "today": "اليوم",
+        "finance": "المالية — {{month}}",
+        "enrollment": "التعداد",
+        "communication": "التواصل"
+      },
+      "today": {
+        "noSchool": "لا توجد دراسة اليوم.",
+        "presence": "الحضور",
+        "presentOf": "حاضرون من أصل {{expected}}",
+        "present": "حاضرون",
+        "late": "متأخرون",
+        "absent": "غائبون",
+        "notMarked": "غير مسجَّلين",
+        "rollCall": "تسجيل الحضور",
+        "classesDone": "أقسام مسجَّلة من أصل {{total}}",
+        "rollCallDone": "سُجِّل الحضور في جميع الأقسام",
+        "reports": "التقارير اليومية",
+        "reportsOf": "أُرسلت من أصل {{expected}} طفلًا حاضرًا",
+        "reportsNone": "لم يُسجَّل حضور أي طفل بعد"
+      },
+      "finance": {
+        "collected": "المحصَّل هذا الشهر",
+        "vsLastMonth": "مقارنة بالشهر الماضي",
+        "noPrevious": "لا تحصيل في الشهر الماضي",
+        "late": "المستحقات المتأخرة",
+        "lateChildren": "عدد الأطفال المعنيين: {{count}}",
+        "noLate": "لا توجد متأخرات",
+        "recovery": "نسبة التحصيل",
+        "recoveryHint": "المدفوع من المستحق هذه السنة",
+        "recoveryNone": "لم يحن موعد أي استحقاق بعد",
+        "net": "نتيجة الشهر",
+        "netDetail": "المصاريف {{expenses}} · الرواتب {{salaries}}",
+        "chart": "التحصيل خلال آخر 6 أشهر"
+      },
+      "attendanceChart": {
+        "title": "الحضور خلال آخر 4 أسابيع",
+        "hint": "الحاضرون والمتأخرون، على مدى 7 أيام",
+        "noData": "لا تسجيل"
+      },
+      "enrollment": {
+        "active": "الأطفال النشطون",
+        "newThisMonth": "الجدد هذا الشهر: {{count}}",
+        "fill": "امتلاء الأقسام",
+        "noClassrooms": "لا توجد أقسام للسنة الحالية",
+        "full": "ممتلئ"
+      },
+      "communication": {
+        "waiting": "أولياء في انتظار الرد",
+        "waitingHint": "بلا رد منذ أكثر من 3 ساعات",
+        "consents": "موافقات منتظرة",
+        "consentsHint": "للفعاليات القادمة",
+        "events": "فعاليات الأيام السبعة القادمة",
+        "noEvents": "لا توجد فعاليات مبرمجة"
+      }
     },
     "platform": {
       "overview": "نظرة عامة",

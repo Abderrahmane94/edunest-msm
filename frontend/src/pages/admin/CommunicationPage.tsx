@@ -52,6 +52,7 @@ import {
   type StaffConversation,
   type StaffMessage,
 } from '@/hooks/useStaffMessaging';
+import { messagePreview } from '@/components/messaging/messagePreview';
 
 type TabMode = 'announcements' | 'events' | 'messages' | 'staff';
 
@@ -126,7 +127,7 @@ export function CommunicationPage() {
           onClick={() => setActiveTab('staff')}
         >
           <Users className="w-4 h-4" />
-          {t('communication.staffMessages.tab', 'Messagerie staff')}
+          {t('communication.staffMessages.tab')}
         </Button>
       </div>
 
@@ -998,13 +999,13 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
         )}>
           <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
             <span className="text-caption font-medium text-text-secondary">
-              {t('communication.staffMessages.title', 'Messagerie enseignants')}
+              {t('communication.staffMessages.title')}
             </span>
             <button
               type="button"
               onClick={() => setShowNewDialog(true)}
               className="flex items-center justify-center w-7 h-7 rounded-md bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] transition-colors duration-150"
-              aria-label={t('communication.staffMessages.new', 'Nouvelle conversation')}
+              aria-label={t('communication.staffMessages.new')}
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
@@ -1026,14 +1027,14 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
             ) : conversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-24 p-4 gap-2">
                 <p className="text-caption text-text-secondary text-center">
-                  {t('communication.staffMessages.noConversations', 'Aucune conversation')}
+                  {t('communication.staffMessages.noConversations')}
                 </p>
                 <button
                   type="button"
                   onClick={() => setShowNewDialog(true)}
                   className="text-caption text-[var(--color-accent)] hover:underline"
                 >
-                  {t('communication.staffMessages.start', 'Démarrer')}
+                  {t('communication.staffMessages.start')}
                 </button>
               </div>
             ) : (
@@ -1067,12 +1068,12 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
                           </div>
                           <p className="text-micro text-text-disabled truncate">
                             {other.role === 'admin'
-                              ? t('communication.staffMessages.roleAdmin', 'Directeur')
-                              : t('communication.staffMessages.roleTeacher', 'Enseignant')}
+                              ? t('communication.staffMessages.roleAdmin')
+                              : t('communication.staffMessages.roleTeacher')}
                           </p>
                           {conv.last_message && (
                             <p className="text-micro text-text-secondary truncate mt-0.5">
-                              {conv.last_message}
+                              {messagePreview(conv.last_message, t)}
                             </p>
                           )}
                         </div>
@@ -1093,7 +1094,7 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
           {!activeConversationId ? (
             <div className="flex-1 flex items-center justify-center p-4">
               <p className="text-body text-text-secondary">
-                {t('communication.staffMessages.selectPrompt', 'Sélectionnez une conversation')}
+                {t('communication.staffMessages.selectPrompt')}
               </p>
             </div>
           ) : (
@@ -1104,7 +1105,7 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
                   type="button"
                   onClick={() => setActiveConversationId(null)}
                   className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-hover transition-colors"
-                  aria-label={t('common.back', 'Retour')}
+                  aria-label={t('common.back')}
                 >
                   <ArrowLeft className="w-4 h-4 text-text-primary rtl:rotate-180" />
                 </button>
@@ -1118,8 +1119,8 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
                   </p>
                   <p className="text-caption text-text-secondary">
                     {activeOther?.role === 'admin'
-                      ? t('communication.staffMessages.roleAdmin', 'Directeur')
-                      : t('communication.staffMessages.roleTeacher', 'Enseignant')}
+                      ? t('communication.staffMessages.roleAdmin')
+                      : t('communication.staffMessages.roleTeacher')}
                   </p>
                 </div>
               </div>
@@ -1135,7 +1136,7 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
                 ) : adaptedMessages.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
                     <p className="text-body text-text-secondary">
-                      {t('communication.staffMessages.noMessages', 'Aucun message. Commencez !')}
+                      {t('communication.staffMessages.noMessages')}
                     </p>
                   </div>
                 ) : (
@@ -1160,7 +1161,7 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
                       type="button"
                       onClick={() => setShowAttachMenu(!showAttachMenu)}
                       className="flex items-center justify-center min-w-[40px] min-h-[40px] rounded-lg hover:bg-hover text-text-secondary transition-colors"
-                      aria-label={t('messages.attach', 'Joindre')}
+                      aria-label={t('messages.attach')}
                     >
                       <Paperclip className="w-4 h-4" />
                     </button>
@@ -1172,7 +1173,7 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
                           className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-body text-text-primary hover:bg-hover transition-colors"
                         >
                           <Image className="w-4 h-4 text-text-secondary" />
-                          {t('messages.sendPhoto', 'Photo')}
+                          {t('messages.sendPhoto')}
                         </button>
                         <button
                           type="button"
@@ -1180,7 +1181,7 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
                           className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-body text-text-primary hover:bg-hover transition-colors"
                         >
                           <FileText className="w-4 h-4 text-text-secondary" />
-                          {t('messages.sendDocument', 'Document')}
+                          {t('messages.sendDocument')}
                         </button>
                       </div>
                     )}
@@ -1190,7 +1191,7 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={t('messages.placeholder', 'Écrivez un message...')}
+                    placeholder={t('messages.placeholder')}
                     rows={1}
                     className="flex-1 min-h-[40px] max-h-[100px] bg-subtle border border-border rounded-lg px-3 py-2 text-body text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-[var(--color-accent)] focus:shadow-[0_0_0_3px_rgba(79,70,229,0.12)] transition-all resize-none"
                   />
@@ -1205,7 +1206,7 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
                         ? 'bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)]'
                         : 'bg-subtle text-text-disabled cursor-not-allowed',
                     )}
-                    aria-label={t('messages.send', 'Envoyer')}
+                    aria-label={t('messages.send')}
                   >
                     <Send className="w-4 h-4" />
                   </button>
@@ -1250,10 +1251,10 @@ function AdminNewStaffConversationDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {t('communication.staffMessages.newTitle', 'Nouvelle conversation')}
+            {t('communication.staffMessages.newTitle')}
           </DialogTitle>
           <DialogDescription>
-            {t('communication.staffMessages.selectTeacher', 'Sélectionnez un enseignant pour démarrer une conversation')}
+            {t('communication.staffMessages.selectTeacher')}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-2 max-h-[60vh] overflow-y-auto">
@@ -1283,15 +1284,15 @@ function AdminNewStaffConversationDialog({
                   </p>
                   <p className="text-caption text-text-secondary">
                     {c.role === 'admin'
-                      ? t('communication.staffMessages.roleAdmin', 'Directeur')
-                      : t('communication.staffMessages.roleTeacher', 'Enseignant')}
+                      ? t('communication.staffMessages.roleAdmin')
+                      : t('communication.staffMessages.roleTeacher')}
                   </p>
                 </div>
               </button>
             ))
           ) : (
             <p className="text-body text-text-secondary text-center py-4">
-              {t('communication.staffMessages.noTeachers', 'Aucun enseignant trouvé')}
+              {t('communication.staffMessages.noTeachers')}
             </p>
           )}
           {getOrCreate.isError && (

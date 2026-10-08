@@ -155,7 +155,7 @@ function PlanFormDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <FormField label={t('billing.plans.name')} htmlFor="p-name" required>
-            <Input id="p-name" value={form.name} onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Standard" />
+            <Input id="p-name" value={form.name} onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))} placeholder={t('billing.plans.namePlaceholder')} />
           </FormField>
           <FormField label={t('billing.plans.description')} htmlFor="p-desc">
             <Input id="p-desc" value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} placeholder={t('billing.plans.descriptionPlaceholder')} />
@@ -276,7 +276,7 @@ function AssignPlanDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
   }, [open]);
 
   const schoolOptions = (schools ?? []).map((s) => ({ value: s.id, label: s.name }));
-  const planOptions = (plans ?? []).filter((p) => p.isActive).map((p) => ({ value: p.id, label: `${p.name} — ${formatDZD(p.priceMonthly)}/mois` }));
+  const planOptions = (plans ?? []).filter((p) => p.isActive).map((p) => ({ value: p.id, label: `${p.name} — ${formatDZD(p.priceMonthly)}${t('billing.plans.perMonth')}` }));
   const cycleOptions = [{ value: 'monthly', label: t('billing.subscriptions.monthly') }, { value: 'annual', label: t('billing.subscriptions.annual') }];
 
   function handleSubmit(e: React.FormEvent) {
@@ -599,7 +599,7 @@ function SubscriptionsTab() {
       ),
     },
     { key: 'plan', header: t('billing.subscriptions.plan'), render: (s) => <span className="font-medium text-foreground">{s.plan.name}</span> },
-    { key: 'price', header: t('billing.subscriptions.price'), render: (s) => <span className="font-mono">{formatDZD(s.plan.priceMonthly)}<span className="text-caption text-text-disabled">/mois</span></span> },
+    { key: 'price', header: t('billing.subscriptions.price'), render: (s) => <span className="font-mono">{formatDZD(s.plan.priceMonthly)}<span className="text-caption text-text-disabled">{t('billing.plans.perMonth')}</span></span> },
     {
       key: 'status', header: t('billing.subscriptions.status'), render: (s) => (
         <div className="flex items-center gap-1.5">
@@ -611,7 +611,7 @@ function SubscriptionsTab() {
     {
       key: 'period', header: t('billing.subscriptions.period'), render: (s) => (
         <span className="text-caption text-text-secondary" dir="ltr">
-          {new Date(s.currentPeriodStart).toLocaleDateString()} – {new Date(s.currentPeriodEnd).toLocaleDateString()}
+          {formatDate(s.currentPeriodStart)} – {formatDate(s.currentPeriodEnd)}
         </span>
       ),
     },

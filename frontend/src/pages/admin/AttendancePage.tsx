@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatDateIn } from '@/lib/formatters';
 import { ClipboardCheck, Calendar, BarChart2, Users, Eye } from 'lucide-react';
 import { Button, DataTable, StatusBadge, KPICard, Input } from '@/components/ui';
 import type { Column } from '@/components/ui';
@@ -47,7 +48,7 @@ function getMonthOptions(t: (key: string) => string) {
 }
 
 export function AttendancePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [viewMode, setViewMode] = React.useState<ViewMode>('daily');
   const [selectedClassroomId, setSelectedClassroomId] = React.useState<string>('');
   const [selectedDate, setSelectedDate] = React.useState<string>(getTodayString());
@@ -510,8 +511,8 @@ export function AttendancePage() {
               {(trackingData ?? []).map((day) => (
                 <div key={day.date} className="bg-card border border-border rounded-lg overflow-hidden">
                   <div className="px-4 py-2 bg-subtle border-b border-border">
-                    <h3 className="text-label font-semibold text-text-heading" dir="ltr">
-                      {new Date(day.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
+                    <h3 className="text-label font-semibold text-text-heading">
+                      {formatDateIn(day.date + 'T00:00:00', i18n.language, { weekday: 'long', day: 'numeric', month: 'long' })}
                     </h3>
                   </div>
                   <div className="divide-y divide-border">

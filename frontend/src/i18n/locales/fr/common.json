@@ -994,6 +994,8 @@
       "maxChildren": "Max enfants",
       "maxUsers": "Max utilisateurs",
       "unlimited": "Illimité",
+      "namePlaceholder": "Ex : Standard",
+      "perMonth": "/mois",
       "empty": "Aucun plan défini",
       "deleteTitle": "Supprimer le plan",
       "deleteConfirm": "Êtes-vous sûr de vouloir supprimer le plan \"{{name}}\" ? Cette action est irréversible."
@@ -1206,6 +1208,7 @@
       "hasReceipt": "Reçu",
       "viewReceipt": "Voir le reçu",
       "downloadReceipt": "Télécharger",
+      "uploadReceipt": "Joindre un reçu",
       "edit": "Modifier",
       "filters": {
         "search": "Recherche",
@@ -1456,6 +1459,13 @@
     "selectChild": "Sélectionner un enfant",
     "noChildren": "Aucun enfant dans la classe",
     "mood": "Humeur",
+    "moods": {
+      "happy": "Joyeux",
+      "sad": "Triste",
+      "tired": "Fatigué",
+      "excited": "Enthousiaste",
+      "calm": "Calme"
+    },
     "mealsEaten": "Repas pris",
     "decreaseMeals": "Diminuer les repas",
     "increaseMeals": "Augmenter les repas",
@@ -1497,6 +1507,13 @@
     "reportFor": "Rapport pour {{name}}",
     "meals": "Repas",
     "napMin": "min sieste",
+    "mood": {
+      "happy": "Joyeux",
+      "sad": "Triste",
+      "tired": "Fatigué",
+      "excited": "Enthousiaste",
+      "calm": "Calme"
+    },
     "activities": "Activités"
   },
   "parentAttendance": {
@@ -1971,6 +1988,13 @@
       "addEntry": "Ajouter une période",
       "noActiveYear": "Aucune année scolaire active n'est configurée.",
       "noEntries": "Aucune période définie pour cette année.",
+      "validation": {
+        "labelRequired": "Le libellé est obligatoire.",
+        "labelTooLong": "Le libellé ne doit pas dépasser 100 caractères.",
+        "startRequired": "La date de début est obligatoire.",
+        "endRequired": "La date de fin est obligatoire.",
+        "endBeforeStart": "La date de fin doit être égale ou postérieure à la date de début."
+      },
       "createEntry": "Nouvelle entrée de calendrier",
       "editEntry": "Modifier l'entrée du calendrier",
       "createDescription": "Définir une nouvelle période de facturation pour cette année scolaire.",

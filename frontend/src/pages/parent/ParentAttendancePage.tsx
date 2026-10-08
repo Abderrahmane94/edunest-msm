@@ -82,10 +82,10 @@ export function ParentAttendancePage() {
       <header className="sticky top-14 z-10 bg-card border-b border-border">
         <div className="max-w-[600px] mx-auto px-4 py-3">
           <h1 className="text-page-title font-semibold text-text-heading">
-            {t('parentAttendance.title', 'Attendance')}
+            {t('parentAttendance.title')}
           </h1>
           <p className="text-caption text-text-secondary">
-            {t('parentAttendance.subtitle', 'Monthly attendance summary')}
+            {t('parentAttendance.subtitle')}
           </p>
         </div>
       </header>
@@ -97,7 +97,7 @@ export function ParentAttendancePage() {
             type="button"
             onClick={handlePreviousMonth}
             className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-hover text-text-secondary hover:text-text-primary transition-colors duration-150"
-            aria-label={t('parentAttendance.previousMonth', 'Previous month')}
+            aria-label={t('parentAttendance.previousMonth')}
           >
             <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
           </button>
@@ -119,7 +119,7 @@ export function ParentAttendancePage() {
                 ? 'text-text-disabled cursor-not-allowed'
                 : 'hover:bg-hover text-text-secondary hover:text-text-primary'
             )}
-            aria-label={t('parentAttendance.nextMonth', 'Next month')}
+            aria-label={t('parentAttendance.nextMonth')}
           >
             <ChevronRight className="w-5 h-5 rtl:rotate-180" />
           </button>
@@ -148,7 +148,7 @@ export function ParentAttendancePage() {
         ) : isError ? (
           <div className="text-center py-16">
             <p className="text-body text-text-secondary">
-              {t('parentAttendance.error', 'Unable to load attendance data. Please try again.')}
+              {t('parentAttendance.error')}
             </p>
           </div>
         ) : data?.children && data.children.length > 0 ? (
@@ -163,7 +163,7 @@ export function ParentAttendancePage() {
               <CalendarDays className="w-8 h-8 text-text-secondary" />
             </div>
             <p className="text-body text-text-secondary">
-              {t('parentAttendance.empty', 'No attendance records for this month.')}
+              {t('parentAttendance.empty')}
             </p>
           </div>
         )}
@@ -204,7 +204,7 @@ function ChildAttendanceCard({ child }: { child: ChildAttendanceSummary }) {
               {Math.round(child.attendance_percentage)}%
             </p>
             <p className="text-micro text-text-secondary">
-              {t('parentAttendance.rate', 'rate')}
+              {t('parentAttendance.rate')}
             </p>
           </div>
         </header>
@@ -217,7 +217,7 @@ function ChildAttendanceCard({ child }: { child: ChildAttendanceSummary }) {
               {child.present_count}
             </span>
             <span className="text-micro text-text-secondary">
-              {t('parentAttendance.present', 'Present')}
+              {t('parentAttendance.present')}
             </span>
           </div>
 
@@ -227,7 +227,7 @@ function ChildAttendanceCard({ child }: { child: ChildAttendanceSummary }) {
               {child.absent_count}
             </span>
             <span className="text-micro text-text-secondary">
-              {t('parentAttendance.absent', 'Absent')}
+              {t('parentAttendance.absent')}
             </span>
           </div>
 
@@ -237,7 +237,7 @@ function ChildAttendanceCard({ child }: { child: ChildAttendanceSummary }) {
               {child.late_count}
             </span>
             <span className="text-micro text-text-secondary">
-              {t('parentAttendance.late', 'Late')}
+              {t('parentAttendance.late')}
             </span>
           </div>
         </div>

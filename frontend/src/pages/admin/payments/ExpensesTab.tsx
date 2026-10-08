@@ -50,7 +50,7 @@ function ReceiptFilePicker({
     <div className="flex items-center gap-2">
       <Button type="button" variant="secondary" size="sm" onClick={() => inputRef.current?.click()} disabled={disabled}>
         <Upload className="w-4 h-4" />
-        {t('finance.expenses.uploadReceipt', 'Upload receipt')}
+        {t('finance.expenses.uploadReceipt')}
       </Button>
       {file && (
         <span className="flex items-center gap-1 text-caption text-text-secondary truncate max-w-[160px]">
@@ -652,7 +652,7 @@ function EditExpenseDialog({
                 <Upload className="w-4 h-4" />
                 {uploadReceipt.isPending
                   ? t('common.loading')
-                  : t('finance.expenses.uploadReceipt', 'Upload receipt')}
+                  : t('finance.expenses.uploadReceipt')}
               </Button>
               <input
                 ref={fileInputRef}

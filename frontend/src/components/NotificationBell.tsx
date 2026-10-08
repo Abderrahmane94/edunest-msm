@@ -79,7 +79,7 @@ export function NotificationBell() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="relative flex items-center justify-center w-9 h-9 rounded-md hover:bg-subtle text-text-secondary hover:text-text-primary transition-colors duration-150"
-        aria-label={t('notifications.title', 'Notifications')}
+        aria-label={t('notifications.title')}
         aria-haspopup="true"
         aria-expanded={open}
       >
@@ -102,7 +102,7 @@ export function NotificationBell() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-subsection font-semibold text-text-heading">
-              {t('notifications.title', 'Notifications')}
+              {t('notifications.title')}
             </h2>
             {unreadCount > 0 && (
               <button
@@ -112,7 +112,7 @@ export function NotificationBell() {
                 className="flex items-center gap-1.5 text-caption font-medium text-[var(--color-accent)] hover:underline"
               >
                 <CheckCheck className="w-4 h-4" />
-                {t('notifications.markAllRead', 'Mark all as read')}
+                {t('notifications.markAllRead')}
               </button>
             )}
           </div>
@@ -133,7 +133,7 @@ export function NotificationBell() {
               </div>
             ) : isError ? (
               <p className="text-body text-text-secondary text-center py-10 px-4">
-                {t('notifications.error', 'Unable to load notifications.')}
+                {t('notifications.error')}
               </p>
             ) : notifications.length === 0 ? (
               <div className="text-center py-10 px-4 space-y-2">
@@ -141,7 +141,7 @@ export function NotificationBell() {
                   <BellOff className="w-6 h-6 text-text-secondary" />
                 </div>
                 <p className="text-caption text-text-secondary">
-                  {t('notifications.empty', 'No notifications yet.')}
+                  {t('notifications.empty')}
                 </p>
               </div>
             ) : (
@@ -195,8 +195,8 @@ export function NotificationBell() {
                       className="w-full py-3 text-caption font-medium text-[var(--color-accent)] hover:bg-hover transition-colors duration-150"
                     >
                       {isFetchingNextPage
-                        ? t('common.loading', 'Loading…')
-                        : t('notifications.loadMore', 'Load older')}
+                        ? t('common.loading')
+                        : t('notifications.loadMore')}
                     </button>
                   </li>
                 )}

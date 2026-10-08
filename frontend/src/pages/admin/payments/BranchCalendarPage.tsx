@@ -2,6 +2,8 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
+import { formatDateIn } from '@/lib/formatters';
 import { CalendarDays, Plus, Pencil, Trash2 } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,18 +30,21 @@ import {
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
+// The messages are translation keys, translated where they are shown.
+const V = 'payments.branchCalendar.validation.';
+
 const calendarFormSchema = z
   .object({
-    label: z.string().min(1, 'Label is required').max(100, 'Label must be 100 characters or less'),
-    period_start: z.string().min(1, 'Period start is required'),
-    period_end: z.string().min(1, 'Period end is required'),
+    label: z.string().min(1, V + 'labelRequired').max(100, V + 'labelTooLong'),
+    period_start: z.string().min(1, V + 'startRequired'),
+    period_end: z.string().min(1, V + 'endRequired'),
   })
   .refine(
     (data) => {
       if (!data.period_start || !data.period_end) return true;
       return data.period_end >= data.period_start;
     },
-    { message: 'Period end must be on or after period start', path: ['period_end'] },
+    { message: V + 'endBeforeStart', path: ['period_end'] },
   );
 
 type CalendarFormValues = z.infer<typeof calendarFormSchema>;
@@ -158,18 +163,18 @@ export function BranchCalendarPage() {
   const columns: Column<BranchCalendarEntry>[] = [
     {
       key: 'label',
-      header: t('payments.branchCalendar.columns.label', 'Label'),
+      header: t('payments.branchCalendar.columns.label'),
       render: (row) => <span className="font-medium">{row.label}</span>,
     },
     {
       key: 'periodStart',
-      header: t('payments.branchCalendar.columns.periodStart', 'Period Start'),
+      header: t('payments.branchCalendar.columns.periodStart'),
       sortable: true,
       render: (row) => formatDate(row.periodStart),
     },
     {
       key: 'periodEnd',
-      header: t('payments.branchCalendar.columns.periodEnd', 'Period End'),
+      header: t('payments.branchCalendar.columns.periodEnd'),
       render: (row) => formatDate(row.periodEnd),
     },
     {
@@ -185,7 +190,7 @@ export function BranchCalendarPage() {
               e.stopPropagation();
               handleOpenEdit(row);
             }}
-            aria-label={t('common.edit', 'Edit')}
+            aria-label={t('common.edit')}
           >
             <Pencil className="w-4 h-4" />
           </Button>
@@ -196,7 +201,7 @@ export function BranchCalendarPage() {
               e.stopPropagation();
               handleOpenDelete(row);
             }}
-            aria-label={t('common.delete', 'Delete')}
+            aria-label={t('common.delete')}
           >
             <Trash2 className="w-4 h-4 text-danger" />
           </Button>
@@ -226,14 +231,14 @@ export function BranchCalendarPage() {
         {isReady && (
           <Button onClick={handleOpenCreate}>
             <Plus className="w-4 h-4" />
-            {t('payments.branchCalendar.addEntry', 'Add Period')}
+            {t('payments.branchCalendar.addEntry')}
           </Button>
         )}
       </div>
 
       {/* Content */}
       {!yearLoading && !activeAcademicYear ? (
-        <EmptyState message={t('payments.branchCalendar.noActiveYear', 'No active academic year is configured yet.')} />
+        <EmptyState message={t('payments.branchCalendar.noActiveYear')} />
       ) : !isReady ? (
         <LoadingSkeleton />
       ) : entriesLoading ? (
@@ -243,7 +248,7 @@ export function BranchCalendarPage() {
           columns={columns}
           data={calendarEntries ?? []}
           keyExtractor={(row) => row.id}
-          emptyMessage={t('payments.branchCalendar.noEntries', 'No calendar entries found for this year.')}
+          emptyMessage={t('payments.branchCalendar.noEntries')}
         />
       )}
 
@@ -253,21 +258,21 @@ export function BranchCalendarPage() {
           <DialogHeader>
             <DialogTitle>
               {editingEntry
-                ? t('payments.branchCalendar.editEntry', 'Edit Calendar Entry')
-                : t('payments.branchCalendar.createEntry', 'New Calendar Entry')}
+                ? t('payments.branchCalendar.editEntry')
+                : t('payments.branchCalendar.createEntry')}
             </DialogTitle>
             <DialogDescription>
               {editingEntry
-                ? t('payments.branchCalendar.editDescription', 'Update the period details below.')
-                : t('payments.branchCalendar.createDescription', 'Define a new billing period for this academic year.')}
+                ? t('payments.branchCalendar.editDescription')
+                : t('payments.branchCalendar.createDescription')}
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input
-              label={t('payments.branchCalendar.fields.label', 'Label')}
-              placeholder={t('payments.branchCalendar.fields.labelPlaceholder', 'e.g. Trimester 1')}
-              error={errors.label?.message}
+              label={t('payments.branchCalendar.fields.label')}
+              placeholder={t('payments.branchCalendar.fields.labelPlaceholder')}
+              error={errors.label?.message && t(errors.label.message)}
               {...register('label')}
             />
 
@@ -279,8 +284,8 @@ export function BranchCalendarPage() {
               render={({ field }) => (
                 <Input
                   type="date"
-                  label={t('payments.branchCalendar.fields.periodStart', 'Period Start')}
-                  error={errors.period_start?.message}
+                  label={t('payments.branchCalendar.fields.periodStart')}
+                  error={errors.period_start?.message && t(errors.period_start.message)}
                   name={field.name}
                   value={field.value ?? ''}
                   onChange={field.onChange}
@@ -296,8 +301,8 @@ export function BranchCalendarPage() {
               render={({ field }) => (
                 <Input
                   type="date"
-                  label={t('payments.branchCalendar.fields.periodEnd', 'Period End')}
-                  error={errors.period_end?.message}
+                  label={t('payments.branchCalendar.fields.periodEnd')}
+                  error={errors.period_end?.message && t(errors.period_end.message)}
                   name={field.name}
                   value={field.value ?? ''}
                   onChange={field.onChange}
@@ -314,14 +319,14 @@ export function BranchCalendarPage() {
                 variant="secondary"
                 onClick={() => setFormOpen(false)}
               >
-                {t('common.cancel', 'Cancel')}
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={isMutating}>
                 {isMutating
-                  ? t('common.loading', 'Saving...')
+                  ? t('common.loading')
                   : editingEntry
-                    ? t('common.save', 'Save')
-                    : t('common.create', 'Create')}
+                    ? t('common.save')
+                    : t('common.create')}
               </Button>
             </DialogFooter>
           </form>
@@ -333,12 +338,11 @@ export function BranchCalendarPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {t('payments.branchCalendar.deleteTitle', 'Delete Calendar Entry')}
+              {t('payments.branchCalendar.deleteTitle')}
             </DialogTitle>
             <DialogDescription>
               {t(
                 'payments.branchCalendar.deleteConfirmation',
-                'Are you sure you want to delete "{{label}}"? This action cannot be undone.',
                 { label: deletingEntry?.label ?? '' },
               )}
             </DialogDescription>
@@ -346,7 +350,7 @@ export function BranchCalendarPage() {
           <ErrorAlert message={deleteError} onDismiss={() => setDeleteError(null)} />
           <DialogFooter>
             <Button variant="secondary" onClick={() => setDeleteOpen(false)}>
-              {t('common.cancel', 'Cancel')}
+              {t('common.cancel')}
             </Button>
             <Button
               variant="danger"
@@ -354,8 +358,8 @@ export function BranchCalendarPage() {
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending
-                ? t('common.loading', 'Deleting...')
-                : t('common.delete', 'Delete')}
+                ? t('common.loading')
+                : t('common.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -390,8 +394,7 @@ function EmptyState({ message }: { message: string }) {
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return '';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString(undefined, {
+  return formatDateIn(dateStr, i18n.language, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

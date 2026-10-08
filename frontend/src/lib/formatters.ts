@@ -65,6 +65,35 @@ export function formatMonthYear(dateStr: string, locale: string = 'fr'): string 
 }
 
 /**
+ * Format a date in the app's language (not the device's), e.g. with
+ * { weekday: 'long', day: 'numeric', month: 'long' } → "lundi 5 octobre" / "الاثنين 5 أكتوبر".
+ * Western digits in both locales (standard in Algeria).
+ */
+export function formatDateIn(
+  date: string | Date,
+  locale: string,
+  options: Intl.DateTimeFormatOptions,
+): string {
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) return typeof date === 'string' ? date : '';
+
+    return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-DZ-u-nu-latn' : 'fr-FR', options).format(d);
+  } catch {
+    return typeof date === 'string' ? date : '';
+  }
+}
+
+/**
+ * Format a time as HH:mm (24-hour, whatever the device's settings).
+ */
+export function formatTime(date: string | Date): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '';
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+/**
  * Format a date+time string as DD/MM/YYYY HH:mm.
  */
 export function formatDateTime(dateStr: string, _locale: string = 'fr'): string {

@@ -17,7 +17,7 @@ import {
 } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
-import { formatDZD } from '@/lib/formatters';
+import { formatDate, formatDZD } from '@/lib/formatters';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import { useChildren } from '@/hooks/useChildren';
 import { useClassrooms } from '@/hooks/useClassrooms';
@@ -632,8 +632,8 @@ function FeeDialog({
                         <span className="text-caption text-foreground">
                           {period.label}
                           <span className="text-text-disabled ms-1">
-                            ({new Date(period.periodStart).toLocaleDateString()} –{' '}
-                            {new Date(period.periodEnd).toLocaleDateString()})
+                            ({formatDate(period.periodStart)} –{' '}
+                            {formatDate(period.periodEnd)})
                           </span>
                         </span>
                       </label>
@@ -814,8 +814,8 @@ function ViewFeeDialog({
                   <li key={period.id} className="p-2 text-caption text-foreground">
                     {period.label}
                     <span className="text-text-disabled ms-1">
-                      ({new Date(period.periodStart).toLocaleDateString()} –{' '}
-                      {new Date(period.periodEnd).toLocaleDateString()})
+                      ({formatDate(period.periodStart)} –{' '}
+                      {formatDate(period.periodEnd)})
                     </span>
                   </li>
                 ))}

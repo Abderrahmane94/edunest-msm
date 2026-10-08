@@ -999,6 +999,8 @@
       "maxChildren": "الحد الأقصى للأطفال",
       "maxUsers": "الحد الأقصى للمستخدمين",
       "unlimited": "غير محدود",
+      "namePlaceholder": "مثال: أساسي",
+      "perMonth": "/شهر",
       "empty": "لم يتم تحديد أي خطة",
       "deleteTitle": "حذف الخطة",
       "deleteConfirm": "هل أنت متأكد من حذف خطة \"{{name}}\"؟ هذا الإجراء لا يمكن التراجع عنه."
@@ -1211,6 +1213,7 @@
       "hasReceipt": "إيصال",
       "viewReceipt": "عرض الإيصال",
       "downloadReceipt": "تنزيل",
+      "uploadReceipt": "إرفاق إيصال",
       "edit": "تعديل",
       "filters": {
         "search": "بحث",
@@ -1461,6 +1464,13 @@
     "selectChild": "اختر طفلاً",
     "noChildren": "لا يوجد أطفال في القسم",
     "mood": "المزاج",
+    "moods": {
+      "happy": "سعيد",
+      "sad": "حزين",
+      "tired": "متعب",
+      "excited": "متحمس",
+      "calm": "هادئ"
+    },
     "mealsEaten": "الوجبات",
     "decreaseMeals": "تقليل الوجبات",
     "increaseMeals": "زيادة الوجبات",
@@ -1502,6 +1512,13 @@
     "reportFor": "تقرير {{name}}",
     "meals": "وجبات",
     "napMin": "دقيقة قيلولة",
+    "mood": {
+      "happy": "سعيد",
+      "sad": "حزين",
+      "tired": "متعب",
+      "excited": "متحمس",
+      "calm": "هادئ"
+    },
     "activities": "أنشطة"
   },
   "parentAttendance": {
@@ -1976,6 +1993,13 @@
       "addEntry": "إضافة فترة",
       "noActiveYear": "لا توجد سنة دراسية نشطة مُعدّة حاليًا.",
       "noEntries": "لا توجد فترات معرّفة لهذه السنة.",
+      "validation": {
+        "labelRequired": "التسمية مطلوبة.",
+        "labelTooLong": "يجب ألا تتجاوز التسمية 100 حرف.",
+        "startRequired": "تاريخ البداية مطلوب.",
+        "endRequired": "تاريخ النهاية مطلوب.",
+        "endBeforeStart": "يجب أن يكون تاريخ النهاية مساويًا لتاريخ البداية أو بعده."
+      },
       "createEntry": "فترة تقويم جديدة",
       "editEntry": "تعديل فترة التقويم",
       "createDescription": "حدد فترة فوترة جديدة لهذه السنة الدراسية.",

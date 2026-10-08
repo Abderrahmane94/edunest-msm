@@ -45,12 +45,12 @@ export function ParentNotificationsPage() {
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <h1 className="text-page-title font-semibold text-text-heading">
-                {t('parentNotifications.title', 'Notifications')}
+                {t('parentNotifications.title')}
               </h1>
               <p className="text-caption text-text-secondary">
                 {unreadCount > 0
                   ? t('parentNotifications.unreadCount', { count: unreadCount, defaultValue: '{{count}} unread' })
-                  : t('parentNotifications.allRead', 'All caught up!')}
+                  : t('parentNotifications.allRead')}
               </p>
             </div>
 
@@ -60,11 +60,11 @@ export function ParentNotificationsPage() {
                 onClick={() => markAllRead.mutate()}
                 disabled={markAllRead.isPending}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-caption font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-muted)] transition-colors duration-150"
-                aria-label={t('parentNotifications.markAllRead', 'Mark all as read')}
+                aria-label={t('parentNotifications.markAllRead')}
               >
                 <CheckCheck className="w-4 h-4" />
                 <span className="hidden sm:inline">
-                  {t('parentNotifications.markAllRead', 'Mark all as read')}
+                  {t('parentNotifications.markAllRead')}
                 </span>
               </button>
             )}
@@ -89,7 +89,7 @@ export function ParentNotificationsPage() {
         ) : isError ? (
           <div className="text-center py-16">
             <p className="text-body text-text-secondary">
-              {t('parentNotifications.error', 'Unable to load notifications. Please try again.')}
+              {t('parentNotifications.error')}
             </p>
           </div>
         ) : notifications.length > 0 ? (
@@ -108,8 +108,8 @@ export function ParentNotificationsPage() {
                   className="px-4 py-2 rounded-lg text-caption font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-muted)] transition-colors duration-150"
                 >
                   {isFetchingNextPage
-                    ? t('common.loading', 'Loading…')
-                    : t('parentNotifications.loadMore', 'Load older')}
+                    ? t('common.loading')
+                    : t('parentNotifications.loadMore')}
                 </button>
               </div>
             )}
@@ -120,7 +120,7 @@ export function ParentNotificationsPage() {
               <BellOff className="w-8 h-8 text-text-secondary" />
             </div>
             <p className="text-body text-text-secondary">
-              {t('parentNotifications.empty', 'No notifications yet.')}
+              {t('parentNotifications.empty')}
             </p>
           </div>
         )}
@@ -179,7 +179,7 @@ function NotificationItem({ notification }: { notification: AppNotification }) {
             {!notification.is_read && (
               <span
                 className="shrink-0 w-2 h-2 mt-2 rounded-full bg-[var(--color-accent)]"
-                aria-label={t('parentNotifications.unread', 'Unread')}
+                aria-label={t('parentNotifications.unread')}
               />
             )}
           </div>

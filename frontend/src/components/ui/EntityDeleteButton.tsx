@@ -128,6 +128,7 @@ export function EntityDeleteButton({
   return (
     <>
       <Button
+        type="button"
         variant="danger"
         onClick={handleOpenDialog}
       >
@@ -159,6 +160,7 @@ export function EntityDeleteButton({
 
           <DialogFooter>
             <Button
+              type="button"
               variant="secondary"
               onClick={() => handleDialogOpenChange(false)}
               disabled={mutation.isPending}
@@ -166,6 +168,7 @@ export function EntityDeleteButton({
               {t('common.softDelete.dialogCancel')}
             </Button>
             <Button
+              type="button"
               variant="danger"
               onClick={handleConfirm}
               disabled={mutation.isPending}

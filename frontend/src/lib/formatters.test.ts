@@ -27,9 +27,11 @@ describe('formatDate', () => {
     expect(result).toBe('15/03/2024');
   });
 
-  it('formats date as DD/MM/YYYY for Arabic locale', () => {
+  it('keeps DD/MM/YYYY in Arabic, laid out right to left', () => {
     const result = formatDate('2024-12-01', 'ar');
-    expect(result).toBe('01/12/2024');
+    expect(result).toBe('⁧01‏/12‏/2024⁩');
+    // Without the layout marks, the same digits in the same order.
+    expect(result.replace(/[⁧⁩‏]/g, '')).toBe('01/12/2024');
   });
 
   it('returns original string for invalid date', () => {
@@ -42,6 +44,11 @@ describe('formatDateTime', () => {
   it('formats date and time as DD/MM/YYYY HH:mm', () => {
     const result = formatDateTime('2024-03-15T14:30:00', 'fr');
     expect(result).toBe('15/03/2024 14:30');
+  });
+
+  it('puts the time after the date in Arabic', () => {
+    const result = formatDateTime('2024-03-15T14:30:00', 'ar');
+    expect(result.replace(/[⁧⁩‏]/g, '')).toBe('15/03/2024 14:30');
   });
 
   it('returns original string for invalid date', () => {

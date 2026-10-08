@@ -419,7 +419,7 @@ function DiscountRow({ discount, enrollmentId }: { discount: Discount; enrollmen
         </span>
       </td>
       <td className="px-4 py-3">
-        <span className="text-body text-text-secondary" dir="ltr">
+        <span className="text-body text-text-secondary">
           {formatDate(discount.validFrom)} —{' '}
           {discount.validTo ? formatDate(discount.validTo) : t('payments.enrollmentDetail.discounts.noExpiry')}
         </span>

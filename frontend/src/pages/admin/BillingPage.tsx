@@ -557,7 +557,7 @@ function SubscriptionsTab() {
     },
     {
       key: 'period', header: t('billing.subscriptions.period'), render: (s) => (
-        <span className="text-caption text-text-secondary" dir="ltr">
+        <span className="text-caption text-text-secondary">
           {formatDate(s.currentPeriodStart)} – {formatDate(s.currentPeriodEnd)}
         </span>
       ),

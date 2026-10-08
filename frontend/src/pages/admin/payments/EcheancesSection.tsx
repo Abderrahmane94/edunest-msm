@@ -216,7 +216,7 @@ export function EcheancesSection({
                       {getLabel(period)}
                     </p>
                     <p className="text-caption text-text-secondary tabular-nums">
-                      <bdi dir="ltr">
+                      <bdi>
                         {formatDate(period.periodStart)} — {formatDate(period.periodEnd)}
                       </bdi>
                     </p>
@@ -342,7 +342,7 @@ export function EcheancesSection({
                       </p>
                       {/* dir on the text only: the paragraph keeps the page's alignment (right in Arabic). */}
                       <p className="text-caption text-text-secondary tabular-nums">
-                        <bdi dir="ltr">
+                        <bdi>
                           {formatDate(period.periodStart)} — {formatDate(period.periodEnd)}
                         </bdi>
                       </p>

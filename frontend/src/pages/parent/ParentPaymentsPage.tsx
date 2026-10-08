@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Receipt, CalendarDays, Wallet, Eye, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatDate } from '@/lib/formatters';
 import { apiClient, apiError } from '@/lib/api-client';
 import { ReceiptView } from '@/pages/admin/payments/ReceiptView';
 import { EmptyState, Tabs } from '@/components/ui';
@@ -23,7 +24,7 @@ function mapPayment(raw: Record<string, unknown>): ParentPaymentRecord { const a
 function mapBalance(raw: Record<string, unknown>): ParentChildBalance { return { childId: (raw.childId ?? raw.child_id) as string, childName: (raw.childName ?? raw.child_name ?? '') as string, branchName: (raw.branchName ?? raw.branch_name ?? '') as string, outstanding: String(raw.outstanding ?? '0') }; }
 
 function formatDZD(amount: string | number): string { const num = typeof amount === 'string' ? parseFloat(amount) : amount; if (isNaN(num)) return '0.00 DZD'; return `${num.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} DZD`; }
-function fmtDate(dateStr: string): string { try { return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }); } catch { return dateStr; } }
+const fmtDate = (dateStr: string) => formatDate(dateStr);
 function statusColor(status: PeriodStatus): string { switch (status) { case 'paid': return 'bg-[var(--color-success-muted)] text-[var(--color-success)]'; case 'partial': return 'bg-[var(--color-warning-muted)] text-[var(--color-warning)]'; case 'late': case 'late_partial': return 'bg-[var(--color-danger-muted)] text-[var(--color-danger)]'; default: return 'bg-subtle text-text-secondary'; } }
 function channelLabel(ch: PaymentChannel, t: ReturnType<typeof useTranslation>['t']): string { return t(`parentPayments.channel.${ch}`, ch); }
 

@@ -134,7 +134,7 @@ export function StaffListPage() {
       header: t('staff.columns.contractDates'),
       render: (row) =>
         row.profile ? (
-          <span className="text-caption text-text-secondary" dir="ltr">
+          <span className="text-caption text-text-secondary">
             {formatDate(row.profile.contract_start)}
             {row.profile.contract_end ? ` – ${formatDate(row.profile.contract_end)}` : ''}
           </span>

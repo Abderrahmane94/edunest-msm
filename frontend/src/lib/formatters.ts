@@ -4,6 +4,24 @@
  * for both French and Arabic locales.
  */
 
+import i18next from 'i18next';
+
+/** The app's language, for formatters called without an explicit locale. */
+function appLocale(): string {
+  return i18next.language?.startsWith('ar') ? 'ar' : 'fr';
+}
+
+/**
+ * Lay out numeric date parts for the language. In Arabic the day sits on the
+ * right and is read first: right-to-left marks keep the parts from joining
+ * into one left-to-right number, and the right-to-left isolate keeps that
+ * order even inside a left-to-right element.
+ */
+function joinDateParts(parts: string[], locale: string, time?: string): string {
+  if (locale !== 'ar') return parts.join('/') + (time ? ` ${time}` : '');
+  return '⁧' + parts.join('‏/') + (time ? `‏ ${time}` : '') + '⁩';
+}
+
 /**
  * Format a number as DZD (Algerian Dinar) currency.
  * - French locale: "12 500,00 DA"
@@ -28,10 +46,11 @@ export function formatDZD(amount: number, locale: string = 'fr'): string {
 }
 
 /**
- * Format a date string as DD/MM/YYYY.
- * Both locales use Western digits (standard in Algeria).
+ * Format a date string as DD/MM/YYYY, in the app's language unless one is given.
+ * Both locales use Western digits (standard in Algeria); in Arabic the day is
+ * on the right (shown as 2024/12/01 for 1 December).
  */
-export function formatDate(dateStr: string, _locale: string = 'fr'): string {
+export function formatDate(dateStr: string, locale: string = appLocale()): string {
   try {
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
@@ -40,7 +59,7 @@ export function formatDate(dateStr: string, _locale: string = 'fr'): string {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = String(date.getFullYear());
 
-    return `${day}/${month}/${year}`;
+    return joinDateParts([day, month, year], locale);
   } catch {
     return dateStr;
   }
@@ -94,9 +113,10 @@ export function formatTime(date: string | Date): string {
 }
 
 /**
- * Format a date+time string as DD/MM/YYYY HH:mm.
+ * Format a date+time string as DD/MM/YYYY HH:mm, in the app's language unless
+ * one is given (in Arabic the day is on the right, see formatDate).
  */
-export function formatDateTime(dateStr: string, _locale: string = 'fr'): string {
+export function formatDateTime(dateStr: string, locale: string = appLocale()): string {
   try {
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
@@ -107,7 +127,7 @@ export function formatDateTime(dateStr: string, _locale: string = 'fr'): string 
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
 
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+    return joinDateParts([day, month, year], locale, `${hours}:${minutes}`);
   } catch {
     return dateStr;
   }

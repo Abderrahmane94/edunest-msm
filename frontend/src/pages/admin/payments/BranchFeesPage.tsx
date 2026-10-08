@@ -40,7 +40,7 @@ import {
   type ChangeFeeScopeResult,
   type OutOfScopeAction,
 } from '@/hooks/useBranchFees';
-import { SectionHeader } from '@/components/ui';
+import { SectionHeader, StatusBadge } from '@/components/ui';
 
 // ─── New Period (inline, inside the fee dialog) ──────────────────────────────
 
@@ -1169,9 +1169,9 @@ export default function BranchFeesPage() {
       header: t('payments.fees.fields.recurring'),
       render: (fee) =>
         fee.billingCycle ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-accent-muted text-accent text-caption font-medium">
+          <StatusBadge variant="info">
             {t(`payments.branchConfig.cycle${fee.billingCycle.charAt(0).toUpperCase()}${fee.billingCycle.slice(1)}`)}
-          </span>
+          </StatusBadge>
         ) : (
           <span className="text-caption text-text-disabled">{t('payments.fees.oneShot')}</span>
         ),
@@ -1182,17 +1182,13 @@ export default function BranchFeesPage() {
       render: (fee) => {
         if (fee.appliesToSchool) {
           return (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-caption font-medium">
-              {t('payments.fees.scopeSchool')}
-            </span>
+            <StatusBadge variant="info">{t('payments.fees.scopeSchool')}</StatusBadge>
           );
         }
         const classrooms = fee.classrooms ?? [];
         if (classrooms.length === 0) {
           return (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-subtle text-text-secondary text-caption font-medium">
-              {t('payments.fees.scopeGeneral')}
-            </span>
+            <StatusBadge variant="neutral">{t('payments.fees.scopeGeneral')}</StatusBadge>
           );
         }
         const names = classrooms.map((c) => c.name).join(', ');

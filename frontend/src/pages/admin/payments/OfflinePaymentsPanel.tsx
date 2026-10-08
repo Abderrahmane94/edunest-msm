@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CloudUpload, Receipt, Pencil, Trash2, Eye, X, AlertCircle, ListChecks } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Button, StatusBadge } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { formatDate, formatDZD } from '@/lib/formatters';
 import { useOnline } from '@/lib/online';
@@ -149,9 +149,9 @@ export function OfflinePaymentsPanel({
                 {t('payments.offline.panel.officialReceipt')}{' '}
                 <bdi dir="ltr" className="font-mono font-semibold text-foreground">{notice.data.receiptNumber}</bdi>
               </p>
-              <span className="mt-1 inline-flex text-caption px-2 py-0.5 rounded-full bg-success/10 text-success">
+              <StatusBadge variant="success" className="mt-1">
                 {t('payments.offline.status.sent')}
-              </span>
+              </StatusBadge>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Button variant="secondary" size="sm" onClick={() => onShowReceipt(notice.data.paymentId)} disabled={!online}>

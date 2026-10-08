@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, BellRing, Wallet } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
-import { Button, DataTable, FilterBar, SectionHeader } from '@/components/ui';
+import { Button, DataTable, FilterBar, SectionHeader, StatusBadge } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
@@ -16,17 +16,8 @@ import { ChildAccountDialog } from './ChildAccountDialog';
 
 // ─── Status Badge ──────────────────────────────────────────────────────────────
 
-function StatusBadge({ status, label }: { status: LatePeriodStatus; label: string }) {
-  const styles: Record<LatePeriodStatus, string> = {
-    late: 'bg-danger/10 text-danger',
-    late_partial: 'bg-warning/10 text-warning',
-  };
-
-  return (
-    <span className={`text-caption px-2 py-0.5 rounded-full font-medium ${styles[status]}`}>
-      {label}
-    </span>
-  );
+function LateBadge({ status, label }: { status: LatePeriodStatus; label: string }) {
+  return <StatusBadge variant={status === 'late' ? 'danger' : 'warning'}>{label}</StatusBadge>;
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -204,7 +195,7 @@ export function LateDashboardPage() {
       header: t('payments.late.columns.status'),
       render: (entry) => (
         <div>
-          <StatusBadge
+          <LateBadge
             status={entry.status}
             label={
               entry.status === 'late'

@@ -484,9 +484,9 @@ function PendingMessagesTab() {
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <div className="text-end">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning-muted text-warning text-micro font-medium">
+              <StatusBadge variant="warning">
                 {conv.unreadCount} {t('communication.messages.pending')}
-              </span>
+              </StatusBadge>
               <p className="text-micro text-text-disabled mt-0.5">
                 {formatTimeAgo(conv.lastMessageAt, t)}
               </p>

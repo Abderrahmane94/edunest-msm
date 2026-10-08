@@ -48,7 +48,7 @@ import { ReceiptView } from './ReceiptView';
 import { ProvisionalReceiptDialog } from './ProvisionalReceiptDialog';
 import { OfflinePaymentsPanel } from './OfflinePaymentsPanel';
 import { suggestAllocations as suggestAllocationsUtil } from '@/lib/paymentAllocation';
-import { FilterBar, SectionHeader } from '@/components/ui';
+import { FilterBar, SectionHeader, StatusBadge } from '@/components/ui';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -1125,17 +1125,11 @@ export function PaymentsPage() {
       header: t('payments.recording.columns.type'),
       render: (record) => (
         <div className="flex flex-col gap-0.5">
-          <span
-            className={`text-caption px-2 py-0.5 rounded-full inline-block w-fit ${
-              record.isCorrection
-                ? 'bg-danger/10 text-danger'
-                : 'bg-success/10 text-success'
-            }`}
-          >
+          <StatusBadge variant={record.isCorrection ? 'danger' : 'success'} className="w-fit">
             {record.isCorrection
               ? t('payments.recording.typeCorrection')
               : t('payments.recording.typePayment')}
-          </span>
+          </StatusBadge>
           {record.isCorrection && record.correctsPaymentId && (
             <span className="text-caption text-text-secondary" dir="ltr">
               {t('payments.recording.columns.correctsPayment', {

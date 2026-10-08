@@ -2597,6 +2597,8 @@
     "outstanding": "Restant dû",
     "noChildren": "Aucun enfant lié à votre compte.",
     "noChildrenHint": "Contactez votre école pour lier vos enfants.",
+    "noBilling": "Aucune facturation pour l’instant.",
+    "noBillingHint": "Les échéances apparaîtront ici dès que l’école aura inscrit votre enfant à des frais.",
     "noPayments": "Aucun paiement enregistré.",
     "status": {
       "unpaid": "Impayé",

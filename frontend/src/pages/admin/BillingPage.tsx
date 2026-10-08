@@ -22,6 +22,7 @@ import {
 } from '@/hooks/useBilling';
 import { useSchoolsList } from '@/hooks/useSchools';
 import { useAuth } from '@/contexts/AuthContext';
+import { ErrorAlert } from '@/components/ui';
 
 type Tab = 'dashboard' | 'plans' | 'subscriptions' | 'payments';
 const TABS: Tab[] = ['dashboard', 'plans', 'subscriptions', 'payments'];
@@ -708,12 +709,10 @@ function SubscriptionsTab() {
           <Plus className="w-4 h-4" />{t('billing.subscriptions.assign')}
         </Button>
       </div>
-      {statusError && (
-        <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
-          <span>{t(`billing.errors.${statusError}`, { defaultValue: statusError! })}</span>
-          <button onClick={() => setStatusError(null)} className="text-danger hover:opacity-70 text-lg leading-none">&times;</button>
-        </div>
-      )}
+      <ErrorAlert
+        message={statusError && t(`billing.errors.${statusError}`, { defaultValue: statusError })}
+        onDismiss={() => setStatusError(null)}
+      />
       {isLoading
         ? <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="bg-hover rounded-xl h-14 animate-pulse" />)}</div>
         : <DataTable columns={columns} data={filtered} keyExtractor={(s) => s.id} emptyMessage={t('billing.subscriptions.empty')} />}

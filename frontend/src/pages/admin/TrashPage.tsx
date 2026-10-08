@@ -23,6 +23,7 @@ import {
 } from '@/hooks/useTrash';
 import { useDeletedPayments, useRestorePayment, type SchoolPaymentRecord } from '@/hooks/useBilling';
 import { useAuth } from '@/contexts/AuthContext';
+import { ErrorAlert } from '@/components/ui';
 
 type EntityTab = TrashEntityType | 'payments';
 
@@ -193,12 +194,10 @@ function DeletedPaymentsTab() {
 
   return (
     <div className="space-y-4">
-      {actionError && (
-        <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
-          <span>{t(`billing.errors.${actionError}`, { defaultValue: actionError })}</span>
-          <button onClick={() => setActionError(null)} className="text-danger hover:opacity-70 text-lg leading-none">&times;</button>
-        </div>
-      )}
+      <ErrorAlert
+        message={actionError && t(`billing.errors.${actionError}`, { defaultValue: actionError })}
+        onDismiss={() => setActionError(null)}
+      />
       {isLoading ? (
         <div className="animate-pulse space-y-3">
           {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-12 bg-hover rounded-md" />)}
@@ -375,17 +374,7 @@ export function TrashPage() {
       </div>
 
       {/* Error banner (non-payments tabs) */}
-      {!isPaymentsTab && actionError && (
-        <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
-          <span>{actionError}</span>
-          <button
-            onClick={() => setActionError(null)}
-            className="text-danger hover:opacity-70 text-lg leading-none"
-          >
-            &times;
-          </button>
-        </div>
-      )}
+      {!isPaymentsTab && <ErrorAlert message={actionError} onDismiss={() => setActionError(null)} />}
 
       {/* Payments tab */}
       {isPaymentsTab ? <DeletedPaymentsTab /> : (

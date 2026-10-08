@@ -25,6 +25,11 @@ export function SearchInput({ onSearch, placeholder, defaultValue = '', classNam
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
+  // The page cleared its search (e.g. "Reset filters"): show it.
+  React.useEffect(() => {
+    setValue(defaultValue);
+  }, [defaultValue]);
+
   function change(next: string, immediate = false) {
     setValue(next);
     if (timer.current) clearTimeout(timer.current);

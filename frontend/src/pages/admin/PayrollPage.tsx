@@ -31,7 +31,7 @@ import {
   type EmployeeRecord,
   type SalaryPayment,
 } from '@/hooks/usePayroll';
-import { FilterBar, PageHeader, Tabs } from '@/components/ui';
+import { FilterBar, PageHeader, RoleBadge, Tabs } from '@/components/ui';
 import { useTabParam } from '@/hooks/useTabParam';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -596,7 +596,7 @@ function EmployeesTab() {
       key: 'role',
       header: t('payroll.columns.role'),
       render: (emp) => (
-        <span className="text-body text-text-secondary capitalize">{emp.role}</span>
+        <RoleBadge role={emp.role} />
       ),
     },
     {
@@ -828,7 +828,7 @@ function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean, 
 
   <div style="padding:28px 32px;">
     <div dir="${dir}" style="font-size:20px;font-weight:700;color:#111827;margin-bottom:2px;text-align:${startAlign};">${p.employeeName}</div>
-    <div dir="${dir}" style="font-size:11px;color:#6b7280;margin-bottom:24px;text-align:${startAlign};">${p.role} — ${monthLabel}</div>
+    <div dir="${dir}" style="font-size:11px;color:#6b7280;margin-bottom:24px;text-align:${startAlign};">${t(`users.roles.${p.role}`)} — ${monthLabel}</div>
 
     <div style="background:#f9fafb;border-radius:12px;padding:20px 24px;margin-bottom:20px;">
       <table style="width:100%;border-collapse:collapse;">

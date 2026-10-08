@@ -13,7 +13,7 @@ import { FormField, FormSelect } from '@/components/forms';
 import { usePlans, useCreatePlan, useUpdatePlan, useDeletePlan, useSubscriptions, useAssignPlan, useUpdateSubscriptionStatus, useRecordPayment, useUpdatePayment, useDeletePayment, useSchoolPayments, type SubscriptionPlan, type SchoolSubscription, type SchoolPaymentRecord } from '@/hooks/useBilling';
 import { useSchoolsList } from '@/hooks/useSchools';
 import { useAuth } from '@/contexts/AuthContext';
-import { EmptyState, ErrorAlert, PageHeader, Tabs } from '@/components/ui';
+import { EmptyState, ErrorAlert, FilterBar, PageHeader, Tabs } from '@/components/ui';
 import { useTabParam } from '@/hooks/useTabParam';
 
 // The figures (revenue, subscription states) are on the platform dashboard.
@@ -482,7 +482,6 @@ function SubscriptionsTab() {
   const [planFilter, setPlanFilter] = React.useState('');
   const [cycleFilter, setCycleFilter] = React.useState('');
 
-  const hasFilters = !!(schoolFilter || statusFilter || planFilter || cycleFilter);
 
   const filtered = React.useMemo(() => {
     let data = subs ?? [];
@@ -589,55 +588,39 @@ function SubscriptionsTab() {
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <div className="bg-card border border-border rounded-lg p-5">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-2">
-            <FormSelect
-              label={t('billing.subscriptions.school')}
-              name="school"
-              value={schoolFilter}
-              onChange={(e) => setSchoolFilter(e.target.value)}
-              options={schoolOptions}
-            />
-          </div>
-          <div>
-            <FormSelect
-              label={t('billing.subscriptions.status')}
-              name="status"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              options={statusOptions}
-            />
-          </div>
-          <div>
-            <FormSelect
-              label={t('billing.subscriptions.plan')}
-              name="plan"
-              value={planFilter}
-              onChange={(e) => setPlanFilter(e.target.value)}
-              options={planOptions}
-            />
-          </div>
-        </div>
-        <div className="mt-4 flex items-center gap-4">
-          <div className="w-48">
-            <FormSelect
-              label={t('billing.subscriptions.billingCycle')}
-              name="cycle"
-              value={cycleFilter}
-              onChange={(e) => setCycleFilter(e.target.value)}
-              options={cycleOptions}
-            />
-          </div>
-          {hasFilters && (
-            <Button variant="ghost" size="sm" className="mt-5"
-              onClick={() => { setSchoolFilter(''); setStatusFilter(''); setPlanFilter(''); setCycleFilter(''); }}>
-              {t('billing.subscriptions.clearFilters')}
-            </Button>
-          )}
-        </div>
-      </div>
+      <FilterBar
+        activeCount={[schoolFilter, statusFilter, planFilter, cycleFilter].filter(Boolean).length}
+        onReset={() => { setSchoolFilter(''); setStatusFilter(''); setPlanFilter(''); setCycleFilter(''); }}
+      >
+        <FormSelect
+          label={t('billing.subscriptions.school')}
+          name="school"
+          value={schoolFilter}
+          onChange={(e) => setSchoolFilter(e.target.value)}
+          options={schoolOptions}
+        />
+        <FormSelect
+          label={t('billing.subscriptions.status')}
+          name="status"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          options={statusOptions}
+        />
+        <FormSelect
+          label={t('billing.subscriptions.plan')}
+          name="plan"
+          value={planFilter}
+          onChange={(e) => setPlanFilter(e.target.value)}
+          options={planOptions}
+        />
+        <FormSelect
+          label={t('billing.subscriptions.billingCycle')}
+          name="cycle"
+          value={cycleFilter}
+          onChange={(e) => setCycleFilter(e.target.value)}
+          options={cycleOptions}
+        />
+      </FilterBar>
 
       <div className="flex justify-end">
         <Button onClick={() => setAssignOpen(true)}>

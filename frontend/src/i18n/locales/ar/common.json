@@ -808,6 +808,7 @@
     "noTeacher": "غير معين",
     "notFound": "القسم غير موجود",
     "detail": {
+      "changeTeacher": "تغيير المعلم",
       "info": "المعلومات",
       "assign": "حفظ",
       "dangerZone": "منطقة الخطر",
@@ -878,6 +879,9 @@
     "active": "نشط",
     "inactive": "غير نشط",
     "detail": {
+      "classroomDialogDescription": "اختر قسم {{name}} للسنة الحالية.",
+      "parentsDialogDescription": "ربط أولياء أمور {{name}} أو تعديلهم أو إزالتهم.",
+      "manageParents": "إدارة أولياء الأمور",
       "info": "المعلومات",
       "classroom": "القسم الحالي",
       "noClassroom": "لا يوجد قسم مخصص",

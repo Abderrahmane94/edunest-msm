@@ -5,6 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { UserPlus, X, Star, Pencil, Check } from 'lucide-react';
 import {
   Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   EditButton,
   EditFormActions,
   EntityDeleteButton,
@@ -79,6 +85,8 @@ export function ChildDetailPage() {
   const [linkError, setLinkError] = React.useState<string | null>(null);
   const [emergencyDialogOpen, setEmergencyDialogOpen] = React.useState(false);
   const [medicalDialogOpen, setMedicalDialogOpen] = React.useState(false);
+  const [classroomDialogOpen, setClassroomDialogOpen] = React.useState(false);
+  const [parentsDialogOpen, setParentsDialogOpen] = React.useState(false);
   const [editingLinkId, setEditingLinkId] = React.useState<string | null>(null);
   const [editLinkRelationship, setEditLinkRelationship] = React.useState('mother');
   const [editLinkCanPickup, setEditLinkCanPickup] = React.useState(true);
@@ -143,6 +151,7 @@ export function ChildDetailPage() {
     try {
       await enrollChild.mutateAsync({ childId: childId!, classroomId: enrollClassroomId });
       setEnrollClassroomId('');
+      setClassroomDialogOpen(false);
     } catch (err) {
       setEnrollError(errorMessage(err, t));
     }
@@ -282,37 +291,128 @@ export function ChildDetailPage() {
       {/* Classroom enrollment */}
       {classroomOptions.length > 0 && (
         <div className="bg-card border border-border rounded-lg p-6 space-y-3">
-          <h2 className="text-subsection font-semibold text-text-heading">{t('children.detail.classroom')}</h2>
-          <p className="text-body text-text-secondary">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-subsection font-semibold text-text-heading">{t('children.detail.classroom')}</h2>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setEnrollClassroomId('');
+                setEnrollError(null);
+                setClassroomDialogOpen(true);
+              }}
+            >
+              {child.classroom_name ? t('children.detail.changeTo') : t('children.detail.enroll')}
+            </Button>
+          </div>
+          <p className={child.classroom_name ? 'text-body text-foreground' : 'text-body text-text-secondary'}>
             {child.classroom_name ?? t('children.detail.noClassroom')}
           </p>
-          <div className="flex items-end gap-3">
-            <div className="flex-1">
-              <FormSelect
-                label={child.classroom_name ? t('children.detail.changeTo') : t('children.detail.enrollIn')}
-                name="enroll-classroom"
-                value={enrollClassroomId}
-                onChange={(e) => setEnrollClassroomId(e.target.value)}
-                options={classroomOptions}
-                placeholder={t('children.detail.selectClassroom')}
-              />
-            </div>
-            <Button type="button" variant="secondary" onClick={handleEnroll} disabled={!enrollClassroomId || enrollChild.isPending}>
+        </div>
+      )}
+
+      <Dialog open={classroomDialogOpen} onOpenChange={setClassroomDialogOpen}>
+        <DialogContent className="max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>{child.classroom_name ? t('children.detail.changeTo') : t('children.detail.enroll')}</DialogTitle>
+            <DialogDescription>{t('children.detail.classroomDialogDescription', { name: child.first_name })}</DialogDescription>
+          </DialogHeader>
+          <FormSelect
+            label={child.classroom_name ? t('children.detail.changeTo') : t('children.detail.enrollIn')}
+            name="enroll-classroom"
+            value={enrollClassroomId}
+            onChange={(e) => setEnrollClassroomId(e.target.value)}
+            options={classroomOptions.filter((o) => o.label !== child.classroom_name)}
+            placeholder={t('children.detail.selectClassroom')}
+          />
+          {enrollError && <p className="text-body text-danger">{enrollError}</p>}
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setClassroomDialogOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button type="button" onClick={handleEnroll} disabled={!enrollClassroomId || enrollChild.isPending}>
               {enrollChild.isPending
                 ? t('common.loading')
                 : child.classroom_name ? t('children.detail.change') : t('children.detail.enroll')}
             </Button>
-          </div>
-          {enrollError && <p className="text-body text-danger">{enrollError}</p>}
-        </div>
-      )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Parent links */}
       <div className="bg-card border border-border rounded-lg p-6 space-y-3">
-        <h2 className="text-subsection font-semibold text-text-heading">{t('children.detail.parents')}</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-subsection font-semibold text-text-heading">{t('children.detail.parents')}</h2>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setLinkError(null);
+              setEditingLinkId(null);
+              setParentsDialogOpen(true);
+            }}
+          >
+            {t('children.detail.manageParents')}
+          </Button>
+        </div>
         {!hasAuthorizedPickup && (
-          <StatusBadge variant="absent">{t('children.emergencyContacts.noPickupContact')}</StatusBadge>
+          <StatusBadge variant="absent" className="whitespace-normal max-w-full">
+            {t('children.emergencyContacts.noPickupContact')}
+          </StatusBadge>
         )}
+        {(parentLinks ?? []).length === 0 ? (
+          <p className="text-body text-text-secondary">{t('children.noParents')}</p>
+        ) : (
+          <div className="space-y-2">
+            {(parentLinks as Record<string, unknown>[]).map((link) => {
+              const parent = link.parent as Record<string, unknown>;
+              return (
+                <div key={link.id as string} className="bg-subtle rounded-lg px-3 py-2">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <button
+                      type="button"
+                      className="text-body font-medium text-primary hover:underline text-start"
+                      onClick={() => navigate(`/admin/users/${parent?.id as string}`)}
+                    >
+                      {parent?.firstName as string} {parent?.lastName as string}
+                    </button>
+                    <span className="text-caption text-text-secondary">
+                      ({t(`children.linkParent.${link.relationship as string}`, { defaultValue: link.relationship as string })})
+                    </span>
+                    {!!link.isPrimary && (
+                      <span className="flex items-center gap-0.5 text-micro text-success font-medium">
+                        <Star className="w-3.5 h-3.5 fill-current" /> {t('children.detail.primary')}
+                      </span>
+                    )}
+                    {link.canPickup === false && (
+                      <span className="text-micro text-danger font-medium">{t('children.linkParent.cannotPickup')}</span>
+                    )}
+                  </div>
+                  {!!parent?.email && (
+                    <p className="text-caption text-text-secondary"><span dir="ltr">{parent.email as string}</span></p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <Dialog
+        open={parentsDialogOpen}
+        onOpenChange={(open) => {
+          setParentsDialogOpen(open);
+          if (!open) setEditingLinkId(null);
+        }}
+      >
+        <DialogContent className="max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle>{t('children.detail.manageParents')}</DialogTitle>
+            <DialogDescription>{t('children.detail.parentsDialogDescription', { name: child.first_name })}</DialogDescription>
+          </DialogHeader>
+        <div className="space-y-3">
         {(parentLinks ?? []).length === 0 ? (
           <p className="text-body text-text-secondary">{t('children.noParents')}</p>
         ) : (
@@ -387,6 +487,8 @@ export function ChildDetailPage() {
                           setEditingLinkId(null);
                         }}
                         disabled={updateParentLink.isPending}
+                        aria-label={t('common.save')}
+                        title={t('common.save')}
                       >
                         <Check className="w-4 h-4 text-success" />
                       </Button>
@@ -402,6 +504,7 @@ export function ChildDetailPage() {
                               setPrimaryParentLink.mutate({ childId: childId!, linkId }, { onError: (err) => setLinkError(errorMessage(err, t)) });
                             }}
                             disabled={setPrimaryParentLink.isPending}
+                            aria-label={t('children.detail.setPrimary')}
                           >
                             <Star className="w-4 h-4 text-text-secondary" />
                           </Button>
@@ -414,6 +517,8 @@ export function ChildDetailPage() {
                             setEditLinkRelationship(link.relationship as string);
                             setEditLinkCanPickup(link.canPickup !== false);
                           }}
+                          aria-label={t('common.edit')}
+                          title={t('common.edit')}
                         >
                           <Pencil className="w-4 h-4 text-text-secondary" />
                         </Button>
@@ -448,8 +553,8 @@ export function ChildDetailPage() {
         )}
 
         {parentOptions.length > 0 && (parentLinks ?? []).length < 2 && (
-          <div className="flex items-end gap-3 pt-2">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-x-3 pt-2 border-t border-border">
+            <div className="flex-1 min-w-0">
               <FormSelect
                 label={t('children.linkParent.parent')}
                 name="link-parent"
@@ -459,7 +564,7 @@ export function ChildDetailPage() {
                 placeholder={t('children.linkParent.selectParent')}
               />
             </div>
-            <div className="w-40">
+            <div className="sm:w-40">
               <FormSelect
                 label={t('children.linkParent.relationship')}
                 name="link-relationship"
@@ -468,7 +573,7 @@ export function ChildDetailPage() {
                 options={relationshipOptions}
               />
             </div>
-            <Button type="button" onClick={handleLinkParent} disabled={!linkParentId || linkParent.isPending}>
+            <Button type="button" className="mb-4" onClick={handleLinkParent} disabled={!linkParentId || linkParent.isPending}>
               <UserPlus className="w-4 h-4" />
               {linkParent.isPending ? t('common.loading') : t('children.detail.link')}
             </Button>
@@ -478,7 +583,14 @@ export function ChildDetailPage() {
           <p className="text-caption text-text-secondary">{t('children.detail.maxParentsReached')}</p>
         )}
         {linkError && <p className="text-body text-danger">{linkError}</p>}
-      </div>
+        </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setParentsDialogOpen(false)}>
+              {t('common.close')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Emergency contacts */}
       <div className="bg-card border border-border rounded-lg p-6 space-y-3">

@@ -6,6 +6,7 @@ import { Sidebar, type NavItem } from './Sidebar';
 import { PageContainer } from './PageContainer';
 import { BottomTabBar } from './BottomTabBar';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { LoadErrorBanner } from '@/components/LoadErrorBanner';
 import { NotificationBell } from '@/components/NotificationBell';
 import { OfflineStatus } from '@/components/OfflineStatus';
 
@@ -34,6 +35,7 @@ export function AdminLayout({ navItems, sidebarHeader, sidebarFooter }: AdminLay
         </header>
 
         <PageContainer>
+          <LoadErrorBanner />
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

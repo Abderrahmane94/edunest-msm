@@ -40,7 +40,7 @@ import {
   type ChangeFeeScopeResult,
   type OutOfScopeAction,
 } from '@/hooks/useBranchFees';
-import { SectionHeader, StatusBadge } from '@/components/ui';
+import { SectionHeader, StatusBadge, useConfirm } from '@/components/ui';
 
 // ─── New Period (inline, inside the fee dialog) ──────────────────────────────
 
@@ -1114,6 +1114,7 @@ export default function BranchFeesPage() {
 
   const { data: fees, isLoading } = useBranchFees(selectedBranchId);
   const deleteFee = useDeleteBranchFee(selectedBranchId);
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
   function handleView(fee: BranchFee) {
@@ -1137,13 +1138,17 @@ export default function BranchFeesPage() {
   }
 
   async function handleDelete(fee: BranchFee) {
-    if (window.confirm(t('payments.fees.confirmDelete', { name: fee.name }))) {
-      setDeleteError(null);
-      try {
-        await deleteFee.mutateAsync(fee.id);
-      } catch (err) {
-        setDeleteError(errorMessage(err, t));
-      }
+    const ok = await confirm({
+      title: t('confirmations.fee.title', { name: fee.name }),
+      description: t('confirmations.fee.description'),
+      confirmLabel: t('common.delete'),
+    });
+    if (!ok) return;
+    setDeleteError(null);
+    try {
+      await deleteFee.mutateAsync(fee.id);
+    } catch (err) {
+      setDeleteError(errorMessage(err, t));
     }
   }
 
@@ -1228,6 +1233,7 @@ export default function BranchFeesPage() {
 
   return (
     <div className="space-y-6">
+      {confirmDialog}
       <SectionHeader
         title={t('payments.fees.title')}
         actions={<CreateButton label={t('payments.fees.create')} onClick={handleCreate} disabled={!selectedBranchId} />}

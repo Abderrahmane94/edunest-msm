@@ -28,3 +28,4 @@ export { ListSkeleton } from './ListSkeleton';
 export { RoleBadge } from './RoleBadge';
 export { DangerZone } from './DangerZone';
 export { SectionHeader } from './SectionHeader';
+export { useConfirm, type ConfirmOptions } from './ConfirmDialog';

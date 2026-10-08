@@ -13,7 +13,7 @@ import { FormField, FormSelect } from '@/components/forms';
 import { usePlans, useCreatePlan, useUpdatePlan, useDeletePlan, useSubscriptions, useAssignPlan, useUpdateSubscriptionStatus, useRecordPayment, useUpdatePayment, useDeletePayment, useSchoolPayments, type SubscriptionPlan, type SchoolSubscription, type SchoolPaymentRecord } from '@/hooks/useBilling';
 import { useSchoolsList } from '@/hooks/useSchools';
 import { useAuth } from '@/contexts/AuthContext';
-import { EmptyState, ErrorAlert, FilterBar, PageHeader, Tabs } from '@/components/ui';
+import { EmptyState, ErrorAlert, FilterBar, PageHeader, Tabs, useConfirm } from '@/components/ui';
 import { useTabParam } from '@/hooks/useTabParam';
 
 // The figures (revenue, subscription states) are on the platform dashboard.
@@ -473,6 +473,7 @@ function SubscriptionsTab() {
   const { data: plans } = usePlans();
   const { data: schools } = useSchoolsList();
   const updateStatus = useUpdateSubscriptionStatus();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const [assignOpen, setAssignOpen] = React.useState(false);
   const [payingSub, setPayingSub] = React.useState<SchoolSubscription | null>(null);
   const [statusError, setStatusError] = React.useState<string | null>(null);
@@ -518,6 +519,15 @@ function SubscriptionsTab() {
   ];
 
   async function handleStatusChange(sub: SchoolSubscription, status: 'cancelled' | 'suspended' | 'active') {
+    const key = status === 'cancelled' ? 'cancel' : status === 'suspended' ? 'suspend' : 'reactivate';
+    const ok = await confirm({
+      title: t(`confirmations.subscription.${key}Title`, { name: sub.school.name }),
+      description: t(`confirmations.subscription.${key}Description`),
+      confirmLabel: t(`billing.subscriptions.${key}`),
+      cancelLabel: status === 'cancelled' ? t('confirmations.subscription.keep') : undefined,
+      tone: status === 'active' ? 'default' : 'danger',
+    });
+    if (!ok) return;
     setStatusError(null);
     try {
       await updateStatus.mutateAsync({ id: sub.id, status });
@@ -588,6 +598,7 @@ function SubscriptionsTab() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <FilterBar
         activeCount={[schoolFilter, statusFilter, planFilter, cycleFilter].filter(Boolean).length}
         onReset={() => { setSchoolFilter(''); setStatusFilter(''); setPlanFilter(''); setCycleFilter(''); }}

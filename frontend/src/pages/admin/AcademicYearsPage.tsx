@@ -23,7 +23,8 @@ import {
   useCreateAcademicYear,
   useActivateAcademicYear,
 } from '@/hooks/useAcademicYears';
-import { EmptyState, ListSkeleton, PageHeader } from '@/components/ui';
+import { EmptyState, ListSkeleton, PageHeader, useConfirm, type ConfirmOptions } from '@/components/ui';
+import type { TFunction } from 'i18next';
 
 function CreateAcademicYearDialog({
   open,
@@ -163,18 +164,30 @@ function CreateAcademicYearDialog({
   );
 }
 
+/** The question asked before a year becomes the current one. */
+export function yearActivateConfirm(t: TFunction, name: string): ConfirmOptions {
+  return {
+    title: t('confirmations.year.activateTitle', { name }),
+    description: t('confirmations.year.activateDescription'),
+    confirmLabel: t('academicYears.activate'),
+    tone: 'default',
+  };
+}
+
 export function AcademicYearsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: academicYears, isLoading } = useAcademicYears();
   const activateAcademicYear = useActivateAcademicYear();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
 
-  async function handleActivate(id: string) {
+  async function handleActivate(year: { id: string; name: string }) {
+    if (!(await confirm(yearActivateConfirm(t, year.name)))) return;
     setActionError(null);
     try {
-      await activateAcademicYear.mutateAsync(id);
+      await activateAcademicYear.mutateAsync(year.id);
     } catch (err) {
       setActionError(errorMessage(err, t));
     }
@@ -184,6 +197,7 @@ export function AcademicYearsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {confirmDialog}
       <PageHeader
         title={t('academicYears.title')}
         actions={<CreateButton label={t('academicYears.create')} onClick={() => setCreateDialogOpen(true)} />}
@@ -227,7 +241,7 @@ export function AcademicYearsPage() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={(e) => { e.stopPropagation(); handleActivate(year.id); }}
+                    onClick={(e) => { e.stopPropagation(); handleActivate(year); }}
                     disabled={activateAcademicYear.isPending}
                   >
                     {t('academicYears.activate')}

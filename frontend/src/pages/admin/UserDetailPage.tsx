@@ -4,7 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Shield, ShieldOff, Save } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { Button, EntityDeleteButton, PageHeader, StatusBadge } from '@/components/ui';
+import { Button, EntityDeleteButton, PageHeader, StatusBadge, useConfirm } from '@/components/ui';
+import { userToggleConfirm } from './UsersPage';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import { useUser, useUpdateUser, useToggleUserActive } from '@/hooks/useUsers';
@@ -20,6 +21,7 @@ export function UserDetailPage() {
   const { data: user, isLoading } = useUser(userId!);
   const updateUser = useUpdateUser();
   const toggleActive = useToggleUserActive();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const [formData, setFormData] = React.useState({
     first_name: '',
@@ -77,6 +79,7 @@ export function UserDetailPage() {
 
   async function handleToggleActive() {
     if (!user) return;
+    if (!(await confirm(userToggleConfirm(t, user)))) return;
     setSaveError(null);
     try {
       await toggleActive.mutateAsync({ id: user.id, isActive: user.is_active });
@@ -119,6 +122,7 @@ export function UserDetailPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {confirmDialog}
       <PageHeader
         back="/admin/users"
         title={`${user.first_name} ${user.last_name}`}

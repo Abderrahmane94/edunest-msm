@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Button, Input, StatusBadge,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Button, Input, StatusBadge, useConfirm,
 } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { cn } from '@/lib/utils';
@@ -48,6 +48,7 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
   const addNote = useAddMedicalNote();
   const updateNote = useUpdateMedicalNote();
   const removeNote = useRemoveMedicalNote();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const typeOptions = TYPE_VALUES.map((v) => ({ value: v, label: t(`children.medicalNotes.types.${v}`) }));
   const severityOptions = SEVERITY_VALUES.map((v) => ({ value: v, label: t(`children.medicalNotes.severities.${v}`) }));
@@ -93,6 +94,12 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
   }
 
   async function handleRemoveNote(noteId: string) {
+    const ok = await confirm({
+      title: t('confirmations.medicalNote.title'),
+      description: t('confirmations.medicalNote.description', { child: childName }),
+      confirmLabel: t('common.delete'),
+    });
+    if (!ok) return;
     setSubmitError(null);
     try {
       await removeNote.mutateAsync({ childId, noteId });
@@ -142,6 +149,7 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
 
   return (
     <>
+      {confirmDialog}
       <p className="text-body text-text-secondary mt-1 mb-4">
         {t('children.medicalNotes.description', { name: childName })}
       </p>
@@ -228,6 +236,7 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
                     size="sm"
                     onClick={() => handleRemoveNote(note.id)}
                     disabled={removeNote.isPending}
+                    aria-label={t('common.delete')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

@@ -52,11 +52,14 @@ export function DialogContent({ children, className }: DialogContentProps) {
     }
 
     document.addEventListener('keydown', handleKeyDown);
+    // A dialog opened over another one (a confirmation) must not unlock the
+    // page scroll under the first when it closes.
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
+      document.body.style.overflow = previousOverflow;
     };
   }, [open, onOpenChange]);
 

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Check, Clock, X, CheckCheck, Send, CloudOff, RefreshCw, AlertTriangle, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/formatters';
-import { Avatar, Input } from '@/components/ui';
+import { Avatar, Input, useConfirm } from '@/components/ui';
 import { useTeacherClassroom, useClassroomChildren } from '@/hooks/useTeacherClassroom';
 import {
   useClassroomAttendance,
@@ -43,6 +43,7 @@ function getTodayString(): string {
  */
 export function TeacherAttendancePage() {
   const { t } = useTranslation();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const [selectedDate, setSelectedDate] = React.useState<string>(getTodayString());
   const [attendanceMap, setAttendanceMap] = React.useState<Map<string, ChildAttendanceState>>(
     new Map()
@@ -413,12 +414,20 @@ export function TeacherAttendancePage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => discardAction(pending.id)}
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: t('confirmations.discard.attendanceTitle'),
+                      description: t('confirmations.discard.attendanceDescription'),
+                      confirmLabel: t('teacherAttendance.discard'),
+                    });
+                    if (ok) discardAction(pending.id);
+                  }}
                   className="inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-lg border border-border bg-card text-caption font-medium text-text-secondary"
                 >
                   <Trash2 className="w-4 h-4" />
                   {t('teacherAttendance.discard')}
                 </button>
+                {confirmDialog}
               </div>
             </div>
           ) : !hasChanges && pending ? (

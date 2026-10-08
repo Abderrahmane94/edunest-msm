@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Button, Input, StatusBadge,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Button, Input, StatusBadge, useConfirm,
 } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import {
@@ -50,6 +50,7 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
   const addContact = useAddEmergencyContact();
   const updateContact = useUpdateEmergencyContact();
   const removeContact = useRemoveEmergencyContact();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const relationshipOptions = [
     ...RELATIONSHIP_VALUES.map((v) => ({ value: v, label: t(`children.emergencyContacts.relationships.${v}`) })),
@@ -120,10 +121,16 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
     }
   }
 
-  async function handleRemoveContact(contactId: string) {
+  async function handleRemoveContact(contact: { id: string; name: string }) {
+    const ok = await confirm({
+      title: t('confirmations.emergencyContact.title', { name: contact.name }),
+      description: t('confirmations.emergencyContact.description', { child: childName }),
+      confirmLabel: t('common.delete'),
+    });
+    if (!ok) return;
     setSubmitError(null);
     try {
-      await removeContact.mutateAsync({ childId, contactId });
+      await removeContact.mutateAsync({ childId, contactId: contact.id });
     } catch (err) {
       setSubmitError(errorMessage(err, t));
     }
@@ -177,6 +184,7 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
 
   return (
     <>
+      {confirmDialog}
       <p className="text-body text-text-secondary mt-1 mb-4">
         {t('children.emergencyContacts.description', { name: childName })}
       </p>
@@ -299,8 +307,9 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
                     type="button"
                     variant="secondary"
                     size="sm"
-                    onClick={() => handleRemoveContact(contact.id)}
+                    onClick={() => handleRemoveContact(contact)}
                     disabled={removeContact.isPending}
+                    aria-label={t('common.delete')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

@@ -23,7 +23,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiClient, apiError } from '@/lib/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSchoolsList, type SchoolItem } from '@/hooks/useSchools';
-import { ErrorAlert, ListSkeleton, PageHeader } from '@/components/ui';
+import { ErrorAlert, ListSkeleton, PageHeader, useConfirm, type ConfirmOptions } from '@/components/ui';
+import type { TFunction } from 'i18next';
 
 export function useCreateSchool() {
   const queryClient = useQueryClient();
@@ -58,12 +59,30 @@ export function useToggleSchoolActive() {
   });
 }
 
+/** The question asked before a school is deactivated or reactivated. */
+export function schoolToggleConfirm(t: TFunction, school: { name: string; isActive: boolean }): ConfirmOptions {
+  return school.isActive
+    ? {
+        title: t('confirmations.school.deactivateTitle', { name: school.name }),
+        description: t('confirmations.school.deactivateDescription'),
+        confirmLabel: t('schools.deactivate'),
+        tone: 'danger',
+      }
+    : {
+        title: t('confirmations.school.activateTitle', { name: school.name }),
+        description: t('confirmations.school.activateDescription'),
+        confirmLabel: t('schools.activate'),
+        tone: 'default',
+      };
+}
+
 export function SchoolsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: schools, isLoading } = useSchoolsList();
   const toggleSchool = useToggleSchoolActive();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
 
@@ -132,8 +151,9 @@ export function SchoolsPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
+              if (!(await confirm(schoolToggleConfirm(t, school)))) return;
               toggleSchool.mutate(
                 { id: school.id, isActive: school.isActive },
                 { onError: (err) => setActionError(errorMessage(err, t)) }
@@ -157,6 +177,7 @@ export function SchoolsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {confirmDialog}
       <PageHeader
         title={t('schools.title')}
         description={t('schools.count', { count: (schools ?? []).length })}

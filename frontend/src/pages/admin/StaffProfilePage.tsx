@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { Upload, FileText, Download, Trash2 } from 'lucide-react';
-import { Button, PageHeader } from '@/components/ui';
+import { Button, PageHeader, useConfirm } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import { useUser } from '@/hooks/useUsers';
@@ -27,6 +27,7 @@ export function StaffProfilePage() {
   const updateProfile = useUpdateStaffProfile();
   const uploadDocument = useUploadStaffDocument();
   const deleteDocument = useDeleteStaffDocument();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const [formData, setFormData] = React.useState({
     position: '',
@@ -101,6 +102,12 @@ export function StaffProfilePage() {
 
   async function handleDeleteDocument() {
     if (!profile) return;
+    const ok = await confirm({
+      title: t('confirmations.staffDocument.title'),
+      description: t('confirmations.staffDocument.description'),
+      confirmLabel: t('common.delete'),
+    });
+    if (!ok) return;
     setDocumentError(null);
     try {
       await deleteDocument.mutateAsync({ profileId: profile.id, userId: userId! });
@@ -159,6 +166,7 @@ export function StaffProfilePage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {confirmDialog}
       <PageHeader
         back="/admin/staff"
         title={`${user.first_name} ${user.last_name}`}

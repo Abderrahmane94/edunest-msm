@@ -521,6 +521,64 @@
       "home": "Accueil"
     }
   },
+  "confirmations": {
+    "school": {
+      "deactivateTitle": "Désactiver l'école « ⁨{{name}}⁩ » ?",
+      "deactivateDescription": "Plus aucun de ses utilisateurs ne pourra se connecter tant que l'école n'est pas réactivée.",
+      "activateTitle": "Réactiver l'école « ⁨{{name}}⁩ » ?",
+      "activateDescription": "Ses utilisateurs pourront de nouveau se connecter."
+    },
+    "user": {
+      "deactivateTitle": "Désactiver le compte de ⁨{{name}}⁩ ?",
+      "deactivateDescription": "Cette personne ne pourra plus se connecter. Vous pourrez réactiver le compte à tout moment.",
+      "activateTitle": "Réactiver le compte de ⁨{{name}}⁩ ?",
+      "activateDescription": "Cette personne pourra de nouveau se connecter."
+    },
+    "subscription": {
+      "suspendTitle": "Suspendre l'abonnement de « ⁨{{name}}⁩ » ?",
+      "suspendDescription": "L'école ne pourra plus utiliser EduNest tant que l'abonnement n'est pas réactivé.",
+      "cancelTitle": "Annuler l'abonnement de « ⁨{{name}}⁩ » ?",
+      "cancelDescription": "L'annulation est définitive : il faudra attribuer un nouveau plan pour rétablir l'accès de l'école.",
+      "reactivateTitle": "Réactiver l'abonnement de « ⁨{{name}}⁩ » ?",
+      "reactivateDescription": "L'école retrouve l'accès à EduNest.",
+      "keep": "Garder l'abonnement"
+    },
+    "year": {
+      "activateTitle": "Faire de « ⁨{{name}}⁩ » l'année en cours ?",
+      "activateDescription": "Elle remplacera l'année en cours actuelle pour toute l'école."
+    },
+    "parentLink": {
+      "title": "Retirer ⁨{{name}}⁩ des parents de cet enfant ?",
+      "description": "Ce parent n'aura plus accès au suivi de ⁨{{child}}⁩. Vous pourrez le lier de nouveau plus tard.",
+      "remove": "Retirer le parent"
+    },
+    "emergencyContact": {
+      "title": "Supprimer le contact « ⁨{{name}}⁩ » ?",
+      "description": "Il sera retiré des contacts d'urgence de ⁨{{child}}⁩."
+    },
+    "medicalNote": {
+      "title": "Supprimer cette note médicale ?",
+      "description": "Elle sera retirée de la fiche de ⁨{{child}}⁩."
+    },
+    "staffDocument": {
+      "title": "Supprimer le document ?",
+      "description": "Le fichier sera supprimé définitivement."
+    },
+    "fee": {
+      "title": "Supprimer le frais « ⁨{{name}}⁩ » ?",
+      "description": "Les échéances existantes ne seront pas affectées."
+    },
+    "discard": {
+      "messageTitle": "Supprimer ce message ?",
+      "messageDescription": "Il n'a pas été envoyé et sera perdu.",
+      "consentTitle": "Abandonner cette réponse ?",
+      "consentDescription": "Votre réponse n'a pas été envoyée. Vous pourrez répondre de nouveau.",
+      "attendanceTitle": "Abandonner cet appel ?",
+      "attendanceDescription": "L'appel n'a pas été envoyé : ce qui a été saisi sera perdu.",
+      "reportTitle": "Abandonner ce rapport ?",
+      "reportDescription": "Le rapport n'a pas été envoyé : ce qui a été saisi sera perdu."
+    }
+  },
   "common": {
     "dangerZone": "Zone dangereuse",
     "filters": "Filtres",
@@ -2042,7 +2100,6 @@
       "editTitle": "Modifier le frais",
       "dialogDescription": "Configurez un frais ponctuel ou récurrent applicable aux inscriptions",
       "empty": "Aucun frais configuré",
-      "confirmDelete": "Supprimer le frais « {{name}} » ? Les échéances existantes ne seront pas affectées.",
       "oneShot": "Ponctuel",
       "scopeGeneral": "Non assigné",
       "scopeSchool": "Toute l'école",

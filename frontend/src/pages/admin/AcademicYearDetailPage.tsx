@@ -4,7 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Save, Trash2, CheckCircle, Circle } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { Button, PageHeader, StatusBadge } from '@/components/ui';
+import { Button, PageHeader, StatusBadge, useConfirm } from '@/components/ui';
+import { yearActivateConfirm } from './AcademicYearsPage';
 import { FormField } from '@/components/forms';
 import { Input } from '@/components/ui';
 import {
@@ -23,6 +24,7 @@ export function AcademicYearDetailPage() {
   const updateYear = useUpdateAcademicYear();
   const deleteYear = useDeleteAcademicYear();
   const activateYear = useActivateAcademicYear();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const [formData, setFormData] = React.useState({ name: '', start_date: '', end_date: '' });
   const [saveSuccess, setSaveSuccess] = React.useState(false);
@@ -70,6 +72,7 @@ export function AcademicYearDetailPage() {
 
   async function handleToggleActive() {
     if (!year) return;
+    if (!(await confirm(yearActivateConfirm(t, year.name)))) return;
     try {
       setSaveError(null);
       await activateYear.mutateAsync(year.id);
@@ -101,6 +104,7 @@ export function AcademicYearDetailPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {confirmDialog}
       <PageHeader
         back="/admin/academic-years"
         title={year.name}

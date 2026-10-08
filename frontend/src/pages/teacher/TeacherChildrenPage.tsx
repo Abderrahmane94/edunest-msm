@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { HeartPulse } from 'lucide-react';
-import { Avatar, StatusBadge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button } from '@/components/ui';
+import { Avatar, SearchInput, StatusBadge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button } from '@/components/ui';
 import { useTeacherClassroom, useClassroomChildren, type ClassroomChild } from '@/hooks/useTeacherClassroom';
 import { useMedicalNotes } from '@/hooks/useChildren';
 
@@ -84,8 +84,15 @@ export function TeacherChildrenPage() {
   const { data: children, isLoading: childrenLoading } = useClassroomChildren(classroom?.id);
   const [selectedChild, setSelectedChild] = React.useState<ClassroomChild | null>(null);
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [search, setSearch] = React.useState('');
 
   const isLoading = classroomLoading || childrenLoading;
+
+  const filteredChildren = React.useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) return children ?? [];
+    return (children ?? []).filter((c) => `${c.first_name} ${c.last_name}`.toLowerCase().includes(needle));
+  }, [children, search]);
 
   if (isLoading) {
     return (
@@ -123,9 +130,16 @@ export function TeacherChildrenPage() {
       </header>
 
       <div className="flex-1 px-4 py-3 max-w-2xl mx-auto w-full">
+        {children && children.length > 0 && (
+          <SearchInput onSearch={setSearch} placeholder={t('teacherChildren.search')} defaultValue={search} className="mb-3" />
+        )}
         <div className="space-y-3">
-          {children && children.length > 0 ? (
-            children.map((child) => (
+          {children && children.length > 0 && filteredChildren.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-body text-text-secondary">{t('teacherChildren.noMatch')}</p>
+            </div>
+          ) : children && children.length > 0 ? (
+            filteredChildren.map((child) => (
               <button
                 key={child.id}
                 type="button"

@@ -329,6 +329,15 @@
     "paymentsRecon": "التسوية"
   },
   "schools": {
+    "filters": {
+      "searchPlaceholder": "الاسم أو الولاية أو جهة الاتصال…",
+      "status": "الحالة",
+      "allStatuses": "الكل",
+      "wilaya": "الولاية",
+      "allWilayas": "كل الولايات",
+      "summary": "{{count}} مدرسة",
+      "noMatch": "لا توجد مدرسة تطابق هذه الفلاتر."
+    },
     "title": "إدارة المدارس",
     "create": "مدرسة جديدة",
     "noSchools": "لا توجد مدارس مسجلة",
@@ -1498,6 +1507,13 @@
       "confirmDelete": "تأكيد الحذف؟"
     },
     "announcements": {
+      "filters": {
+        "searchPlaceholder": "العنوان أو الكاتب…",
+        "target": "المستلمون",
+        "allTargets": "الكل",
+        "summary": "{{count}} إعلان",
+        "noMatch": "لا يوجد إعلان يطابق هذه الفلاتر."
+      },
       "tab": "الإعلانات",
       "notFound": "الإعلان غير موجود",
       "create": "إعلان جديد",
@@ -1522,6 +1538,21 @@
       }
     },
     "events": {
+      "filters": {
+        "searchPlaceholder": "العنوان أو المكان…",
+        "period": "الفترة",
+        "allPeriods": "الكل",
+        "upcoming": "القادمة",
+        "past": "الماضية",
+        "target": "القسم",
+        "allTargets": "الكل",
+        "consent": "الموافقة",
+        "allConsent": "الكل",
+        "withConsent": "تتطلب موافقة",
+        "withoutConsent": "بدون موافقة",
+        "summary": "{{count}} فعالية",
+        "noMatch": "لا توجد فعالية تطابق هذه الفلاتر."
+      },
       "tab": "الفعاليات",
       "create": "فعالية جديدة",
       "noEvents": "لا توجد فعاليات مخططة",
@@ -1620,9 +1651,14 @@
     "offlineUnavailable": "هذه الصفحة غير متاحة بعد دون اتصال. افتحها مرة واحدة مع الاتصال لتتمكن من استخدامها لاحقًا دون شبكة."
   },
   "teacherChildren": {
+    "noMatch": "لا يوجد طفل يطابق هذا البحث.",
+    "search": "اسم الطفل…",
     "title": "أطفال قسمي"
   },
   "messages": {
+    "noMatch": "لا توجد محادثة مطابقة.",
+    "searchStaff": "اسم الزميل…",
+    "searchParents": "الولي أو الطفل…",
     "title": "الرسائل",
     "noConversations": "لا توجد محادثات حتى الآن",
     "selectConversation": "اختر محادثة للبدء",

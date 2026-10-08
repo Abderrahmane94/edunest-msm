@@ -23,7 +23,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiClient, apiError } from '@/lib/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSchoolsList, type SchoolItem } from '@/hooks/useSchools';
-import { ErrorAlert, ListSkeleton, PageHeader, useConfirm, type ConfirmOptions } from '@/components/ui';
+import { ErrorAlert, FilterBar, ListSkeleton, PageHeader, useConfirm, type ConfirmOptions } from '@/components/ui';
 import type { TFunction } from 'i18next';
 
 export function useCreateSchool() {
@@ -85,6 +85,31 @@ export function SchoolsPage() {
   const { confirm, dialog: confirmDialog } = useConfirm();
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
+
+  // ─── Filters (the platform has few schools, so filter here) ───
+  const [search, setSearch] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState<'' | 'active' | 'inactive'>('');
+  const [wilayaFilter, setWilayaFilter] = React.useState('');
+
+  const wilayaOptions = React.useMemo(
+    () => [...new Set((schools ?? []).map((s) => s.wilaya).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+    [schools],
+  );
+
+  const filteredSchools = React.useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return (schools ?? []).filter((s) => {
+      if (needle && ![s.name, s.wilaya, s.contactEmail, s.contactPhone].some((v) => (v ?? '').toLowerCase().includes(needle))) {
+        return false;
+      }
+      if (statusFilter === 'active' && !s.isActive) return false;
+      if (statusFilter === 'inactive' && s.isActive) return false;
+      if (wilayaFilter && s.wilaya !== wilayaFilter) return false;
+      return true;
+    });
+  }, [schools, search, statusFilter, wilayaFilter]);
+
+  const hasFilters = !!(search || statusFilter || wilayaFilter);
 
   if (user?.role !== 'super_admin') {
     return (
@@ -189,13 +214,49 @@ export function SchoolsPage() {
       {isLoading ? (
         <ListSkeleton rows={3} />
       ) : (
-      <DataTable<SchoolItem>
-        columns={columns}
-        data={schools ?? []}
-        keyExtractor={(s) => s.id}
-        onRowClick={(s) => navigate(`/admin/schools/${s.id}`)}
-        emptyMessage={t('schools.noSchools')}
-      />
+        <>
+          {(schools ?? []).length > 0 && (
+            <FilterBar
+              search={{ onSearch: setSearch, placeholder: t('schools.filters.searchPlaceholder'), defaultValue: search }}
+              activeCount={[statusFilter, wilayaFilter].filter(Boolean).length}
+              summary={t('schools.filters.summary', { count: filteredSchools.length })}
+              onReset={() => {
+                setStatusFilter('');
+                setWilayaFilter('');
+              }}
+              columns={2}
+            >
+              <FormSelect
+                label={t('schools.filters.status')}
+                name="schools-filter-status"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as '' | 'active' | 'inactive')}
+                options={[
+                  { value: '', label: t('schools.filters.allStatuses') },
+                  { value: 'active', label: t('schools.active') },
+                  { value: 'inactive', label: t('schools.inactive') },
+                ]}
+              />
+              <FormSelect
+                label={t('schools.filters.wilaya')}
+                name="schools-filter-wilaya"
+                value={wilayaFilter}
+                onChange={(e) => setWilayaFilter(e.target.value)}
+                options={[
+                  { value: '', label: t('schools.filters.allWilayas') },
+                  ...wilayaOptions.map((w) => ({ value: w, label: w })),
+                ]}
+              />
+            </FilterBar>
+          )}
+          <DataTable<SchoolItem>
+            columns={columns}
+            data={filteredSchools}
+            keyExtractor={(s) => s.id}
+            onRowClick={(s) => navigate(`/admin/schools/${s.id}`)}
+            emptyMessage={hasFilters ? t('schools.filters.noMatch') : t('schools.noSchools')}
+          />
+        </>
       )}
 
       <CreateSchoolDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />

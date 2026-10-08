@@ -16,7 +16,7 @@ import {
   Baby,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Avatar, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui';
+import { Avatar, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, SearchInput } from '@/components/ui';
 import { MessageBubble } from '@/components/messaging/MessageBubble';
 import { PendingMessageBubble } from '@/components/messaging/PendingMessageBubble';
 import { sendTextMessage, usePendingMessages, type MessagePayload } from '@/hooks/useMessageSync';
@@ -136,6 +136,12 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
   const attachMenuRef = React.useRef<HTMLDivElement>(null);
 
   const { data: conversations = [], isLoading: conversationsLoading } = useConversations();
+  const [search, setSearch] = React.useState('');
+  const shownConversations = React.useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) return conversations;
+    return conversations.filter((c) => [c.parent_name, c.child_name].some((v) => (v ?? '').toLowerCase().includes(needle)));
+  }, [conversations, search]);
   const { data: messages = [], isLoading: messagesLoading } = useMessages(activeConversationId ?? undefined);
 
   const { pending: pendingMessages, syncing } = usePendingMessages('parent', activeConversationId);
@@ -263,8 +269,15 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
             </p>
           </div>
         ) : (
+          <>
+          <div className="p-3 border-b border-border">
+            <SearchInput onSearch={setSearch} placeholder={t('messages.searchParents')} defaultValue={search} />
+          </div>
+          {shownConversations.length === 0 && (
+            <p className="p-4 text-body text-text-secondary text-center">{t('messages.noMatch')}</p>
+          )}
           <ul role="list" className="divide-y divide-border">
-            {conversations.map((conv) => (
+            {shownConversations.map((conv) => (
               <li key={conv.id}>
                 <button
                   type="button"
@@ -293,6 +306,7 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
               </li>
             ))}
           </ul>
+          </>
         )}
       </aside>
 
@@ -380,6 +394,7 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
   const attachMenuRef = React.useRef<HTMLDivElement>(null);
 
   const { data: conversations = [], isLoading: conversationsLoading } = useStaffConversations();
+  const [search, setSearch] = React.useState('');
   const { data: messages = [], isLoading: messagesLoading } = useStaffMessages(activeConversationId ?? undefined);
 
   const { pending: pendingMessages, syncing } = usePendingMessages('staff', activeConversationId);
@@ -400,6 +415,15 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
   );
 
   const activeOther = activeConversation ? getOtherParticipant(activeConversation) : null;
+
+  const shownConversations = React.useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) return conversations;
+    return conversations.filter((c) => {
+      const other = getOtherParticipant(c);
+      return `${other.firstName} ${other.lastName}`.toLowerCase().includes(needle);
+    });
+  }, [conversations, search, getOtherParticipant]);
 
   // Socket room
   React.useEffect(() => {
@@ -543,8 +567,15 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
             </button>
           </div>
         ) : (
+          <>
+          <div className="p-3 border-b border-border">
+            <SearchInput onSearch={setSearch} placeholder={t('messages.searchStaff')} defaultValue={search} />
+          </div>
+          {shownConversations.length === 0 && (
+            <p className="p-4 text-body text-text-secondary text-center">{t('messages.noMatch')}</p>
+          )}
           <ul role="list" className="divide-y divide-border">
-            {conversations.map((conv) => {
+            {shownConversations.map((conv) => {
               const other = getOtherParticipant(conv);
               const fullName = `${other.firstName} ${other.lastName}`;
               return (
@@ -581,6 +612,7 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
               );
             })}
           </ul>
+          </>
         )}
       </aside>
 

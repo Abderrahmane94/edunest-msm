@@ -24,7 +24,7 @@ import {
 import type { Column } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { FormSelect } from '@/components/forms';
-import { Input, PageHeader, Tabs } from '@/components/ui';
+import { FilterBar, Input, PageHeader, Tabs } from '@/components/ui';
 import { MessageBubble } from '@/components/messaging/MessageBubble';
 import { useClassrooms, type Classroom } from '@/hooks/useClassrooms';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
@@ -130,6 +130,29 @@ function AnnouncementsTab() {
   const navigate = useNavigate();
   const { data: announcements, isLoading } = useAnnouncements();
 
+  const [search, setSearch] = React.useState('');
+  const [targetFilter, setTargetFilter] = React.useState('');
+
+  const targetOptions = React.useMemo(
+    () =>
+      [...new Set((announcements ?? []).map((a) => a.classroom_name).filter((n): n is string => !!n))].sort((a, b) =>
+        a.localeCompare(b)
+      ),
+    [announcements]
+  );
+
+  const filtered = React.useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return (announcements ?? []).filter((a) => {
+      if (needle && ![a.title, a.created_by_name].some((v) => (v ?? '').toLowerCase().includes(needle))) return false;
+      if (targetFilter === '__school__' && a.classroom_name) return false;
+      if (targetFilter && targetFilter !== '__school__' && a.classroom_name !== targetFilter) return false;
+      return true;
+    });
+  }, [announcements, search, targetFilter]);
+
+  const hasFilters = !!(search || targetFilter);
+
   const columns: Column<Announcement>[] = [
     {
       key: 'title',
@@ -180,13 +203,36 @@ function AnnouncementsTab() {
   }
 
   return (
-    <DataTable<Announcement>
-      columns={columns}
-      data={announcements ?? []}
-      keyExtractor={(row) => row.id}
-      onRowClick={(row) => navigate(`/admin/communication/announcements/${row.id}`)}
-      emptyMessage={t('communication.announcements.noAnnouncements')}
-    />
+    <div className="space-y-4">
+      {(announcements ?? []).length > 0 && (
+        <FilterBar
+          search={{ onSearch: setSearch, placeholder: t('communication.announcements.filters.searchPlaceholder'), defaultValue: search }}
+          activeCount={targetFilter ? 1 : 0}
+          summary={t('communication.announcements.filters.summary', { count: filtered.length })}
+          onReset={() => setTargetFilter('')}
+          columns={3}
+        >
+          <FormSelect
+            label={t('communication.announcements.filters.target')}
+            name="announcements-filter-target"
+            value={targetFilter}
+            onChange={(e) => setTargetFilter(e.target.value)}
+            options={[
+              { value: '', label: t('communication.announcements.filters.allTargets') },
+              { value: '__school__', label: t('communication.announcements.schoolWide') },
+              ...targetOptions.map((name) => ({ value: name, label: name })),
+            ]}
+          />
+        </FilterBar>
+      )}
+      <DataTable<Announcement>
+        columns={columns}
+        data={filtered}
+        keyExtractor={(row) => row.id}
+        onRowClick={(row) => navigate(`/admin/communication/announcements/${row.id}`)}
+        emptyMessage={hasFilters ? t('communication.announcements.filters.noMatch') : t('communication.announcements.noAnnouncements')}
+      />
+    </div>
   );
 }
 
@@ -202,6 +248,36 @@ function EventsTab({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: events, isLoading } = useEvents();
+
+  const [search, setSearch] = React.useState('');
+  const [periodFilter, setPeriodFilter] = React.useState<'' | 'upcoming' | 'past'>('');
+  const [targetFilter, setTargetFilter] = React.useState('');
+  const [consentFilter, setConsentFilter] = React.useState<'' | 'with' | 'without'>('');
+
+  const targetOptions = React.useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const e of events ?? []) for (const c of e.classrooms) byId.set(c.id, c.name);
+    return [...byId].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [events]);
+
+  const filtered = React.useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    const now = Date.now();
+    return (events ?? []).filter((e) => {
+      if (needle && ![e.title, e.location].some((v) => (v ?? '').toLowerCase().includes(needle))) return false;
+      // An event is past once it has ended.
+      const end = new Date(e.end_datetime || e.start_datetime).getTime();
+      if (periodFilter === 'upcoming' && end < now) return false;
+      if (periodFilter === 'past' && end >= now) return false;
+      if (targetFilter === '__school__' && e.classrooms.length > 0) return false;
+      if (targetFilter && targetFilter !== '__school__' && !e.classrooms.some((c) => c.id === targetFilter)) return false;
+      if (consentFilter === 'with' && !e.requires_consent) return false;
+      if (consentFilter === 'without' && e.requires_consent) return false;
+      return true;
+    });
+  }, [events, search, periodFilter, targetFilter, consentFilter]);
+
+  const hasFilters = !!(search || periodFilter || targetFilter || consentFilter);
 
   const columns: Column<SchoolEvent>[] = [
     {
@@ -304,12 +380,59 @@ function EventsTab({
 
   return (
     <div className="space-y-4">
+      {(events ?? []).length > 0 && (
+        <FilterBar
+          search={{ onSearch: setSearch, placeholder: t('communication.events.filters.searchPlaceholder'), defaultValue: search }}
+          activeCount={[periodFilter, targetFilter, consentFilter].filter(Boolean).length}
+          summary={t('communication.events.filters.summary', { count: filtered.length })}
+          onReset={() => {
+            setPeriodFilter('');
+            setTargetFilter('');
+            setConsentFilter('');
+          }}
+          columns={3}
+        >
+          <FormSelect
+            label={t('communication.events.filters.period')}
+            name="events-filter-period"
+            value={periodFilter}
+            onChange={(e) => setPeriodFilter(e.target.value as '' | 'upcoming' | 'past')}
+            options={[
+              { value: '', label: t('communication.events.filters.allPeriods') },
+              { value: 'upcoming', label: t('communication.events.filters.upcoming') },
+              { value: 'past', label: t('communication.events.filters.past') },
+            ]}
+          />
+          <FormSelect
+            label={t('communication.events.filters.target')}
+            name="events-filter-target"
+            value={targetFilter}
+            onChange={(e) => setTargetFilter(e.target.value)}
+            options={[
+              { value: '', label: t('communication.events.filters.allTargets') },
+              { value: '__school__', label: t('communication.announcements.allSchool') },
+              ...targetOptions.map(([value, label]) => ({ value, label })),
+            ]}
+          />
+          <FormSelect
+            label={t('communication.events.filters.consent')}
+            name="events-filter-consent"
+            value={consentFilter}
+            onChange={(e) => setConsentFilter(e.target.value as '' | 'with' | 'without')}
+            options={[
+              { value: '', label: t('communication.events.filters.allConsent') },
+              { value: 'with', label: t('communication.events.filters.withConsent') },
+              { value: 'without', label: t('communication.events.filters.withoutConsent') },
+            ]}
+          />
+        </FilterBar>
+      )}
       <DataTable<SchoolEvent>
         columns={columns}
-        data={events ?? []}
+        data={filtered}
         keyExtractor={(row) => row.id}
         onRowClick={(row) => navigate(`/admin/communication/events/${row.id}`)}
-        emptyMessage={t('communication.events.noEvents')}
+        emptyMessage={hasFilters ? t('communication.events.filters.noMatch') : t('communication.events.noEvents')}
       />
 
       {/* Consent tracking dashboard */}

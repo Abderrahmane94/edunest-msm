@@ -329,6 +329,15 @@
     "paymentsRecon": "Rapprochement"
   },
   "schools": {
+    "filters": {
+      "searchPlaceholder": "Nom, wilaya ou contact…",
+      "status": "Statut",
+      "allStatuses": "Toutes",
+      "wilaya": "Wilaya",
+      "allWilayas": "Toutes les wilayas",
+      "summary": "{{count}} école(s)",
+      "noMatch": "Aucune école ne correspond à ces filtres."
+    },
     "title": "Gestion des écoles",
     "create": "Nouvelle école",
     "noSchools": "Aucune école enregistrée",
@@ -1493,6 +1502,13 @@
       "confirmDelete": "Confirmer la suppression ?"
     },
     "announcements": {
+      "filters": {
+        "searchPlaceholder": "Titre ou auteur…",
+        "target": "Destinataires",
+        "allTargets": "Toutes",
+        "summary": "{{count}} annonce(s)",
+        "noMatch": "Aucune annonce ne correspond à ces filtres."
+      },
       "tab": "Annonces",
       "notFound": "Annonce introuvable",
       "create": "Nouvelle annonce",
@@ -1517,6 +1533,21 @@
       }
     },
     "events": {
+      "filters": {
+        "searchPlaceholder": "Titre ou lieu…",
+        "period": "Période",
+        "allPeriods": "Tous",
+        "upcoming": "À venir",
+        "past": "Passés",
+        "target": "Classe",
+        "allTargets": "Toutes",
+        "consent": "Autorisation",
+        "allConsent": "Tous",
+        "withConsent": "Avec autorisation",
+        "withoutConsent": "Sans autorisation",
+        "summary": "{{count}} événement(s)",
+        "noMatch": "Aucun événement ne correspond à ces filtres."
+      },
       "tab": "Événements",
       "create": "Nouvel événement",
       "noEvents": "Aucun événement planifié",
@@ -1615,9 +1646,14 @@
     "offlineUnavailable": "Cette page n'est pas encore disponible hors ligne. Ouvrez-la une fois avec la connexion pour pouvoir l'utiliser ensuite sans réseau."
   },
   "teacherChildren": {
+    "noMatch": "Aucun enfant ne correspond à cette recherche.",
+    "search": "Nom de l'enfant…",
     "title": "Enfants de ma classe"
   },
   "messages": {
+    "noMatch": "Aucune conversation ne correspond.",
+    "searchStaff": "Nom du collègue…",
+    "searchParents": "Parent ou enfant…",
     "title": "Messages",
     "noConversations": "Aucune conversation pour le moment",
     "selectConversation": "Sélectionnez une conversation pour commencer",

@@ -516,6 +516,9 @@
     }
   },
   "common": {
+    "filters": "التصفية",
+    "resetFilters": "إعادة ضبط التصفية",
+    "clearSearch": "مسح البحث",
     "save": "حفظ",
     "saved": "تم حفظ التغييرات",
     "cancel": "إلغاء",

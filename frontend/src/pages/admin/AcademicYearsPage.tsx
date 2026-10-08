@@ -23,6 +23,7 @@ import {
   useCreateAcademicYear,
   useActivateAcademicYear,
 } from '@/hooks/useAcademicYears';
+import { EmptyState, ListSkeleton, PageHeader } from '@/components/ui';
 
 function CreateAcademicYearDialog({
   open,
@@ -179,48 +180,27 @@ export function AcademicYearsPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <h1 className="text-page-title font-semibold text-text-heading">
-            {t('academicYears.title')}
-          </h1>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-6">
-          <div className="animate-pulse space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-16 bg-hover rounded-md" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const years = academicYears ?? [];
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-page-title font-semibold text-text-heading">
-          {t('academicYears.title')}
-        </h1>
-        <CreateButton label={t('academicYears.create')} onClick={() => setCreateDialogOpen(true)} />
-      </div>
+      <PageHeader
+        title={t('academicYears.title')}
+        actions={<CreateButton label={t('academicYears.create')} onClick={() => setCreateDialogOpen(true)} />}
+      />
 
       <ErrorAlert message={actionError} onDismiss={() => setActionError(null)} />
 
-      {years.length === 0 ? (
-        <div className="bg-card border border-border rounded-lg p-8 text-center">
-          <p className="text-body text-text-secondary">{t('academicYears.noYears')}</p>
-        </div>
+      {isLoading ? (
+        <ListSkeleton rows={3} />
+      ) : years.length === 0 ? (
+        <EmptyState message={t('academicYears.noYears')} />
       ) : (
         <div className="space-y-3">
           {years.map((year) => (
             <div
               key={year.id}
-              className="bg-card border border-border rounded-lg p-4 flex items-center justify-between hover:bg-hover transition-colors duration-150 cursor-pointer"
+              className="bg-card border border-border rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-hover transition-colors duration-150 cursor-pointer"
               onClick={() => navigate(`/admin/academic-years/${year.id}`)}
             >
               <div className="flex items-center gap-3">
@@ -240,7 +220,7 @@ export function AcademicYearsPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <StatusBadge variant={year.is_active ? 'present' : 'draft'}>
+                <StatusBadge variant={year.is_active ? 'success' : 'neutral'}>
                   {year.is_active ? t('academicYears.active') : t('academicYears.inactive')}
                 </StatusBadge>
                 {!year.is_active && (

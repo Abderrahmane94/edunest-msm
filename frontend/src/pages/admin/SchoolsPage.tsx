@@ -23,6 +23,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiClient, apiError } from '@/lib/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSchoolsList, type SchoolItem } from '@/hooks/useSchools';
+import { ErrorAlert, ListSkeleton, PageHeader } from '@/components/ui';
 
 export function useCreateSchool() {
   const queryClient = useQueryClient();
@@ -154,40 +155,19 @@ export function SchoolsPage() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <h1 className="text-page-title font-semibold text-text-heading">{t('schools.title')}</h1>
-        <div className="bg-card border border-border rounded-lg p-6">
-          <div className="animate-pulse space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-14 bg-hover rounded-md" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-page-title font-semibold text-text-heading">{t('schools.title')}</h1>
-          <p className="text-caption text-text-secondary mt-1">
-            {t('schools.count', { count: (schools ?? []).length })}
-          </p>
-        </div>
-        <CreateButton label={t('schools.create')} onClick={() => setCreateDialogOpen(true)} />
-      </div>
+      <PageHeader
+        title={t('schools.title')}
+        description={t('schools.count', { count: (schools ?? []).length })}
+        actions={<CreateButton label={t('schools.create')} onClick={() => setCreateDialogOpen(true)} />}
+      />
 
-      {actionError && (
-        <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
-          <span>{actionError}</span>
-          <button onClick={() => setActionError(null)} className="text-danger hover:opacity-70 text-lg leading-none">&times;</button>
-        </div>
-      )}
+      <ErrorAlert message={actionError} onDismiss={() => setActionError(null)} />
 
+      {isLoading ? (
+        <ListSkeleton rows={3} />
+      ) : (
       <DataTable<SchoolItem>
         columns={columns}
         data={schools ?? []}
@@ -195,6 +175,7 @@ export function SchoolsPage() {
         onRowClick={(s) => navigate(`/admin/schools/${s.id}`)}
         emptyMessage={t('schools.noSchools')}
       />
+      )}
 
       <CreateSchoolDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
     </div>

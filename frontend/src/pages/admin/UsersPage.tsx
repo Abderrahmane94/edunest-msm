@@ -3,33 +3,24 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '@/lib/formatters';
-import { Shield, ShieldOff, Mail, X } from 'lucide-react';
-import { Button, CreateButton, DataTable, StatusBadge } from '@/components/ui';
+import { Shield, ShieldOff, Mail } from 'lucide-react';
+import {
+  Button,
+  CreateButton,
+  DataTable,
+  ErrorAlert,
+  FilterBar,
+  ListSkeleton,
+  PageHeader,
+  RoleBadge,
+  StatusBadge,
+} from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useUsers, useToggleUserActive, type User } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
 import { InviteUserDialog } from './InviteUserDialog';
 import { InviteByEmailDialog } from './InviteByEmailDialog';
-
-function RoleBadge({ role }: { role: string }) {
-  const { t } = useTranslation();
-
-  const roleStyles: Record<string, string> = {
-    admin: 'bg-[var(--color-role-admin-bg,#EDE9FE)] text-[var(--color-role-admin,#5B21B6)]',
-    teacher: 'bg-[var(--color-role-teacher-bg,#DBEAFE)] text-[var(--color-role-teacher,#1D4ED8)]',
-    parent: 'bg-[var(--color-role-parent-bg,#FCE7F3)] text-[var(--color-role-parent,#9D174D)]',
-    super_admin: 'bg-[var(--color-role-admin-bg,#EDE9FE)] text-[var(--color-role-admin,#5B21B6)]',
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center px-1.5 py-0.5 rounded text-micro font-medium ${roleStyles[role] || 'bg-subtle text-text-secondary'}`}
-    >
-      {t(`users.roles.${role}`)}
-    </span>
-  );
-}
 
 export function UsersPage() {
   const { t } = useTranslation();
@@ -169,119 +160,84 @@ export function UsersPage() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <h1 className="text-page-title font-semibold text-text-heading">
-            {t('users.title')}
-          </h1>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-6">
-          <div className="animate-pulse space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-12 bg-hover rounded-md" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-page-title font-semibold text-text-heading">
-          {t('users.title')}
-        </h1>
-        <div className="flex items-center gap-2">
-          {!isSuperAdmin && (
-            <Button variant="secondary" onClick={() => setInviteByEmailDialogOpen(true)}>
-              <Mail className="w-4 h-4" />
-              {t('users.invite')}
-            </Button>
-          )}
-          <CreateButton label={t('users.create')} onClick={() => setInviteDialogOpen(true)} />
-        </div>
-      </div>
-
-      {actionError && (
-        <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 text-body text-danger flex items-center justify-between">
-          <span>{actionError}</span>
-          <button onClick={() => setActionError(null)} className="text-danger hover:opacity-70 text-lg leading-none">&times;</button>
-        </div>
-      )}
-
-      {/* Filters (search is in the table header) */}
-      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <FormSelect
-            label={t('users.filters.role')}
-            name="users-filter-role"
-            value={roleFilter}
-            onChange={(e) => {
-              setRoleFilter(e.target.value as '' | 'admin' | 'teacher' | 'parent');
-              setPage(1);
-            }}
-            options={[
-              { value: '', label: t('users.filters.allRoles') },
-              { value: 'admin', label: t('users.roles.admin') },
-              { value: 'teacher', label: t('users.roles.teacher') },
-              { value: 'parent', label: t('users.roles.parent') },
-            ]}
-          />
-          <FormSelect
-            label={t('users.filters.status')}
-            name="users-filter-status"
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value as '' | 'active' | 'inactive');
-              setPage(1);
-            }}
-            options={[
-              { value: '', label: t('users.filters.allStatuses') },
-              { value: 'active', label: t('users.active') },
-              { value: 'inactive', label: t('users.inactive') },
-            ]}
-          />
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-caption text-text-secondary">{t('users.filters.summary', { count: total })}</p>
-          {hasFilters && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setRoleFilter('');
-                setStatusFilter('');
-                setPage(1);
-              }}
-            >
-              <X className="w-4 h-4" />
-              {t('users.filters.reset')}
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <DataTable<User>
-        columns={columns}
-        data={users}
-        keyExtractor={(user) => user.id}
-        onRowClick={(user) => navigate(`/admin/users/${user.id}`)}
-        searchable
-        searchPlaceholder={t('users.searchPlaceholder')}
-        onSearch={handleSearch}
-        sortColumn={sortColumn}
-        sortDirection={sortDirection}
-        onSort={handleSort}
-        page={page}
-        pageSize={pageSize}
-        total={total}
-        onPageChange={setPage}
-        emptyMessage={hasFilters || search ? t('users.filters.noMatch') : t('users.noUsers')}
+      <PageHeader
+        title={t('users.title')}
+        actions={
+          <>
+            {!isSuperAdmin && (
+              <Button variant="secondary" onClick={() => setInviteByEmailDialogOpen(true)}>
+                <Mail className="w-4 h-4" />
+                {t('users.invite')}
+              </Button>
+            )}
+            <CreateButton label={t('users.create')} onClick={() => setInviteDialogOpen(true)} />
+          </>
+        }
       />
+
+      <ErrorAlert message={actionError} onDismiss={() => setActionError(null)} />
+
+      <FilterBar
+        search={{ onSearch: handleSearch, placeholder: t('users.searchPlaceholder'), defaultValue: search }}
+        activeCount={(roleFilter ? 1 : 0) + (statusFilter ? 1 : 0)}
+        summary={t('users.filters.summary', { count: total })}
+        onReset={() => {
+          setRoleFilter('');
+          setStatusFilter('');
+          setPage(1);
+        }}
+      >
+        <FormSelect
+          label={t('users.filters.role')}
+          name="users-filter-role"
+          value={roleFilter}
+          onChange={(e) => {
+            setRoleFilter(e.target.value as '' | 'admin' | 'teacher' | 'parent');
+            setPage(1);
+          }}
+          options={[
+            { value: '', label: t('users.filters.allRoles') },
+            { value: 'admin', label: t('users.roles.admin') },
+            { value: 'teacher', label: t('users.roles.teacher') },
+            { value: 'parent', label: t('users.roles.parent') },
+          ]}
+        />
+        <FormSelect
+          label={t('users.filters.status')}
+          name="users-filter-status"
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value as '' | 'active' | 'inactive');
+            setPage(1);
+          }}
+          options={[
+            { value: '', label: t('users.filters.allStatuses') },
+            { value: 'active', label: t('users.active') },
+            { value: 'inactive', label: t('users.inactive') },
+          ]}
+        />
+      </FilterBar>
+
+      {isLoading ? (
+        <ListSkeleton />
+      ) : (
+        <DataTable<User>
+          columns={columns}
+          data={users}
+          keyExtractor={(user) => user.id}
+          onRowClick={(user) => navigate(`/admin/users/${user.id}`)}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+          emptyMessage={hasFilters || search ? t('users.filters.noMatch') : t('users.noUsers')}
+        />
+      )}
 
       <InviteUserDialog
         open={inviteDialogOpen}

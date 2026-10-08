@@ -24,7 +24,7 @@ import {
 import type { Column } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { FormSelect } from '@/components/forms';
-import { Input } from '@/components/ui';
+import { Input, PageHeader, Tabs } from '@/components/ui';
 import { MessageBubble } from '@/components/messaging/MessageBubble';
 import { useClassrooms, type Classroom } from '@/hooks/useClassrooms';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
@@ -53,6 +53,7 @@ import {
   type StaffMessage,
 } from '@/hooks/useStaffMessaging';
 import { messagePreview } from '@/components/messaging/messagePreview';
+import { useTabParam } from '@/hooks/useTabParam';
 
 type TabMode = 'announcements' | 'events' | 'messages' | 'staff';
 
@@ -61,75 +62,35 @@ const VALID_TABS: TabMode[] = ['announcements', 'events', 'messages', 'staff'];
 export function CommunicationPage() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const tabParam = searchParams.get('tab');
-  const initialTab: TabMode = VALID_TABS.includes(tabParam as TabMode) ? (tabParam as TabMode) : 'announcements';
+  const [activeTab, setActiveTab] = useTabParam<TabMode>(VALID_TABS, 'announcements');
   const initialConversationId = searchParams.get('conversationId') ?? undefined;
-  const [activeTab, setActiveTab] = React.useState<TabMode>(initialTab);
   const [showAnnouncementDialog, setShowAnnouncementDialog] = React.useState(false);
   const [showEventDialog, setShowEventDialog] = React.useState(false);
   const [selectedEventId, setSelectedEventId] = React.useState<string | undefined>(undefined);
 
-  // Re-sync the active tab when the URL's ?tab= changes (e.g. navigating here
-  // again from a notification while this page is already mounted) without
-  // fighting manual tab clicks, which don't touch the URL.
-  React.useEffect(() => {
-    if (tabParam && VALID_TABS.includes(tabParam as TabMode)) {
-      setActiveTab(tabParam as TabMode);
-    }
-  }, [tabParam]);
-
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Page header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-page-title font-semibold text-text-heading">
-          {t('communication.title')}
-        </h1>
-        <div>
-          {activeTab === 'announcements' && (
+      <PageHeader
+        title={t('communication.title')}
+        actions={
+          activeTab === 'announcements' ? (
             <CreateButton label={t('communication.announcements.create')} onClick={() => setShowAnnouncementDialog(true)} />
-          )}
-          {activeTab === 'events' && (
+          ) : activeTab === 'events' ? (
             <CreateButton label={t('communication.events.create')} onClick={() => setShowEventDialog(true)} />
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
-      {/* Tab switcher */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Button
-          variant={activeTab === 'announcements' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setActiveTab('announcements')}
-        >
-          <Megaphone className="w-4 h-4" />
-          {t('communication.announcements.tab')}
-        </Button>
-        <Button
-          variant={activeTab === 'events' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setActiveTab('events')}
-        >
-          <Calendar className="w-4 h-4" />
-          {t('communication.events.tab')}
-        </Button>
-        <Button
-          variant={activeTab === 'messages' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setActiveTab('messages')}
-        >
-          <MessageCircle className="w-4 h-4" />
-          {t('communication.messages.tab')}
-        </Button>
-        <Button
-          variant={activeTab === 'staff' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setActiveTab('staff')}
-        >
-          <Users className="w-4 h-4" />
-          {t('communication.staffMessages.tab')}
-        </Button>
-      </div>
+      <Tabs
+        value={activeTab}
+        onChange={setActiveTab}
+        items={[
+          { value: 'announcements', label: t('communication.announcements.tab'), icon: <Megaphone /> },
+          { value: 'events', label: t('communication.events.tab'), icon: <Calendar /> },
+          { value: 'messages', label: t('communication.messages.tab'), icon: <MessageCircle /> },
+          { value: 'staff', label: t('communication.staffMessages.tab'), icon: <Users /> },
+        ]}
+      />
 
       {/* Tab content */}
       {activeTab === 'announcements' && <AnnouncementsTab />}

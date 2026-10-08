@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { UserCog } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { DataTable, StatusBadge } from '@/components/ui';
+import { DataTable, FilterBar, ListSkeleton, PageHeader, RoleBadge, StatusBadge } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { useUsers, type User } from '@/hooks/useUsers';
 import { useStaffList, type StaffProfile } from '@/hooks/useStaff';
@@ -71,11 +70,7 @@ export function StaffListPage() {
     {
       key: 'role',
       header: t('staff.columns.role'),
-      render: (row) => (
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-micro font-medium bg-[var(--color-role-teacher-bg,#DBEAFE)] text-[var(--color-role-teacher,#1D4ED8)]">
-          {t(`users.roles.${row.user.role}`)}
-        </span>
-      ),
+      render: (row) => <RoleBadge role={row.user.role} />,
     },
     {
       key: 'position',
@@ -121,49 +116,27 @@ export function StaffListPage() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <UserCog className="w-6 h-6 text-primary" />
-          <h1 className="text-page-title font-semibold text-text-heading">
-            {t('staff.title')}
-          </h1>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-6">
-          <div className="animate-pulse space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-12 bg-hover rounded-md" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center gap-3">
-        <UserCog className="w-6 h-6 text-primary" />
-        <h1 className="text-page-title font-semibold text-text-heading">
-          {t('staff.title')}
-        </h1>
-      </div>
+      <PageHeader title={t('staff.title')} />
 
+      <FilterBar search={{ onSearch: handleSearch, placeholder: t('staff.searchPlaceholder') }} />
+
+      {isLoading ? (
+        <ListSkeleton />
+      ) : (
       <DataTable<StaffRow>
         columns={columns}
         data={pageRows}
         keyExtractor={(row) => row.user.id}
         onRowClick={(row) => navigate(`/admin/staff/${row.user.id}`)}
-        searchable
-        searchPlaceholder={t('staff.searchPlaceholder')}
-        onSearch={handleSearch}
         page={page}
         pageSize={pageSize}
         total={total}
         onPageChange={setPage}
         emptyMessage={t('staff.noStaff')}
       />
+      )}
     </div>
   );
 }

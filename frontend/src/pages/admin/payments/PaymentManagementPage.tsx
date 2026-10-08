@@ -1,8 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
-import { CreditCard, Receipt, Clock, BarChart2, Settings, Wallet } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Receipt, Clock, BarChart2, Settings, Wallet } from 'lucide-react';
 import { BranchConfigPage } from './BranchConfigPage';
 import { BranchCalendarPage } from './BranchCalendarPage';
 import BranchFeesPage from './BranchFeesPage';
@@ -10,54 +8,29 @@ import { PaymentsPage } from './PaymentsPage';
 import { LateDashboardPage } from './LateDashboardPage';
 import { ReconciliationPage } from './ReconciliationPage';
 import { ExpensesTab } from './ExpensesTab';
+import { PageHeader, Tabs } from '@/components/ui';
+import { useTabParam } from '@/hooks/useTabParam';
 
 type PaymentTab = 'records' | 'late' | 'reconciliation' | 'expenses' | 'config';
 
 export function PaymentManagementPage() {
   const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  // A child's billing enrollment is managed from their page (Assigned fees → Manage billing).
+  const [activeTab, setActiveTab] = useTabParam<PaymentTab>(PAYMENT_TABS, 'records');
 
-  // Read tab from URL query param, default to 'records'. A child's billing
-  // enrollment is managed from their page (Assigned fees → Manage billing).
-  const tabParam = searchParams.get('tab') as PaymentTab | null;
-  const activeTab: PaymentTab = tabParam && isValidTab(tabParam) ? tabParam : 'records';
-
-  function setActiveTab(tab: PaymentTab) {
-    setSearchParams({ tab });
-  }
-
-  const tabs: { key: PaymentTab; label: string; icon: React.ReactNode }[] = [
-    { key: 'records', label: t('nav.paymentsRecords'), icon: <Receipt className="w-4 h-4" /> },
-    { key: 'late', label: t('nav.paymentsLate'), icon: <Clock className="w-4 h-4" /> },
-    { key: 'reconciliation', label: t('nav.paymentsRecon'), icon: <BarChart2 className="w-4 h-4" /> },
-    { key: 'expenses', label: t('finance.tabs.expenses'), icon: <Wallet className="w-4 h-4" /> },
-    { key: 'config', label: t('payments.branchConfig.title'), icon: <Settings className="w-4 h-4" /> },
+  const tabs: { value: PaymentTab; label: string; icon: React.ReactNode }[] = [
+    { value: 'records', label: t('nav.paymentsRecords'), icon: <Receipt className="w-4 h-4" /> },
+    { value: 'late', label: t('nav.paymentsLate'), icon: <Clock className="w-4 h-4" /> },
+    { value: 'reconciliation', label: t('nav.paymentsRecon'), icon: <BarChart2 className="w-4 h-4" /> },
+    { value: 'expenses', label: t('finance.tabs.expenses'), icon: <Wallet className="w-4 h-4" /> },
+    { value: 'config', label: t('payments.branchConfig.title'), icon: <Settings className="w-4 h-4" /> },
   ];
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Page header */}
-      <div className="flex items-center gap-3">
-        <CreditCard className="w-6 h-6 text-primary" />
-        <h1 className="text-page-title font-semibold text-text-heading">
-          {t('nav.payments')}
-        </h1>
-      </div>
+      <PageHeader title={t('nav.payments')} />
 
-      {/* Tab switcher */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {tabs.map((tab) => (
-          <Button
-            key={tab.key}
-            variant={activeTab === tab.key ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.icon}
-            {tab.label}
-          </Button>
-        ))}
-      </div>
+      <Tabs value={activeTab} onChange={setActiveTab} items={tabs} />
 
       {/* Tab content */}
       {activeTab === 'records' && <PaymentsPage />}
@@ -87,6 +60,4 @@ function ConfigTab() {
   );
 }
 
-function isValidTab(tab: string): tab is PaymentTab {
-  return ['records', 'late', 'reconciliation', 'expenses', 'config'].includes(tab);
-}
+const PAYMENT_TABS: PaymentTab[] = ['records', 'late', 'reconciliation', 'expenses', 'config'];

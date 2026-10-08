@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -302,7 +303,7 @@ export function TeacherDailyReportPage() {
       setPhotoPreviewUrls([]);
       setSavedSnapshot(JSON.stringify(form) + '|0');
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : t('dailyReport.submitError', 'Failed to send report. Please try again.'));
+      setSaveError(errorMessage(err, t));
     }
   }, [form, photos, photoPreviewUrls, t]);
 
@@ -742,7 +743,7 @@ export function TeacherDailyReportPage() {
           {saved && pending?.error ? (
             // The server refused what was saved on the device.
             <div className="rounded-lg bg-danger-muted px-4 py-3 space-y-2">
-              <p className="text-caption text-danger">{t('dailyReport.syncError', { error: pending.error })}</p>
+              <p className="text-caption text-danger">{t('dailyReport.syncError', { error: errorMessage(pending.error, t) })}</p>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"

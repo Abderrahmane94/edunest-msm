@@ -1,7 +1,8 @@
+import { errorMessage } from '@/lib/errorMessage';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
@@ -27,7 +28,7 @@ export function ResetPasswordRequestPage() {
       if (response.success) {
         setIsSuccess(true);
       } else {
-        setError(response.error?.message || t('auth.resetPasswordRequest.genericError'));
+        setError(response.error ? errorMessage(apiError(response.error, ''), t) : t('auth.resetPasswordRequest.genericError'));
       }
     } catch {
       setError(t('auth.resetPasswordRequest.unexpectedError'));

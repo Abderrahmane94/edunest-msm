@@ -1,3 +1,5 @@
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, Edit2, Eye, DollarSign, Users, CalendarDays, Plus } from 'lucide-react';
@@ -96,7 +98,7 @@ function NewPeriodForm({
       reset();
       setOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      setError(errorMessage(err, t));
     }
   }
 
@@ -318,7 +320,7 @@ function FeeDialog({
           return;
         }
       } catch (err) {
-        setErrors((prev) => ({ ...prev, form: err instanceof Error ? err.message : t('common.error') }));
+        setErrors((prev) => ({ ...prev, form: errorMessage(err, t) }));
         return;
       }
     }
@@ -384,7 +386,7 @@ function FeeDialog({
       setScopePreview(null);
       setErrors((prev) => ({
         ...prev,
-        form: err instanceof Error ? err.message : t('common.error'),
+        form: errorMessage(err, t),
       }));
     }
   }
@@ -608,7 +610,7 @@ function FeeDialog({
                   <div className="animate-pulse h-16 bg-subtle rounded-md" />
                 ) : editingFee && feePeriodsError ? (
                   <p className="text-caption text-danger">
-                    {feePeriodsErrorObj instanceof Error ? feePeriodsErrorObj.message : t('common.error')}
+                    {errorMessage(feePeriodsErrorObj, t)}
                   </p>
                 ) : !periodOptions || periodOptions.length === 0 ? (
                   <p className="text-caption text-text-secondary">
@@ -900,7 +902,7 @@ function AssignFeeDialog({
       });
       setResult(res);
     } catch (err) {
-      setAssignError(err instanceof Error ? err.message : t('common.error'));
+      setAssignError(errorMessage(err, t));
     }
   }
 
@@ -1111,6 +1113,7 @@ export default function BranchFeesPage() {
 
   const { data: fees, isLoading } = useBranchFees(selectedBranchId);
   const deleteFee = useDeleteBranchFee(selectedBranchId);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
   function handleView(fee: BranchFee) {
     setViewingFee(fee);
@@ -1134,7 +1137,12 @@ export default function BranchFeesPage() {
 
   async function handleDelete(fee: BranchFee) {
     if (window.confirm(t('payments.fees.confirmDelete', { name: fee.name }))) {
-      await deleteFee.mutateAsync(fee.id);
+      setDeleteError(null);
+      try {
+        await deleteFee.mutateAsync(fee.id);
+      } catch (err) {
+        setDeleteError(errorMessage(err, t));
+      }
     }
   }
 
@@ -1239,6 +1247,7 @@ export default function BranchFeesPage() {
       </div>
 
       {/* Fees table */}
+      <ErrorAlert message={deleteError} onDismiss={() => setDeleteError(null)} />
       <DataTable
         columns={columns}
         data={fees ?? []}

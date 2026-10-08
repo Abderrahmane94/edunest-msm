@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, RotateCcw, Building2, Users, Baby, DoorOpen, Banknote } from 'lucide-react';
@@ -181,7 +182,7 @@ function DeletedPaymentsTab() {
             e.stopPropagation();
             setActionError(null);
             restorePayment.mutate(p.id, {
-              onError: (err) => setActionError(err instanceof Error ? err.message : t('common.error')),
+              onError: (err) => setActionError(errorMessage(err, t)),
             });
           }}>
           <RotateCcw className="w-3.5 h-3.5 text-success" />{t('trash.restore')}
@@ -251,7 +252,7 @@ export function TrashPage() {
       { entityType: item.entityType, id: item.id },
       {
         onError: (err) =>
-          setActionError(err instanceof Error ? err.message : t('common.error')),
+          setActionError(errorMessage(err, t)),
       },
     );
   }
@@ -274,7 +275,7 @@ export function TrashPage() {
         onError: (err) => {
           setDeleteDialogOpen(false);
           setSelectedItem(null);
-          setActionError(err instanceof Error ? err.message : t('common.error'));
+          setActionError(errorMessage(err, t));
         },
       },
     );

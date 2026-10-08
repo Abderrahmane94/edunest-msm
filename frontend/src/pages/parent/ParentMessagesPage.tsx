@@ -1,3 +1,5 @@
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useChatSend } from '@/components/messaging/useChatSend';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -57,6 +59,7 @@ export function ParentMessagesPage() {
 
   const { pending: pendingMessages, syncing } = usePendingMessages('parent', activeConversationId);
   const sendFileMessage = useSendFileMessage(activeConversationId ?? undefined);
+  const chatSend = useChatSend();
   const markRead = useMarkMessageRead();
 
   const activeConversation = React.useMemo(
@@ -174,12 +177,12 @@ export function ParentMessagesPage() {
     (e: React.ChangeEvent<HTMLInputElement>, messageType: 'photo' | 'document') => {
       const file = e.target.files?.[0];
       if (!file || !activeConversationId) return;
-      sendFileMessage.mutate({ file, messageType });
+      chatSend.sendFile(sendFileMessage, file, messageType);
       setShowAttachMenu(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
       if (photoInputRef.current) photoInputRef.current.value = '';
     },
-    [activeConversationId, sendFileMessage]
+    [activeConversationId, sendFileMessage, chatSend.sendFile]
   );
 
   const handleSelectConversation = React.useCallback((conversation: Conversation) => {
@@ -362,6 +365,7 @@ export function ParentMessagesPage() {
 
               {/* Message input */}
               <div className="shrink-0 bg-card border-t border-border p-3">
+                <ErrorAlert message={chatSend.error} onDismiss={chatSend.clearError} className="mb-2" />
                 <div className="flex items-end gap-2">
                   {/* Attachment button */}
                   <div className="relative" ref={attachMenuRef}>

@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +24,7 @@ export function AnnouncementDetailPage() {
       await deleteAnnouncement.mutateAsync(announcementId!);
       navigate('/admin/communication');
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : t('common.error'));
+      setDeleteError(errorMessage(err, t));
       setConfirmDelete(false);
     }
   }

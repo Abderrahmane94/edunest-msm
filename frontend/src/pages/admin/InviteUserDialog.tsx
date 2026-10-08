@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserPlus } from 'lucide-react';
@@ -100,7 +101,7 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
       if (err instanceof ApiRequestError && err.code === 'RESTORABLE_USER_EXISTS') {
         setRestorableUserId((err.meta?.deletedUserId as string | undefined) ?? null);
       }
-      setCreateError(err instanceof Error ? err.message : t('common.error'));
+      setCreateError(errorMessage(err, t));
     }
   }
 
@@ -112,7 +113,7 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
       resetForm();
       onOpenChange(false);
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : t('common.error'));
+      setCreateError(errorMessage(err, t));
     }
   }
 

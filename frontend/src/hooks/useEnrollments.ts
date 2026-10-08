@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 export interface Enrollment {
   id: string;
@@ -118,7 +118,7 @@ export function useCreateEnrollment() {
         feeIds: data.feeIds,
       });
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to create enrollment');
+        throw apiError(res.error, 'Failed to create enrollment');
       }
       const d = res.data as Record<string, unknown>;
       return {
@@ -173,7 +173,7 @@ export function useEnrollmentDetail(enrollmentId: string) {
         `/payments/enrollments/${enrollmentId}`
       );
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to fetch enrollment');
+        throw apiError(res.error, 'Failed to fetch enrollment');
       }
       const raw = res.data as Record<string, unknown>;
       const enrollment = mapEnrollment(raw) as EnrollmentDetail;
@@ -221,7 +221,7 @@ export function useWithdrawEnrollment() {
         data
       );
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to withdraw enrollment');
+        throw apiError(res.error, 'Failed to withdraw enrollment');
       }
       return res.data;
     },

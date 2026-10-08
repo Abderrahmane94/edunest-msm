@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { apiClient, type ApiResponse } from '@/lib/api-client';
+import { apiClient, type ApiResponse, apiError } from '@/lib/api-client';
 
 export type NotificationType =
   | 'absence_alert'
@@ -82,7 +82,7 @@ export function useMarkNotificationRead() {
   return useMutation({
     mutationFn: async (id: string) => {
       const res = await apiClient.patch(`/notifications/${id}/read`);
-      if (!res.success) throw new Error(res.error?.message || 'Failed to mark as read');
+      if (!res.success) throw apiError(res.error, 'Failed to mark as read');
       return id;
     },
     onSuccess: (id) => {
@@ -107,7 +107,7 @@ export function useMarkAllNotificationsRead() {
   return useMutation({
     mutationFn: async () => {
       const res = await apiClient.patch('/notifications/read-all');
-      if (!res.success) throw new Error(res.error?.message || 'Failed to mark all as read');
+      if (!res.success) throw apiError(res.error, 'Failed to mark all as read');
     },
     onSuccess: () => {
       qc.setQueryData<InfiniteData<NotificationsPage>>(['notifications', 'list'], (data) => {

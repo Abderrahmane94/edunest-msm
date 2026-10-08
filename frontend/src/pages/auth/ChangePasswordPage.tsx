@@ -1,10 +1,11 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { Input } from '@/components/ui';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function ChangePasswordPage() {
@@ -35,13 +36,13 @@ export function ChangePasswordPage() {
     setLoading(true);
     try {
       const res = await apiClient.post<{ message: string; accessToken: string }>('/users/change-password', { newPassword });
-      if (!res.success) throw new Error(res.error?.message ?? t('common.error'));
+      if (!res.success) throw apiError(res.error, t('common.error'));
       if (res.data?.accessToken) {
         localStorage.setItem('access_token', res.data.accessToken);
       }
       clearMustChangePassword();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      setError(errorMessage(err, t));
     } finally {
       setLoading(false);
     }

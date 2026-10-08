@@ -4,6 +4,7 @@ import { queryClient, queryPersister, OFFLINE_MAX_AGE } from '@/lib/query-client
 import { AuthProvider } from '@/contexts/AuthContext';
 import { useDirection } from '@/hooks/useDirection';
 import { NotificationsManager } from '@/components/NotificationsManager';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { routes } from '@/router';
 import '@/i18n';
 
@@ -34,7 +35,9 @@ function App() {
         <AuthProvider>
           <DirectionManager>
             <NotificationsManager />
-            <AppRoutes />
+            <ErrorBoundary variant="screen">
+              <AppRoutes />
+            </ErrorBoundary>
           </DirectionManager>
         </AuthProvider>
       </BrowserRouter>

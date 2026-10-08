@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -57,7 +57,7 @@ export function useParentBillingPeriods() {
     queryFn: async () => {
       const res = await apiClient.get<unknown>('/payments/parent/periods');
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to fetch billing periods');
+        throw apiError(res.error, 'Failed to fetch billing periods');
       }
       const raw = res.data;
       if (Array.isArray(raw)) {
@@ -77,7 +77,7 @@ export function useParentPaymentHistory() {
     queryFn: async () => {
       const res = await apiClient.get<unknown>('/payments/parent/history');
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to fetch payment history');
+        throw apiError(res.error, 'Failed to fetch payment history');
       }
       const raw = res.data;
       if (Array.isArray(raw)) {
@@ -97,7 +97,7 @@ export function useParentBalances() {
     queryFn: async () => {
       const res = await apiClient.get<unknown>('/payments/parent/balances');
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to fetch balances');
+        throw apiError(res.error, 'Failed to fetch balances');
       }
       const raw = res.data;
       if (Array.isArray(raw)) {

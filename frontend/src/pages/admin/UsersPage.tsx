@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -154,7 +155,7 @@ export function UsersPage() {
             aria-label={user.is_active ? t('users.deactivate') : t('users.activate')}
             title={user.is_active ? t('users.deactivate') : t('users.activate')}
             disabled={toggleUserActive.isPending}
-            onClick={(e) => { e.stopPropagation(); toggleUserActive.mutate({ id: user.id, isActive: user.is_active }, { onError: (err) => setActionError(err instanceof Error ? err.message : 'Error') }); }}
+            onClick={(e) => { e.stopPropagation(); toggleUserActive.mutate({ id: user.id, isActive: user.is_active }, { onError: (err) => setActionError(errorMessage(err, t)) }); }}
           >
             {user.is_active ? (
               <ShieldOff className="w-4 h-4 text-danger" />

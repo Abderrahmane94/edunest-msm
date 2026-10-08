@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -132,7 +132,7 @@ export function useGetOrCreateStaffConversation() {
         '/communication/staff/conversations',
         { targetUserId },
       );
-      if (!res.success) throw new Error(res.error?.message || 'Failed to create conversation');
+      if (!res.success) throw apiError(res.error, 'Failed to create conversation');
       const data = res.data as { conversation: Record<string, unknown> };
       return mapConversation(data.conversation);
     },
@@ -151,7 +151,7 @@ export function useSendStaffMessage(conversationId?: string) {
         `/communication/staff/conversations/${conversationId}/messages`,
         { content: data.content, messageType: data.message_type || 'text' },
       );
-      if (!res.success) throw new Error(res.error?.message || 'Failed to send message');
+      if (!res.success) throw apiError(res.error, 'Failed to send message');
       return res.data as StaffMessage;
     },
     onSuccess: () => {
@@ -173,7 +173,7 @@ export function useSendStaffFileMessage(conversationId?: string) {
         `/communication/staff/conversations/${conversationId}/messages/file`,
         formData,
       );
-      if (!res.success) throw new Error(res.error?.message || 'Failed to send file');
+      if (!res.success) throw apiError(res.error, 'Failed to send file');
       return res;
     },
     onSuccess: () => {
@@ -189,7 +189,7 @@ export function useMarkStaffMessageRead() {
   return useMutation({
     mutationFn: async (messageId: string) => {
       const res = await apiClient.patch(`/communication/staff/messages/${messageId}/read`);
-      if (!res.success) throw new Error(res.error?.message || 'Failed to mark as read');
+      if (!res.success) throw apiError(res.error, 'Failed to mark as read');
       return res.data;
     },
     onSuccess: () => {

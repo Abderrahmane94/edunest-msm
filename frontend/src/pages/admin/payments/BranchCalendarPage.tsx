@@ -1,3 +1,5 @@
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CalendarDays, Plus, Pencil, Trash2 } from 'lucide-react';
@@ -60,6 +62,8 @@ export function BranchCalendarPage() {
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [editingEntry, setEditingEntry] = React.useState<BranchCalendarEntry | null>(null);
   const [deletingEntry, setDeletingEntry] = React.useState<BranchCalendarEntry | null>(null);
+  const [formError, setFormError] = React.useState<string | null>(null);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
   // Calendar data
   const { data: calendarEntries, isLoading: entriesLoading } = useBranchCalendar(
@@ -88,6 +92,7 @@ export function BranchCalendarPage() {
   function handleOpenCreate() {
     setEditingEntry(null);
     reset({ label: '', period_start: '', period_end: '' });
+    setFormError(null);
     setFormOpen(true);
   }
 
@@ -98,43 +103,55 @@ export function BranchCalendarPage() {
       period_start: entry.periodStart.slice(0, 10),
       period_end: entry.periodEnd.slice(0, 10),
     });
+    setFormError(null);
     setFormOpen(true);
   }
 
   function handleOpenDelete(entry: BranchCalendarEntry) {
     setDeletingEntry(entry);
+    setDeleteError(null);
     setDeleteOpen(true);
   }
 
   async function onSubmit(data: CalendarFormValues) {
-    if (editingEntry) {
-      await updateMutation.mutateAsync({
-        branchId: selectedBranchId,
-        id: editingEntry.id,
-        label: data.label,
-        period_start: data.period_start,
-        period_end: data.period_end,
-      });
-    } else {
-      await createMutation.mutateAsync({
-        branchId: selectedBranchId,
-        label: data.label,
-        period_start: data.period_start,
-        period_end: data.period_end,
-        academicYearId: selectedAcademicYearId,
-      });
+    setFormError(null);
+    try {
+      if (editingEntry) {
+        await updateMutation.mutateAsync({
+          branchId: selectedBranchId,
+          id: editingEntry.id,
+          label: data.label,
+          period_start: data.period_start,
+          period_end: data.period_end,
+        });
+      } else {
+        await createMutation.mutateAsync({
+          branchId: selectedBranchId,
+          label: data.label,
+          period_start: data.period_start,
+          period_end: data.period_end,
+          academicYearId: selectedAcademicYearId,
+        });
+      }
+      setFormOpen(false);
+    } catch (err) {
+      setFormError(errorMessage(err, t));
     }
-    setFormOpen(false);
   }
 
   async function handleConfirmDelete() {
     if (!deletingEntry) return;
-    await deleteMutation.mutateAsync({
-      branchId: selectedBranchId,
-      id: deletingEntry.id,
-    });
-    setDeleteOpen(false);
-    setDeletingEntry(null);
+    setDeleteError(null);
+    try {
+      await deleteMutation.mutateAsync({
+        branchId: selectedBranchId,
+        id: deletingEntry.id,
+      });
+      setDeleteOpen(false);
+      setDeletingEntry(null);
+    } catch (err) {
+      setDeleteError(errorMessage(err, t));
+    }
   }
 
   // Table columns
@@ -290,6 +307,7 @@ export function BranchCalendarPage() {
               )}
             />
 
+            <ErrorAlert message={formError} onDismiss={() => setFormError(null)} />
             <DialogFooter>
               <Button
                 type="button"
@@ -325,6 +343,7 @@ export function BranchCalendarPage() {
               )}
             </DialogDescription>
           </DialogHeader>
+          <ErrorAlert message={deleteError} onDismiss={() => setDeleteError(null)} />
           <DialogFooter>
             <Button variant="secondary" onClick={() => setDeleteOpen(false)}>
               {t('common.cancel', 'Cancel')}

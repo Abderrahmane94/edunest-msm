@@ -1,3 +1,4 @@
+import { errorHandler } from './middleware/error.middleware';
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import cors from 'cors';
@@ -119,15 +120,7 @@ app.use((_req: Request, res: Response) => {
   res.status(404).json(errorResponse('NOT_FOUND', 'The requested resource was not found'));
 });
 
-// Global error handler
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  const statusCode = (err as { statusCode?: number }).statusCode || 500;
-  const message =
-    process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message || 'Internal server error';
-
-  console.error('[Error]', err);
-
-  res.status(statusCode).json(errorResponse('INTERNAL_ERROR', message));
-});
+// Global error handler (uploads too large, duplicates, bad JSON... get a proper answer)
+app.use(errorHandler);
 
 export default app;

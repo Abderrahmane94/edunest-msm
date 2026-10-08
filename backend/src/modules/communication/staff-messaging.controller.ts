@@ -26,6 +26,7 @@ const uploadFile = multer({
   },
 });
 
+/** One photo or document (field "file", 10 MB max), for any chat. */
 export const staffMessagingUpload = uploadFile.single('file');
 
 export const staffMessagingController = {

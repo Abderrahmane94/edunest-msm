@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 export interface BranchBillingConfig {
   id: string;
@@ -41,7 +41,7 @@ export function useCreateBranch() {
     mutationFn: async (data: { name: string; address?: string }) => {
       const res = await apiClient.post<Branch>('/payments/branches', data);
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to create branch');
+        throw apiError(res.error, 'Failed to create branch');
       }
       return res.data;
     },
@@ -59,7 +59,7 @@ export function useUpdateBranch() {
     mutationFn: async ({ branchId, ...data }: { branchId: string; name?: string; address?: string; isActive?: boolean }) => {
       const res = await apiClient.put<Branch>(`/payments/branches/${branchId}`, data);
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to update branch');
+        throw apiError(res.error, 'Failed to update branch');
       }
       return res.data;
     },
@@ -82,7 +82,7 @@ export function useBranchBillingConfig(branchId: string | undefined) {
         return null;
       }
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to fetch billing config');
+        throw apiError(res.error, 'Failed to fetch billing config');
       }
       return res.data ?? null;
     },

@@ -37,7 +37,10 @@ function StatCard({
 /* ─── Admin (school director) dashboard ─── */
 function AdminDashboard() {
   const { t } = useTranslation();
-  const { data: stats, isLoading } = useAdminDashboard();
+  const { data: stats, isLoading, isError } = useAdminDashboard();
+
+  // Not loaded: no zeros that look like real figures (the page's banner says what failed).
+  if (isError && !stats) return null;
 
   if (isLoading) {
     return (
@@ -89,7 +92,10 @@ function AdminDashboard() {
 /* ─── Super admin platform dashboard ─── */
 function SuperAdminDashboard() {
   const { t } = useTranslation();
-  const { data: stats, isLoading } = usePlatformStats();
+  const { data: stats, isLoading, isError } = usePlatformStats();
+
+  // Not loaded: no zeros that look like real figures (the page's banner says what failed).
+  if (isError && !stats) return null;
 
   if (isLoading) {
     return (

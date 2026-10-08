@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +20,7 @@ import {
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSchoolsList, type SchoolItem } from '@/hooks/useSchools';
 
@@ -31,7 +32,7 @@ export function useCreateSchool() {
       director: { firstName: string; lastName: string; email: string; preferredLanguage: string };
     }) => {
       const res = await apiClient.post('/schools', data);
-      if (!res.success) throw new Error(res.error?.message || 'Failed to create school');
+      if (!res.success) throw apiError(res.error, 'Failed to create school');
       return res.data;
     },
     onSuccess: () => {
@@ -46,7 +47,7 @@ export function useToggleSchoolActive() {
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
       const endpoint = isActive ? `/schools/${id}/deactivate` : `/schools/${id}/activate`;
       const res = await apiClient.patch(endpoint);
-      if (!res.success) throw new Error(res.error?.message || 'Failed to update school status');
+      if (!res.success) throw apiError(res.error, 'Failed to update school status');
       return res.data;
     },
     onSuccess: () => {
@@ -134,7 +135,7 @@ export function SchoolsPage() {
               e.stopPropagation();
               toggleSchool.mutate(
                 { id: school.id, isActive: school.isActive },
-                { onError: (err) => setActionError(err instanceof Error ? err.message : 'Error') }
+                { onError: (err) => setActionError(errorMessage(err, t)) }
               );
             }}
             disabled={toggleSchool.isPending}
@@ -256,7 +257,7 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
       resetForm();
       onOpenChange(false);
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : t('common.error'));
+      setCreateError(errorMessage(err, t));
     }
   }
 

@@ -23,6 +23,31 @@ export class ApiRequestError extends Error {
   }
 }
 
+/**
+ * The server couldn't be reached (offline, connection dropped) or didn't
+ * answer properly (e.g. restarting during a deployment). Not a refusal: the
+ * same request may work a moment later.
+ */
+export class NetworkError extends Error {
+  /** 'offline': no answer at all; 'server': an answer that wasn't the API's (5xx, proxy page). */
+  kind: 'offline' | 'server';
+
+  constructor(kind: 'offline' | 'server') {
+    super(kind === 'offline' ? 'Network unreachable' : 'Server unavailable');
+    this.name = 'NetworkError';
+    this.kind = kind;
+  }
+}
+
+/** The error to throw for a refused API request: keeps its code for the message shown. */
+export function apiError(error: Partial<ApiError> | undefined, fallbackMessage: string): ApiRequestError {
+  return new ApiRequestError({
+    ...error,
+    code: error?.code ?? 'UNKNOWN_ERROR',
+    message: error?.message ?? fallbackMessage,
+  });
+}
+
 interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -108,6 +133,32 @@ class ApiClient {
     return headers;
   }
 
+  /** fetch that throws NetworkError when there's no answer. */
+  private async send(url: string, init: RequestInit): Promise<Response> {
+    try {
+      return await fetch(url, init);
+    } catch {
+      throw new NetworkError('offline');
+    }
+  }
+
+  /**
+   * Reads the API's JSON answer. An answer that isn't the API's (a proxy or
+   * hosting page while the server restarts) is a NetworkError; a file over
+   * the size limit stopped before reaching the API gets its own code.
+   */
+  private async read<T>(response: Response): Promise<ApiResponse<T>> {
+    try {
+      return (await response.json()) as ApiResponse<T>;
+    } catch {
+      if (response.status === 413) {
+        return { success: false, error: { code: 'FILE_TOO_LARGE', message: 'File too large' } };
+      }
+      if (response.status >= 500 || response.status === 0) throw new NetworkError('server');
+      return { success: false, error: { code: 'HTTP_ERROR', message: `HTTP ${response.status}` } };
+    }
+  }
+
   async request<T>(
     endpoint: string,
     options: RequestInit & { skipAuth?: boolean } = {},
@@ -120,14 +171,14 @@ class ApiClient {
 
     const url = `${this.baseUrl}${endpoint}`;
 
-    let response = await fetch(url, { ...fetchOptions, headers });
+    let response = await this.send(url, { ...fetchOptions, headers });
 
     // Handle 401 — attempt token refresh
     if (response.status === 401 && !skipAuth) {
       const newToken = await this.refreshAccessToken();
       if (newToken) {
         headers.set('Authorization', `Bearer ${newToken}`);
-        response = await fetch(url, { ...fetchOptions, headers });
+        response = await this.send(url, { ...fetchOptions, headers });
       } else {
         return {
           success: false,
@@ -136,8 +187,7 @@ class ApiClient {
       }
     }
 
-    const data: ApiResponse<T> = await response.json();
-    return data;
+    return this.read<T>(response);
   }
 
   /**
@@ -195,7 +245,7 @@ class ApiClient {
       return headers;
     };
 
-    let response = await fetch(url, { method: 'POST', headers: buildAuthHeaders(), body: formData });
+    let response = await this.send(url, { method: 'POST', headers: buildAuthHeaders(), body: formData });
 
     if (response.status === 401) {
       const newToken = await this.refreshAccessToken();
@@ -205,10 +255,10 @@ class ApiClient {
           error: { code: 'UNAUTHORIZED', message: 'Session expired. Please log in again.' },
         };
       }
-      response = await fetch(url, { method: 'POST', headers: buildAuthHeaders(), body: formData });
+      response = await this.send(url, { method: 'POST', headers: buildAuthHeaders(), body: formData });
     }
 
-    return response.json();
+    return this.read<T>(response);
   }
 }
 

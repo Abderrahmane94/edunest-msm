@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 import type { BranchCalendarEntry } from '@/hooks/useBranchCalendar';
 
 export interface FeePeriod extends BranchCalendarEntry {
@@ -18,7 +18,7 @@ export function useFeePeriods(branchFeeId: string | undefined, academicYearId: s
         `/payments/fees/${branchFeeId}/periods?academicYearId=${academicYearId}`,
       );
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to load periods');
+        throw apiError(res.error, 'Failed to load periods');
       }
       return res.data?.periods ?? [];
     },
@@ -47,7 +47,7 @@ export function useSetFeePeriods(branchFeeId: string | undefined) {
         periodIds,
       });
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to save period assignments');
+        throw apiError(res.error, 'Failed to save period assignments');
       }
       return res.data?.periods ?? [];
     },

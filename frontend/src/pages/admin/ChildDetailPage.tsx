@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -104,7 +105,7 @@ export function ChildDetailPage() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : t('common.error'));
+      setSaveError(errorMessage(err, t));
     }
   }
 
@@ -115,7 +116,7 @@ export function ChildDetailPage() {
       await enrollChild.mutateAsync({ childId: childId!, classroomId: enrollClassroomId });
       setEnrollClassroomId('');
     } catch (err) {
-      setEnrollError(err instanceof Error ? err.message : t('common.error'));
+      setEnrollError(errorMessage(err, t));
     }
   }
 
@@ -126,7 +127,7 @@ export function ChildDetailPage() {
       await linkParent.mutateAsync({ childId: childId!, parentId: linkParentId, relationship: linkRelationship });
       setLinkParentId('');
     } catch (err) {
-      setLinkError(err instanceof Error ? err.message : t('common.error'));
+      setLinkError(errorMessage(err, t));
     }
   }
 
@@ -357,7 +358,11 @@ export function ChildDetailPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => {
-                          updateParentLink.mutate({ childId: childId!, linkId, relationship: editLinkRelationship, canPickup: editLinkCanPickup });
+                          setLinkError(null);
+                          updateParentLink.mutate(
+                            { childId: childId!, linkId, relationship: editLinkRelationship, canPickup: editLinkCanPickup },
+                            { onError: (err) => setLinkError(errorMessage(err, t)) },
+                          );
                           setEditingLinkId(null);
                         }}
                         disabled={updateParentLink.isPending}
@@ -371,7 +376,10 @@ export function ChildDetailPage() {
                             variant="ghost"
                             size="icon"
                             title={t('children.detail.setPrimary')}
-                            onClick={() => setPrimaryParentLink.mutate({ childId: childId!, linkId })}
+                            onClick={() => {
+                              setLinkError(null);
+                              setPrimaryParentLink.mutate({ childId: childId!, linkId }, { onError: (err) => setLinkError(errorMessage(err, t)) });
+                            }}
                             disabled={setPrimaryParentLink.isPending}
                           >
                             <Star className="w-4 h-4 text-text-secondary" />
@@ -393,7 +401,10 @@ export function ChildDetailPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => removeParentLink.mutate({ childId: childId!, linkId })}
+                      onClick={() => {
+                        setLinkError(null);
+                        removeParentLink.mutate({ childId: childId!, linkId }, { onError: (err) => setLinkError(errorMessage(err, t)) });
+                      }}
                       disabled={removeParentLink.isPending}
                     >
                       <X className="w-4 h-4 text-danger" />

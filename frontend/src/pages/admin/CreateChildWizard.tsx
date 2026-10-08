@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
@@ -120,7 +121,7 @@ function BasicsStep({
       const newId = (result as { id?: string } | undefined)?.id;
       if (newId) onCreated({ id: newId, first_name, last_name }, formData.enrollment_date);
     } catch (err) {
-      setErrors((prev) => ({ ...prev, form: err instanceof Error ? err.message : t('common.error') }));
+      setErrors((prev) => ({ ...prev, form: errorMessage(err, t) }));
     }
   }
 
@@ -299,7 +300,7 @@ function ParentStep({
       }
       onNext();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      setError(errorMessage(err, t));
     } finally {
       setIsSaving(false);
     }
@@ -438,7 +439,7 @@ function ClassroomStep({
       await enrollChild.mutateAsync({ childId, classroomId });
       onNext();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      setError(errorMessage(err, t));
     }
   }
 
@@ -545,7 +546,7 @@ function FeesStep({
       await qc.invalidateQueries({ queryKey: ['child-billing-periods', child.id] });
       setEnrollmentCreated(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      setError(errorMessage(err, t));
     } finally {
       setIsSaving(false);
     }
@@ -565,7 +566,7 @@ function FeesStep({
       });
       onFinish();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      setError(errorMessage(err, t));
     } finally {
       setIsSaving(false);
     }

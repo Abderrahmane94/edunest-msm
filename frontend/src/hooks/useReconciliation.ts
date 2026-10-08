@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -56,9 +56,7 @@ export async function fetchReconciliationReport(
   );
 
   if (!res.success) {
-    throw new Error(
-      res.error?.message ?? 'Failed to fetch reconciliation report'
-    );
+    throw apiError(res.error, 'Failed to fetch reconciliation report');
   }
 
   return mapReconciliationReport(res.data as Record<string, unknown>);

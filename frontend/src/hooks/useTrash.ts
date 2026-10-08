@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 export type TrashEntityType = 'schools' | 'users' | 'children' | 'classrooms';
 
@@ -30,7 +30,7 @@ export function useTrashList(entityType: TrashEntityType, page = 1, pageSize = 2
       const res = await apiClient.get<{ items: Record<string, unknown>[]; total: number; page: number; pageSize: number }>(
         `/trash/${entityType}?${queryParams.toString()}`,
       );
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load trash items');
+      if (!res.success) throw apiError(res.error, 'Failed to load trash items');
       const raw = res.data as { items: Record<string, unknown>[]; total: number; page: number; pageSize: number };
 
       // Map raw API items to TrashItem shape
@@ -72,7 +72,7 @@ export function useRestoreRecord() {
   return useMutation({
     mutationFn: async ({ entityType, id }: { entityType: TrashEntityType; id: string }) => {
       const res = await apiClient.post(`/trash/${entityType}/${id}/restore`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to restore record');
+      if (!res.success) throw apiError(res.error, 'Failed to restore record');
       return res.data;
     },
     onSuccess: (_data, { entityType }) => {
@@ -87,7 +87,7 @@ export function useHardDeleteRecord() {
   return useMutation({
     mutationFn: async ({ entityType, id }: { entityType: TrashEntityType; id: string }) => {
       const res = await apiClient.delete(`/trash/${entityType}/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to permanently delete record');
+      if (!res.success) throw apiError(res.error, 'Failed to permanently delete record');
       return res.data;
     },
     onSuccess: () => {

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Receipt, CalendarDays, Wallet, Eye, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 import { ReceiptView } from '@/pages/admin/payments/ReceiptView';
 
 type PeriodStatus = 'unpaid' | 'partial' | 'late_partial' | 'late' | 'paid';
@@ -12,9 +12,9 @@ interface ParentBillingPeriod { id: string; childName: string; branchName: strin
 interface ParentPaymentRecord { id: string; childName: string; receiptNumber: string; totalAmount: string; channel: PaymentChannel; valueDate: string; isCorrection: boolean; correctsReceiptNumber: string | null; allocations: { periodLabel: string; amount: string }[]; }
 interface ParentChildBalance { childId: string; childName: string; branchName: string; outstanding: string; }
 
-function useParentPeriods() { return useQuery({ queryKey: ['parent-payment-periods'], queryFn: async () => { const res = await apiClient.get<unknown>('/payments/parent/periods'); if (!res.success) throw new Error(res.error?.message ?? 'Failed'); return Array.isArray(res.data) ? res.data.map(mapPeriod) : []; } }); }
-function useParentHistory() { return useQuery({ queryKey: ['parent-payment-history'], queryFn: async () => { const res = await apiClient.get<unknown>('/payments/parent/history'); if (!res.success) throw new Error(res.error?.message ?? 'Failed'); return Array.isArray(res.data) ? res.data.map(mapPayment) : []; } }); }
-function useParentBalances() { return useQuery({ queryKey: ['parent-payment-balances'], queryFn: async () => { const res = await apiClient.get<unknown>('/payments/parent/balances'); if (!res.success) throw new Error(res.error?.message ?? 'Failed'); return Array.isArray(res.data) ? res.data.map(mapBalance) : []; } }); }
+function useParentPeriods() { return useQuery({ queryKey: ['parent-payment-periods'], queryFn: async () => { const res = await apiClient.get<unknown>('/payments/parent/periods'); if (!res.success) throw apiError(res.error, 'Failed'); return Array.isArray(res.data) ? res.data.map(mapPeriod) : []; } }); }
+function useParentHistory() { return useQuery({ queryKey: ['parent-payment-history'], queryFn: async () => { const res = await apiClient.get<unknown>('/payments/parent/history'); if (!res.success) throw apiError(res.error, 'Failed'); return Array.isArray(res.data) ? res.data.map(mapPayment) : []; } }); }
+function useParentBalances() { return useQuery({ queryKey: ['parent-payment-balances'], queryFn: async () => { const res = await apiClient.get<unknown>('/payments/parent/balances'); if (!res.success) throw apiError(res.error, 'Failed'); return Array.isArray(res.data) ? res.data.map(mapBalance) : []; } }); }
 
 function mapPeriod(raw: Record<string, unknown>): ParentBillingPeriod { return { id: raw.id as string, childName: (raw.childName ?? raw.child_name ?? '') as string, branchName: (raw.branchName ?? raw.branch_name ?? '') as string, periodStart: (raw.periodStart ?? raw.period_start) as string, periodEnd: (raw.periodEnd ?? raw.period_end) as string, dueDate: (raw.dueDate ?? raw.due_date) as string, graceEndDate: (raw.graceEndDate ?? raw.grace_end_date) as string, amountDue: String(raw.amountDue ?? raw.amount_due ?? '0'), isRegistrationPeriod: Boolean(raw.isRegistrationPeriod ?? raw.is_registration_period), status: (raw.status as PeriodStatus) ?? 'unpaid', isLate: Boolean(raw.isLate ?? raw.is_late) }; }
 function mapPayment(raw: Record<string, unknown>): ParentPaymentRecord { const allocs = raw.allocations as Record<string, unknown>[] | undefined; return { id: raw.id as string, childName: (raw.childName ?? raw.child_name ?? '') as string, receiptNumber: (raw.receiptNumber ?? raw.receipt_number) as string, totalAmount: String(raw.totalAmount ?? raw.total_amount ?? '0'), channel: (raw.channel as PaymentChannel) ?? 'cash', valueDate: (raw.valueDate ?? raw.value_date) as string, isCorrection: Boolean(raw.isCorrection ?? raw.is_correction), correctsReceiptNumber: (raw.correctsReceiptNumber ?? raw.corrects_receipt_number ?? null) as string | null, allocations: allocs ? allocs.map((a) => ({ periodLabel: (a.periodLabel ?? a.period_label ?? '') as string, amount: String(a.amount ?? '0') })) : [] }; }

@@ -83,6 +83,15 @@ router.post(
   communicationController.sendMessage,
 );
 
+// POST /api/communication/conversations/:id/messages/file — Send a photo or document (teacher, parent)
+router.post(
+  '/conversations/:id/messages/file',
+  rbac(['teacher', 'parent']),
+  validateParams(conversationIdParamSchema),
+  staffMessagingUpload,
+  communicationController.sendFileMessage,
+);
+
 // PATCH /api/communication/messages/:id/read — Mark message as read (teacher, parent)
 router.patch(
   '/messages/:id/read',

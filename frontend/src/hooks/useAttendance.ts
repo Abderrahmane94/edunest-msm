@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 import { queryClient } from '@/lib/query-client';
 import { registerQueueHandler, QueueRejectedError } from '@/lib/offlineQueue';
 
@@ -178,7 +178,7 @@ export function useAttendanceTracking(startDate: string | undefined, endDate: st
       const res = await apiClient.get<DayMarkingStatus[]>(
         `/attendance/tracking?start_date=${startDate}&end_date=${endDate}`
       );
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load tracking data');
+      if (!res.success) throw apiError(res.error, 'Failed to load tracking data');
       return res.data ?? [];
     },
     enabled: !!startDate && !!endDate,

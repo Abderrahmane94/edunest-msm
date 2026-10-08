@@ -4,6 +4,8 @@ import { LogOut, Languages } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLogoutWithConfirm } from '@/components/LogoutConfirm';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { LoadErrorBanner } from '@/components/LoadErrorBanner';
 import { NotificationBell } from '@/components/NotificationBell';
 import { OfflineStatus } from '@/components/OfflineStatus';
 import { InstallAppButton } from '@/components/InstallAppButton';
@@ -95,7 +97,10 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
       </header>
 
       {logoutDialog}
-      <Outlet />
+      <LoadErrorBanner className="mx-4 mt-4 sm:mx-auto sm:max-w-[868px] sm:w-[calc(100%-2rem)]" />
+      <ErrorBoundary>
+        <Outlet />
+      </ErrorBoundary>
       {navItems && <BottomTabBar items={navItems} />}
     </div>
   );

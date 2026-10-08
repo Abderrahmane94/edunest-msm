@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Receipt, Plus, Trash2, CheckCircle, AlertCircle, Minus, Eye, Filter, X, WifiOff, CloudUpload } from 'lucide-react';
@@ -382,7 +383,7 @@ function RecordPaymentDialog({
             const reason = err.meta?.reason;
             setErrors((prev) => ({
               ...prev,
-              form: typeof reason === 'string' ? paymentRefusalText(t, `reason:${reason}`) : err.message,
+              form: typeof reason === 'string' ? paymentRefusalText(t, `reason:${reason}`) : errorMessage(err, t),
             }));
             return;
           }

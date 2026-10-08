@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 export type DiscountType = 'scholarship' | 'sibling' | 'staff' | 'custom';
 
@@ -54,7 +54,7 @@ export function useCreateDiscount(enrollmentId: string) {
         `/payments/enrollments/${enrollmentId}/discounts`,
         input,
       );
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to create discount');
+      if (!res.success) throw apiError(res.error, 'Failed to create discount');
       return res.data;
     },
     onSuccess: () => {
@@ -70,7 +70,7 @@ export function useUpdateDiscount(enrollmentId: string) {
   return useMutation({
     mutationFn: async ({ id, ...input }: UpdateDiscountInput & { id: string }) => {
       const res = await apiClient.put<Discount>(`/payments/discounts/${id}`, input);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update discount');
+      if (!res.success) throw apiError(res.error, 'Failed to update discount');
       return res.data;
     },
     onSuccess: () => {
@@ -86,7 +86,7 @@ export function useDeleteDiscount(enrollmentId: string) {
   return useMutation({
     mutationFn: async (id: string) => {
       const res = await apiClient.delete(`/payments/discounts/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to delete discount');
+      if (!res.success) throw apiError(res.error, 'Failed to delete discount');
       return res.data;
     },
     onSuccess: () => {

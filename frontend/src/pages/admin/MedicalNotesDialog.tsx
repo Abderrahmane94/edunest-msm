@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
@@ -87,7 +88,7 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
       setNewNote(emptyForm);
       setErrors({});
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : t('common.error'));
+      setSubmitError(errorMessage(err, t));
     }
   }
 
@@ -96,7 +97,7 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
     try {
       await removeNote.mutateAsync({ childId, noteId });
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : t('common.error'));
+      setSubmitError(errorMessage(err, t));
     }
   }
 
@@ -129,7 +130,7 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
       });
       setEditingId(null);
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : t('common.error'));
+      setEditError(errorMessage(err, t));
     }
   }
 

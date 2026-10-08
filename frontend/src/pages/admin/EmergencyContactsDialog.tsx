@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
@@ -115,7 +116,7 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
       setNewContact(emptyForm);
       setErrors({});
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : t('common.error'));
+      setSubmitError(errorMessage(err, t));
     }
   }
 
@@ -124,7 +125,7 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
     try {
       await removeContact.mutateAsync({ childId, contactId });
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : t('common.error'));
+      setSubmitError(errorMessage(err, t));
     }
   }
 
@@ -168,7 +169,7 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
       });
       setEditingId(null);
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : t('common.error'));
+      setEditError(errorMessage(err, t));
     }
   }
 

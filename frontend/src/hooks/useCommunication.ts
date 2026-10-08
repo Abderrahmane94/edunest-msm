@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 import { queryClient as sharedQueryClient } from '@/lib/query-client';
 import { enqueue, registerQueueHandler, QueueRejectedError } from '@/lib/offlineQueue';
 
@@ -77,7 +77,7 @@ export function useAnnouncements() {
     queryKey: ['announcements'],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>[]>('/communication/announcements');
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load announcements');
+      if (!res.success) throw apiError(res.error, 'Failed to load announcements');
       const raw = res.data;
       const list = Array.isArray(raw) ? raw : [];
       return list.map(mapAnnouncement);
@@ -90,7 +90,7 @@ export function useAnnouncement(id: string) {
     queryKey: ['announcements', id],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>>(`/communication/announcements/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Not found');
+      if (!res.success) throw apiError(res.error, 'Not found');
       return mapAnnouncement(res.data as Record<string, unknown>);
     },
     enabled: !!id,
@@ -102,7 +102,7 @@ export function useDeleteAnnouncement() {
   return useMutation({
     mutationFn: async (id: string) => {
       const res = await apiClient.delete(`/communication/announcements/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to delete announcement');
+      if (!res.success) throw apiError(res.error, 'Failed to delete announcement');
       return res.data;
     },
     onSuccess: () => {
@@ -116,7 +116,7 @@ export function useEvent(id: string) {
     queryKey: ['events', id],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>>(`/communication/events/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Not found');
+      if (!res.success) throw apiError(res.error, 'Not found');
       return mapEvent(res.data as Record<string, unknown>);
     },
     enabled: !!id,
@@ -128,7 +128,7 @@ export function useDeleteEvent() {
   return useMutation({
     mutationFn: async (id: string) => {
       const res = await apiClient.delete(`/communication/events/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to delete event');
+      if (!res.success) throw apiError(res.error, 'Failed to delete event');
       return res.data;
     },
     onSuccess: () => {
@@ -149,7 +149,7 @@ export function useCreateAnnouncement() {
       if (data.classroom_id) body.classroomId = data.classroom_id;
 
       const res = await apiClient.post('/communication/announcements', body);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to create announcement');
+      if (!res.success) throw apiError(res.error, 'Failed to create announcement');
       return res.data;
     },
     onSuccess: () => {
@@ -163,7 +163,7 @@ export function useEvents() {
     queryKey: ['events'],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>[]>('/communication/events');
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load events');
+      if (!res.success) throw apiError(res.error, 'Failed to load events');
       const raw = res.data;
       const list = Array.isArray(raw) ? raw : [];
       return list.map(mapEvent);
@@ -197,7 +197,7 @@ export function useCreateEvent() {
       if (data.classroom_ids && data.classroom_ids.length > 0) body.classroomIds = data.classroom_ids;
 
       const res = await apiClient.post('/communication/events', body);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to create event');
+      if (!res.success) throw apiError(res.error, 'Failed to create event');
       return res.data;
     },
     onSuccess: () => {
@@ -213,7 +213,7 @@ export function useEventConsent(eventId?: string) {
       // There is no dedicated /consent endpoint — consent forms come embedded
       // in the event detail response, so derive the per-child list from that.
       const res = await apiClient.get<Record<string, unknown>>(`/communication/events/${eventId}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load consent data');
+      if (!res.success) throw apiError(res.error, 'Failed to load consent data');
       const forms = (res.data?.consentForms ?? []) as Record<string, unknown>[];
       return forms.map((form): ConsentEntry => {
         const child = form.child as Record<string, string> | undefined;
@@ -312,7 +312,7 @@ export function useDailyReportsForChild(childId: string | undefined) {
       const res = await apiClient.get<unknown>(
         `/communication/daily-reports/child/${childId}?pageSize=30`
       );
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load reports');
+      if (!res.success) throw apiError(res.error, 'Failed to load reports');
       const raw = res.data;
       const list = Array.isArray(raw) ? raw : [];
       return (list as Record<string, unknown>[]).map(mapDailyReport);
@@ -351,7 +351,7 @@ export function useUpdateDailyReport() {
         `/communication/daily-reports/${reportId}`,
         body
       );
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update report');
+      if (!res.success) throw apiError(res.error, 'Failed to update report');
       return mapDailyReport(res.data as Record<string, unknown>);
     },
     onSuccess: (report) => {
@@ -376,7 +376,7 @@ export function usePendingConversations() {
     queryKey: ['pending-conversations'],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>[]>('/communication/conversations/pending');
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load pending conversations');
+      if (!res.success) throw apiError(res.error, 'Failed to load pending conversations');
       const raw = res.data;
       const list = Array.isArray(raw) ? raw : [];
       return list.map((item): PendingConversation => {

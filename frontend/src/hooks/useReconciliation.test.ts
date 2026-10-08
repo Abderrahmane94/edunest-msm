@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fetchReconciliationReport } from './useReconciliation';
 
-vi.mock('@/lib/api-client', () => ({
+vi.mock('@/lib/api-client', async () => ({
+  ...(await vi.importActual<typeof import('@/lib/api-client')>('@/lib/api-client')),
   apiClient: { get: vi.fn() },
 }));
 

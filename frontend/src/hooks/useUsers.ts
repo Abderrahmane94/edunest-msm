@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, ApiRequestError } from '@/lib/api-client';
+import { apiClient, ApiRequestError, apiError } from '@/lib/api-client';
 
 export interface User {
   id: string;
@@ -100,7 +100,7 @@ export function useUser(id: string) {
     queryKey: ['users', id],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>>(`/users/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'User not found');
+      if (!res.success) throw apiError(res.error, 'User not found');
       const raw = res.data as Record<string, unknown>;
       const base = mapUser(raw);
       const school = raw.school as { id: string; name: string; schoolType: string } | null | undefined;
@@ -126,7 +126,7 @@ export function useUpdateUser() {
       if (data.national_id?.trim()) body.nationalId = data.national_id.trim();
 
       const res = await apiClient.patch(`/users/${id}`, body);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update user');
+      if (!res.success) throw apiError(res.error, 'Failed to update user');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -143,7 +143,7 @@ export function useToggleUserActive() {
       const endpoint = isActive ? `/users/${id}/deactivate` : `/users/${id}/activate`;
       const res = await apiClient.patch(endpoint);
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to update user status');
+        throw apiError(res.error, 'Failed to update user status');
       }
       return res.data;
     },

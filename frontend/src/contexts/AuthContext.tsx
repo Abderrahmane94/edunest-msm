@@ -100,6 +100,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Listen for forced logout events (e.g., from API client on refresh failure)
   useEffect(() => {
     const handleLogout = () => {
+      // The login page explains why the user is back there.
+      try {
+        sessionStorage.setItem('session-expired', '1');
+      } catch {
+        // Storage unavailable: the login page just shows no explanation.
+      }
       // Clear cached server data and stale local session artifacts.
       clearQueryCache();
       localStorage.removeItem('fcm_token');

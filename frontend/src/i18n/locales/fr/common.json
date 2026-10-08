@@ -261,6 +261,14 @@
     "iosStep3": "Touchez « Ajouter » en haut à droite",
     "iosSafariOnly": "Ces étapes se font dans Safari. Si vous utilisez un autre navigateur, ouvrez d'abord EduNest dans Safari."
   },
+  "errors": {
+    "crash": {
+      "title": "Un problème est survenu sur cette page",
+      "message": "L'affichage a rencontré une erreur. Rechargez la page ; si le problème continue, revenez à l'accueil.",
+      "reload": "Recharger",
+      "home": "Accueil"
+    }
+  },
   "common": {
     "save": "Enregistrer",
     "saved": "Modifications enregistrées",

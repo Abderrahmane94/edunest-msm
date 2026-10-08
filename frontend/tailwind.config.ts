@@ -22,6 +22,12 @@ const config: Config = {
           'system-ui',
           'sans-serif',
         ],
+        playful: [
+          '"Baloo Bhaijaan 2"',
+          '"Noto Sans Arabic"',
+          'system-ui',
+          'sans-serif',
+        ],
         mono: [
           '"JetBrains Mono"',
           '"Fira Code"',

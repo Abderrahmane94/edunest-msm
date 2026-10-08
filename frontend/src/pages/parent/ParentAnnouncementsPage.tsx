@@ -4,7 +4,7 @@ import { Megaphone, Calendar, MapPin, Users, Check, X, CloudOff } from 'lucide-r
 import { useOfflineQueue, retryAction, discardAction, type QueuedAction } from '@/lib/offlineQueue';
 import { cn } from '@/lib/utils';
 import { formatDate, formatDateTime } from '@/lib/formatters';
-import { EmptyState, StatusBadge, Tabs } from '@/components/ui';
+import { EmptyState, StatusBadge, Tabs, useConfirm } from '@/components/ui';
 import {
   useAnnouncements,
   useEvents,
@@ -192,6 +192,7 @@ function EventCard({ event }: { event: SchoolEvent }) {
  */
 function EventConsent({ eventId }: { eventId: string }) {
   const { t } = useTranslation();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const { data: forms, isPending, fetchStatus } = useEventConsent(eventId);
   const { actions, syncing } = useOfflineQueue();
 
@@ -247,11 +248,19 @@ function EventConsent({ eventId }: { eventId: string }) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => discardAction(queued.id)}
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: t('confirmations.discard.consentTitle'),
+                        description: t('confirmations.discard.consentDescription'),
+                        confirmLabel: t('teacherAttendance.discard'),
+                      });
+                      if (ok) discardAction(queued.id);
+                    }}
                     className="font-medium text-text-secondary hover:underline"
                   >
                     {t('teacherAttendance.discard')}
                   </button>
+                  {confirmDialog}
                 </div>
               )}
             </div>

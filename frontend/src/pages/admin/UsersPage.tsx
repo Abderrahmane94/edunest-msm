@@ -14,13 +14,37 @@ import {
   PageHeader,
   RoleBadge,
   StatusBadge,
+  useConfirm,
+  type ConfirmOptions,
 } from '@/components/ui';
+import type { TFunction } from 'i18next';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useUsers, useToggleUserActive, type User } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
 import { InviteUserDialog } from './InviteUserDialog';
 import { InviteByEmailDialog } from './InviteByEmailDialog';
+
+/** The question asked before an account is deactivated or reactivated. */
+export function userToggleConfirm(
+  t: TFunction,
+  user: { first_name: string; last_name: string; is_active: boolean }
+): ConfirmOptions {
+  const name = `${user.first_name} ${user.last_name}`;
+  return user.is_active
+    ? {
+        title: t('confirmations.user.deactivateTitle', { name }),
+        description: t('confirmations.user.deactivateDescription'),
+        confirmLabel: t('users.deactivate'),
+        tone: 'danger',
+      }
+    : {
+        title: t('confirmations.user.activateTitle', { name }),
+        description: t('confirmations.user.activateDescription'),
+        confirmLabel: t('users.activate'),
+        tone: 'default',
+      };
+}
 
 export function UsersPage() {
   const { t } = useTranslation();
@@ -37,6 +61,7 @@ export function UsersPage() {
   const { user: currentUser } = useAuth();
   const isSuperAdmin = currentUser?.role === 'super_admin';
   const toggleUserActive = useToggleUserActive();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const pageSize = 10;
 
   const { data, isLoading } = useUsers({
@@ -146,7 +171,7 @@ export function UsersPage() {
             aria-label={user.is_active ? t('users.deactivate') : t('users.activate')}
             title={user.is_active ? t('users.deactivate') : t('users.activate')}
             disabled={toggleUserActive.isPending}
-            onClick={(e) => { e.stopPropagation(); toggleUserActive.mutate({ id: user.id, isActive: user.is_active }, { onError: (err) => setActionError(errorMessage(err, t)) }); }}
+            onClick={async (e) => { e.stopPropagation(); if (!(await confirm(userToggleConfirm(t, user)))) return; toggleUserActive.mutate({ id: user.id, isActive: user.is_active }, { onError: (err) => setActionError(errorMessage(err, t)) }); }}
           >
             {user.is_active ? (
               <ShieldOff className="w-4 h-4 text-danger" />
@@ -162,6 +187,7 @@ export function UsersPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {confirmDialog}
       <PageHeader
         title={t('users.title')}
         actions={

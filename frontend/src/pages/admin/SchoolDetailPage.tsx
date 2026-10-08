@@ -4,12 +4,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Save, Shield, ShieldOff, Users, UserPlus, Settings } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { Button, DangerZone, DataTable, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, EmptyState, EntityDeleteButton, ErrorAlert, Input, ListSkeleton, PageHeader, RoleBadge, StatusBadge, Tabs } from '@/components/ui';
+import { Button, DangerZone, DataTable, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, EmptyState, EntityDeleteButton, ErrorAlert, Input, ListSkeleton, PageHeader, RoleBadge, StatusBadge, Tabs, useConfirm } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { apiClient, apiError } from '@/lib/api-client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useToggleSchoolActive } from './SchoolsPage';
+import { schoolToggleConfirm, useToggleSchoolActive } from './SchoolsPage';
 import type { SchoolItem } from '@/hooks/useSchools';
 import { useTabParam } from '@/hooks/useTabParam';
 
@@ -91,6 +91,7 @@ export function SchoolDetailPage() {
   const { data: school, isLoading } = useSchoolDetail(schoolId!);
   const updateSchool = useUpdateSchoolAdmin();
   const toggleSchool = useToggleSchoolActive();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const [activeTab, setActiveTab] = useTabParam<Tab>(['info', 'users'], 'info');
   const [formData, setFormData] = React.useState({
@@ -126,8 +127,9 @@ export function SchoolDetailPage() {
     }
   }
 
-  function handleToggle() {
+  async function handleToggle() {
     if (!school) return;
+    if (!(await confirm(schoolToggleConfirm(t, school)))) return;
     setToggleError(null);
     toggleSchool.mutate(
       { id: school.id, isActive: school.isActive },
@@ -236,6 +238,7 @@ export function SchoolDetailPage() {
       {activeTab === 'users' && (
         <UsersTab schoolId={schoolId!} />
       )}
+      {confirmDialog}
     </div>
   );
 }

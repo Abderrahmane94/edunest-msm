@@ -521,6 +521,64 @@
       "home": "الرئيسية"
     }
   },
+  "confirmations": {
+    "school": {
+      "deactivateTitle": "تعطيل المؤسسة «⁨{{name}}⁩»؟",
+      "deactivateDescription": "لن يتمكن أي من مستخدميها من تسجيل الدخول حتى يُعاد تفعيلها.",
+      "activateTitle": "إعادة تفعيل المؤسسة «⁨{{name}}⁩»؟",
+      "activateDescription": "سيتمكن مستخدموها من تسجيل الدخول مجدداً."
+    },
+    "user": {
+      "deactivateTitle": "تعطيل حساب ⁨{{name}}⁩؟",
+      "deactivateDescription": "لن يتمكن هذا الشخص من تسجيل الدخول. يمكنك إعادة تفعيل الحساب في أي وقت.",
+      "activateTitle": "إعادة تفعيل حساب ⁨{{name}}⁩؟",
+      "activateDescription": "سيتمكن هذا الشخص من تسجيل الدخول مجدداً."
+    },
+    "subscription": {
+      "suspendTitle": "تعليق اشتراك «⁨{{name}}⁩»؟",
+      "suspendDescription": "لن تتمكن المؤسسة من استخدام EduNest حتى يُعاد تفعيل الاشتراك.",
+      "cancelTitle": "إلغاء اشتراك «⁨{{name}}⁩»؟",
+      "cancelDescription": "الإلغاء نهائي: يجب تعيين خطة جديدة لإعادة وصول المؤسسة.",
+      "reactivateTitle": "إعادة تفعيل اشتراك «⁨{{name}}⁩»؟",
+      "reactivateDescription": "تستعيد المؤسسة الوصول إلى EduNest.",
+      "keep": "الإبقاء على الاشتراك"
+    },
+    "year": {
+      "activateTitle": "جعل «⁨{{name}}⁩» السنة الحالية؟",
+      "activateDescription": "ستحل محل السنة الحالية لكامل المؤسسة."
+    },
+    "parentLink": {
+      "title": "إزالة ⁨{{name}}⁩ من أولياء هذا الطفل؟",
+      "description": "لن يتمكن هذا الولي من متابعة ⁨{{child}}⁩. يمكنك ربطه مجدداً لاحقاً.",
+      "remove": "إزالة الولي"
+    },
+    "emergencyContact": {
+      "title": "حذف جهة الاتصال «⁨{{name}}⁩»؟",
+      "description": "ستُزال من جهات اتصال الطوارئ الخاصة بـ⁨{{child}}⁩."
+    },
+    "medicalNote": {
+      "title": "حذف هذه الملاحظة الطبية؟",
+      "description": "ستُزال من ملف ⁨{{child}}⁩."
+    },
+    "staffDocument": {
+      "title": "حذف الوثيقة؟",
+      "description": "سيُحذف الملف نهائياً."
+    },
+    "fee": {
+      "title": "حذف الرسوم «⁨{{name}}⁩»؟",
+      "description": "لن تتأثر الاستحقاقات الحالية."
+    },
+    "discard": {
+      "messageTitle": "حذف هذه الرسالة؟",
+      "messageDescription": "لم تُرسل وستضيع.",
+      "consentTitle": "التخلي عن هذا الرد؟",
+      "consentDescription": "لم يُرسل ردك. يمكنك الرد مجدداً.",
+      "attendanceTitle": "التخلي عن هذا التسجيل للحضور؟",
+      "attendanceDescription": "لم يُرسل تسجيل الحضور: ستضيع البيانات المدخلة.",
+      "reportTitle": "التخلي عن هذا التقرير؟",
+      "reportDescription": "لم يُرسل التقرير: ستضيع البيانات المدخلة."
+    }
+  },
   "common": {
     "dangerZone": "منطقة الخطر",
     "filters": "التصفية",
@@ -2047,7 +2105,6 @@
       "editTitle": "تعديل الرسم",
       "dialogDescription": "قم بإعداد رسم لمرة واحدة أو دوري يمكن تطبيقه على التسجيلات",
       "empty": "لا توجد رسوم مُعدّة",
-      "confirmDelete": "حذف الرسم « {{name}} »؟ لن تتأثر المستحقات الموجودة.",
       "oneShot": "لمرة واحدة",
       "scopeGeneral": "غير مسند",
       "scopeSchool": "كل المدرسة",

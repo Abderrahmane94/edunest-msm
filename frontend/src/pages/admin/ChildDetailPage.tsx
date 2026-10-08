@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Save, UserPlus, X, Star, Pencil, Check } from 'lucide-react';
-import { Button, EntityDeleteButton, PageHeader, StatusBadge } from '@/components/ui';
+import { Button, EntityDeleteButton, PageHeader, StatusBadge, useConfirm } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import {
@@ -36,6 +36,7 @@ export function ChildDetailPage() {
   const enrollChild = useEnrollChild();
   const { data: parentLinks } = useParentLinks(childId!);
   const removeParentLink = useRemoveParentLink();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const updateParentLink = useUpdateParentLink();
   const setPrimaryParentLink = useSetPrimaryParentLink();
   const { data: emergencyContacts } = useEmergencyContacts(childId!);
@@ -185,6 +186,7 @@ export function ChildDetailPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {confirmDialog}
       <PageHeader
         back="/admin/children"
         title={`${child.first_name} ${child.last_name}`}
@@ -389,7 +391,17 @@ export function ChildDetailPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => {
+                      aria-label={t('confirmations.parentLink.remove')}
+                      title={t('confirmations.parentLink.remove')}
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: t('confirmations.parentLink.title', {
+                            name: `${parent?.firstName as string} ${parent?.lastName as string}`,
+                          }),
+                          description: t('confirmations.parentLink.description', { child: child.first_name }),
+                          confirmLabel: t('confirmations.parentLink.remove'),
+                        });
+                        if (!ok) return;
                         setLinkError(null);
                         removeParentLink.mutate({ childId: childId!, linkId }, { onError: (err) => setLinkError(errorMessage(err, t)) });
                       }}

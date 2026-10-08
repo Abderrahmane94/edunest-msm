@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Clock, AlertCircle, RefreshCw, Trash2 } from 'lucide-react';
 import { retryAction, discardAction, type QueuedAction } from '@/lib/offlineQueue';
 import type { MessagePayload } from '@/hooks/useMessageSync';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 
 /**
  * An outgoing message not sent yet: waiting for the connection (or being
@@ -9,7 +10,17 @@ import type { MessagePayload } from '@/hooks/useMessageSync';
  */
 export function PendingMessageBubble({ action, syncing }: { action: QueuedAction<MessagePayload>; syncing: boolean }) {
   const { t } = useTranslation();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const failed = !!action.error;
+
+  async function handleDiscard() {
+    const ok = await confirm({
+      title: t('confirmations.discard.messageTitle'),
+      description: t('confirmations.discard.messageDescription'),
+      confirmLabel: t('messages.delete'),
+    });
+    if (ok) discardAction(action.id);
+  }
 
   return (
     <div className="flex flex-col max-w-[75%] ms-auto items-end">
@@ -40,12 +51,13 @@ export function PendingMessageBubble({ action, syncing }: { action: QueuedAction
           </button>
           <button
             type="button"
-            onClick={() => discardAction(action.id)}
+            onClick={handleDiscard}
             className="inline-flex items-center gap-1 font-medium text-text-secondary hover:underline"
           >
             <Trash2 className="w-3 h-3" />
             {t('messages.delete')}
           </button>
+          {confirmDialog}
         </div>
       ) : (
         <span className="mt-1 inline-flex items-center gap-1 text-micro text-text-secondary">

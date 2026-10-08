@@ -17,7 +17,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Avatar } from '@/components/ui';
+import { Avatar, useConfirm } from '@/components/ui';
 import { useTeacherClassroom, useClassroomChildren } from '@/hooks/useTeacherClassroom';
 import {
   useDailyReportsForChild,
@@ -110,6 +110,7 @@ function formatReportDate(dateStr: string, locale: string): string {
 
 export function TeacherDailyReportPage() {
   const { t, i18n } = useTranslation();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   // Form state
   const [form, setForm] = React.useState<DailyReportForm>({
@@ -755,12 +756,20 @@ export function TeacherDailyReportPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => discardAction(pending.id)}
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: t('confirmations.discard.reportTitle'),
+                      description: t('confirmations.discard.reportDescription'),
+                      confirmLabel: t('teacherAttendance.discard'),
+                    });
+                    if (ok) discardAction(pending.id);
+                  }}
                   className="inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-lg border border-border bg-card text-caption font-medium text-text-secondary"
                 >
                   <Trash2 className="w-4 h-4" />
                   {t('teacherAttendance.discard')}
                 </button>
+                {confirmDialog}
               </div>
             </div>
           ) : saved && pending ? (

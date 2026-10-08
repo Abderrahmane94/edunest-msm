@@ -354,16 +354,7 @@ class CommunicationService {
     userRole: string,
     input: SendMessageInput,
   ): Promise<MessageResponse> {
-    // Verify conversation exists and user has access
-    const conversation = await this.verifyConversationAccess(conversationId, schoolId, userId, userRole);
-
-    // Only teacher and parent participants can send messages (not admins viewing)
-    if (userId !== conversation.teacherUserId && userId !== conversation.parentUserId) {
-      throw new CommunicationServiceError(
-        'Only conversation participants can send messages',
-        403,
-      );
-    }
+    const conversation = await this.assertCanSendMessage(conversationId, schoolId, userId, userRole);
 
     // Build response with signed URL if applicable
     const toResponse = (message: Prisma.MessageGetPayload<{ include: { sender: { select: typeof participantSelect } } }>): MessageResponse => {
@@ -1376,6 +1367,19 @@ class CommunicationService {
    * Verify that a user has access to a conversation.
    * Returns the conversation if access is granted.
    */
+  /**
+   * Throws unless the user may send messages in this conversation: only its
+   * teacher and parent (not an admin viewing it). Checked before a file is
+   * stored, so a refused sender stores nothing.
+   */
+  async assertCanSendMessage(conversationId: string, schoolId: string, userId: string, userRole: string) {
+    const conversation = await this.verifyConversationAccess(conversationId, schoolId, userId, userRole);
+    if (userId !== conversation.teacherUserId && userId !== conversation.parentUserId) {
+      throw new CommunicationServiceError('Only conversation participants can send messages', 403);
+    }
+    return conversation;
+  }
+
   private async verifyConversationAccess(
     conversationId: string,
     schoolId: string,

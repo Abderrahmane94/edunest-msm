@@ -1,3 +1,4 @@
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -987,6 +988,7 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
   );
   const [page, setPage] = React.useState(1);
   const [deleteConfirm, setDeleteConfirm] = React.useState<string | null>(null);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [pdfRowId, setPdfRowId] = React.useState<string | null>(null);
   const [pdfBulkLoading, setPdfBulkLoading] = React.useState(false);
   const pageSize = 20;
@@ -1107,7 +1109,11 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
               disabled={deletePayment.isPending}
               onClick={(e) => {
                 e.stopPropagation();
-                deletePayment.mutate(p.id, { onSuccess: () => setDeleteConfirm(null) });
+                setDeleteError(null);
+                deletePayment.mutate(p.id, {
+                  onSuccess: () => setDeleteConfirm(null),
+                  onError: (err) => setDeleteError(errorMessage(err, t)),
+                });
               }}
             >
               {t('common.confirm')}
@@ -1260,6 +1266,8 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
           ))}
         </div>
       ) : (
+        <>
+        <ErrorAlert message={deleteError} onDismiss={() => setDeleteError(null)} className="mb-3" />
         <DataTable<SalaryPayment>
           columns={columns}
           data={data?.items ?? []}
@@ -1270,6 +1278,7 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
           onPageChange={setPage}
           emptyMessage={hasPaymentFilters ? t('payroll.filters.noPaymentMatch') : t('payroll.payments.empty')}
         />
+        </>
       )}
 
       <RecordPaymentDialog open={recordOpen} onOpenChange={setRecordOpen} employees={employees} />

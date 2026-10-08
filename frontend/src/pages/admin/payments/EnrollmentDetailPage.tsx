@@ -396,6 +396,7 @@ function DiscountRow({ discount, enrollmentId }: { discount: Discount; enrollmen
   const { t, i18n } = useTranslation();
   const deleteDiscount = useDeleteDiscount(enrollmentId);
   const [confirming, setConfirming] = React.useState(false);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
   return (
     <tr className="border-b border-border last:border-b-0 hover:bg-hover">
@@ -433,7 +434,10 @@ function DiscountRow({ discount, enrollmentId }: { discount: Discount; enrollmen
             <Button
               variant="danger"
               size="sm"
-              onClick={() => deleteDiscount.mutate(discount.id)}
+              onClick={() => {
+                setDeleteError(null);
+                deleteDiscount.mutate(discount.id, { onError: (err) => setDeleteError(errorMessage(err, t)) });
+              }}
               disabled={deleteDiscount.isPending}
             >
               {deleteDiscount.isPending ? t('common.loading') : t('payments.enrollmentDetail.discounts.delete')}
@@ -447,6 +451,7 @@ function DiscountRow({ discount, enrollmentId }: { discount: Discount; enrollmen
             <Trash2 className="w-4 h-4 text-danger" />
           </Button>
         )}
+        {deleteError && <p className="text-caption text-danger mt-1 text-start" role="alert">{deleteError}</p>}
       </td>
     </tr>
   );

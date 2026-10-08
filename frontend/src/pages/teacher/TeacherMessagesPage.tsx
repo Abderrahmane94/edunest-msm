@@ -1,3 +1,5 @@
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useChatSend } from '@/components/messaging/useChatSend';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -137,6 +139,7 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
 
   const { pending: pendingMessages, syncing } = usePendingMessages('parent', activeConversationId);
   const sendFileMessage = useSendFileMessage(activeConversationId ?? undefined);
+  const chatSend = useChatSend();
   const markRead = useMarkMessageRead();
 
   const activeConversation = React.useMemo(
@@ -211,12 +214,12 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
     (e: React.ChangeEvent<HTMLInputElement>, messageType: 'photo' | 'document') => {
       const file = e.target.files?.[0];
       if (!file || !activeConversationId) return;
-      sendFileMessage.mutate({ file, messageType });
+      chatSend.sendFile(sendFileMessage, file, messageType);
       setShowAttachMenu(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
       if (photoInputRef.current) photoInputRef.current.value = '';
     },
-    [activeConversationId, sendFileMessage]
+    [activeConversationId, sendFileMessage, chatSend.sendFile]
   );
 
   return (
@@ -335,6 +338,8 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
             setShowAttachMenu={setShowAttachMenu}
             fileInputRef={fileInputRef}
             photoInputRef={photoInputRef}
+            sendError={chatSend.error}
+            onDismissSendError={chatSend.clearError}
             i18nNamespace="messages"
           />
         )}
@@ -378,6 +383,7 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
 
   const { pending: pendingMessages, syncing } = usePendingMessages('staff', activeConversationId);
   const sendFileMessage = useSendStaffFileMessage(activeConversationId ?? undefined);
+  const chatSend = useChatSend();
   const markRead = useMarkStaffMessageRead();
 
   const activeConversation = React.useMemo(
@@ -464,12 +470,12 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
     (e: React.ChangeEvent<HTMLInputElement>, messageType: 'photo' | 'document') => {
       const file = e.target.files?.[0];
       if (!file || !activeConversationId) return;
-      sendFileMessage.mutate({ file, messageType });
+      chatSend.sendFile(sendFileMessage, file, messageType);
       setShowAttachMenu(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
       if (photoInputRef.current) photoInputRef.current.value = '';
     },
-    [activeConversationId, sendFileMessage]
+    [activeConversationId, sendFileMessage, chatSend.sendFile]
   );
 
   // Convert StaffMessage to the shape MessageBubble expects
@@ -629,6 +635,8 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
             setShowAttachMenu={setShowAttachMenu}
             fileInputRef={fileInputRef}
             photoInputRef={photoInputRef}
+            sendError={chatSend.error}
+            onDismissSendError={chatSend.clearError}
             i18nNamespace="messages"
           />
         )}
@@ -678,6 +686,9 @@ interface ChatAreaProps {
   setShowAttachMenu: (v: boolean) => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
   photoInputRef: React.RefObject<HTMLInputElement>;
+  /** Why the last send failed, shown above the input. */
+  sendError: string | null;
+  onDismissSendError: () => void;
   i18nNamespace: string;
 }
 
@@ -699,6 +710,8 @@ function ChatArea({
   setShowAttachMenu,
   fileInputRef,
   photoInputRef,
+  sendError,
+  onDismissSendError,
   i18nNamespace,
 }: ChatAreaProps) {
   const { t } = useTranslation();
@@ -744,6 +757,7 @@ function ChatArea({
 
       {/* Message input */}
       <div className="shrink-0 bg-card border-t border-border p-3">
+        <ErrorAlert message={sendError} onDismiss={onDismissSendError} className="mb-2" />
         <div className="flex items-end gap-2">
           <div className="relative" ref={attachMenuRef}>
             <button

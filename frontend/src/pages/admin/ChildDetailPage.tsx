@@ -358,7 +358,11 @@ export function ChildDetailPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => {
-                          updateParentLink.mutate({ childId: childId!, linkId, relationship: editLinkRelationship, canPickup: editLinkCanPickup });
+                          setLinkError(null);
+                          updateParentLink.mutate(
+                            { childId: childId!, linkId, relationship: editLinkRelationship, canPickup: editLinkCanPickup },
+                            { onError: (err) => setLinkError(errorMessage(err, t)) },
+                          );
                           setEditingLinkId(null);
                         }}
                         disabled={updateParentLink.isPending}
@@ -372,7 +376,10 @@ export function ChildDetailPage() {
                             variant="ghost"
                             size="icon"
                             title={t('children.detail.setPrimary')}
-                            onClick={() => setPrimaryParentLink.mutate({ childId: childId!, linkId })}
+                            onClick={() => {
+                              setLinkError(null);
+                              setPrimaryParentLink.mutate({ childId: childId!, linkId }, { onError: (err) => setLinkError(errorMessage(err, t)) });
+                            }}
                             disabled={setPrimaryParentLink.isPending}
                           >
                             <Star className="w-4 h-4 text-text-secondary" />
@@ -394,7 +401,10 @@ export function ChildDetailPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => removeParentLink.mutate({ childId: childId!, linkId })}
+                      onClick={() => {
+                        setLinkError(null);
+                        removeParentLink.mutate({ childId: childId!, linkId }, { onError: (err) => setLinkError(errorMessage(err, t)) });
+                      }}
                       disabled={removeParentLink.isPending}
                     >
                       <X className="w-4 h-4 text-danger" />

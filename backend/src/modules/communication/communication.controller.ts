@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { communicationService, CommunicationServiceError } from './communication.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
+import { cloudinaryService } from '../../services/cloudinary.service';
 import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, UpdateDailyReportInput, SaveDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput, MessagesQuery, DailyReportsQuery, AnnouncementsQuery, EventsQuery } from './communication.schema';
 
 export const communicationController = {
@@ -121,6 +122,48 @@ export const communicationController = {
         userRole,
         input,
       );
+      res.status(201).json(successResponse(message));
+    } catch (error) {
+      if (error instanceof CommunicationServiceError) {
+        res.status(error.statusCode).json(errorResponse('COMMUNICATION_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/communication/conversations/:id/messages/file (multipart/form-data)
+   * Sends a photo or document in a teacher <-> parent conversation.
+   */
+  async sendFileMessage(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const userId = req.user!.userId;
+      const userRole = req.user!.role;
+      const { id } = req.params;
+      const file = req.file;
+      if (!file) {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', 'No file uploaded'));
+        return;
+      }
+
+      // Refused before anything is stored.
+      await communicationService.assertCanSendMessage(id, schoolId, userId, userRole);
+
+      const requestedType = req.body.message_type as string | undefined;
+      const isPhoto = requestedType === 'photo' || (requestedType !== 'document' && file.mimetype.startsWith('image/'));
+      const stored = await cloudinaryService.uploadFile(file.buffer, {
+        folder: `schools/${schoolId}/messages`,
+        resourceType: isPhoto ? 'image' : 'raw',
+        accessMode: 'authenticated',
+      });
+
+      const message = await communicationService.sendMessage(id, schoolId, userId, userRole, {
+        messageType: isPhoto ? 'photo' : 'document',
+        content: typeof req.body.content === 'string' && req.body.content.trim() ? req.body.content : undefined,
+        cloudinaryPublicId: stored.publicId,
+      });
       res.status(201).json(successResponse(message));
     } catch (error) {
       if (error instanceof CommunicationServiceError) {

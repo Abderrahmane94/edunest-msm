@@ -142,7 +142,7 @@ export function useSendFileMessage(conversationId?: string) {
       formData.append('file', file);
       formData.append('message_type', messageType);
 
-      const res = await apiClient.uploadFile(`/communication/conversations/${conversationId}/messages`, formData);
+      const res = await apiClient.uploadFile(`/communication/conversations/${conversationId}/messages/file`, formData);
       if (!res.success) throw apiError(res.error, 'Failed to send file message');
       return res;
     },

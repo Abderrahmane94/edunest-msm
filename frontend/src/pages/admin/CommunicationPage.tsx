@@ -1,3 +1,5 @@
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useChatSend } from '@/components/messaging/useChatSend';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -678,6 +680,7 @@ function CreateEventDialog({
   const [classroomIds, setClassroomIds] = React.useState<string[]>([]);
 
   const createEvent = useCreateEvent();
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
   const { data: academicYears } = useAcademicYears();
   const activeYear = (academicYears ?? []).find((y) => y.is_active);
   const { data: classrooms } = useClassrooms(activeYear?.id);
@@ -690,6 +693,7 @@ function CreateEventDialog({
     e.preventDefault();
     if (!title.trim() || !description.trim() || !startDatetime || !endDatetime) return;
 
+    setSubmitError(null);
     createEvent.mutate(
       {
         title: title.trim(),
@@ -711,6 +715,7 @@ function CreateEventDialog({
           setClassroomIds([]);
           onOpenChange(false);
         },
+        onError: (err) => setSubmitError(errorMessage(err, t)),
       }
     );
   }
@@ -817,6 +822,8 @@ function CreateEventDialog({
             </label>
           </div>
 
+          <ErrorAlert message={submitError} onDismiss={() => setSubmitError(null)} />
+
           <DialogFooter>
             <Button variant="secondary" type="button" onClick={() => onOpenChange(false)}>
               {t('common.cancel')}
@@ -860,6 +867,7 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
 
   const sendMessage = useSendStaffMessage(activeConversationId ?? undefined);
   const sendFileMessage = useSendStaffFileMessage(activeConversationId ?? undefined);
+  const chatSend = useChatSend();
   const markRead = useMarkStaffMessageRead();
 
   const activeConversation = React.useMemo(
@@ -931,9 +939,18 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
   const handleSend = React.useCallback(() => {
     const trimmed = messageInput.trim();
     if (!trimmed || !activeConversationId) return;
-    sendMessage.mutate({ content: trimmed, message_type: 'text' });
+    // On failure the text comes back in the input, with the reason above it.
+    sendMessage.mutate(
+      { content: trimmed, message_type: 'text' },
+      {
+        onError: (err) => {
+          chatSend.onError(err);
+          setMessageInput((current) => current || trimmed);
+        },
+      },
+    );
     setMessageInput('');
-  }, [messageInput, activeConversationId, sendMessage]);
+  }, [messageInput, activeConversationId, sendMessage, chatSend.onError]);
 
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent) => {
@@ -946,12 +963,12 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
     (e: React.ChangeEvent<HTMLInputElement>, messageType: 'photo' | 'document') => {
       const file = e.target.files?.[0];
       if (!file || !activeConversationId) return;
-      sendFileMessage.mutate({ file, messageType });
+      chatSend.sendFile(sendFileMessage, file, messageType);
       setShowAttachMenu(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
       if (photoInputRef.current) photoInputRef.current.value = '';
     },
-    [activeConversationId, sendFileMessage],
+    [activeConversationId, sendFileMessage, chatSend.sendFile],
   );
 
   // Adapt StaffMessage → MessageBubble shape
@@ -1136,6 +1153,7 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
 
               {/* Input */}
               <div className="shrink-0 bg-card border-t border-border p-3">
+                <ErrorAlert message={chatSend.error} onDismiss={chatSend.clearError} className="mb-2" />
                 <div className="flex items-end gap-2">
                   <div className="relative" ref={attachMenuRef}>
                     <button

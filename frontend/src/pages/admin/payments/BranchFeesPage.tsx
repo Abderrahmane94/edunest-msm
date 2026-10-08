@@ -1,3 +1,4 @@
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -1112,6 +1113,7 @@ export default function BranchFeesPage() {
 
   const { data: fees, isLoading } = useBranchFees(selectedBranchId);
   const deleteFee = useDeleteBranchFee(selectedBranchId);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
   function handleView(fee: BranchFee) {
     setViewingFee(fee);
@@ -1135,7 +1137,12 @@ export default function BranchFeesPage() {
 
   async function handleDelete(fee: BranchFee) {
     if (window.confirm(t('payments.fees.confirmDelete', { name: fee.name }))) {
-      await deleteFee.mutateAsync(fee.id);
+      setDeleteError(null);
+      try {
+        await deleteFee.mutateAsync(fee.id);
+      } catch (err) {
+        setDeleteError(errorMessage(err, t));
+      }
     }
   }
 
@@ -1240,6 +1247,7 @@ export default function BranchFeesPage() {
       </div>
 
       {/* Fees table */}
+      <ErrorAlert message={deleteError} onDismiss={() => setDeleteError(null)} />
       <DataTable
         columns={columns}
         data={fees ?? []}

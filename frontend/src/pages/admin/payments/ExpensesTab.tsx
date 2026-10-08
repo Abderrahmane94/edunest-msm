@@ -1,3 +1,4 @@
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -524,6 +525,8 @@ function EditExpenseDialog({
   const [amount, setAmount] = React.useState(String(expense.amount));
   const [date, setDate] = React.useState(expense.date.slice(0, 10));
   const [confirmingDelete, setConfirmingDelete] = React.useState(false);
+  const [actionError, setActionError] = React.useState<string | null>(null);
+  const showError = (err: unknown) => setActionError(errorMessage(err, t));
 
   const updateExpense = useUpdateExpense();
   const deleteExpense = useDeleteExpense();
@@ -540,6 +543,7 @@ function EditExpenseDialog({
     e.preventDefault();
     if (!category || !description.trim() || !amount || !date) return;
 
+    setActionError(null);
     updateExpense.mutate(
       {
         id: expense.id,
@@ -548,18 +552,20 @@ function EditExpenseDialog({
         amount: parseFloat(amount),
         date,
       },
-      { onSuccess: () => onOpenChange(false) },
+      { onSuccess: () => onOpenChange(false), onError: showError },
     );
   }
 
   function handleDelete() {
-    deleteExpense.mutate(expense.id, { onSuccess: () => onOpenChange(false) });
+    setActionError(null);
+    deleteExpense.mutate(expense.id, { onSuccess: () => onOpenChange(false), onError: showError });
   }
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    uploadReceipt.mutate({ id: expense.id, file });
+    setActionError(null);
+    uploadReceipt.mutate({ id: expense.id, file }, { onError: showError });
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
@@ -680,6 +686,7 @@ function EditExpenseDialog({
             )}
           </div>
 
+          <ErrorAlert message={actionError} onDismiss={() => setActionError(null)} />
           <DialogFooter>
             <Button variant="secondary" type="button" onClick={() => onOpenChange(false)}>
               {t('common.cancel')}

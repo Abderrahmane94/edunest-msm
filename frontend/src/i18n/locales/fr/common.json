@@ -262,6 +262,7 @@
     "iosSafariOnly": "Ces étapes se font dans Safari. Si vous utilisez un autre navigateur, ouvrez d'abord EduNest dans Safari."
   },
   "errors": {
+    "fileTooLargeMax": "Le fichier est trop volumineux ({{max}} maximum).",
     "serverError": "Le serveur a rencontré une erreur. Réessayez ; si le problème continue, contactez le support.",
     "offline": "Pas de connexion internet. Vérifiez votre connexion, puis réessayez.",
     "serverUnreachable": "Impossible de joindre le serveur. Vérifiez votre connexion, puis réessayez.",

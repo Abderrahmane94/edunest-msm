@@ -610,8 +610,8 @@ function EmployeesTab() {
                 ? `${fmtDZD(emp.salary.ratePerStudent!)} / ${t(`payroll.employees.perStudentBasis_${emp.salary.perStudentBasis ?? 'working_day'}`)}`
                 : fmtDZD(emp.salary.baseSalary!)}
             </p>
-            <p className="text-caption text-text-secondary" dir="ltr">
-              {t('payroll.employees.effectiveFrom')}: {formatDate(emp.salary.effectiveFrom)}
+            <p className="text-caption text-text-secondary">
+              {t('payroll.employees.effectiveFrom')}: <span dir="ltr">{formatDate(emp.salary.effectiveFrom)}</span>
             </p>
           </div>
         ) : (

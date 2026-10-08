@@ -41,8 +41,8 @@ function BalanceSummary({ report }: { report: ReconciliationReport }) {
             <TrendingUp className="w-4 h-4 text-success" />
             {t('payments.reconciliation.balance.income')}
           </p>
-          <p className="mt-1 text-subsection font-semibold text-foreground" dir="ltr">
-            {money(report.grandTotal)}
+          <p className="mt-1 text-subsection font-semibold text-foreground">
+            <span dir="ltr">{money(report.grandTotal)}</span>
           </p>
         </div>
         <div className="rounded-lg bg-subtle p-4">
@@ -50,8 +50,8 @@ function BalanceSummary({ report }: { report: ReconciliationReport }) {
             <TrendingDown className="w-4 h-4 text-danger" />
             {t('payments.reconciliation.balance.outflows')}
           </p>
-          <p className="mt-1 text-subsection font-semibold text-foreground" dir="ltr">
-            {money(outflows)}
+          <p className="mt-1 text-subsection font-semibold text-foreground">
+            <span dir="ltr">{money(outflows)}</span>
           </p>
         </div>
         <div className="rounded-lg bg-subtle p-4">

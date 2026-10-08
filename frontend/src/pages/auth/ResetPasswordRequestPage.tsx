@@ -2,9 +2,11 @@ import { errorMessage } from '@/lib/errorMessage';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { AuthShell } from '@/components/layout/AuthShell';
 import { apiClient, apiError } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { ErrorAlert } from '@/components/ui';
 
 export function ResetPasswordRequestPage() {
   const { t } = useTranslation();
@@ -39,8 +41,8 @@ export function ResetPasswordRequestPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-page px-4">
-        <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6 text-center">
+      <AuthShell>
+        <div className="text-center">
           <h1 className="text-display font-bold text-text-heading mb-4">
             {t('auth.resetPasswordRequest.checkEmailTitle')}
           </h1>
@@ -51,13 +53,13 @@ export function ResetPasswordRequestPage() {
             <Button variant="secondary">{t('auth.resetPasswordRequest.backToLogin')}</Button>
           </Link>
         </div>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-page px-4">
-      <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6">
+    <AuthShell>
+      <div>
         <h1 className="text-display font-bold text-text-heading mb-2">
           {t('auth.resetPasswordRequest.title')}
         </h1>
@@ -65,11 +67,7 @@ export function ResetPasswordRequestPage() {
           {t('auth.resetPasswordRequest.subtitle')}
         </p>
 
-        {error && (
-          <div className="mb-4 p-3 rounded-md bg-[var(--color-danger-muted)] border-s-[3px] border-danger">
-            <p className="text-body text-danger">{error}</p>
-          </div>
-        )}
+        <ErrorAlert message={error} className="mb-4" />
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input
@@ -103,6 +101,6 @@ export function ResetPasswordRequestPage() {
           </Link>
         </div>
       </div>
-    </div>
+    </AuthShell>
   );
 }

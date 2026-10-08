@@ -295,6 +295,12 @@
       "passwordMaxLength": "يجب ألا تتجاوز كلمة المرور 128 حرفًا"
     }
   },
+  "navShort": {
+    "dashboard": "الرئيسية",
+    "users": "الحسابات",
+    "timetable": "الأيام",
+    "communication": "التواصل"
+  },
   "nav": {
     "dashboard": "لوحة التحكم",
     "schools": "المدارس",

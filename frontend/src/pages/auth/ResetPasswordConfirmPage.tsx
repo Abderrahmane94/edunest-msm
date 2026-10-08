@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { AuthShell } from '@/components/layout/AuthShell';
 import { apiClient } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { ErrorAlert } from '@/components/ui';
 
 /** Server codes for a link that can't be used: the page offers a new one. */
 const LINK_ERRORS: Record<string, string> = {
@@ -70,8 +72,8 @@ export function ResetPasswordConfirmPage() {
 
   if (!token || linkError) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-page px-4">
-        <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6 text-center">
+      <AuthShell>
+        <div className="text-center">
           <h1 className="text-display font-bold text-text-heading mb-4">
             {t('auth.resetPasswordConfirm.invalidLinkTitle')}
           </h1>
@@ -82,14 +84,14 @@ export function ResetPasswordConfirmPage() {
             <Button variant="secondary">{t('auth.resetPasswordConfirm.requestNewLink')}</Button>
           </Link>
         </div>
-      </div>
+      </AuthShell>
     );
   }
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-page px-4">
-        <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6 text-center">
+      <AuthShell>
+        <div className="text-center">
           <h1 className="text-display font-bold text-text-heading mb-4">
             {t('auth.resetPasswordConfirm.successTitle')}
           </h1>
@@ -100,13 +102,13 @@ export function ResetPasswordConfirmPage() {
             {t('auth.resetPasswordConfirm.goToLogin')}
           </Button>
         </div>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-page px-4">
-      <div className="w-full max-w-[400px] bg-card border border-border rounded-lg p-6">
+    <AuthShell>
+      <div>
         <h1 className="text-display font-bold text-text-heading mb-2">
           {t('auth.resetPasswordConfirm.title')}
         </h1>
@@ -114,11 +116,7 @@ export function ResetPasswordConfirmPage() {
           {t('auth.resetPasswordConfirm.subtitle')}
         </p>
 
-        {error && (
-          <div className="mb-4 p-3 rounded-md bg-[var(--color-danger-muted)] border-s-[3px] border-danger">
-            <p className="text-body text-danger">{error}</p>
-          </div>
-        )}
+        <ErrorAlert message={error} className="mb-4" />
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input
@@ -156,6 +154,6 @@ export function ResetPasswordConfirmPage() {
           </Button>
         </form>
       </div>
-    </div>
+    </AuthShell>
   );
 }

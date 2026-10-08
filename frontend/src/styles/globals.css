@@ -1,5 +1,5 @@
 /* ─── Google Fonts ─── */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;500&family=Baloo+Bhaijaan+2:wght@600;700;800&display=swap');
 
 /* ─── Local Font Fallbacks ─── */
 /* Ensures text renders immediately with system fonts while Google Fonts load */
@@ -244,4 +244,39 @@
   .receipt-content .border {
     border-color: #ccc !important;
   }
+}
+
+/* ─── Sign-in pages: nursery feel ─── */
+@layer components {
+  .auth-soft h1 {
+    font-family: 'Baloo Bhaijaan 2', 'Noto Sans Arabic', system-ui, sans-serif;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #2E2A6B;
+  }
+  .auth-soft input:not([type='radio']):not([type='checkbox']),
+  .auth-soft select,
+  .auth-soft button[type='submit'] {
+    border-radius: 0.875rem;
+  }
+  .auth-soft button[type='submit'] {
+    height: 3rem;
+  }
+
+  .nest-drift { animation: nest-drift 14s ease-in-out infinite; }
+  .nest-drift-slow { animation: nest-drift 20s ease-in-out infinite reverse; }
+  .nest-sway { animation: nest-sway 5s ease-in-out infinite; }
+  .nest-spin { animation: nest-spin 60s linear infinite; }
+}
+
+@keyframes nest-drift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(28px); }
+}
+@keyframes nest-sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+@keyframes nest-spin {
+  to { transform: rotate(360deg); }
 }

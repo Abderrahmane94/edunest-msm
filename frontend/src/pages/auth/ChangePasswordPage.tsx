@@ -59,7 +59,7 @@ export function ChangePasswordPage() {
           <span className="text-section font-semibold text-text-heading">EduNest</span>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-8 shadow-level-2 space-y-6">
+        <div className="bg-card border border-border rounded-lg p-8 shadow-level-2 space-y-6">
           <div className="flex flex-col items-center gap-3 text-center">
             <div className="w-12 h-12 rounded-full bg-[var(--color-warning-muted)] flex items-center justify-center">
               <KeyRound className="w-6 h-6 text-warning" />

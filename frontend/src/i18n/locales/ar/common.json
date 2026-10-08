@@ -516,6 +516,7 @@
     }
   },
   "common": {
+    "dangerZone": "منطقة الخطر",
     "filters": "التصفية",
     "resetFilters": "إعادة ضبط التصفية",
     "clearSearch": "مسح البحث",

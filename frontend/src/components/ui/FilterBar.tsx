@@ -45,7 +45,7 @@ export function FilterBar({
   const hasFields = React.Children.toArray(children).some(Boolean);
 
   return (
-    <div className={cn('bg-card border border-border rounded-xl p-3 sm:p-4 space-y-3', className)}>
+    <div className={cn('bg-card border border-border rounded-lg p-3 sm:p-4 space-y-3', className)}>
       {(search || hasFields) && (
         <div className="flex items-center gap-2">
           {search && <SearchInput {...search} className="flex-1 min-w-0 sm:max-w-sm" />}

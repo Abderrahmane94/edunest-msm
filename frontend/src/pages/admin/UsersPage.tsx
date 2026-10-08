@@ -94,7 +94,7 @@ export function UsersPage() {
       header: t('users.columns.status'),
       sortable: true,
       render: (user) => (
-        <StatusBadge variant={user.is_active ? 'present' : 'cancelled'}>
+        <StatusBadge variant={user.is_active ? 'success' : 'neutral'}>
           {user.is_active ? t('users.active') : t('users.inactive')}
         </StatusBadge>
       ),

@@ -203,7 +203,7 @@ export function ChildDetailPage() {
             <p className="text-body text-text-secondary">{child.classroom_name}</p>
           )}
         </div>
-        <StatusBadge variant={child.is_active ? 'present' : 'cancelled'}>
+        <StatusBadge variant={child.is_active ? 'success' : 'neutral'}>
           {child.is_active ? t('children.active') : t('children.inactive')}
         </StatusBadge>
       </div>

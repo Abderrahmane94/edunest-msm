@@ -79,7 +79,7 @@ function NoChildren() {
 
 function SkeletonCards({ count }: { count: number }) {
   return (<div className="space-y-3">{Array.from({ length: count }).map((_, i) => (
-    <div key={i} className="animate-pulse bg-card border border-border rounded-xl p-4"><div className="flex items-center gap-3"><div className="flex-1 space-y-2"><div className="h-4 bg-subtle rounded w-2/3" /><div className="h-3 bg-subtle rounded w-1/3" /></div><div className="h-6 w-16 bg-subtle rounded-full" /></div></div>
+    <div key={i} className="animate-pulse bg-card border border-border rounded-lg p-4"><div className="flex items-center gap-3"><div className="flex-1 space-y-2"><div className="h-4 bg-subtle rounded w-2/3" /><div className="h-3 bg-subtle rounded w-1/3" /></div><div className="h-6 w-16 bg-subtle rounded-full" /></div></div>
   ))}</div>);
 }
 
@@ -97,7 +97,7 @@ function PeriodCard({ period }: { period: ParentBillingPeriod }) {
   const { t } = useTranslation();
   const label = period.isRegistrationPeriod ? t('parentPayments.registrationFee') : `${fmtDate(period.periodStart)} — ${fmtDate(period.periodEnd)}`;
   return (
-    <li><article className={cn('bg-card border rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]', period.isLate ? 'border-[var(--color-danger-muted)]' : 'border-border')}>
+    <li><article className={cn('bg-card border rounded-lg overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]', period.isLate ? 'border-[var(--color-danger-muted)]' : 'border-border')}>
       {period.isLate && <div className="h-1 bg-[var(--color-danger)]" aria-hidden="true" />}
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
@@ -131,7 +131,7 @@ function PaymentCard({ payment }: { payment: ParentPaymentRecord }) {
   const [showReceipt, setShowReceipt] = React.useState(false);
   const isNeg = parseFloat(payment.totalAmount) < 0;
   return (
-    <li><article className={cn('bg-card border rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]', payment.isCorrection ? 'border-[var(--color-warning-muted)]' : 'border-border')}>
+    <li><article className={cn('bg-card border rounded-lg overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]', payment.isCorrection ? 'border-[var(--color-warning-muted)]' : 'border-border')}>
       {payment.isCorrection && <div className="h-1 bg-[var(--color-warning)]" aria-hidden="true" />}
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
@@ -171,7 +171,7 @@ function BalanceCard({ balance }: { balance: ParentChildBalance }) {
   const isOverpaid = amt < 0;
   const isZero = amt === 0;
   return (
-    <li><article className="bg-card border border-border rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
+    <li><article className="bg-card border border-border rounded-lg overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
       <div className="p-5"><div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0"><h3 className="text-subsection font-semibold text-text-heading truncate">{balance.childName}</h3><p className="text-caption text-text-secondary mt-0.5">{balance.branchName}</p></div>
         <div className="text-end shrink-0">

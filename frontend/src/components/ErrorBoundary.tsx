@@ -61,7 +61,7 @@ class Boundary extends React.Component<Props, State> {
             : 'flex items-center justify-center px-4 py-16'
         }
       >
-        <div className="w-full max-w-[420px] bg-card border border-border rounded-xl p-6 text-center space-y-4">
+        <div className="w-full max-w-[420px] bg-card border border-border rounded-lg p-6 text-center space-y-4">
           <div className="mx-auto w-12 h-12 rounded-full bg-[var(--color-danger-muted)] flex items-center justify-center">
             <AlertTriangle className="w-6 h-6 text-danger" />
           </div>

@@ -516,6 +516,7 @@
     }
   },
   "common": {
+    "dangerZone": "Zone dangereuse",
     "filters": "Filtres",
     "resetFilters": "Réinitialiser les filtres",
     "clearSearch": "Effacer la recherche",

@@ -211,7 +211,7 @@ function SchoolsSection({ data }: { data: Dashboard }) {
         </p>
       </Tile>
 
-      <div className="bg-card border border-border rounded-xl p-4 sm:p-5">
+      <div className="bg-card border border-border rounded-lg p-4 sm:p-5">
         <div className="flex items-center gap-3">
           <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', TONE_ICON.success)}>
             <PieChart className="w-[18px] h-[18px]" />
@@ -296,7 +296,7 @@ function UsageSection({ data }: { data: Dashboard }) {
 
       <div className="lg:col-span-2 grid grid-cols-2 gap-4">
         {activity.map((a) => (
-          <div key={a.key} className="bg-card border border-border rounded-xl p-4 sm:p-5 flex flex-col justify-between gap-3">
+          <div key={a.key} className="bg-card border border-border rounded-lg p-4 sm:p-5 flex flex-col justify-between gap-3">
             <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center', TONE_ICON[a.tone])}>{a.icon}</div>
             <div>
               <p className="text-page-title font-bold text-text-heading leading-none">
@@ -355,14 +355,14 @@ function SchoolsTable({ data }: { data: Dashboard }) {
 
   if (rows.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-xl px-4 py-6 text-center text-body text-text-secondary">
+      <div className="bg-card border border-border rounded-lg px-4 py-6 text-center text-body text-text-secondary">
         {t('dashboard.platform.table.empty')}
       </div>
     );
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <div className="bg-card border border-border rounded-lg overflow-hidden">
       <div className={cn('hidden px-4 py-2.5 border-b border-border bg-subtle text-micro font-semibold uppercase tracking-wide text-text-secondary', cols)}>
         <span>{t('dashboard.platform.table.school')}</span>
         <span>{t('dashboard.platform.table.plan')}</span>
@@ -449,13 +449,13 @@ function DashboardSkeleton() {
         <div className="h-7 w-64 bg-hover rounded-md animate-pulse" />
         <div className="h-4 w-48 bg-hover rounded-md animate-pulse" />
       </div>
-      <div className="h-14 bg-hover rounded-xl animate-pulse" />
+      <div className="h-14 bg-hover rounded-lg animate-pulse" />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-32 bg-hover rounded-xl animate-pulse" />
+          <div key={i} className="h-32 bg-hover rounded-lg animate-pulse" />
         ))}
       </div>
-      <div className="h-56 bg-hover rounded-xl animate-pulse" />
+      <div className="h-56 bg-hover rounded-lg animate-pulse" />
     </div>
   );
 }

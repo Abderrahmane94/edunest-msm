@@ -135,7 +135,7 @@ export function UserDetailPage() {
           </h1>
           <p className="text-body text-text-secondary">{user.email}</p>
         </div>
-        <StatusBadge variant={user.is_active ? 'present' : 'cancelled'}>
+        <StatusBadge variant={user.is_active ? 'success' : 'neutral'}>
           {user.is_active ? t('users.active') : t('users.inactive')}
         </StatusBadge>
       </div>

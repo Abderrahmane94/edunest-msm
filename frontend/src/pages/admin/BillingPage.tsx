@@ -1,10 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
-import {
-  TrendingUp, CreditCard, Building2, CheckCircle, AlertCircle,
-  Plus, Pencil, Trash2, X, Save, Banknote, Clock, XCircle, Search, Calendar, Download,
-} from 'lucide-react';
+import { CreditCard, Building2, CheckCircle, AlertCircle, Plus, Pencil, Trash2, X, Save, Banknote, Clock, XCircle, Search, Calendar, Download } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -14,18 +10,15 @@ import {
 } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
-import {
-  usePlans, useCreatePlan, useUpdatePlan, useDeletePlan,
-  useSubscriptions, useAssignPlan, useUpdateSubscriptionStatus,
-  useRecordPayment, useUpdatePayment, useDeletePayment, useBillingStats, useSchoolPayments,
-  type SubscriptionPlan, type SchoolSubscription, type BillingStats, type SchoolPaymentRecord,
-} from '@/hooks/useBilling';
+import { usePlans, useCreatePlan, useUpdatePlan, useDeletePlan, useSubscriptions, useAssignPlan, useUpdateSubscriptionStatus, useRecordPayment, useUpdatePayment, useDeletePayment, useSchoolPayments, type SubscriptionPlan, type SchoolSubscription, type SchoolPaymentRecord } from '@/hooks/useBilling';
 import { useSchoolsList } from '@/hooks/useSchools';
 import { useAuth } from '@/contexts/AuthContext';
-import { ErrorAlert } from '@/components/ui';
+import { EmptyState, ErrorAlert, PageHeader, Tabs } from '@/components/ui';
+import { useTabParam } from '@/hooks/useTabParam';
 
-type Tab = 'dashboard' | 'plans' | 'subscriptions' | 'payments';
-const TABS: Tab[] = ['dashboard', 'plans', 'subscriptions', 'payments'];
+// The figures (revenue, subscription states) are on the platform dashboard.
+type Tab = 'subscriptions' | 'plans' | 'payments';
+const TABS: Tab[] = ['subscriptions', 'plans', 'payments'];
 
 function formatDZD(n: number) {
   return new Intl.NumberFormat('fr-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n);
@@ -42,64 +35,6 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
   cancelled: <XCircle className="w-4 h-4 text-text-disabled" />,
   suspended: <X className="w-4 h-4 text-text-disabled" />,
 };
-
-/* ─── Dashboard tab ─── */
-function BillingDashboard() {
-  const { t } = useTranslation();
-  const { data: stats, isLoading } = useBillingStats() as { data: BillingStats | undefined; isLoading: boolean };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => <div key={i} className="bg-hover rounded-xl h-24 animate-pulse" />)}
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => <div key={i} className="bg-hover rounded-xl h-20 animate-pulse" />)}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Revenue cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { label: t('billing.dashboard.mrr'), value: formatDZD(stats?.mrr ?? 0), icon: <TrendingUp className="w-5 h-5 text-primary" />, accent: 'bg-accent-muted' },
-          { label: t('billing.dashboard.revenueThisMonth'), value: formatDZD(stats?.revenueThisMonth ?? 0), icon: <Banknote className="w-5 h-5 text-success" />, accent: 'bg-success-muted' },
-          { label: t('billing.dashboard.totalRevenue'), value: formatDZD(stats?.totalRevenue ?? 0), icon: <CreditCard className="w-5 h-5 text-warning" />, accent: 'bg-warning-muted' },
-        ].map((c) => (
-          <div key={c.label} className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${c.accent}`}>{c.icon}</div>
-            <div>
-              <p className="text-caption text-text-secondary">{c.label}</p>
-              <p className="text-section font-bold text-text-heading">{c.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Subscription status breakdown */}
-      <div className="bg-card border border-border rounded-xl p-5">
-        <h3 className="text-subsection font-semibold text-text-heading mb-4">{t('billing.dashboard.subscriptionStatus')}</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[
-            { key: 'active', label: t('billing.status.active'), color: 'text-success' },
-            { key: 'trial', label: t('billing.status.trial'), color: 'text-warning' },
-            { key: 'overdue', label: t('billing.status.overdue'), color: 'text-danger' },
-            { key: 'cancelled', label: t('billing.status.cancelled'), color: 'text-text-disabled' },
-          ].map((s) => (
-            <div key={s.key} className="text-center p-4 bg-subtle rounded-lg">
-              <p className={`text-display font-bold ${s.color}`}>{stats?.[s.key as keyof BillingStats] ?? 0}</p>
-              <p className="text-caption text-text-secondary mt-1">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ─── Plans tab ─── */
 function PlanFormDialog({
@@ -237,7 +172,7 @@ function PlansTab() {
         </div>
       </div>
       {isLoading
-        ? <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="bg-hover rounded-xl h-12 animate-pulse" />)}</div>
+        ? <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="bg-hover rounded-lg h-12 animate-pulse" />)}</div>
         : <DataTable columns={columns} data={plans ?? []} keyExtractor={(p) => p.id} emptyMessage={t('billing.plans.empty')} />}
       <PlanFormDialog open={formOpen} onOpenChange={(v) => { setFormOpen(v); if (!v) setEditPlan(undefined); }} plan={editPlan} />
 
@@ -463,7 +398,7 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
           </div>
 
           {/* Amount card */}
-          <div className="mb-4 border border-border rounded-xl overflow-hidden">
+          <div className="mb-4 border border-border rounded-lg overflow-hidden">
             {/* Base amount row */}
             <div className="flex items-center justify-between px-4 py-3 bg-subtle">
               <span className="text-caption text-text-secondary">{t('billing.payments.baseAmount')}</span>
@@ -655,7 +590,7 @@ function SubscriptionsTab() {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="bg-card border border-border rounded-xl p-5">
+      <div className="bg-card border border-border rounded-lg p-5">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-2">
             <FormSelect
@@ -714,7 +649,7 @@ function SubscriptionsTab() {
         onDismiss={() => setStatusError(null)}
       />
       {isLoading
-        ? <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="bg-hover rounded-xl h-14 animate-pulse" />)}</div>
+        ? <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="bg-hover rounded-lg h-14 animate-pulse" />)}</div>
         : <DataTable columns={columns} data={filtered} keyExtractor={(s) => s.id} emptyMessage={t('billing.subscriptions.empty')} />}
       <AssignPlanDialog open={assignOpen} onOpenChange={setAssignOpen} />
       {payingSub && <RecordPaymentDialog sub={payingSub} onClose={() => setPayingSub(null)} />}
@@ -1181,7 +1116,7 @@ function PaymentsTab() {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="bg-card border border-border rounded-xl p-5">
+      <div className="bg-card border border-border rounded-lg p-5">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-2">
             <FormSelect
@@ -1222,13 +1157,13 @@ function PaymentsTab() {
 
       {/* Results */}
       {!selectedSchoolId ? (
-        <div className="bg-card border border-border rounded-xl p-12 text-center">
+        <div className="bg-card border border-border rounded-lg p-12 text-center">
           <Search className="w-12 h-12 text-text-disabled mx-auto mb-4" />
           <p className="text-body text-text-secondary">{t('billingPayments.selectSchoolPrompt')}</p>
         </div>
       ) : paymentsLoading ? (
         <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => <div key={i} className="bg-hover rounded-xl h-14 animate-pulse" />)}
+          {Array.from({ length: 5 }).map((_, i) => <div key={i} className="bg-hover rounded-lg h-14 animate-pulse" />)}
         </div>
       ) : (
         <>
@@ -1241,7 +1176,7 @@ function PaymentsTab() {
           )}
           {payments && payments.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
+              <div className="bg-card border border-border rounded-lg p-5 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-success-muted">
                   <Banknote className="w-5 h-5 text-success" />
                 </div>
@@ -1250,7 +1185,7 @@ function PaymentsTab() {
                   <p className="text-section font-bold text-text-heading">{payments.length}</p>
                 </div>
               </div>
-              <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
+              <div className="bg-card border border-border rounded-lg p-5 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-accent-muted">
                   <Calendar className="w-5 h-5 text-primary" />
                 </div>
@@ -1297,43 +1232,31 @@ function PaymentsTab() {
 export function BillingPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  // A link can open a tab directly (?tab=subscriptions).
-  const [searchParams] = useSearchParams();
-  const tabParam = searchParams.get('tab') as Tab | null;
-  const [activeTab, setActiveTab] = React.useState<Tab>(tabParam && TABS.includes(tabParam) ? tabParam : 'dashboard');
+  const [activeTab, setActiveTab] = useTabParam<Tab>(TABS, 'subscriptions');
 
   if (user?.role !== 'super_admin') {
     return (
       <div className="space-y-6 animate-fade-in">
-        <h1 className="text-page-title font-semibold text-text-heading">{t('billing.title')}</h1>
-        <div className="bg-card border border-border rounded-lg p-8 text-center">
-          <p className="text-body text-text-secondary">{t('schools.superAdminOnly')}</p>
-        </div>
+        <PageHeader title={t('billing.title')} />
+        <EmptyState message={t('schools.superAdminOnly')} />
       </div>
     );
   }
 
-  const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: 'dashboard', label: t('billing.tabs.dashboard'), icon: <TrendingUp className="w-4 h-4" /> },
-    { key: 'plans', label: t('billing.tabs.plans'), icon: <CreditCard className="w-4 h-4" /> },
-    { key: 'subscriptions', label: t('billing.tabs.subscriptions'), icon: <Building2 className="w-4 h-4" /> },
-    { key: 'payments', label: t('billing.tabs.payments'), icon: <Banknote className="w-4 h-4" /> },
-  ];
-
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="text-page-title font-semibold text-text-heading">{t('billing.title')}</h1>
+      <PageHeader title={t('billing.title')} />
 
-      <div className="flex items-center gap-2 flex-wrap">
-        {tabs.map((tab) => (
-          <Button key={tab.key} variant={activeTab === tab.key ? 'primary' : 'secondary'} size="sm"
-            onClick={() => setActiveTab(tab.key)}>
-            {tab.icon}{tab.label}
-          </Button>
-        ))}
-      </div>
+      <Tabs
+        value={activeTab}
+        onChange={setActiveTab}
+        items={[
+          { value: 'subscriptions', label: t('billing.tabs.subscriptions'), icon: <Building2 /> },
+          { value: 'plans', label: t('billing.tabs.plans'), icon: <CreditCard /> },
+          { value: 'payments', label: t('billing.tabs.payments'), icon: <Banknote /> },
+        ]}
+      />
 
-      {activeTab === 'dashboard' && <BillingDashboard />}
       {activeTab === 'plans' && <PlansTab />}
       {activeTab === 'subscriptions' && <SubscriptionsTab />}
       {activeTab === 'payments' && <PaymentsTab />}

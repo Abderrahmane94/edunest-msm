@@ -36,7 +36,7 @@ function LoginErrorBanner({ error }: { error: LoginError }) {
   return (
     <div
       role="alert"
-      className="mb-5 p-4 rounded-xl bg-[var(--color-danger-muted)] border border-danger/20 flex items-start gap-3"
+      className="mb-5 p-4 rounded-lg bg-[var(--color-danger-muted)] border border-danger/20 flex items-start gap-3"
     >
       <Icon className="w-5 h-5 text-danger shrink-0 mt-0.5" />
       <div>
@@ -250,7 +250,7 @@ export function LoginPage() {
                   {schoolChoices.map((school) => (
                     <label
                       key={school.schoolId ?? 'none'}
-                      className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:bg-hover cursor-pointer transition has-[:checked]:border-[var(--color-accent)] has-[:checked]:bg-[var(--color-accent-muted)]"
+                      className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-hover cursor-pointer transition has-[:checked]:border-[var(--color-accent)] has-[:checked]:bg-[var(--color-accent-muted)]"
                     >
                       <input
                         type="radio"
@@ -271,7 +271,7 @@ export function LoginPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting || !selectedSchoolId || !online}
-                  className="w-full h-11 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1"
+                  className="w-full h-11 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1"
                 >
                   {isSubmitting ? (
                     <span className="animate-pulse">{t('common.loading')}</span>
@@ -292,7 +292,7 @@ export function LoginPage() {
           </div>
 
           {sessionExpired && online && !error && (
-            <div role="status" className="mb-5 p-4 rounded-xl bg-[var(--color-accent-subtle)] border border-primary/20 flex items-start gap-3">
+            <div role="status" className="mb-5 p-4 rounded-lg bg-[var(--color-accent-subtle)] border border-primary/20 flex items-start gap-3">
               <Clock className="w-5 h-5 text-primary shrink-0 mt-0.5" />
               <div>
                 <p className="text-body font-medium text-foreground">{t('auth.sessionExpired')}</p>
@@ -317,7 +317,7 @@ export function LoginPage() {
                   placeholder={t('auth.emailPlaceholder')}
                   required
                   autoComplete="email"
-                  className="w-full h-11 ps-10 pe-4 rounded-xl border border-border bg-card text-foreground text-body placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition"
+                  className="w-full h-11 ps-10 pe-4 rounded-lg border border-border bg-card text-foreground text-body placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition"
                 />
               </div>
             </div>
@@ -344,7 +344,7 @@ export function LoginPage() {
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
-                  className="w-full h-11 ps-10 pe-10 rounded-xl border border-border bg-card text-foreground text-body placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition"
+                  className="w-full h-11 ps-10 pe-10 rounded-lg border border-border bg-card text-foreground text-body placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition"
                 />
                 <button
                   type="button"
@@ -360,7 +360,7 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting || !online}
-              className="w-full h-11 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1"
+              className="w-full h-11 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1"
             >
               {isSubmitting ? (
                 <span className="animate-pulse">{t('common.loading')}</span>

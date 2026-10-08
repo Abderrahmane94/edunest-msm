@@ -119,7 +119,7 @@ export function AcademicYearDetailPage() {
             <span dir="ltr">{formatDate(year.end_date)}</span>
           </p>
         </div>
-        <StatusBadge variant={year.is_active ? 'present' : 'draft'}>
+        <StatusBadge variant={year.is_active ? 'success' : 'neutral'}>
           {year.is_active ? t('academicYears.active') : t('academicYears.inactive')}
         </StatusBadge>
       </div>

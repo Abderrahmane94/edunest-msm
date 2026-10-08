@@ -30,6 +30,8 @@ const REFRESH_TOKEN_RENEW_AFTER_HOURS = 24;
 const REPLACED_REFRESH_TOKEN_GRACE_MS = 2 * 60 * 1000;
 const PASSWORD_RESET_EXPIRY_HOURS = 1;
 const BCRYPT_SALT_ROUNDS = 10;
+/** The last-activity date is saved at most this often (one write a day). */
+const ACTIVITY_RESOLUTION_MS = 24 * 60 * 60 * 1000;
 
 function getAccessSecret(): string {
   const secret = process.env.JWT_ACCESS_SECRET;
@@ -62,6 +64,19 @@ function generateRefreshToken(payload: TokenPayload): string {
   // refreshes) of the same user within the same second signed identical
   // tokens, and storing the second hit the unique constraint (a 500).
   return jwt.sign(payload, getRefreshSecret(), { expiresIn, jwtid: crypto.randomUUID() });
+}
+
+/**
+ * Remembers that the user used the app (shown to the platform admin, per
+ * school). Never blocks or fails a sign-in.
+ */
+async function recordActivity(user: { id: string; lastActiveAt?: Date | null }): Promise<void> {
+  if (user.lastActiveAt && Date.now() - user.lastActiveAt.getTime() < ACTIVITY_RESOLUTION_MS) return;
+  try {
+    await prisma.user.update({ where: { id: user.id }, data: { lastActiveAt: new Date() } });
+  } catch (err) {
+    console.error('[Auth] Failed to record activity:', err);
+  }
 }
 
 function verifyAccessToken(token: string): TokenPayload {
@@ -142,6 +157,7 @@ export const authService = {
         expiresAt,
       },
     });
+    void recordActivity(user);
 
     const userInfo: UserInfo = {
       id: user.id,
@@ -203,6 +219,7 @@ export const authService = {
       mustChangePassword: user.mustChangePassword,
     };
     const newAccessToken = generateAccessToken(tokenPayload);
+    void recordActivity(user);
 
     // Extend the session: a new refresh token, valid REFRESH_TOKEN_EXPIRY_DAYS
     // from now. The old one stops working after a short grace period.

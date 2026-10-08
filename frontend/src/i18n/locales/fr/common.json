@@ -37,6 +37,7 @@
         "reportsNone": "Aucun enfant pointé présent pour l'instant"
       },
       "finance": {
+        "noCollected": "Aucun encaissement sur la période",
         "collected": "Encaissé ce mois",
         "vsLastMonth": "vs mois dernier",
         "noPrevious": "Rien encaissé le mois dernier",
@@ -72,17 +73,96 @@
       }
     },
     "platform": {
-      "overview": "Vue d'ensemble",
       "welcome": "Bonjour, {{name}} 👋",
-      "subtitle": "Vous gérez {{count}} établissement(s) sur la plateforme.",
-      "schools": "Établissements",
-      "totalSchools": "Total établissements",
-      "activeSchools": "Établissements actifs",
-      "inactiveSchools": "Établissements inactifs",
-      "activeRate": "Taux d'activité",
-      "people": "Utilisateurs & enfants",
-      "totalUsers": "Total utilisateurs",
-      "totalChildren": "Total enfants inscrits"
+      "schoolCount": "Écoles sur la plateforme : {{count}}",
+      "todo": {
+        "title": "À faire",
+        "allGood": "Aucune école ne demande d’action. Bonne journée !",
+        "overdue": "Abonnements en retard de paiement : {{schools}}",
+        "renewalDue": "Période payée qui se termine dans moins de 7 jours : {{schools}}",
+        "trialEnding": "Essai gratuit qui se termine dans moins de 7 jours : {{schools}}",
+        "noSubscription": "Écoles sans abonnement : {{schools}}",
+        "overLimit": "Au-delà de la limite de leur formule : {{schools}}",
+        "dormant": "Aucune activité depuis 14 jours : {{schools}}"
+      },
+      "sections": {
+        "revenue": "Revenus — {{month}}",
+        "schools": "Écoles",
+        "usage": "Utilisation — 7 derniers jours",
+        "list": "Toutes les écoles"
+      },
+      "revenue": {
+        "noRevenue": "Aucun encaissement sur la période",
+        "mrr": "Revenu mensuel récurrent",
+        "mrrHint": "Abonnements payants, ramenés au mois",
+        "collected": "Encaissé ce mois",
+        "vsLastMonth": "vs mois dernier",
+        "noPrevious": "Rien encaissé le mois dernier",
+        "overdue": "Abonnements en retard",
+        "overdueHint": "Abonnements concernés : {{count}}",
+        "noOverdue": "Aucun retard",
+        "chart": "Encaissements des 12 derniers mois"
+      },
+      "schools": {
+        "noGrowth": "Aucune nouvelle école sur la période",
+        "total": "Écoles",
+        "newThisMonth": "Nouvelles ce mois : {{count}}",
+        "breakdown": "Répartition des écoles",
+        "growth": "Nouvelles écoles des 6 derniers mois",
+        "states": {
+          "active": "Payantes",
+          "trial": "En essai",
+          "overdue": "En retard",
+          "none": "Sans abonnement",
+          "cancelled": "Résiliées",
+          "suspended": "Suspendues",
+          "disabled": "Désactivées"
+        }
+      },
+      "usage": {
+        "activeUsers": "Utilisateurs actifs",
+        "activeOf": "sur {{total}} comptes",
+        "roles": {
+          "admin": "Directeurs",
+          "teacher": "Enseignants",
+          "parent": "Parents"
+        },
+        "children": "Enfants inscrits",
+        "attendance": "Présences saisies",
+        "dailyReports": "Rapports du jour",
+        "messages": "Messages",
+        "payments": "Paiements saisis"
+      },
+      "table": {
+        "school": "École",
+        "plan": "Formule",
+        "status": "Statut",
+        "children": "Enfants",
+        "users": "Utilisateurs",
+        "lastActive": "Dernière activité",
+        "never": "Jamais",
+        "today": "Aujourd'hui",
+        "daysAgo": "Il y a {{count}} j",
+        "periodEnd": "Jusqu’au {{date}}",
+        "empty": "Aucune école",
+        "states": {
+          "active": "Payante",
+          "trial": "En essai",
+          "overdue": "En retard",
+          "none": "Sans abonnement",
+          "cancelled": "Résiliée",
+          "suspended": "Suspendue",
+          "disabled": "Désactivée"
+        },
+        "alerts": {
+          "overdue": "En retard",
+          "renewalDue": "Renouvellement proche",
+          "trialEnding": "Fin d’essai proche",
+          "noSubscription": "Sans abonnement",
+          "overLimit": "Limite dépassée",
+          "dormant": "Inactive"
+        }
+      }
     }
   },
   "auth": {

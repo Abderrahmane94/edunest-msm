@@ -37,6 +37,7 @@
         "reportsNone": "لم يُسجَّل حضور أي طفل بعد"
       },
       "finance": {
+        "noCollected": "لا يوجد تحصيل خلال هذه الفترة",
         "collected": "المحصَّل هذا الشهر",
         "vsLastMonth": "مقارنة بالشهر الماضي",
         "noPrevious": "لا تحصيل في الشهر الماضي",
@@ -72,17 +73,96 @@
       }
     },
     "platform": {
-      "overview": "نظرة عامة",
-      "welcome": "مرحباً، {{name}} 👋",
-      "subtitle": "تدير {{count}} مؤسسة على المنصة.",
-      "schools": "المؤسسات",
-      "totalSchools": "إجمالي المؤسسات",
-      "activeSchools": "المؤسسات النشطة",
-      "inactiveSchools": "المؤسسات المعطلة",
-      "activeRate": "نسبة النشاط",
-      "people": "المستخدمون والأطفال",
-      "totalUsers": "إجمالي المستخدمين",
-      "totalChildren": "إجمالي الأطفال المسجلين"
+      "welcome": "مرحبًا، {{name}} 👋",
+      "schoolCount": "عدد المدارس على المنصة: {{count}}",
+      "todo": {
+        "title": "مهام اليوم",
+        "allGood": "لا توجد مدرسة تحتاج إلى إجراء. يومًا موفقًا!",
+        "overdue": "اشتراكات متأخرة الدفع: {{schools}}",
+        "renewalDue": "فترة مدفوعة تنتهي خلال أقل من 7 أيام: {{schools}}",
+        "trialEnding": "فترة تجريبية تنتهي خلال أقل من 7 أيام: {{schools}}",
+        "noSubscription": "مدارس بلا اشتراك: {{schools}}",
+        "overLimit": "تجاوزت حدود صيغتها: {{schools}}",
+        "dormant": "لا نشاط منذ 14 يومًا: {{schools}}"
+      },
+      "sections": {
+        "revenue": "الإيرادات — {{month}}",
+        "schools": "المدارس",
+        "usage": "الاستخدام — آخر 7 أيام",
+        "list": "جميع المدارس"
+      },
+      "revenue": {
+        "noRevenue": "لا يوجد تحصيل خلال هذه الفترة",
+        "mrr": "الإيراد الشهري المتكرر",
+        "mrrHint": "الاشتراكات المدفوعة، محسوبة شهريًا",
+        "collected": "المحصَّل هذا الشهر",
+        "vsLastMonth": "مقارنة بالشهر الماضي",
+        "noPrevious": "لا تحصيل في الشهر الماضي",
+        "overdue": "اشتراكات متأخرة",
+        "overdueHint": "عدد الاشتراكات المعنية: {{count}}",
+        "noOverdue": "لا توجد متأخرات",
+        "chart": "التحصيل خلال آخر 12 شهرًا"
+      },
+      "schools": {
+        "noGrowth": "لا توجد مدارس جديدة خلال هذه الفترة",
+        "total": "المدارس",
+        "newThisMonth": "الجديدة هذا الشهر: {{count}}",
+        "breakdown": "توزيع المدارس",
+        "growth": "المدارس الجديدة خلال آخر 6 أشهر",
+        "states": {
+          "active": "مدفوعة",
+          "trial": "فترة تجريبية",
+          "overdue": "متأخرة",
+          "none": "بلا اشتراك",
+          "cancelled": "ملغاة",
+          "suspended": "معلَّقة",
+          "disabled": "معطَّلة"
+        }
+      },
+      "usage": {
+        "activeUsers": "المستخدمون النشطون",
+        "activeOf": "من أصل {{total}} حسابًا",
+        "roles": {
+          "admin": "المديرون",
+          "teacher": "المعلمون",
+          "parent": "الأولياء"
+        },
+        "children": "الأطفال المسجَّلون",
+        "attendance": "تسجيلات الحضور",
+        "dailyReports": "التقارير اليومية",
+        "messages": "الرسائل",
+        "payments": "الدفعات المسجَّلة"
+      },
+      "table": {
+        "school": "المدرسة",
+        "plan": "الصيغة",
+        "status": "الحالة",
+        "children": "الأطفال",
+        "users": "المستخدمون",
+        "lastActive": "آخر نشاط",
+        "never": "أبدًا",
+        "today": "اليوم",
+        "daysAgo": "منذ {{count}} يوم",
+        "periodEnd": "إلى غاية {{date}}",
+        "empty": "لا توجد مدارس",
+        "states": {
+          "active": "مدفوعة",
+          "trial": "تجريبية",
+          "overdue": "متأخرة",
+          "none": "بلا اشتراك",
+          "cancelled": "ملغاة",
+          "suspended": "معلَّقة",
+          "disabled": "معطَّلة"
+        },
+        "alerts": {
+          "overdue": "متأخرة",
+          "renewalDue": "تجديد قريب",
+          "trialEnding": "نهاية التجربة قريبة",
+          "noSubscription": "بلا اشتراك",
+          "overLimit": "تجاوز الحد",
+          "dormant": "غير نشطة"
+        }
+      }
     }
   },
   "auth": {

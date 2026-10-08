@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 vi.mock('../../lib/prisma', () => ({
   default: {
-    user: { findUnique: vi.fn() },
+    user: { findUnique: vi.fn(), update: vi.fn() },
     school: { findUnique: vi.fn() },
     refreshToken: { findUnique: vi.fn(), create: vi.fn(), updateMany: vi.fn(), delete: vi.fn() },
     $transaction: vi.fn(),
@@ -15,7 +15,7 @@ import prisma from '../../lib/prisma';
 import { authService, AuthError } from './auth.service';
 
 const mockPrisma = prisma as unknown as {
-  user: { findUnique: ReturnType<typeof vi.fn> };
+  user: { findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
   school: { findUnique: ReturnType<typeof vi.fn> };
   refreshToken: {
     findUnique: ReturnType<typeof vi.fn>;
@@ -41,6 +41,7 @@ beforeEach(() => {
     mustChangePassword: false,
   });
   mockPrisma.$transaction.mockResolvedValue([]);
+  mockPrisma.user.update.mockResolvedValue({});
 });
 
 const refreshToken = () =>
@@ -84,5 +85,25 @@ describe('refresh', () => {
 
     await expect(authService.refresh({ refreshToken: refreshToken() })).rejects.toBeInstanceOf(AuthError);
     expect(mockPrisma.refreshToken.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('last activity', () => {
+  it('is saved when the session is used, at most once a day', async () => {
+    mockPrisma.refreshToken.findUnique.mockResolvedValue(stored(2 * HOUR));
+    mockPrisma.user.findUnique.mockResolvedValueOnce({
+      id: 'u1', schoolId: null, role: 'teacher', isActive: true, mustChangePassword: false,
+      lastActiveAt: new Date(Date.now() - 2 * DAY),
+    });
+    await authService.refresh({ refreshToken: refreshToken() });
+    expect(mockPrisma.user.update).toHaveBeenCalledWith({ where: { id: 'u1' }, data: { lastActiveAt: expect.any(Date) } });
+
+    mockPrisma.user.update.mockClear();
+    mockPrisma.user.findUnique.mockResolvedValueOnce({
+      id: 'u1', schoolId: null, role: 'teacher', isActive: true, mustChangePassword: false,
+      lastActiveAt: new Date(Date.now() - 3 * HOUR),
+    });
+    await authService.refresh({ refreshToken: refreshToken() });
+    expect(mockPrisma.user.update).not.toHaveBeenCalled();
   });
 });

@@ -1,15 +1,11 @@
-import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
   Baby,
   CalendarDays,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   ClipboardCheck,
   ClipboardList,
   Clock,
@@ -27,179 +23,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatDateIn, formatTime } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
-type Tone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
-
-const TONE_ICON: Record<Tone, string> = {
-  neutral: 'bg-subtle text-text-secondary',
-  accent: 'bg-accent-muted text-primary',
-  success: 'bg-success-muted text-success',
-  warning: 'bg-warning-muted text-warning',
-  danger: 'bg-danger-muted text-danger',
-};
-
-const TONE_FILL: Record<Tone, string> = {
-  neutral: 'bg-[var(--color-text-disabled)]',
-  accent: 'bg-[var(--color-accent)]',
-  success: 'bg-[var(--color-success)]',
-  warning: 'bg-[var(--color-warning)]',
-  danger: 'bg-[var(--color-danger)]',
-};
-
-const TONE_TEXT: Record<Tone, string> = {
-  neutral: 'text-text-heading',
-  accent: 'text-primary',
-  success: 'text-success',
-  warning: 'text-warning',
-  danger: 'text-danger',
-};
-
-// ─── Number formatting (app language, Western digits) ───
-
-function useNumbers() {
-  const { i18n } = useTranslation();
-  const locale = i18n.language === 'ar' ? 'ar-DZ' : 'fr-DZ';
-  return React.useMemo(() => {
-    const money = new Intl.NumberFormat(locale, { style: 'currency', currency: 'DZD', maximumFractionDigits: 0 });
-    const compact = new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 });
-    const number = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
-    return {
-      money: (n: number) => money.format(n),
-      compact: (n: number) => compact.format(n),
-      percent: (n: number) => `${number.format(n)} %`,
-      number: (n: number) => number.format(n),
-    };
-  }, [locale]);
-}
-
-// ─── Building blocks ───
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="space-y-3">
-      <h2 className="text-label font-semibold uppercase tracking-wide text-text-secondary">{title}</h2>
-      {children}
-    </section>
-  );
-}
-
-function Tile({
-  icon,
-  tone = 'neutral',
-  title,
-  to,
-  className,
-  children,
-}: {
-  icon: React.ReactNode;
-  tone?: Tone;
-  title: string;
-  to?: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  const { i18n } = useTranslation();
-  const Chevron = i18n.dir() === 'rtl' ? ChevronLeft : ChevronRight;
-  const body = (
-    <>
-      <div className="flex items-center gap-3">
-        <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', TONE_ICON[tone])}>{icon}</div>
-        <p className="text-label font-medium text-text-secondary flex-1 min-w-0 truncate">{title}</p>
-        {to && (
-          <Chevron className="w-4 h-4 text-text-disabled shrink-0 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
-        )}
-      </div>
-      <div className="mt-3">{children}</div>
-    </>
-  );
-  const base = 'group block bg-card border border-border rounded-xl p-4 sm:p-5';
-  return to ? (
-    <Link
-      to={to}
-      className={cn(
-        base,
-        'transition-[box-shadow,border-color] duration-150 hover:shadow-level-2 hover:border-[var(--color-accent-muted)] focus-visible:outline-none focus-visible:shadow-focus-ring',
-        className,
-      )}
-    >
-      {body}
-    </Link>
-  ) : (
-    <div className={cn(base, className)}>{body}</div>
-  );
-}
-
-function BigNumber({ value, tone = 'neutral', suffix }: { value: string; tone?: Tone; suffix?: string }) {
-  return (
-    <p className="flex items-baseline gap-1.5 flex-wrap">
-      <span className={cn('text-page-title font-bold leading-none', TONE_TEXT[tone])} dir="ltr">
-        {value}
-      </span>
-      {suffix && <span className="text-caption text-text-secondary">{suffix}</span>}
-    </p>
-  );
-}
-
-function Progress({ value, tone }: { value: number; tone: Tone }) {
-  return (
-    <div className="h-2 bg-subtle rounded-full overflow-hidden">
-      <div
-        className={cn('h-full rounded-full transition-[width] duration-500', TONE_FILL[tone])}
-        style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
-      />
-    </div>
-  );
-}
-
-/** Vertical bars; a bar without a value (null) shows as an empty slot. */
-function BarChart({
-  bars,
-  tone,
-  emptyLabel,
-}: {
-  bars: { key: string; label: string; value: number | null; display: string }[];
-  tone: Tone;
-  emptyLabel: string;
-}) {
-  const max = Math.max(0, ...bars.map((b) => b.value ?? 0));
-  return (
-    <div className="flex items-end gap-2 sm:gap-3 h-40" role="list">
-      {bars.map((b, i) => {
-        const height = b.value != null && max > 0 ? Math.max(4, (Math.max(0, b.value) / max) * 100) : 0;
-        const last = i === bars.length - 1;
-        return (
-          <div key={b.key} role="listitem" className="flex-1 min-w-0 h-full flex flex-col items-center justify-end gap-1.5">
-            {/* On a phone only the latest value shows: the others would overlap. */}
-            <span
-              className={cn('text-micro font-medium whitespace-nowrap', last ? 'text-text-heading' : 'text-text-secondary hidden sm:inline')}
-              dir="ltr"
-            >
-              {b.value != null ? b.display : ''}
-            </span>
-            <div className="w-full flex-1 flex items-end">
-              {b.value != null ? (
-                <div
-                  className={cn('w-full rounded-t-md transition-[height] duration-500', TONE_FILL[tone], !last && 'opacity-50')}
-                  style={{ height: `${height}%` }}
-                  title={`${b.label} : ${b.display}`}
-                />
-              ) : (
-                <div className="w-full h-1 rounded bg-subtle" title={`${b.label} : ${emptyLabel}`} />
-              )}
-            </div>
-            <span className="text-micro text-text-secondary truncate max-w-full">{b.label}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+import { ActionList, BarChart, BigNumber, Progress, Section, Tile, type ActionItem } from './parts';
+import { TONE_FILL, TONE_ICON, useNumbers, type Tone } from './theme';
 
 // ─── Sections ───
 
 function TodoList({ data }: { data: Dashboard }) {
   const { t } = useTranslation();
   const n = useNumbers();
-  const items: { key: string; tone: Tone; icon: React.ReactNode; text: string; to: string }[] = [];
+  const items: ActionItem[] = [];
 
   if (data.attendance.missingClassrooms.length > 0) {
     items.push({
@@ -242,49 +74,9 @@ function TodoList({ data }: { data: Dashboard }) {
       to: '/admin/communication?tab=events',
     });
   }
-
-  if (items.length === 0) {
-    return (
-      <div className="flex items-center gap-3 bg-[var(--color-success-subtle)] border border-[var(--color-success-muted)] rounded-xl px-4 py-3">
-        <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
-        <p className="text-body font-medium text-success">{t('dashboard.admin.todo.allGood')}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-        <AlertTriangle className="w-4 h-4 text-warning" />
-        <h2 className="text-label font-semibold text-text-heading">{t('dashboard.admin.todo.title')}</h2>
-        <span className="ms-auto min-w-[22px] h-[22px] px-1.5 rounded-full bg-danger-muted text-danger text-micro font-semibold flex items-center justify-center">
-          {items.length}
-        </span>
-      </div>
-      <ul className="divide-y divide-border">
-        {items.map((item) => (
-          <li key={item.key}>
-            <Link
-              to={item.to}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-hover transition-colors focus-visible:outline-none focus-visible:bg-hover"
-            >
-              <span className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', TONE_ICON[item.tone])}>
-                {item.icon}
-              </span>
-              <span className="text-body text-text-heading flex-1 min-w-0">{item.text}</span>
-              <ChevronIcon />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <ActionList title={t('dashboard.admin.todo.title')} allGood={t('dashboard.admin.todo.allGood')} items={items} />
   );
-}
-
-function ChevronIcon() {
-  const { i18n } = useTranslation();
-  const Chevron = i18n.dir() === 'rtl' ? ChevronLeft : ChevronRight;
-  return <Chevron className="w-4 h-4 text-text-disabled shrink-0" />;
 }
 
 function TodaySection({ data }: { data: Dashboard }) {
@@ -513,7 +305,7 @@ function FinanceSection({ data }: { data: Dashboard }) {
           title={t('dashboard.admin.finance.chart')}
           to="/admin/payments?tab=reconciliation"
         >
-          <BarChart bars={bars} tone="accent" emptyLabel="—" />
+          <BarChart bars={bars} tone="accent" emptyLabel={t('dashboard.admin.finance.noCollected')} />
         </Tile>
         <AttendanceChart data={data} />
       </div>

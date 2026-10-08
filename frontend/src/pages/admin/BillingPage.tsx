@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import {
   TrendingUp, CreditCard, Building2, CheckCircle, AlertCircle,
   Plus, Pencil, Trash2, X, Save, Banknote, Clock, XCircle, Search, Calendar, Download,
@@ -23,6 +24,7 @@ import { useSchoolsList } from '@/hooks/useSchools';
 import { useAuth } from '@/contexts/AuthContext';
 
 type Tab = 'dashboard' | 'plans' | 'subscriptions' | 'payments';
+const TABS: Tab[] = ['dashboard', 'plans', 'subscriptions', 'payments'];
 
 function formatDZD(n: number) {
   return new Intl.NumberFormat('fr-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n);
@@ -1296,7 +1298,10 @@ function PaymentsTab() {
 export function BillingPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = React.useState<Tab>('dashboard');
+  // A link can open a tab directly (?tab=subscriptions).
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') as Tab | null;
+  const [activeTab, setActiveTab] = React.useState<Tab>(tabParam && TABS.includes(tabParam) ? tabParam : 'dashboard');
 
   if (user?.role !== 'super_admin') {
     return (

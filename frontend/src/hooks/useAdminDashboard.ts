@@ -41,12 +41,56 @@ export interface AdminDashboard {
   };
 }
 
-interface PlatformStats {
-  totalSchools: number;
-  activeSchools: number;
-  inactiveSchools: number;
-  totalUsers: number;
-  totalChildren: number;
+export type SchoolState = 'none' | 'trial' | 'active' | 'overdue' | 'cancelled' | 'suspended' | 'disabled';
+export type SchoolAlert = 'overdue' | 'renewalDue' | 'trialEnding' | 'noSubscription' | 'overLimit' | 'dormant';
+type PerRole = { admin: number; teacher: number; parent: number };
+
+export interface PlatformSchoolRow {
+  id: string;
+  name: string;
+  wilaya: string;
+  isActive: boolean;
+  state: SchoolState;
+  planName: string | null;
+  monthlyPrice: number | null;
+  periodPrice: number | null;
+  /** End of the paid period, or of the trial (YYYY-MM-DD). */
+  periodEnd: string | null;
+  children: number;
+  maxChildren: number | null;
+  users: number;
+  maxUsers: number | null;
+  lastActiveAt: string | null;
+  createdAt: string;
+  /** Most urgent first. */
+  alerts: SchoolAlert[];
+}
+
+/** The platform admin's dashboard (GET /admin/platform-stats); amounts in DZD. */
+export interface PlatformDashboard {
+  today: string;
+  revenue: {
+    mrr: number;
+    collectedThisMonth: number;
+    collectedPreviousMonth: number;
+    overdueAmount: number;
+    overdueCount: number;
+    monthly: { month: string; collected: number }[];
+  };
+  schools: {
+    total: number;
+    byState: Record<SchoolState, number>;
+    newThisMonth: number;
+    growth: { month: string; created: number }[];
+  };
+  usage: {
+    activeUsers: PerRole;
+    totalUsers: PerRole;
+    totalChildren: number;
+    lastWeek: { attendance: number; dailyReports: number; messages: number; payments: number };
+  };
+  /** Schools needing attention first. */
+  schoolRows: PlatformSchoolRow[];
 }
 
 export function useAdminDashboard() {
@@ -62,18 +106,14 @@ export function useAdminDashboard() {
   });
 }
 
-export function usePlatformStats() {
+export function usePlatformDashboard() {
   return useQuery({
-    queryKey: ['admin', 'platform-stats'],
+    queryKey: ['admin', 'platform-dashboard'],
     queryFn: async () => {
-      const res = await apiClient.get<PlatformStats>('/admin/platform-stats');
-      return res.data ?? {
-        totalSchools: 0,
-        activeSchools: 0,
-        inactiveSchools: 0,
-        totalUsers: 0,
-        totalChildren: 0,
-      };
+      const res = await apiClient.get<PlatformDashboard>('/admin/platform-stats');
+      if (!res.success || !res.data) throw apiError(res.error, 'Failed to load the dashboard');
+      return res.data;
     },
+    refetchInterval: 5 * 60 * 1000,
   });
 }

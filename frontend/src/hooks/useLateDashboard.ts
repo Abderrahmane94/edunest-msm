@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient, ApiRequestError } from '@/lib/api-client';
+import { apiClient, ApiRequestError, apiError } from '@/lib/api-client';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -44,7 +44,7 @@ export function useLateDashboard(branchId: string, statusFilter?: LatePeriodStat
       const url = `/payments/branches/${branchId}/late${qs ? `?${qs}` : ''}`;
       const res = await apiClient.get<unknown>(url);
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to fetch late dashboard');
+        throw apiError(res.error, 'Failed to fetch late dashboard');
       }
       const raw = res.data;
       if (Array.isArray(raw)) {

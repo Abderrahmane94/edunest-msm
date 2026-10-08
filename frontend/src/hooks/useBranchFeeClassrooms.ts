@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 import type { BranchFee } from '@/hooks/useBranchFees';
 
 export interface FeeClassroom {
@@ -20,7 +20,7 @@ export function useFeeClassrooms(branchFeeId: string | undefined) {
         `/payments/fees/${branchFeeId}/classrooms`,
       );
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to load classrooms');
+        throw apiError(res.error, 'Failed to load classrooms');
       }
       return res.data?.classrooms ?? [];
     },
@@ -40,7 +40,7 @@ export function useSetFeeClassrooms(branchFeeId: string | undefined) {
         { classroomIds },
       );
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to save classroom links');
+        throw apiError(res.error, 'Failed to save classroom links');
       }
       return res.data?.classrooms ?? [];
     },
@@ -66,7 +66,7 @@ export function useClassroomFees(classroomId: string | undefined) {
         `/payments/classrooms/${classroomId}/fees`,
       );
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to load fees');
+        throw apiError(res.error, 'Failed to load fees');
       }
       return res.data?.fees ?? [];
     },

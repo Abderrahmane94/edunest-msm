@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Megaphone, Calendar, MapPin, Users, Check, X, CloudOff } from 'lucide-react';
@@ -275,7 +276,7 @@ function EventConsent({ eventId }: { eventId: string }) {
               )}
               {queued?.error && (
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-micro">
-                  <span className="text-danger">{t('parentAnnouncements.consentRefused', { error: queued.error })}</span>
+                  <span className="text-danger">{t('parentAnnouncements.consentRefused', { error: errorMessage(queued.error, t) })}</span>
                   <button
                     type="button"
                     onClick={() => retryAction(queued.id)}

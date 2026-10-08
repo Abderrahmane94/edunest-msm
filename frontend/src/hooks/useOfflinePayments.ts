@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
-import { apiClient, ApiRequestError } from '@/lib/api-client';
+import { apiClient, ApiRequestError, apiError } from '@/lib/api-client';
 import { queryClient } from '@/lib/query-client';
+import { errorMessage } from '@/lib/errorMessage';
 import {
   enqueue,
   registerQueueHandler,
@@ -137,7 +138,7 @@ export function paymentRefusalText(t: TFunction, error: string): string {
     const reason = error.slice('reason:'.length);
     return t(`payments.offline.reasons.${reason}`, { defaultValue: t('payments.offline.reasons.other') });
   }
-  return error;
+  return errorMessage(error, t);
 }
 
 // ─── Snapshot ──────────────────────────────────────────────────────────────────
@@ -168,7 +169,7 @@ export function useOfflinePaymentsSnapshot(branchId: string, enabled = true) {
         generatedAt: string;
         children: Array<Omit<OfflineSnapshotChild, 'periods'> & { periods: Array<Record<string, unknown>> }>;
       }>(`/payments/branches/${branchId}/offline-snapshot`);
-      if (!res.success || !res.data) throw new Error(res.error?.message ?? 'Failed to load payments data');
+      if (!res.success || !res.data) throw apiError(res.error, 'Failed to load payments data');
       return {
         generatedAt: res.data.generatedAt,
         children: res.data.children.map((c) => ({

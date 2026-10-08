@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 export interface Expense {
   id: string;
@@ -49,7 +49,7 @@ export function useExpenses(filters: ExpenseFilters, page: number) {
         if (value) params.set(key, value);
       }
       const res = await apiClient.get<Expense[]>(`/payments/expenses?${params.toString()}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load expenses');
+      if (!res.success) throw apiError(res.error, 'Failed to load expenses');
       const expenses = Array.isArray(res.data) ? res.data : [];
       const meta = res.meta as { pagination?: { total?: number }; totalAmount?: string } | undefined;
       return {
@@ -68,7 +68,7 @@ export function useCreateExpense() {
   return useMutation({
     mutationFn: async (input: CreateExpenseInput) => {
       const res = await apiClient.post<Expense>('/payments/expenses', input);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to create expense');
+      if (!res.success) throw apiError(res.error, 'Failed to create expense');
       return res.data;
     },
     onSuccess: () => {
@@ -82,7 +82,7 @@ export function useUpdateExpense() {
   return useMutation({
     mutationFn: async ({ id, ...input }: UpdateExpenseInput & { id: string }) => {
       const res = await apiClient.put<Expense>(`/payments/expenses/${id}`, input);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update expense');
+      if (!res.success) throw apiError(res.error, 'Failed to update expense');
       return res.data;
     },
     onSuccess: () => {
@@ -96,7 +96,7 @@ export function useDeleteExpense() {
   return useMutation({
     mutationFn: async (id: string) => {
       const res = await apiClient.delete(`/payments/expenses/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to delete expense');
+      if (!res.success) throw apiError(res.error, 'Failed to delete expense');
       return res.data;
     },
     onSuccess: () => {
@@ -128,7 +128,7 @@ export function useExpenseReceiptFile() {
       });
       if (!response.ok) {
         const data = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
-        throw new Error(data?.error?.message ?? 'Failed to load receipt');
+        throw apiError(data?.error, 'Failed to load receipt');
       }
       const blob = await response.blob();
       const fileName = fileNameFromDisposition(response.headers.get('Content-Disposition')) ?? 'receipt';
@@ -154,7 +154,7 @@ export function useUploadExpenseReceipt() {
 
       const data = await response.json();
       if (!data.success) {
-        throw new Error(data.error?.message ?? 'Failed to upload receipt');
+        throw apiError(data.error, 'Failed to upload receipt');
       }
       return data.data as Expense;
     },

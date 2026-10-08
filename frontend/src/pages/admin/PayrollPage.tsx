@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Banknote, Pencil, Trash2, Download, X } from 'lucide-react';
@@ -110,7 +111,7 @@ function SetSalaryDialog({
       });
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      setError(errorMessage(err, t));
     }
   }
 
@@ -339,7 +340,7 @@ function RecordPaymentDialog({
       });
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      setError(errorMessage(err, t));
     }
   }
 

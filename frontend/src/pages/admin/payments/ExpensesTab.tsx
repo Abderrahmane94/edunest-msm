@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Upload, Download, Trash2, X, Eye, Pencil } from 'lucide-react';
@@ -126,9 +127,7 @@ function useExpenseReceiptActions() {
     download,
     isPending: receiptFile.isPending,
     error: receiptFile.isError
-      ? receiptFile.error instanceof Error
-        ? receiptFile.error.message
-        : t('common.error')
+      ? errorMessage(receiptFile.error, t)
       : null,
   };
 }
@@ -424,7 +423,7 @@ function CreateExpenseDialog({
       resetForm();
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      setError(errorMessage(err, t));
     }
   }
 

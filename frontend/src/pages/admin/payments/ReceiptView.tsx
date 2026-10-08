@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Printer, Mail, Send, Download } from 'lucide-react';
@@ -179,7 +180,7 @@ export function ReceiptView({ paymentRecordId, open, onOpenChange }: ReceiptView
               )}
               {emailReceipt.isError && (
                 <p className="text-caption text-danger me-auto" role="alert">
-                  {emailReceipt.error instanceof Error ? emailReceipt.error.message : t('common.error')}
+                  {errorMessage(emailReceipt.error, t)}
                 </p>
               )}
               <Button

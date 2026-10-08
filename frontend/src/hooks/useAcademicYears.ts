@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 export interface AcademicYear {
   id: string;
@@ -58,7 +58,7 @@ export function useAcademicYear(id: string) {
     queryKey: ['academic-years', id],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>>(`/academic-years/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Not found');
+      if (!res.success) throw apiError(res.error, 'Not found');
       return mapAcademicYear(res.data as Record<string, unknown>);
     },
     enabled: !!id,
@@ -74,7 +74,7 @@ export function useUpdateAcademicYear() {
       if (data.start_date !== undefined) body.startDate = data.start_date;
       if (data.end_date !== undefined) body.endDate = data.end_date;
       const res = await apiClient.put(`/academic-years/${id}`, body);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update academic year');
+      if (!res.success) throw apiError(res.error, 'Failed to update academic year');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -89,7 +89,7 @@ export function useDeleteAcademicYear() {
   return useMutation({
     mutationFn: async (id: string) => {
       const res = await apiClient.delete(`/academic-years/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to delete academic year');
+      if (!res.success) throw apiError(res.error, 'Failed to delete academic year');
       return res.data;
     },
     onSuccess: () => {
@@ -108,7 +108,7 @@ export function useCreateAcademicYear() {
         endDate: data.end_date,
       });
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to create academic year');
+        throw apiError(res.error, 'Failed to create academic year');
       }
       return res.data;
     },

@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -52,7 +53,7 @@ export function AcademicYearDetailPage() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : t('common.error'));
+      setSaveError(errorMessage(err, t));
     }
   }
 
@@ -62,7 +63,7 @@ export function AcademicYearDetailPage() {
       await deleteYear.mutateAsync(yearId!);
       navigate('/admin/academic-years');
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : t('common.error'));
+      setDeleteError(errorMessage(err, t));
       setConfirmDelete(false);
     }
   }
@@ -73,7 +74,7 @@ export function AcademicYearDetailPage() {
       setSaveError(null);
       await activateYear.mutateAsync(year.id);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : t('common.error'));
+      setSaveError(errorMessage(err, t));
     }
   }
 

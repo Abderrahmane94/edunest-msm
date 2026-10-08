@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -880,7 +881,7 @@ function NewParentConversationDialog({
           )}
           {createConversation.isError && (
             <p className="text-caption text-[var(--color-danger)] text-center mt-2">
-              {createConversation.error?.message || t('messages.createError', 'Échec de la création')}
+              {errorMessage(createConversation.error, t)}
             </p>
           )}
         </div>
@@ -960,7 +961,7 @@ function NewStaffConversationDialog({
           )}
           {getOrCreate.isError && (
             <p className="text-caption text-[var(--color-danger)] text-center mt-2">
-              {getOrCreate.error?.message || t('messages.createError', 'Échec de la création')}
+              {errorMessage(getOrCreate.error, t)}
             </p>
           )}
         </div>

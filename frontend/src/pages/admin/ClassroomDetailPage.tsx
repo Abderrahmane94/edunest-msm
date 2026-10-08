@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -67,7 +68,7 @@ export function ClassroomDetailPage() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : t('common.error'));
+      setSaveError(errorMessage(err, t));
     }
   }
 
@@ -76,7 +77,7 @@ export function ClassroomDetailPage() {
     try {
       await assignTeacher.mutateAsync({ classroomId: classroomId!, teacherId: teacherId || null });
     } catch (err) {
-      setTeacherError(err instanceof Error ? err.message : t('common.error'));
+      setTeacherError(errorMessage(err, t));
     }
   }
 

@@ -1,7 +1,8 @@
+import { errorMessage } from '@/lib/errorMessage';
 import { useState, useEffect, type FormEvent } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
@@ -46,7 +47,7 @@ export function RegisterPage() {
         if (response.success && response.data) {
           setInvitation(response.data);
         } else {
-          setError(response.error?.message || t('auth.register.invalidOrExpired'));
+          setError(response.error ? errorMessage(apiError(response.error, ''), t) : t('auth.register.invalidOrExpired'));
         }
       } catch {
         setError(t('auth.register.verifyFailed'));
@@ -88,7 +89,7 @@ export function RegisterPage() {
       if (response.success) {
         setIsSuccess(true);
       } else {
-        setError(response.error?.message || t('auth.register.genericError'));
+        setError(response.error ? errorMessage(apiError(response.error, ''), t) : t('auth.register.genericError'));
       }
     } catch {
       setError(t('auth.register.unexpectedError'));

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 export type PerStudentBasis = 'working_day' | 'present_day';
 
@@ -107,7 +107,7 @@ export function useStudentDays(userId: string | undefined, year: number, month: 
       const res = await apiClient.get<StudentDaysSummary>(
         `/payroll/employees/${userId}/student-days?year=${year}&month=${month}`,
       );
-      if (!res.success || !res.data) throw new Error(res.error?.message ?? 'PAYROLL_ERROR');
+      if (!res.success || !res.data) throw apiError(res.error, 'PAYROLL_ERROR');
       return res.data;
     },
     enabled: enabled && !!userId,
@@ -119,7 +119,7 @@ export function useSetSalary() {
   return useMutation({
     mutationFn: async ({ userId, data }: { userId: string; data: SetSalaryInput }) => {
       const res = await apiClient.put<EmployeeSalary>(`/payroll/employees/${userId}/salary`, data);
-      if (!res.success) throw new Error(res.error?.message ?? 'PAYROLL_ERROR');
+      if (!res.success) throw apiError(res.error, 'PAYROLL_ERROR');
       return res.data;
     },
     onSuccess: () => {
@@ -170,7 +170,7 @@ export function useRecordPayment() {
   return useMutation({
     mutationFn: async (data: RecordPaymentInput) => {
       const res = await apiClient.post<SalaryPayment>('/payroll/payments', data);
-      if (!res.success) throw new Error(res.error?.message ?? 'PAYROLL_ERROR');
+      if (!res.success) throw apiError(res.error, 'PAYROLL_ERROR');
       return res.data as SalaryPayment;
     },
     onSuccess: () => {

@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import { useTranslation } from 'react-i18next';
 import { StatusBadge } from '@/components/ui';
 import { formatDZD } from '@/lib/formatters';
@@ -25,7 +26,7 @@ export function ClassroomFeesSection({ classroomId }: { classroomId: string }) {
       {isLoading ? (
         <div className="animate-pulse h-16 bg-subtle rounded-md" />
       ) : isError ? (
-        <p className="text-body text-danger">{error instanceof Error ? error.message : t('common.error')}</p>
+        <p className="text-body text-danger">{errorMessage(error, t)}</p>
       ) : !fees || fees.length === 0 ? (
         <p className="text-body text-text-secondary">{t('classrooms.fees.empty')}</p>
       ) : (

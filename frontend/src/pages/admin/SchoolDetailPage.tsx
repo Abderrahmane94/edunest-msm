@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +7,7 @@ import { formatDate } from '@/lib/formatters';
 import { Button, StatusBadge, DataTable, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Input, EntityDeleteButton } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToggleSchoolActive } from './SchoolsPage';
 import type { SchoolItem } from '@/hooks/useSchools';
@@ -20,7 +21,7 @@ function useSchoolDetail(id: string) {
     queryKey: ['school-detail', id],
     queryFn: async () => {
       const res = await apiClient.get<SchoolItem>(`/schools/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'School not found');
+      if (!res.success) throw apiError(res.error, 'School not found');
       return res.data as SchoolItem;
     },
     enabled: !!id,
@@ -32,7 +33,7 @@ function useUpdateSchoolAdmin() {
   return useMutation({
     mutationFn: async ({ id, ...data }: { id: string; name?: string; address?: string; wilaya?: string; contactEmail?: string; contactPhone?: string }) => {
       const res = await apiClient.put(`/schools/${id}`, data);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update school');
+      if (!res.success) throw apiError(res.error, 'Failed to update school');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -70,7 +71,7 @@ function useCreateUserInSchool(schoolId: string) {
   return useMutation({
     mutationFn: async (data: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string }) => {
       const res = await apiClient.post(`/schools/${schoolId}/users`, data);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to create user');
+      if (!res.success) throw apiError(res.error, 'Failed to create user');
       return res.data;
     },
     onSuccess: () => {
@@ -120,7 +121,7 @@ export function SchoolDetailPage() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : t('common.error'));
+      setSaveError(errorMessage(err, t));
     }
   }
 
@@ -129,7 +130,7 @@ export function SchoolDetailPage() {
     setToggleError(null);
     toggleSchool.mutate(
       { id: school.id, isActive: school.isActive },
-      { onError: (err) => setToggleError(err instanceof Error ? err.message : t('common.error')) }
+      { onError: (err) => setToggleError(errorMessage(err, t)) }
     );
   }
 
@@ -411,7 +412,7 @@ function CreateUserDialog({
       setForm(emptyForm);
       setTimeout(() => { setSuccess(false); onOpenChange(false); }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      setError(errorMessage(err, t));
     }
   }
 

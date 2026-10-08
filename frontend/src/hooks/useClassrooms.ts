@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 export interface Classroom {
   id: string;
@@ -56,7 +56,7 @@ export function useClassroom(id: string) {
     queryKey: ['classrooms', id],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>>(`/classrooms/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Classroom not found');
+      if (!res.success) throw apiError(res.error, 'Classroom not found');
       return mapClassroom(res.data as Record<string, unknown>);
     },
     enabled: !!id,
@@ -73,7 +73,7 @@ export function useUpdateClassroom() {
       if (data.room_number !== undefined) body.roomNumber = data.room_number;
       if (data.level !== undefined) body.level = data.level;
       const res = await apiClient.put(`/classrooms/${id}`, body);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update classroom');
+      if (!res.success) throw apiError(res.error, 'Failed to update classroom');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -88,7 +88,7 @@ export function useDeleteClassroom() {
   return useMutation({
     mutationFn: async (id: string) => {
       const res = await apiClient.delete(`/classrooms/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to delete classroom');
+      if (!res.success) throw apiError(res.error, 'Failed to delete classroom');
       return res.data;
     },
     onSuccess: () => {
@@ -109,7 +109,7 @@ export function useCreateClassroom() {
         academicYearId: data.academic_year_id,
         teacherUserId: data.teacher_id || undefined,
       });
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to create classroom');
+      if (!res.success) throw apiError(res.error, 'Failed to create classroom');
       return res.data;
     },
     onSuccess: () => {
@@ -123,7 +123,7 @@ export function useAssignTeacher() {
   return useMutation({
     mutationFn: async ({ classroomId, teacherId }: { classroomId: string; teacherId: string | null }) => {
       const res = await apiClient.patch(`/classrooms/${classroomId}/assign-teacher`, { teacherUserId: teacherId });
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to assign teacher');
+      if (!res.success) throw apiError(res.error, 'Failed to assign teacher');
       return res.data;
     },
     onSuccess: (_data, variables) => {

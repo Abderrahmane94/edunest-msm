@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -121,7 +122,7 @@ export function ChildFeesSection({
       {isLoading ? (
         <div className="animate-pulse h-16 bg-subtle rounded-md" />
       ) : isError ? (
-        <p className="text-body text-danger">{error instanceof Error ? error.message : t('common.error')}</p>
+        <p className="text-body text-danger">{errorMessage(error, t)}</p>
       ) : fees.length === 0 ? (
         <p className="text-body text-text-secondary">{t('children.fees.empty')}</p>
       ) : (

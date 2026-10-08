@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, CheckCircle, Minus } from 'lucide-react';
@@ -211,7 +212,7 @@ export function RecordCorrectionDialog({ open, onOpenChange, branchId }: Props) 
     } catch (err) {
       setErrors((prev) => ({
         ...prev,
-        form: err instanceof Error ? err.message : t('common.error'),
+        form: errorMessage(err, t),
       }));
     }
   }

@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -150,9 +151,7 @@ function WithdrawalDialog({
 
           {withdrawEnrollment.isError && (
             <p className="text-body text-danger mt-1">
-              {withdrawEnrollment.error instanceof Error
-                ? withdrawEnrollment.error.message
-                : t('common.error')}
+              {errorMessage(withdrawEnrollment.error, t)}
             </p>
           )}
 
@@ -365,7 +364,7 @@ function AddDiscountDialog({
 
           {createDiscount.isError && (
             <p className="text-body text-danger mt-1">
-              {createDiscount.error instanceof Error ? createDiscount.error.message : t('common.error')}
+              {errorMessage(createDiscount.error, t)}
             </p>
           )}
 
@@ -374,7 +373,7 @@ function AddDiscountDialog({
               {t('common.cancel')}
             </Button>
             <ErrorAlert
-              message={createDiscount.isError ? (createDiscount.error instanceof Error ? createDiscount.error.message : t('common.error')) : null}
+              message={createDiscount.isError ? (errorMessage(createDiscount.error, t)) : null}
               className="me-auto"
             />
             <Button

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface School {
@@ -59,7 +59,7 @@ export function useUploadSchoolLogo() {
 
       const data = await response.json();
       if (!data.success) {
-        throw new Error(data.error?.message ?? 'Failed to upload logo');
+        throw apiError(data.error, 'Failed to upload logo');
       }
       return data.data;
     },
@@ -84,7 +84,7 @@ export function useUpdateSchool() {
 
       const res = await apiClient.put(`/schools/${user!.schoolId}`, body);
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to update school');
+        throw apiError(res.error, 'Failed to update school');
       }
       return res.data;
     },

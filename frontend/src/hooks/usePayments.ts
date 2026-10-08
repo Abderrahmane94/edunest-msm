@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -90,7 +90,7 @@ export function useChildBillingPeriods(childId: string) {
         `/payments/children/${childId}/periods`
       );
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to fetch billing periods');
+        throw apiError(res.error, 'Failed to fetch billing periods');
       }
       const raw = res.data;
       if (Array.isArray(raw)) {
@@ -121,7 +121,7 @@ export function useRecordPayment(branchId: string) {
         }
       );
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to record payment');
+        throw apiError(res.error, 'Failed to record payment');
       }
       const d = res.data as Record<string, unknown>;
       return {
@@ -173,7 +173,7 @@ export function usePaymentRecords(branchId: string, filters?: PaymentRecordFilte
         `/payments/records?${queryParams.toString()}`
       );
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to fetch payment records');
+        throw apiError(res.error, 'Failed to fetch payment records');
       }
       const raw = res.data;
       if (Array.isArray(raw)) {
@@ -223,7 +223,7 @@ export function usePaymentReceiptUrl(paymentId: string | null) {
       // The receipt endpoint generates a receipt document
       const res = await apiClient.get<unknown>(`/payments/records/${paymentId}/receipt`);
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to fetch receipt');
+        throw apiError(res.error, 'Failed to fetch receipt');
       }
       return res.data as Record<string, unknown>;
     },
@@ -248,7 +248,7 @@ export function useRecordCorrection() {
         allocations: data.allocations,
       });
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to record correction');
+        throw apiError(res.error, 'Failed to record correction');
       }
       const d = res.data as Record<string, unknown>;
       return {
@@ -354,7 +354,7 @@ export function useReceipt(paymentRecordId: string | null, language?: string) {
         `/payments/records/${paymentRecordId}/receipt?language=${lang}`
       );
       if (!res.success || !res.data) {
-        throw new Error(res.error?.message ?? 'Failed to fetch receipt');
+        throw apiError(res.error, 'Failed to fetch receipt');
       }
       return res.data as ReceiptData;
     },
@@ -388,7 +388,7 @@ export function useEmailReceipt() {
         { to, language, pdfBase64, pdfFileName },
       );
       if (!res.success || !res.data) {
-        throw new Error(res.error?.message ?? 'Failed to send receipt');
+        throw apiError(res.error, 'Failed to send receipt');
       }
       return res.data.sentTo;
     },

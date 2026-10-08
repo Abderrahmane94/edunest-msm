@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 export interface Conversation {
   id: string;
@@ -91,7 +91,7 @@ export function useSendMessage(conversationId?: string) {
         { content: data.content, messageType: data.message_type }
       );
       if (!res.success) {
-        throw new Error(res.error?.message || 'Failed to send message');
+        throw apiError(res.error, 'Failed to send message');
       }
       return res.data as Message;
     },
@@ -109,7 +109,7 @@ export function useMarkMessageRead() {
     mutationFn: async (messageId: string) => {
       const res = await apiClient.patch(`/communication/messages/${messageId}/read`);
       if (!res.success) {
-        throw new Error(res.error?.message || 'Failed to mark message as read');
+        throw apiError(res.error, 'Failed to mark message as read');
       }
       return res.data;
     },
@@ -124,7 +124,7 @@ export function useCreateConversation() {
   return useMutation({
     mutationFn: async (data: { childId: string; parentUserId?: string }) => {
       const res = await apiClient.post<{ conversation: Conversation }>('/communication/conversations', data);
-      if (!res.success) throw new Error(res.error?.message || 'Failed to create conversation');
+      if (!res.success) throw apiError(res.error, 'Failed to create conversation');
       return res.data;
     },
     onSuccess: () => {
@@ -143,7 +143,7 @@ export function useSendFileMessage(conversationId?: string) {
       formData.append('message_type', messageType);
 
       const res = await apiClient.uploadFile(`/communication/conversations/${conversationId}/messages`, formData);
-      if (!res.success) throw new Error(res.error?.message || 'Failed to send file message');
+      if (!res.success) throw apiError(res.error, 'Failed to send file message');
       return res;
     },
     onSuccess: () => {

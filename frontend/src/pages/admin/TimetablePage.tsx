@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
@@ -60,7 +61,7 @@ export function TimetablePage() {
       });
       setSaved(true);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : t('common.error'));
+      setSaveError(errorMessage(err, t));
     }
   }
 

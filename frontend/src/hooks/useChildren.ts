@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 export type BloodType = 'a_positive' | 'a_negative' | 'b_positive' | 'b_negative' | 'ab_positive' | 'ab_negative' | 'o_positive' | 'o_negative';
 
@@ -122,7 +122,7 @@ export function useChild(id: string) {
     queryKey: ['children', id],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>>(`/children/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Child not found');
+      if (!res.success) throw apiError(res.error, 'Child not found');
       return mapChild(res.data as Record<string, unknown>);
     },
     enabled: !!id,
@@ -144,7 +144,7 @@ export function useUpdateChild() {
       if (data.place_of_birth !== undefined) body.placeOfBirth = data.place_of_birth;
       if (data.blood_type !== undefined) body.bloodType = data.blood_type;
       const res = await apiClient.put(`/children/${id}`, body);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update child');
+      if (!res.success) throw apiError(res.error, 'Failed to update child');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -159,7 +159,7 @@ export function useDeleteChild() {
   return useMutation({
     mutationFn: async (id: string) => {
       const res = await apiClient.delete(`/children/${id}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to delete child');
+      if (!res.success) throw apiError(res.error, 'Failed to delete child');
       return res.data;
     },
     onSuccess: () => {
@@ -173,7 +173,7 @@ export function useEnrollChild() {
   return useMutation({
     mutationFn: async ({ childId, classroomId }: { childId: string; classroomId: string }) => {
       const res = await apiClient.post(`/children/${childId}/enroll`, { classroomId });
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to enroll child');
+      if (!res.success) throw apiError(res.error, 'Failed to enroll child');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -188,7 +188,7 @@ export function useParentLinks(childId: string) {
     queryKey: ['parent-links', childId],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>[]>(`/children/${childId}/parent-links`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load parent links');
+      if (!res.success) throw apiError(res.error, 'Failed to load parent links');
       return Array.isArray(res.data) ? res.data : [];
     },
     enabled: !!childId,
@@ -200,7 +200,7 @@ export function useRemoveParentLink() {
   return useMutation({
     mutationFn: async ({ childId, linkId }: { childId: string; linkId: string }) => {
       const res = await apiClient.delete(`/children/${childId}/parent-links/${linkId}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to remove parent link');
+      if (!res.success) throw apiError(res.error, 'Failed to remove parent link');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -214,7 +214,7 @@ export function useUpdateParentLink() {
   return useMutation({
     mutationFn: async ({ childId, linkId, relationship, canPickup }: { childId: string; linkId: string; relationship: string; canPickup?: boolean }) => {
       const res = await apiClient.put(`/children/${childId}/parent-links/${linkId}`, { relationship, canPickup });
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update parent link');
+      if (!res.success) throw apiError(res.error, 'Failed to update parent link');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -228,7 +228,7 @@ export function useSetPrimaryParentLink() {
   return useMutation({
     mutationFn: async ({ childId, linkId }: { childId: string; linkId: string }) => {
       const res = await apiClient.patch(`/children/${childId}/parent-links/${linkId}/primary`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to set primary parent');
+      if (!res.success) throw apiError(res.error, 'Failed to set primary parent');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -254,7 +254,7 @@ export function useEmergencyContacts(childId: string) {
     queryKey: ['emergency-contacts', childId],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>[]>(`/children/${childId}/emergency-contacts`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load emergency contacts');
+      if (!res.success) throw apiError(res.error, 'Failed to load emergency contacts');
       return Array.isArray(res.data) ? res.data.map(mapEmergencyContact) : [];
     },
     enabled: !!childId,
@@ -270,7 +270,7 @@ export function useAddEmergencyContact() {
       const res = await apiClient.post(`/children/${childId}/emergency-contacts`, {
         name, relationship, phone, address, nationalId: national_id, isAuthorizedPickup: is_authorized_pickup,
       });
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to add emergency contact');
+      if (!res.success) throw apiError(res.error, 'Failed to add emergency contact');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -288,7 +288,7 @@ export function useUpdateEmergencyContact() {
       const res = await apiClient.put(`/children/${childId}/emergency-contacts/${contactId}`, {
         name, relationship, phone, address, nationalId: national_id, isAuthorizedPickup: is_authorized_pickup,
       });
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update emergency contact');
+      if (!res.success) throw apiError(res.error, 'Failed to update emergency contact');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -302,7 +302,7 @@ export function useRemoveEmergencyContact() {
   return useMutation({
     mutationFn: async ({ childId, contactId }: { childId: string; contactId: string }) => {
       const res = await apiClient.delete(`/children/${childId}/emergency-contacts/${contactId}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to remove emergency contact');
+      if (!res.success) throw apiError(res.error, 'Failed to remove emergency contact');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -328,7 +328,7 @@ export function useCreateChild() {
         bloodType: data.blood_type,
       });
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to create child');
+        throw apiError(res.error, 'Failed to create child');
       }
       return res.data;
     },
@@ -354,7 +354,7 @@ export function useMedicalNotes(childId: string) {
     queryKey: ['medical-notes', childId],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>[]>(`/children/${childId}/medical-notes`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load medical notes');
+      if (!res.success) throw apiError(res.error, 'Failed to load medical notes');
       return Array.isArray(res.data) ? res.data.map(mapMedicalNote) : [];
     },
     enabled: !!childId,
@@ -368,7 +368,7 @@ export function useAddMedicalNote() {
       childId: string; type: MedicalNoteType; title: string; details?: string; severity: MedicalNoteSeverity;
     }) => {
       const res = await apiClient.post(`/children/${childId}/medical-notes`, { type, title, details, severity });
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to add medical note');
+      if (!res.success) throw apiError(res.error, 'Failed to add medical note');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -384,7 +384,7 @@ export function useUpdateMedicalNote() {
       childId: string; noteId: string; type: MedicalNoteType; title: string; details?: string; severity: MedicalNoteSeverity;
     }) => {
       const res = await apiClient.put(`/children/${childId}/medical-notes/${noteId}`, { type, title, details, severity });
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update medical note');
+      if (!res.success) throw apiError(res.error, 'Failed to update medical note');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -398,7 +398,7 @@ export function useRemoveMedicalNote() {
   return useMutation({
     mutationFn: async ({ childId, noteId }: { childId: string; noteId: string }) => {
       const res = await apiClient.delete(`/children/${childId}/medical-notes/${noteId}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to remove medical note');
+      if (!res.success) throw apiError(res.error, 'Failed to remove medical note');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -413,7 +413,7 @@ export function useLinkParent() {
     mutationFn: async ({ childId, parentId, relationship, canPickup }: { childId: string; parentId: string; relationship: string; canPickup?: boolean }) => {
       const res = await apiClient.post(`/children/${childId}/parent-links`, { parentUserId: parentId, relationship, canPickup });
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to link parent');
+        throw apiError(res.error, 'Failed to link parent');
       }
       return res.data;
     },

@@ -1,8 +1,9 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trash2, Loader2 } from 'lucide-react';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 import { Button } from './Button';
 import {
   Dialog,
@@ -48,8 +49,7 @@ function useSoftDelete(entityType: EntityType) {
     mutationFn: async (entityId: string) => {
       const res = await apiClient.delete(`/${entityType}/${entityId}`);
       if (!res.success) {
-        const err = new Error(res.error?.message ?? 'Delete failed');
-        (err as Error & { code?: string }).code = res.error?.code;
+        const err = apiError(res.error, 'Delete failed');
         throw err;
       }
       return res.data;
@@ -121,7 +121,7 @@ export function EntityDeleteButton({
       }
 
       // For all other errors: display inline in dialog
-      setError(caughtError.message || t('common.softDelete.errorGeneric'));
+      setError(errorMessage(caughtError, t));
     }
   }
 

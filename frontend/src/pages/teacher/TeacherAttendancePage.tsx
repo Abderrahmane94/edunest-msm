@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, Clock, X, CheckCheck, Send, CloudOff, RefreshCw, AlertTriangle, Trash2 } from 'lucide-react';
@@ -144,7 +145,7 @@ export function TeacherAttendancePage() {
       setHasChanges(false);
       setSubmitted(true);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : t('teacherAttendance.submitError'));
+      setSaveError(errorMessage(err, t));
     }
   }, [classroom, dayKey, attendanceMap, selectedDate, t]);
 
@@ -399,7 +400,7 @@ export function TeacherAttendancePage() {
             // The server refused what was saved on the device.
             <div className="rounded-lg bg-danger-muted px-4 py-3 space-y-2">
               <p className="text-caption text-danger">
-                {t('teacherAttendance.syncError', { error: pending.error })}
+                {t('teacherAttendance.syncError', { error: errorMessage(pending.error, t) })}
               </p>
               <div className="flex flex-wrap gap-2">
                 <button

@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
@@ -592,7 +593,7 @@ function CreateAnnouncementDialog({
       setClassroomId('');
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create announcement');
+      setError(errorMessage(err, t));
     }
   }
 
@@ -1277,7 +1278,7 @@ function AdminNewStaffConversationDialog({
           )}
           {getOrCreate.isError && (
             <p className="text-caption text-[var(--color-danger)] text-center mt-2">
-              {getOrCreate.error?.message}
+              {getOrCreate.error && errorMessage(getOrCreate.error, t)}
             </p>
           )}
         </div>

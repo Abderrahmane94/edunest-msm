@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 export type ContractType = 'full_time' | 'part_time' | 'contract';
 
@@ -54,7 +54,7 @@ export function useStaffList(params: StaffListParams = {}) {
     queryKey: ['staff', params],
     queryFn: async () => {
       const res = await apiClient.get<Record<string, unknown>[]>(`/staff?page=${page}&pageSize=${pageSize}`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to load staff');
+      if (!res.success) throw apiError(res.error, 'Failed to load staff');
       const list = Array.isArray(res.data) ? res.data.map(mapStaffProfile) : [];
       const total = (res.meta as { pagination?: { total?: number } })?.pagination?.total ?? list.length;
       return { profiles: list, total };
@@ -97,7 +97,7 @@ export function useCreateStaffProfile() {
         contractStart: data.contract_start,
         contractEnd: data.contract_end || undefined,
       });
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to create staff profile');
+      if (!res.success) throw apiError(res.error, 'Failed to create staff profile');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -125,7 +125,7 @@ export function useUpdateStaffProfile() {
       if (data.contract_end !== undefined) body.contractEnd = data.contract_end || null;
 
       const res = await apiClient.put(`/staff/${profileId}`, body);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to update staff profile');
+      if (!res.success) throw apiError(res.error, 'Failed to update staff profile');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -143,7 +143,7 @@ export function useUploadStaffDocument() {
       formData.append('document', file);
 
       const res = await apiClient.uploadFile(`/staff/${profileId}/document`, formData);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to upload document');
+      if (!res.success) throw apiError(res.error, 'Failed to upload document');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -157,7 +157,7 @@ export function useDeleteStaffDocument() {
   return useMutation({
     mutationFn: async ({ profileId }: { profileId: string; userId: string }) => {
       const res = await apiClient.delete(`/staff/${profileId}/document`);
-      if (!res.success) throw new Error(res.error?.message ?? 'Failed to delete document');
+      if (!res.success) throw apiError(res.error, 'Failed to delete document');
       return res.data;
     },
     onSuccess: (_data, variables) => {
@@ -173,7 +173,7 @@ export function useDeleteStaffDocument() {
 export async function openStaffDocument(profileId: string): Promise<void> {
   const res = await apiClient.get<{ url: string }>(`/staff/${profileId}/document-url`);
   if (!res.success || !res.data?.url) {
-    throw new Error(res.error?.message ?? 'Failed to get document URL');
+    throw apiError(res.error, 'Failed to get document URL');
   }
   window.open(res.data.url, '_blank', 'noopener,noreferrer');
 }

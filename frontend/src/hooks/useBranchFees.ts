@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -59,7 +59,7 @@ export function useBranchFees(branchId: string, includeInactive = false) {
         : `/payments/branches/${branchId}/fees`;
       const res = await apiClient.get<unknown>(url);
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to fetch fees');
+        throw apiError(res.error, 'Failed to fetch fees');
       }
       return (res.data as BranchFee[]) ?? [];
     },
@@ -79,7 +79,7 @@ export function useCreateBranchFee(branchId: string) {
         data,
       );
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to create fee');
+        throw apiError(res.error, 'Failed to create fee');
       }
       return res.data as BranchFee;
     },
@@ -101,7 +101,7 @@ export function useUpdateBranchFee(branchId: string) {
         data,
       );
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to update fee');
+        throw apiError(res.error, 'Failed to update fee');
       }
       return res.data as BranchFee;
     },
@@ -122,7 +122,7 @@ export function useDeleteBranchFee(branchId: string) {
         `/payments/branches/${branchId}/fees/${id}`,
       );
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to delete fee');
+        throw apiError(res.error, 'Failed to delete fee');
       }
     },
     onSuccess: () => {
@@ -161,7 +161,7 @@ export function useAssignFee(branchId: string) {
         data,
       );
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to assign fee');
+        throw apiError(res.error, 'Failed to assign fee');
       }
       return res.data as AssignFeeResult;
     },
@@ -224,7 +224,7 @@ export function useChangeFeeScope(branchId: string) {
     mutationFn: async ({ feeId, ...data }: ChangeFeeScopeInput): Promise<ChangeFeeScopeResult> => {
       const res = await apiClient.put<unknown>(`/payments/fees/${feeId}/scope`, data);
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to change fee scope');
+        throw apiError(res.error, 'Failed to change fee scope');
       }
       return res.data as ChangeFeeScopeResult;
     },

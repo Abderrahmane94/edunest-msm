@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm, Controller } from 'react-hook-form';
@@ -75,7 +76,7 @@ export function BranchConfigPage() {
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
       setServerError(
-        err instanceof Error ? err.message : t('common.error'),
+        errorMessage(err, t),
       );
     }
   }

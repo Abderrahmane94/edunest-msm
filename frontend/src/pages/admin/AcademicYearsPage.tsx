@@ -1,3 +1,4 @@
+import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -80,7 +81,7 @@ function CreateAcademicYearDialog({
       resetForm();
       onOpenChange(false);
     } catch (err) {
-      setErrors((prev) => ({ ...prev, form: err instanceof Error ? err.message : t('common.error') }));
+      setErrors((prev) => ({ ...prev, form: errorMessage(err, t) }));
     }
   }
 
@@ -174,7 +175,7 @@ export function AcademicYearsPage() {
     try {
       await activateAcademicYear.mutateAsync(id);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : t('common.error'));
+      setActionError(errorMessage(err, t));
     }
   }
 

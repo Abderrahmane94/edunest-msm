@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, apiError } from '@/lib/api-client';
 
 export interface Branch {
   id: string;
@@ -77,7 +77,7 @@ export function useCreateBranchCalendar() {
         academicYearId: data.academicYearId,
       });
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to create calendar entry');
+        throw apiError(res.error, 'Failed to create calendar entry');
       }
       return res.data as BranchCalendarEntry;
     },
@@ -103,7 +103,7 @@ export function useUpdateBranchCalendar() {
         period_end: data.period_end,
       });
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to update calendar entry');
+        throw apiError(res.error, 'Failed to update calendar entry');
       }
       return res.data;
     },
@@ -119,7 +119,7 @@ export function useDeleteBranchCalendar() {
     mutationFn: async ({ branchId, id }: { branchId: string; id: string }) => {
       const res = await apiClient.delete(`/payments/branches/${branchId}/calendar/${id}`);
       if (!res.success) {
-        throw new Error(res.error?.message ?? 'Failed to delete calendar entry');
+        throw apiError(res.error, 'Failed to delete calendar entry');
       }
     },
     onSuccess: () => {

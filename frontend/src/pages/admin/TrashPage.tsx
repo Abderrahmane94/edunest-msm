@@ -23,7 +23,7 @@ import {
 } from '@/hooks/useTrash';
 import { useDeletedPayments, useRestorePayment, type SchoolPaymentRecord } from '@/hooks/useBilling';
 import { useAuth } from '@/contexts/AuthContext';
-import { ErrorAlert, PageHeader, Tabs } from '@/components/ui';
+import { ErrorAlert, PageHeader, SectionHeader, Tabs } from '@/components/ui';
 import { useTabParam } from '@/hooks/useTabParam';
 
 type EntityTab = TrashEntityType | 'payments';
@@ -215,7 +215,8 @@ function DeletedPaymentsTab() {
   );
 }
 
-export function TrashPage() {
+/** `embedded`: shown as the Corbeille tab of a school's Settings, under its own ?section=… */
+export function TrashPage({ embedded = false }: { embedded?: boolean }) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const isSuperAdmin = user?.role === 'super_admin';
@@ -223,6 +224,7 @@ export function TrashPage() {
   const [activeTab, setActiveTab] = useTabParam<EntityTab>(
     visibleTabs.map((tab) => tab.key),
     isSuperAdmin ? 'schools' : 'users',
+    embedded ? 'section' : 'tab',
   );
   const [page, setPage] = React.useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
@@ -358,7 +360,7 @@ export function TrashPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title={t('trash.title')} />
+      {embedded ? <SectionHeader title={t('trash.title')} /> : <PageHeader title={t('trash.title')} />}
 
       <Tabs
         value={activeTab}

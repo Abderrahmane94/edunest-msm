@@ -1,4 +1,4 @@
-import { Navigate, Outlet, useParams, type RouteObject } from 'react-router-dom';
+import { Navigate, Outlet, useParams, useSearchParams, type RouteObject } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLogoutWithConfirm } from '@/components/LogoutConfirm';
@@ -31,7 +31,6 @@ import {
   AnnouncementDetailPage,
   EventDetailPage,
   TrashPage,
-  TimetablePage,
   PayrollPage,
 } from '@/pages/admin';
 import {
@@ -62,7 +61,6 @@ import {
   Building2,
   Languages,
   Trash2,
-  Clock,
   Banknote,
   Megaphone,
   CreditCard,
@@ -146,13 +144,11 @@ function getAdminNavItems(role: string): NavItem[] {
     { label: 'nav.users',         href: '/admin/users', icon: Users },
     { label: 'nav.staff',         href: '/admin/staff', icon: UserCog },
     { label: 'nav.classrooms',    href: '/admin/classrooms', icon: School },
-    { label: 'nav.timetable',     href: '/admin/timetable', icon: Clock },
     { label: 'nav.children',      href: '/admin/children', icon: Baby },
     { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck },
     { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle },
     { label: 'nav.payments',      href: '/admin/payments', icon: CreditCard },
     { label: 'nav.payroll',       href: '/admin/payroll', icon: Banknote },
-    { label: 'nav.trash',         href: '/admin/trash', icon: Trash2 },
     { label: 'nav.settings',      href: '/admin/settings', icon: Settings },
   ];
 }
@@ -266,6 +262,15 @@ function OldAcademicYearRedirect() {
   return <Navigate to={`/admin/settings/academic-years/${yearId}`} replace />;
 }
 
+/** The platform's trash stays a page; a school's trash is a tab of its Settings. */
+function TrashRoute() {
+  const { user } = useAuth();
+  const [params] = useSearchParams();
+  if (user?.role === 'super_admin') return <TrashPage />;
+  const section = params.get('tab');
+  return <Navigate to={`/admin/settings?tab=trash${section ? `&section=${section}` : ''}`} replace />;
+}
+
 function AdminLayoutWrapper() {
   const { user } = useAuth();
   const navItems = getAdminNavItems(user?.role || 'admin');
@@ -354,7 +359,7 @@ export const routes: RouteObject[] = [
               { path: 'academic-years/:yearId', element: <OldAcademicYearRedirect /> },
               { path: 'classrooms', element: <ClassroomsPage /> },
               { path: 'classrooms/:classroomId', element: <ClassroomDetailPage /> },
-              { path: 'timetable', element: <TimetablePage /> },
+              { path: 'timetable', element: <Navigate to="/admin/settings?tab=days" replace /> },
               { path: 'children', element: <ChildrenPage /> },
               { path: 'children/:childId', element: <ChildDetailPage /> },
               { path: 'attendance', element: <AttendancePage /> },
@@ -365,7 +370,7 @@ export const routes: RouteObject[] = [
               { path: 'payroll', element: <PayrollPage /> },
               { path: 'payments', element: <PaymentManagementPage /> },
               { path: 'payments/enrollments/:enrollmentId', element: <EnrollmentDetailPage /> },
-              { path: 'trash', element: <TrashPage /> },
+              { path: 'trash', element: <TrashRoute /> },
               { path: 'settings', element: <SchoolSettingsPage /> },
               { path: 'settings/academic-years/:yearId', element: <AcademicYearDetailPage /> },
             ],

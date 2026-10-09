@@ -1,7 +1,7 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Building2, Upload, Camera, GraduationCap } from 'lucide-react';
+import { Building2, Upload, Camera, GraduationCap, Clock, Trash2 } from 'lucide-react';
 import {
   Button,
   EditButton,
@@ -16,9 +16,11 @@ import { FormField } from '@/components/forms';
 import { useSchool, useUpdateSchool, useUploadSchoolLogo } from '@/hooks/useSchool';
 import { useTabParam } from '@/hooks/useTabParam';
 import { AcademicYearsSection } from './AcademicYearsPage';
+import { TimetableSection } from './TimetablePage';
+import { TrashPage } from './TrashPage';
 
-type SettingsTab = 'school' | 'years';
-const SETTINGS_TABS: SettingsTab[] = ['school', 'years'];
+type SettingsTab = 'school' | 'years' | 'days' | 'trash';
+const SETTINGS_TABS: SettingsTab[] = ['school', 'years', 'days', 'trash'];
 
 export function SchoolSettingsPage() {
   const { t } = useTranslation();
@@ -27,6 +29,8 @@ export function SchoolSettingsPage() {
   const tabs: { value: SettingsTab; label: string; icon: React.ReactNode }[] = [
     { value: 'school', label: t('schoolSettings.tabs.school'), icon: <Building2 className="w-4 h-4" /> },
     { value: 'years', label: t('academicYears.title'), icon: <GraduationCap className="w-4 h-4" /> },
+    { value: 'days', label: t('timetable.title'), icon: <Clock className="w-4 h-4" /> },
+    { value: 'trash', label: t('trash.title'), icon: <Trash2 className="w-4 h-4" /> },
   ];
 
   return (
@@ -35,6 +39,8 @@ export function SchoolSettingsPage() {
       <Tabs value={activeTab} onChange={setActiveTab} items={tabs} />
       {activeTab === 'school' && <SchoolTab />}
       {activeTab === 'years' && <AcademicYearsSection />}
+      {activeTab === 'days' && <TimetableSection />}
+      {activeTab === 'trash' && <TrashPage embedded />}
     </div>
   );
 }

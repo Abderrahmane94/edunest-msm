@@ -19,5 +19,5 @@ export { AnnouncementDetailPage } from './AnnouncementDetailPage';
 export { EventDetailPage } from './EventDetailPage';
 export { BillingPage } from './BillingPage';
 export { TrashPage } from './TrashPage';
-export { TimetablePage } from './TimetablePage';
+export { TimetableSection } from './TimetablePage';
 export { PayrollPage } from './PayrollPage';

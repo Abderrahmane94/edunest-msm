@@ -2,7 +2,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
-import { Button, PageHeader } from '@/components/ui';
+import { Button, SectionHeader } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useClassrooms } from '@/hooks/useClassrooms';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
@@ -10,7 +10,8 @@ import { useWorkingDays, useUpdateWorkingDays, type DayOfWeek } from '@/hooks/us
 
 const ALL_DAYS: DayOfWeek[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
-export function TimetablePage() {
+/** The "Jours de présence" tab of Settings. */
+export function TimetableSection() {
   const { t } = useTranslation();
   const { data: academicYears } = useAcademicYears();
   const activeYear = (academicYears ?? []).find((y) => y.is_active);
@@ -76,7 +77,7 @@ export function TimetablePage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title={t('timetable.title')} description={t('timetable.description')} />
+      <SectionHeader title={t('timetable.title')} description={t('timetable.description')} />
 
       {/* Classroom selector */}
       <div className="max-w-xs">

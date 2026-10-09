@@ -23,7 +23,7 @@ import {
   useCreateAcademicYear,
   useActivateAcademicYear,
 } from '@/hooks/useAcademicYears';
-import { EmptyState, ListSkeleton, PageHeader, useConfirm, type ConfirmOptions } from '@/components/ui';
+import { EmptyState, ListSkeleton, SectionHeader, useConfirm, type ConfirmOptions } from '@/components/ui';
 import type { TFunction } from 'i18next';
 
 function CreateAcademicYearDialog({
@@ -164,6 +164,9 @@ function CreateAcademicYearDialog({
   );
 }
 
+/** The years list lives in Settings, on the "Années scolaires" tab. */
+export const ACADEMIC_YEARS_HREF = '/admin/settings?tab=years';
+
 /** The question asked before a year becomes the current one. */
 export function yearActivateConfirm(t: TFunction, name: string): ConfirmOptions {
   return {
@@ -174,7 +177,8 @@ export function yearActivateConfirm(t: TFunction, name: string): ConfirmOptions 
   };
 }
 
-export function AcademicYearsPage() {
+/** The "Années scolaires" tab of Settings. */
+export function AcademicYearsSection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: academicYears, isLoading } = useAcademicYears();
@@ -198,7 +202,7 @@ export function AcademicYearsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {confirmDialog}
-      <PageHeader
+      <SectionHeader
         title={t('academicYears.title')}
         actions={<CreateButton label={t('academicYears.create')} onClick={() => setCreateDialogOpen(true)} />}
       />
@@ -215,7 +219,7 @@ export function AcademicYearsPage() {
             <div
               key={year.id}
               className="bg-card border border-border rounded-lg p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-hover transition-colors duration-150 cursor-pointer"
-              onClick={() => navigate(`/admin/academic-years/${year.id}`)}
+              onClick={() => navigate(`/admin/settings/academic-years/${year.id}`)}
             >
               <div className="flex items-center gap-3">
                 {year.is_active ? (
@@ -226,9 +230,9 @@ export function AcademicYearsPage() {
                 <div>
                   <p className="text-body font-medium text-foreground">{year.name}</p>
                   <p className="text-caption text-text-secondary flex items-center gap-1">
-                    <span dir="ltr">{formatDate(year.start_date)}</span>
+                    <span>{formatDate(year.start_date)}</span>
                     <span>–</span>
-                    <span dir="ltr">{formatDate(year.end_date)}</span>
+                    <span>{formatDate(year.end_date)}</span>
                   </p>
                 </div>
               </div>

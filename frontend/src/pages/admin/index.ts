@@ -7,7 +7,7 @@ export { UserDetailPage } from './UserDetailPage';
 export { InviteUserDialog } from './InviteUserDialog';
 export { StaffListPage } from './StaffListPage';
 export { StaffProfilePage } from './StaffProfilePage';
-export { AcademicYearsPage } from './AcademicYearsPage';
+export { AcademicYearsSection } from './AcademicYearsPage';
 export { AcademicYearDetailPage } from './AcademicYearDetailPage';
 export { ClassroomsPage } from './ClassroomsPage';
 export { ClassroomDetailPage } from './ClassroomDetailPage';

@@ -668,6 +668,9 @@
       "kindergarten": "Maternelle",
       "primary": "Primaire",
       "secondary": "Secondaire"
+    },
+    "tabs": {
+      "school": "École"
     }
   },
   "users": {

@@ -668,6 +668,9 @@
       "kindergarten": "روضة أطفال",
       "primary": "ابتدائي",
       "secondary": "ثانوي"
+    },
+    "tabs": {
+      "school": "المدرسة"
     }
   },
   "users": {

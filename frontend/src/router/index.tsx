@@ -43,6 +43,7 @@ import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage, Tea
 import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentAnnouncementsPage, ParentPaymentsPage } from '@/pages/parent';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { AdminLayout, ParentLayout } from '@/components/layout';
+import { BrandMark } from '@/components/layout/BrandMark';
 import type { NavItem } from '@/components/layout';
 import { useSchool } from '@/hooks/useSchool';
 import {
@@ -241,13 +242,13 @@ function SchoolSidebarHeader() {
 
   return (
     <div className="flex items-center gap-2 px-1">
-      <div className="w-8 h-8 rounded-lg bg-[var(--color-accent)] flex items-center justify-center overflow-hidden shrink-0">
-        {school?.logo_url ? (
+      {school?.logo_url ? (
+        <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0">
           <img src={school.logo_url} alt={school.name} className="w-full h-full object-cover" />
-        ) : (
-          <span className="text-[var(--color-text-inverse)] text-label font-semibold">E</span>
-        )}
-      </div>
+        </div>
+      ) : (
+        <BrandMark size={34} className="shrink-0" />
+      )}
       <span className="text-body font-semibold text-text-heading truncate">
         {school?.name || 'EduNest'}
       </span>
@@ -277,9 +278,7 @@ function AdminLayoutWrapper() {
             <SchoolSidebarHeader />
           ) : (
             <div className="flex items-center gap-2 px-1">
-              <div className="w-8 h-8 rounded-lg bg-[var(--color-accent)] flex items-center justify-center">
-                <span className="text-[var(--color-text-inverse)] text-label font-semibold">E</span>
-              </div>
+              <BrandMark size={34} className="shrink-0" />
               <span className="text-body font-semibold text-text-heading">EduNest</span>
             </div>
           )
@@ -296,9 +295,7 @@ function TeacherLayoutWrapper() {
       navItems={teacherNavItems}
       sidebarHeader={
         <div className="flex items-center gap-2 px-1">
-          <div className="w-8 h-8 rounded-lg bg-[var(--color-accent)] flex items-center justify-center">
-            <span className="text-[var(--color-text-inverse)] text-label font-semibold">E</span>
-          </div>
+          <BrandMark size={34} className="shrink-0" />
           <span className="text-body font-semibold text-text-heading">EduNest</span>
         </div>
       }

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="200 196 860 860">
+  <!-- Simplified mark for 16 to 32 px: no rays, faces or small details. -->
+  <defs>
+    <!-- Gaps around the heads, cut out so whatever is behind the logo shows through. -->
+    <mask id="gaps" maskUnits="userSpaceOnUse" x="164" y="146" width="940" height="940">
+      <rect x="164" y="146" width="940" height="940" fill="#fff" />
+      <ellipse cx="590" cy="528" rx="166" ry="152" fill="#000" />
+      <ellipse cx="700" cy="712" rx="114" ry="94" fill="#000" />
+    </mask>
+    <mask id="child-gap" maskUnits="userSpaceOnUse" x="164" y="146" width="940" height="940">
+      <rect x="164" y="146" width="940" height="940" fill="#fff" />
+      <ellipse cx="700" cy="712" rx="114" ry="94" fill="#000" />
+    </mask>
+  </defs>
+
+
+  <!-- house -->
+  <g stroke="#5B55D6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M287 518 L628 263 L967 518" stroke-width="92" />
+    <path d="M323 572 V692" stroke-width="66" />
+    <path d="M930 572 V692" stroke-width="66" />
+  </g>
+
+  <!-- leaves, like two hands holding them -->
+  <path d="M280 812 C292 772 336 768 398 810 C480 864 560 910 672 926 C620 972 524 1006 440 996 C330 982 268 894 280 812 Z" fill="#5BAF94" />
+  <path d="M970 822 C974 792 952 784 926 802 C852 862 730 962 487 1030 C600 1082 762 1072 862 990 C940 926 976 866 970 822 Z" fill="#A2CD79" />
+
+  <!-- adult: body and the arm that holds the child -->
+  <path mask="url(#gaps)" fill="#6C5FDB" d="M470 600 C408 640 380 706 380 762 C470 832 600 900 720 886 C792 876 842 840 846 790 C849 760 820 742 800 758 C780 790 750 806 710 806 C620 806 545 750 528 650 C505 640 485 625 470 600 Z" />
+  <ellipse mask="url(#child-gap)" cx="590" cy="528" rx="146" ry="132" fill="#6C5FDB" />
+
+  <!-- child -->
+  <ellipse cx="700" cy="712" rx="92" ry="74" fill="#F79A57" />
+
+
+  <!-- heart -->
+  <path d="M842 676 C796 646 786 620 786 603 C786 582 802 568 819 568 C831 568 838 575 842 584 C846 575 853 568 865 568 C882 568 898 582 898 603 C898 620 888 646 842 676 Z" fill="#F47B8C" transform="rotate(-12 842 620)" />
+</svg>

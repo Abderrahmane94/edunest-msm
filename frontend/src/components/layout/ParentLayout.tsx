@@ -10,6 +10,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { OfflineStatus } from '@/components/OfflineStatus';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { BottomTabBar } from './BottomTabBar';
+import { BrandMark } from './BrandMark';
 import type { NavItem } from './Sidebar';
 
 interface ParentLayoutProps {
@@ -35,9 +36,7 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
         <div className="max-w-[900px] mx-auto px-4 h-14 flex items-center justify-between">
           {/* Left: Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-[var(--color-accent)] flex items-center justify-center">
-              <span className="text-[var(--color-text-inverse)] text-micro font-semibold">E</span>
-            </div>
+            <BrandMark size={30} className="shrink-0" />
             <span className="text-body font-semibold text-text-heading">EduNest</span>
           </div>
 

@@ -14,7 +14,7 @@ import {
   useConfirm,
   useEditMode,
 } from '@/components/ui';
-import { yearActivateConfirm } from './AcademicYearsPage';
+import { ACADEMIC_YEARS_HREF, yearActivateConfirm } from './AcademicYearsPage';
 import { FormField } from '@/components/forms';
 import { Input } from '@/components/ui';
 import {
@@ -81,7 +81,7 @@ export function AcademicYearDetailPage() {
     setDeleteError(null);
     try {
       await deleteYear.mutateAsync(yearId!);
-      navigate('/admin/academic-years');
+      navigate(ACADEMIC_YEARS_HREF);
     } catch (err) {
       setDeleteError(errorMessage(err, t));
       setConfirmDelete(false);
@@ -115,7 +115,7 @@ export function AcademicYearDetailPage() {
   if (!year) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <PageHeader back="/admin/academic-years" title={t('academicYears.notFound')} />
+        <PageHeader back={ACADEMIC_YEARS_HREF} title={t('academicYears.notFound')} />
       </div>
     );
   }
@@ -124,7 +124,7 @@ export function AcademicYearDetailPage() {
     <div className="space-y-6 animate-fade-in">
       {confirmDialog}
       <PageHeader
-        back="/admin/academic-years"
+        back={ACADEMIC_YEARS_HREF}
         title={year.name}
         description={
           <>

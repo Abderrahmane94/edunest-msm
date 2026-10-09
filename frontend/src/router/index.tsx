@@ -1,4 +1,4 @@
-import { Navigate, Outlet, type RouteObject } from 'react-router-dom';
+import { Navigate, Outlet, useParams, type RouteObject } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLogoutWithConfirm } from '@/components/LogoutConfirm';
@@ -21,7 +21,6 @@ import {
   UserDetailPage,
   StaffListPage,
   StaffProfilePage,
-  AcademicYearsPage,
   AcademicYearDetailPage,
   ClassroomsPage,
   ClassroomDetailPage,
@@ -50,7 +49,6 @@ import {
   LayoutDashboard,
   Users,
   UserCog,
-  GraduationCap,
   School,
   Baby,
   ClipboardCheck,
@@ -147,7 +145,6 @@ function getAdminNavItems(role: string): NavItem[] {
     { label: 'nav.dashboard',     href: '/admin', icon: LayoutDashboard },
     { label: 'nav.users',         href: '/admin/users', icon: Users },
     { label: 'nav.staff',         href: '/admin/staff', icon: UserCog },
-    { label: 'nav.academicYears', href: '/admin/academic-years', icon: GraduationCap },
     { label: 'nav.classrooms',    href: '/admin/classrooms', icon: School },
     { label: 'nav.timetable',     href: '/admin/timetable', icon: Clock },
     { label: 'nav.children',      href: '/admin/children', icon: Baby },
@@ -263,6 +260,12 @@ function OfflinePaymentsPreloader() {
   return null;
 }
 
+/** An old /admin/academic-years/:id link opens the same year under Settings. */
+function OldAcademicYearRedirect() {
+  const { yearId } = useParams<{ yearId: string }>();
+  return <Navigate to={`/admin/settings/academic-years/${yearId}`} replace />;
+}
+
 function AdminLayoutWrapper() {
   const { user } = useAuth();
   const navItems = getAdminNavItems(user?.role || 'admin');
@@ -346,8 +349,9 @@ export const routes: RouteObject[] = [
               { path: 'users/:userId', element: <UserDetailPage /> },
               { path: 'staff', element: <StaffListPage /> },
               { path: 'staff/:userId', element: <StaffProfilePage /> },
-              { path: 'academic-years', element: <AcademicYearsPage /> },
-              { path: 'academic-years/:yearId', element: <AcademicYearDetailPage /> },
+              // Academic years moved into Settings; old links still land there.
+              { path: 'academic-years', element: <Navigate to="/admin/settings?tab=years" replace /> },
+              { path: 'academic-years/:yearId', element: <OldAcademicYearRedirect /> },
               { path: 'classrooms', element: <ClassroomsPage /> },
               { path: 'classrooms/:classroomId', element: <ClassroomDetailPage /> },
               { path: 'timetable', element: <TimetablePage /> },
@@ -363,6 +367,7 @@ export const routes: RouteObject[] = [
               { path: 'payments/enrollments/:enrollmentId', element: <EnrollmentDetailPage /> },
               { path: 'trash', element: <TrashPage /> },
               { path: 'settings', element: <SchoolSettingsPage /> },
+              { path: 'settings/academic-years/:yearId', element: <AcademicYearDetailPage /> },
             ],
           },
         ],

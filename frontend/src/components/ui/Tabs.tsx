@@ -24,6 +24,20 @@ export interface TabsProps<T extends string> {
  */
 export function Tabs<T extends string>({ items, value, onChange, label, className }: TabsProps<T>) {
   const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const listRef = React.useRef<HTMLDivElement>(null);
+  const activeIndex = items.findIndex((item) => item.value === value);
+
+  // On a phone the active tab may sit past the edge of the row: scroll the row
+  // (not the page) until it shows, e.g. when a link opens the last tab.
+  React.useEffect(() => {
+    const list = listRef.current;
+    const tab = refs.current[activeIndex];
+    if (!list || !tab) return;
+    const l = list.getBoundingClientRect();
+    const r = tab.getBoundingClientRect();
+    if (r.left < l.left) list.scrollLeft -= l.left - r.left + 16;
+    else if (r.right > l.right) list.scrollLeft += r.right - l.right + 16;
+  }, [activeIndex]);
 
   function onKeyDown(e: React.KeyboardEvent, index: number) {
     const dir = document.documentElement.dir === 'rtl' ? -1 : 1;
@@ -37,6 +51,7 @@ export function Tabs<T extends string>({ items, value, onChange, label, classNam
 
   return (
     <div
+      ref={listRef}
       role="tablist"
       aria-label={label}
       className={cn(

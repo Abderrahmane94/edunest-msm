@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Backpack, CalendarHeart, HeartHandshake, Languages, PiggyBank } from 'lucide-react';
+import { BrandMark } from './BrandMark';
 import {
   NurseryBalloon,
   NurseryBlocks,
@@ -51,9 +52,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         <NurseryBalloon className="absolute bottom-24 end-[6%] w-12" />
 
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-[var(--color-accent)] flex items-center justify-center shrink-0 shadow-level-1">
-            <span className="font-playful text-white text-xl font-extrabold leading-none">E</span>
-          </div>
+          <BrandMark size={56} className="shrink-0" />
           <span className="font-playful text-[#2E2A6B] text-2xl font-extrabold tracking-tight">{t('app.name')}</span>
         </div>
 
@@ -101,9 +100,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
             <path d="M0 22 Q100 2 200 20 T400 16 V40 H0Z" fill="#FFF9F1" />
           </svg>
           <div className="absolute bottom-6 inset-x-0 flex items-center justify-center gap-2">
-            <div className="w-9 h-9 rounded-2xl bg-[var(--color-accent)] flex items-center justify-center shadow-level-1">
-              <span className="font-playful text-white text-lg font-extrabold leading-none">E</span>
-            </div>
+            <BrandMark size={48} className="shrink-0" />
             <span className="font-playful text-[#2E2A6B] text-xl font-extrabold">{t('app.name')}</span>
           </div>
         </div>

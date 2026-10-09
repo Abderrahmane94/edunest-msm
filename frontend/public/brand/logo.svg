@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="164 146 940 940">
+  <defs>
+    <!-- Gaps around the heads, cut out so whatever is behind the logo shows through. -->
+    <mask id="gaps" maskUnits="userSpaceOnUse" x="164" y="146" width="940" height="940">
+      <rect x="164" y="146" width="940" height="940" fill="#fff" />
+      <ellipse cx="590" cy="528" rx="166" ry="152" fill="#000" />
+      <ellipse cx="700" cy="712" rx="114" ry="94" fill="#000" />
+    </mask>
+    <mask id="child-gap" maskUnits="userSpaceOnUse" x="164" y="146" width="940" height="940">
+      <rect x="164" y="146" width="940" height="940" fill="#fff" />
+      <ellipse cx="700" cy="712" rx="114" ry="94" fill="#000" />
+    </mask>
+  </defs>
+
+  <!-- sun rays -->
+  <g stroke="#FFC145" stroke-width="58" stroke-linecap="round" fill="none">
+    <path d="M797 193 L786 248" />
+    <path d="M930 264 L884 306" />
+    <path d="M1002 376 L950 383" />
+  </g>
+
+  <!-- house -->
+  <g stroke="#5B55D6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M287 518 L628 263 L967 518" stroke-width="92" />
+    <path d="M323 572 V692" stroke-width="66" />
+    <path d="M930 572 V692" stroke-width="66" />
+  </g>
+
+  <!-- leaves, like two hands holding them -->
+  <path d="M280 812 C292 772 336 768 398 810 C480 864 560 910 672 926 C620 972 524 1006 440 996 C330 982 268 894 280 812 Z" fill="#5BAF94" />
+  <path d="M970 822 C974 792 952 784 926 802 C852 862 730 962 487 1030 C600 1082 762 1072 862 990 C940 926 976 866 970 822 Z" fill="#A2CD79" />
+
+  <!-- adult: body and the arm that holds the child -->
+  <path mask="url(#gaps)" fill="#6C5FDB" d="M470 600 C408 640 380 706 380 762 C470 832 600 900 720 886 C792 876 842 840 846 790 C849 760 820 742 800 758 C780 790 750 806 710 806 C620 806 545 750 528 650 C505 640 485 625 470 600 Z" />
+  <ellipse mask="url(#child-gap)" cx="590" cy="528" rx="146" ry="132" fill="#6C5FDB" />
+
+  <!-- child: blanket, head and hair curl -->
+  <path d="M558 746 C600 762 682 792 772 800 C744 832 694 842 650 834 C598 822 566 792 558 746 Z" fill="#FFCB65" />
+  <ellipse cx="700" cy="712" rx="92" ry="74" fill="#F79A57" />
+  <path d="M752 652 C744 638 744 622 756 616 C766 612 774 622 772 636 C782 628 798 634 796 648 C794 662 776 666 764 660 Z" fill="#F79A57" />
+
+  <!-- faces -->
+  <g stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" fill="none">
+    <path d="M555 566 A23 23 0 0 1 601 566" />
+    <path d="M660 566 A23 23 0 0 1 706 566" />
+    <path d="M645 720 A15 15 0 0 1 675 720" />
+    <path d="M712 740 A15 15 0 0 1 742 740" />
+  </g>
+
+  <!-- heart -->
+  <path d="M842 676 C796 646 786 620 786 603 C786 582 802 568 819 568 C831 568 838 575 842 584 C846 575 853 568 865 568 C882 568 898 582 898 603 C898 620 888 646 842 676 Z" fill="#F47B8C" transform="rotate(-12 842 620)" />
+</svg>

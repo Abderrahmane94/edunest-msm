@@ -57,6 +57,11 @@ export function LateReminderDialog({
     }
   }
 
+  // The server allows one reminder per period per day: say so upfront rather
+  // than after a click that is bound to fail.
+  const remindedToday =
+    !!entry?.lastReminderAt && new Date(entry.lastReminderAt).toDateString() === new Date().toDateString();
+
   async function handleSend() {
     if (!entry) return;
     try {
@@ -102,6 +107,7 @@ export function LateReminderDialog({
               {entry.lastReminderAt && (
                 <p className="text-caption text-warning">
                   {t('payments.late.reminder.lastSent', { date: formatDateTime(entry.lastReminderAt, i18n.language) })}
+                  {remindedToday && ` ${t('payments.late.reminder.onePerDay')}`}
                 </p>
               )}
 
@@ -120,7 +126,7 @@ export function LateReminderDialog({
               <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
                 {t('common.cancel')}
               </Button>
-              <Button type="button" onClick={handleSend} disabled={sendReminder.isPending}>
+              <Button type="button" onClick={handleSend} disabled={sendReminder.isPending || remindedToday}>
                 <BellRing className="w-4 h-4" />
                 {sendReminder.isPending ? t('payments.late.reminder.sending') : t('payments.late.reminder.send')}
               </Button>

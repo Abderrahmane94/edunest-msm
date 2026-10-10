@@ -275,9 +275,13 @@ function RecordPaymentDialog({ sub, onClose }: { sub: SchoolSubscription; onClos
   const today = new Date().toISOString().split('T')[0];
 
   const latestCoveredEnd = sub.payments[0]?.periodEnd ?? null;
-  const defaultStart = latestCoveredEnd
-    ? latestCoveredEnd.split('T')[0]
-    : sub.currentPeriodStart.split('T')[0];
+  // The first payment starts after the free trial. (Subscriptions created
+  // before the trial was excluded can still have their period start on the
+  // trial's first day.)
+  const firstBilledDay = (
+    sub.trialEndsAt && sub.trialEndsAt > sub.currentPeriodStart ? sub.trialEndsAt : sub.currentPeriodStart
+  ).split('T')[0];
+  const defaultStart = latestCoveredEnd ? latestCoveredEnd.split('T')[0] : firstBilledDay;
   const defaultMonths = sub.billingCycle === 'annual' ? 12 : 1;
 
   function calcBase(m: number): number {
@@ -557,9 +561,16 @@ function SubscriptionsTab() {
     },
     {
       key: 'period', header: t('billing.subscriptions.period'), render: (s) => (
-        <span className="text-caption text-text-secondary">
-          {formatDate(s.currentPeriodStart)} – {formatDate(s.currentPeriodEnd)}
-        </span>
+        <div>
+          <span className="text-caption text-text-secondary">
+            {formatDate(s.currentPeriodStart)} – {formatDate(s.currentPeriodEnd)}
+          </span>
+          {s.status === 'trial' && s.trialEndsAt && (
+            <p className="text-micro text-warning">
+              {t('billing.subscriptions.trialUntil', { date: formatDate(s.trialEndsAt) })}
+            </p>
+          )}
+        </div>
       ),
     },
     {

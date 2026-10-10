@@ -1138,26 +1138,51 @@ class PaymentService {
   }
 }
 
+/**
+ * Wraps text inserted into a sentence (Unicode first-strong isolate) so an
+ * Arabic fee name inside a French sentence, or a Latin child name inside an
+ * Arabic one, keeps its own direction instead of reordering its neighbours.
+ */
+const isolate = (text: string): string => `⁨${text}⁩`;
+
+/** "12 500,00": the app's amount format, with plain spaces so SMS stay readable. */
+function formatAmount(amount: string): string {
+  return new Intl.NumberFormat('fr-DZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    .format(Number(amount))
+    .replace(/\s/g, ' ');
+}
+
+/** "منذ يوم واحد" / "منذ يومين" / "منذ 5 أيام" / "منذ 30 يومًا". */
+function arabicDaysAgo(days: number): string {
+  if (days === 1) return 'منذ يوم واحد';
+  if (days === 2) return 'منذ يومين';
+  if (days >= 3 && days <= 10) return `منذ ${days} أيام`;
+  return `منذ ${days} يومًا`;
+}
+
 /** A late-payment reminder in the parent's language. */
 export function lateReminderMessage(
   language: Language,
   d: { childName: string; feeName: string | null; periodLabel: string; outstanding: string; daysLate: number },
 ): { title: string; body: string } {
+  const child = isolate(d.childName);
+  const period = isolate(d.periodLabel);
+  const amount = isolate(formatAmount(d.outstanding));
   if (language === 'ar') {
-    const fee = d.feeName ?? 'رسوم التسجيل';
+    const fee = isolate(d.feeName ?? 'رسوم التسجيل');
     return {
       title: 'تذكير بالدفع',
       body:
-        `دفع «${fee}» (${d.periodLabel}) الخاص بـ ${d.childName} متأخر منذ ${d.daysLate} يوم. ` +
-        `المبلغ المتبقي: ${d.outstanding} د.ج. يرجى التسوية لدى المدرسة.`,
+        `دفع «${fee}» (${period}) الخاص بـ ${child} متأخر ${arabicDaysAgo(d.daysLate)}. ` +
+        `المبلغ المتبقي: ${amount} د.ج. يرجى التسوية لدى المدرسة.`,
     };
   }
-  const fee = d.feeName ?? "frais d'inscription";
+  const fee = isolate(d.feeName ?? "frais d'inscription");
   return {
     title: 'Rappel de paiement',
     body:
-      `Le paiement « ${fee} » (${d.periodLabel}) de ${d.childName} est en retard de ` +
-      `${d.daysLate} jour${d.daysLate > 1 ? 's' : ''}. Reste à payer : ${d.outstanding} DA. ` +
+      `Le paiement « ${fee} » (${period}) de ${child} est en retard de ` +
+      `${d.daysLate} jour${d.daysLate > 1 ? 's' : ''}. Reste à payer : ${amount} DA. ` +
       `Merci de régulariser auprès de l'école.`,
   };
 }

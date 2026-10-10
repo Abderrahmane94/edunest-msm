@@ -130,6 +130,17 @@ export function EcheancesSection({
       : t('payments.enrollmentDetail.periods.daysAgo', { count: -days });
   }
 
+  /**
+   * The line under the due date. A late échéance counts its days late from the
+   * end of its grace period, like the late-payments dashboard, so both screens
+   * give the same number.
+   */
+  function dueNote(period: BillingPeriod, category: Category): string {
+    if (category !== 'late') return relativeDue(period.dueDate);
+    const days = Math.max(0, Math.round((today - startOfDay(period.graceEndDate)) / DAY_MS));
+    return t('payments.late.daysLate', { count: days });
+  }
+
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden">
       <div className="p-4 border-b border-border space-y-4">
@@ -239,7 +250,7 @@ export function EcheancesSection({
                     </p>
                     {(category === 'due' || category === 'late' || category === 'upcoming') && (
                       <p className={category === 'upcoming' ? 'text-text-secondary' : 'text-danger font-medium'}>
-                        {relativeDue(period.dueDate)}
+                        {dueNote(period, category)}
                       </p>
                     )}
                   </div>
@@ -360,7 +371,7 @@ export function EcheancesSection({
                             category === 'upcoming' ? 'text-text-secondary' : 'text-danger font-medium',
                           )}
                         >
-                          {relativeDue(period.dueDate)}
+                          {dueNote(period, category)}
                         </p>
                       )}
                     </td>

@@ -28,7 +28,7 @@ function joinDateParts(parts: string[], locale: string, time?: string): string {
  * - Arabic locale: "12٬500٫00 د.ج"
  */
 export function formatDZD(amount: number, locale: string = 'fr'): string {
-  if (locale === 'ar') {
+  if (locale.startsWith('ar')) {
     return new Intl.NumberFormat('ar-DZ', {
       style: 'currency',
       currency: 'DZD',
@@ -74,7 +74,7 @@ export function formatMonthYear(dateStr: string, locale: string = 'fr'): string 
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
 
-    return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-DZ-u-nu-latn' : 'fr-FR', {
+    return new Intl.DateTimeFormat(locale.startsWith('ar') ? 'ar-DZ-u-nu-latn' : 'fr-FR', {
       month: 'long',
       year: 'numeric',
     }).format(date);
@@ -110,6 +110,16 @@ export function formatTime(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   if (isNaN(d.getTime())) return '';
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+/**
+ * Wrap text in Unicode first-strong isolates (FSI … PDI) so that, when mixed
+ * with text of the other direction in a single string (e.g. an Arabic fee name
+ * next to a French amount in a <option>), it keeps its own internal order and
+ * is not reordered with its neighbours by the bidi algorithm.
+ */
+export function bidiIsolate(text: string): string {
+  return `⁨${text}⁩`;
 }
 
 /**

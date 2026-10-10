@@ -169,8 +169,9 @@ function NotificationItem({ notification }: { notification: AppNotification }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <h3
+              dir="auto"
               className={cn(
-                'text-body truncate',
+                'text-body truncate flex-1 min-w-0',
                 notification.is_read ? 'font-normal text-text-primary' : 'font-medium text-text-heading'
               )}
             >
@@ -183,7 +184,7 @@ function NotificationItem({ notification }: { notification: AppNotification }) {
               />
             )}
           </div>
-          <p className="text-caption text-text-secondary mt-0.5 line-clamp-2">{notification.body}</p>
+          <p dir="auto" className="text-caption text-text-secondary mt-0.5 line-clamp-2">{notification.body}</p>
           <p className="text-micro text-text-disabled mt-1">
             {formatRelativeTime(notification.created_at, i18n.language)}
           </p>

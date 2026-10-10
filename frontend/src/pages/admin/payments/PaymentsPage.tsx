@@ -2,7 +2,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Receipt, Plus, Trash2, CheckCircle, AlertCircle, Minus, Eye, WifiOff, CloudUpload } from 'lucide-react';
-import { formatDate, formatDateTime, formatDZD, formatMonthYear } from '@/lib/formatters';
+import { bidiIsolate, formatDate, formatDateTime, formatDZD, formatMonthYear } from '@/lib/formatters';
 import {
   Button,
   CreateButton,
@@ -407,11 +407,17 @@ function RecordPaymentDialog({
     return Math.max(0, Math.round((Number(p.baseAmount) - Number(p.amountDue)) * 100) / 100);
   }
 
-  /** Names an échéance: its fee and month, "registration", or its dates. */
+  /**
+   * Names an échéance: its fee and month, "registration", or its dates. Each
+   * part is bidi-isolated: fee names are often Arabic while the rest may be
+   * French, and unisolated the browser reorders them (amount before the name).
+   */
   function periodLabel(p: BillingPeriod): string {
-    if (p.branchFeeName) return `${p.branchFeeName} (${formatMonthYear(p.periodStart, i18n.language)})`;
-    if (p.isRegistrationPeriod) return t('payments.recording.registrationPeriod');
-    return `${formatDate(p.periodStart)} - ${formatDate(p.periodEnd)}`;
+    if (p.branchFeeName) {
+      return `${bidiIsolate(p.branchFeeName)} (${bidiIsolate(formatMonthYear(p.periodStart, i18n.language))})`;
+    }
+    if (p.isRegistrationPeriod) return bidiIsolate(t('payments.recording.registrationPeriod'));
+    return `${bidiIsolate(formatDate(p.periodStart))} - ${bidiIsolate(formatDate(p.periodEnd))}`;
   }
 
   // Build period options for select — sorted by priority (late first, then closest)
@@ -419,12 +425,13 @@ function RecordPaymentDialog({
     return sortedPeriodsByPriority.map((p) => {
       const label = periodLabel(p);
       const outstanding = Number(p.outstanding ?? p.amountDue);
-      const suffix = p.isLate
-        ? ` ⚠ ${formatDZD(outstanding, i18n.language)}`
-        : ` — ${formatDZD(outstanding, i18n.language)}`;
+      const amount = bidiIsolate(formatDZD(outstanding, i18n.language));
+      const suffix = p.isLate ? ` ⚠ ${amount}` : ` — ${amount}`;
       const saved = discountOf(p);
       const discountNote =
-        saved > 0 ? ` · ${t('payments.recording.discountShort', { amount: formatDZD(saved, i18n.language) })}` : '';
+        saved > 0
+          ? ` · ${bidiIsolate(t('payments.recording.discountShort', { amount: formatDZD(saved, i18n.language) }))}`
+          : '';
       return {
         value: p.id,
         label: `${label}${suffix}${discountNote}`,

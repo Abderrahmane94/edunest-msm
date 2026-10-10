@@ -11,6 +11,31 @@ import {
   useMedicalNotes, useAddMedicalNote, useUpdateMedicalNote, useRemoveMedicalNote,
   type MedicalNote, type MedicalNoteType, type MedicalNoteSeverity,
 } from '@/hooks/useChildren';
+import type { ListStore } from './listStore';
+
+export interface MedicalNoteInput {
+  type: MedicalNoteType;
+  title: string;
+  details?: string;
+  severity: MedicalNoteSeverity;
+}
+export type MedicalNoteStore = ListStore<MedicalNote, MedicalNoteInput>;
+
+/** The child's notes on the server, each change saved at once. */
+export function useMedicalNoteStore(childId: string): MedicalNoteStore {
+  const { data: items = [], isLoading } = useMedicalNotes(childId);
+  const addNote = useAddMedicalNote();
+  const updateNote = useUpdateMedicalNote();
+  const removeNote = useRemoveMedicalNote();
+  return {
+    items,
+    isLoading,
+    isSaving: addNote.isPending || updateNote.isPending || removeNote.isPending,
+    add: async (input) => { await addNote.mutateAsync({ childId, ...input }); },
+    update: async (noteId, input) => { await updateNote.mutateAsync({ childId, noteId, ...input }); },
+    remove: async (noteId) => { await removeNote.mutateAsync({ childId, noteId }); },
+  };
+}
 
 const TYPE_VALUES: MedicalNoteType[] = ['allergy', 'condition', 'medication'];
 const SEVERITY_VALUES: MedicalNoteSeverity[] = ['low', 'medium', 'high'];
@@ -31,23 +56,20 @@ export function severityBadgeVariant(severity: MedicalNoteSeverity): 'present' |
 }
 
 interface MedicalNotesManagerProps {
-  childId: string;
+  store: MedicalNoteStore;
   childName: string;
   /** Called whenever the add/edit form starts or stops holding unsaved input. */
   onUnsavedChange?: (hasUnsaved: boolean) => void;
 }
 
 /**
- * List + inline add/edit form for a child's medical notes. Each mutation
- * saves immediately (no outer form submit) — used both as the body of the
- * standalone MedicalNotesDialog and as a step in the child creation wizard.
+ * List + inline add/edit form for a child's medical notes. Each change goes
+ * to the store at once (no outer form submit): the server in the standalone
+ * MedicalNotesDialog, memory in the child creation wizard.
  */
-export function MedicalNotesManager({ childId, childName, onUnsavedChange }: MedicalNotesManagerProps) {
+export function MedicalNotesManager({ store, childName, onUnsavedChange }: MedicalNotesManagerProps) {
   const { t } = useTranslation();
-  const { data: notes = [], isLoading: notesLoading } = useMedicalNotes(childId);
-  const addNote = useAddMedicalNote();
-  const updateNote = useUpdateMedicalNote();
-  const removeNote = useRemoveMedicalNote();
+  const { items: notes, isLoading: notesLoading, isSaving } = store;
   const { confirm, dialog: confirmDialog } = useConfirm();
 
   const typeOptions = TYPE_VALUES.map((v) => ({ value: v, label: t(`children.medicalNotes.types.${v}`) }));
@@ -73,19 +95,22 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
     return errs;
   }
 
+  function toInput(form: NoteFormState): MedicalNoteInput {
+    return {
+      type: form.type,
+      title: form.title.trim(),
+      details: form.details.trim() || undefined,
+      severity: form.severity,
+    };
+  }
+
   async function handleAddNote() {
     const errs = validate(newNote);
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
     setSubmitError(null);
     try {
-      await addNote.mutateAsync({
-        childId,
-        type: newNote.type,
-        title: newNote.title.trim(),
-        details: newNote.details.trim() || undefined,
-        severity: newNote.severity,
-      });
+      await store.add(toInput(newNote));
       setNewNote(emptyForm);
       setErrors({});
     } catch (err) {
@@ -102,7 +127,7 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
     if (!ok) return;
     setSubmitError(null);
     try {
-      await removeNote.mutateAsync({ childId, noteId });
+      await store.remove(noteId);
     } catch (err) {
       setSubmitError(errorMessage(err, t));
     }
@@ -127,14 +152,7 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
     if (Object.keys(errs).length > 0) return;
     setEditError(null);
     try {
-      await updateNote.mutateAsync({
-        childId,
-        noteId,
-        type: editForm.type,
-        title: editForm.title.trim(),
-        details: editForm.details.trim() || undefined,
-        severity: editForm.severity,
-      });
+      await store.update(noteId, toInput(editForm));
       setEditingId(null);
     } catch (err) {
       setEditError(errorMessage(err, t));
@@ -202,7 +220,7 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
                 </FormField>
                 {editError && <p className="text-body text-danger">{editError}</p>}
                 <div className="flex items-center gap-2">
-                  <Button type="button" variant="secondary" size="sm" onClick={() => handleSaveEdit(note.id)} disabled={updateNote.isPending}>
+                  <Button type="button" variant="secondary" size="sm" onClick={() => handleSaveEdit(note.id)} disabled={isSaving}>
                     <Check className="w-4 h-4" />
                     {t('children.medicalNotes.save')}
                   </Button>
@@ -235,7 +253,7 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
                     variant="secondary"
                     size="sm"
                     onClick={() => handleRemoveNote(note.id)}
-                    disabled={removeNote.isPending}
+                    disabled={isSaving}
                     aria-label={t('common.delete')}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -297,9 +315,9 @@ export function MedicalNotesManager({ childId, childName, onUnsavedChange }: Med
 
         {submitError && <p className="text-body text-danger">{submitError}</p>}
 
-        <Button type="button" variant="secondary" size="sm" onClick={handleAddNote} disabled={addNote.isPending}>
+        <Button type="button" variant="secondary" size="sm" onClick={handleAddNote} disabled={isSaving}>
           <Plus className="w-4 h-4" />
-          {addNote.isPending ? t('common.loading') : t('children.medicalNotes.add')}
+          {isSaving ? t('common.loading') : t('children.medicalNotes.add')}
         </Button>
       </div>
     </>
@@ -315,6 +333,7 @@ interface MedicalNotesDialogProps {
 
 export function MedicalNotesDialog({ open, onOpenChange, childId, childName }: MedicalNotesDialogProps) {
   const { t } = useTranslation();
+  const store = useMedicalNoteStore(childId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -323,7 +342,7 @@ export function MedicalNotesDialog({ open, onOpenChange, childId, childName }: M
           <DialogTitle>{t('children.medicalNotes.title')}</DialogTitle>
         </DialogHeader>
 
-        <MedicalNotesManager childId={childId} childName={childName} />
+        <MedicalNotesManager store={store} childName={childName} />
 
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)}>

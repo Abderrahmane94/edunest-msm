@@ -169,6 +169,42 @@ export const medicalNoteParamsSchema = z.object({
   noteId: uuidSchema,
 });
 
+const parentRelationshipSchema = z.enum(['mother', 'father', 'guardian'], {
+  errorMap: () => ({ message: 'Relationship must be mother, father, or guardian' }),
+});
+
+/** Everything the creation wizard collects, saved in one transaction. */
+export const registerChildSchema = z.object({
+  child: createChildSchema,
+  parent: z
+    .object({
+      relationship: parentRelationshipSchema,
+      parentUserId: uuidSchema.optional(),
+      newParent: z
+        .object({
+          firstName: z.string().min(1, 'First name is required').max(100),
+          lastName: z.string().min(1, 'Last name is required').max(100),
+          email: z.string().email('Invalid email address'),
+          phone: z.string().min(1).max(20).optional(),
+        })
+        .optional(),
+    })
+    .refine((p) => !!p.parentUserId !== !!p.newParent, {
+      message: 'Give either an existing parent or a new one',
+    })
+    .optional(),
+  emergencyContacts: z.array(createEmergencyContactSchema).max(20).default([]),
+  medicalNotes: z.array(createMedicalNoteSchema).max(50).default([]),
+  classroomId: uuidSchema.optional(),
+  billing: z
+    .object({
+      branchId: uuidSchema,
+      startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format'),
+      feeIds: z.array(uuidSchema).max(50).default([]),
+    })
+    .optional(),
+});
+
 export type CreateChildInput = z.infer<typeof createChildSchema>;
 export type UpdateChildInput = z.infer<typeof updateChildSchema>;
 export type EnrollChildInput = z.infer<typeof enrollChildSchema>;
@@ -178,3 +214,4 @@ export type CreateEmergencyContactInput = z.infer<typeof createEmergencyContactS
 export type UpdateEmergencyContactInput = z.infer<typeof updateEmergencyContactSchema>;
 export type CreateMedicalNoteInput = z.infer<typeof createMedicalNoteSchema>;
 export type UpdateMedicalNoteInput = z.infer<typeof updateMedicalNoteSchema>;
+export type RegisterChildInput = z.infer<typeof registerChildSchema>;

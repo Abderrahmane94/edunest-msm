@@ -4,32 +4,35 @@ import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { UserPlus } from 'lucide-react';
 import {
-  Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Input,
+  Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Input, useConfirm,
 } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { cn } from '@/lib/utils';
-import { formatDZD } from '@/lib/formatters';
+import { formatDate, formatDZD } from '@/lib/formatters';
 import {
-  useCreateChild, useLinkParent, useEnrollChild, type Child, type BloodType,
+  useRegisterChild, type BloodType, type EmergencyContact, type MedicalNote, type RegisterChildInput,
 } from '@/hooks/useChildren';
 import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
 import { useUsers } from '@/hooks/useUsers';
-import { useCreateUser } from './InviteUserDialog';
 import { useClassrooms } from '@/hooks/useClassrooms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import { useBranchFees, type BranchFee } from '@/hooks/useBranchFees';
 import { useClassroomFees } from '@/hooks/useBranchFeeClassrooms';
-import { useCreateEnrollment } from '@/hooks/useEnrollments';
 import { useChildBillingPeriods, useRecordPayment } from '@/hooks/usePayments';
 import { suggestAllocations, totalOutstanding } from '@/lib/paymentAllocation';
-import { EmergencyContactsManager } from './EmergencyContactsDialog';
-import { MedicalNotesManager } from './MedicalNotesDialog';
+import { EmergencyContactsManager, type EmergencyContactInput } from './EmergencyContactsDialog';
+import { MedicalNotesManager, type MedicalNoteInput } from './MedicalNotesDialog';
+import { localListStore } from './listStore';
 
-/** Minimal shape needed once the child exists. */
-type ChildRef = Pick<Child, 'id' | 'first_name' | 'last_name'>;
-
-const STEPS = ['basics', 'parent', 'emergency', 'medical', 'classroom', 'fees'] as const;
+/**
+ * Steps up to the summary only collect: nothing is saved until "Créer
+ * l'inscription" sends everything in one request (all or nothing). Payment
+ * comes after, once the child and their billing periods exist.
+ */
+const STEPS = ['basics', 'parent', 'emergency', 'medical', 'classroom', 'fees', 'summary', 'payment'] as const;
 type Step = (typeof STEPS)[number];
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function todayString(): string {
   return new Date().toISOString().slice(0, 10);
@@ -49,31 +52,128 @@ function clampToAcademicYear(date: string, startDate: string, endDate: string): 
   return date;
 }
 
-// ─── Step 1: Basic info ──────────────────────────────────────────────────────
+interface BasicsForm {
+  first_name: string;
+  last_name: string;
+  date_of_birth: string;
+  gender: string;
+  enrollment_date: string;
+  national_id: string;
+  address: string;
+  place_of_birth: string;
+  blood_type: BloodType | '';
+}
 
-function BasicsStep({
-  onCreated,
-  onCancel,
-}: {
-  onCreated: (child: ChildRef, enrollmentDate: string) => void;
-  onCancel: () => void;
-}) {
-  const { t } = useTranslation();
-  const createChild = useCreateChild();
-  const { data: activeYear } = useActiveAcademicYear();
-  const today = todayString();
-  const emptyForm = {
+function emptyBasics(): BasicsForm {
+  return {
     first_name: '',
     last_name: '',
     date_of_birth: '',
     gender: 'male',
-    enrollment_date: today,
+    enrollment_date: todayString(),
     national_id: '',
     address: '',
     place_of_birth: '',
-    blood_type: '' as BloodType | '',
+    blood_type: '',
   };
-  const [formData, setFormData] = React.useState(emptyForm);
+}
+
+interface ParentChoice {
+  mode: 'existing' | 'new';
+  parentId: string;
+  relationship: string;
+  newParent: { firstName: string; lastName: string; email: string; phone: string };
+}
+
+const emptyParent: ParentChoice = {
+  mode: 'existing',
+  parentId: '',
+  relationship: 'mother',
+  newParent: { firstName: '', lastName: '', email: '', phone: '' },
+};
+
+function newParentStarted(p: ParentChoice): boolean {
+  const { firstName, lastName, email } = p.newParent;
+  return p.mode === 'new' && !!(firstName.trim() || lastName.trim() || email.trim());
+}
+
+function parentPayload(p: ParentChoice): RegisterChildInput['parent'] {
+  if (p.mode === 'existing') {
+    return p.parentId ? { relationship: p.relationship, parentUserId: p.parentId } : undefined;
+  }
+  if (!newParentStarted(p)) return undefined;
+  const { firstName, lastName, email, phone } = p.newParent;
+  return {
+    relationship: p.relationship,
+    newParent: {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      phone: phone.trim() || undefined,
+    },
+  };
+}
+
+function useRelationshipOptions() {
+  const { t } = useTranslation();
+  return [
+    { value: 'mother', label: t('children.linkParent.mother') },
+    { value: 'father', label: t('children.linkParent.father') },
+    { value: 'guardian', label: t('children.linkParent.guardian') },
+  ];
+}
+
+function useParents() {
+  const { data: usersData } = useUsers({ pageSize: 100 });
+  return (usersData?.users ?? []).filter((u) => u.role === 'parent');
+}
+
+/** Fees offered for the chosen classroom (or the whole branch when none), split as on the fees step. */
+function useWizardFees(classroomId: string) {
+  const { branchId } = useDefaultBranch();
+  const { data: classroomFees } = useClassroomFees(classroomId || undefined);
+  const { data: branchFees } = useBranchFees(branchId);
+  const fees: BranchFee[] = (classroomId ? (classroomFees ?? []) : (branchFees ?? [])).filter(
+    (f) => f.showInWizard,
+  );
+  // Whole-school fees are applied automatically (shown ticked, locked); the
+  // others are picked here.
+  return {
+    branchId,
+    fees,
+    schoolFees: fees.filter((f) => f.appliesToSchool),
+    optionalFees: fees.filter((f) => !f.appliesToSchool),
+  };
+}
+
+function useFeeLabel() {
+  const { t, i18n } = useTranslation();
+  return (fee: BranchFee): string => {
+    const cycle =
+      fee.billingCycle === 'monthly'
+        ? t('children.wizard.fees.perMonth')
+        : fee.billingCycle === 'custom'
+          ? t('children.wizard.fees.perPeriod')
+          : t('children.wizard.fees.oneTime');
+    return `${fee.name} — ${formatDZD(Number(fee.amount), i18n.language)} ${cycle}`;
+  };
+}
+
+// ─── Step 1: Basic info ──────────────────────────────────────────────────────
+
+function BasicsStep({
+  value: formData,
+  onChange: setFormData,
+  onCancel,
+  onNext,
+}: {
+  value: BasicsForm;
+  onChange: React.Dispatch<React.SetStateAction<BasicsForm>>;
+  onCancel: () => void;
+  onNext: () => void;
+}) {
+  const { t } = useTranslation();
+  const { data: activeYear } = useActiveAcademicYear();
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -93,37 +193,14 @@ function BasicsStep({
     if (!formData.last_name.trim()) newErrors.last_name = t('children.form.lastNameRequired');
     if (!formData.date_of_birth) newErrors.date_of_birth = t('children.form.dobRequired');
     if (!formData.enrollment_date) newErrors.enrollment_date = t('common.fieldRequired');
+    if (!activeYear) newErrors.form = t('children.form.noActiveYear');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!validate()) return;
-    if (!activeYear) {
-      setErrors({ form: t('children.form.noActiveYear') });
-      return;
-    }
-
-    const { first_name, last_name } = formData;
-    try {
-      const result = await createChild.mutateAsync({
-        first_name,
-        last_name,
-        date_of_birth: formData.date_of_birth,
-        gender: formData.gender,
-        enrollment_date: formData.enrollment_date,
-        academic_year_id: activeYear.id,
-        national_id: formData.national_id.trim() || undefined,
-        address: formData.address.trim() || undefined,
-        place_of_birth: formData.place_of_birth.trim() || undefined,
-        blood_type: formData.blood_type || undefined,
-      });
-      const newId = (result as { id?: string } | undefined)?.id;
-      if (newId) onCreated({ id: newId, first_name, last_name }, formData.enrollment_date);
-    } catch (err) {
-      setErrors((prev) => ({ ...prev, form: errorMessage(err, t) }));
-    }
+    if (validate()) onNext();
   }
 
   const genderOptions = [
@@ -234,9 +311,7 @@ function BasicsStep({
         <Button type="button" variant="secondary" onClick={onCancel}>
           {t('common.cancel')}
         </Button>
-        <Button type="submit" disabled={createChild.isPending}>
-          {createChild.isPending ? t('common.loading') : t('children.wizard.next')}
-        </Button>
+        <Button type="submit">{t('children.wizard.next')}</Button>
       </DialogFooter>
     </form>
   );
@@ -245,66 +320,41 @@ function BasicsStep({
 // ─── Step 2: Parent ──────────────────────────────────────────────────────────
 
 function ParentStep({
-  childId,
+  value,
+  onChange,
   onBack,
   onNext,
 }: {
-  childId: string;
+  value: ParentChoice;
+  onChange: React.Dispatch<React.SetStateAction<ParentChoice>>;
   onBack: () => void;
   onNext: () => void;
 }) {
   const { t } = useTranslation();
-  const linkParent = useLinkParent();
-  const createUser = useCreateUser();
-  const { data: usersData } = useUsers({ pageSize: 100 });
-  const parents = (usersData?.users ?? []).filter((u) => u.role === 'parent');
-
-  const [mode, setMode] = React.useState<'existing' | 'new'>('existing');
-  const [parentId, setParentId] = React.useState('');
-  const [relationship, setRelationship] = React.useState('mother');
-  const [newParent, setNewParent] = React.useState({ firstName: '', lastName: '', email: '', phone: '' });
+  const parents = useParents();
+  const relationshipOptions = useRelationshipOptions();
   const [error, setError] = React.useState<string | null>(null);
-  const [isSaving, setIsSaving] = React.useState(false);
+  const { mode, parentId, relationship, newParent } = value;
 
   const parentOptions = parents.map((p) => ({ value: p.id, label: `${p.first_name} ${p.last_name}` }));
-  const relationshipOptions = [
-    { value: 'mother', label: t('children.linkParent.mother') },
-    { value: 'father', label: t('children.linkParent.father') },
-    { value: 'guardian', label: t('children.linkParent.guardian') },
-  ];
 
-  async function handleNext() {
-    setError(null);
+  function setNewParent(field: keyof ParentChoice['newParent'], fieldValue: string) {
+    onChange((p) => ({ ...p, newParent: { ...p.newParent, [field]: fieldValue } }));
+  }
 
-    try {
-      if (mode === 'existing' && parentId) {
-        setIsSaving(true);
-        await linkParent.mutateAsync({ childId, parentId, relationship });
-      } else if (mode === 'new' && (newParent.firstName.trim() || newParent.lastName.trim() || newParent.email.trim())) {
-        if (!newParent.firstName.trim() || !newParent.lastName.trim() || !newParent.email.trim()) {
-          setError(t('children.wizard.parent.newParentIncomplete'));
-          return;
-        }
-        setIsSaving(true);
-        const created = await createUser.mutateAsync({
-          firstName: newParent.firstName.trim(),
-          lastName: newParent.lastName.trim(),
-          email: newParent.email.trim(),
-          phone: newParent.phone.trim() || undefined,
-          role: 'parent',
-          preferredLanguage: 'fr',
-        });
-        const newParentId = (created as { id?: string } | undefined)?.id;
-        if (newParentId) {
-          await linkParent.mutateAsync({ childId, parentId: newParentId, relationship });
-        }
+  function handleNext() {
+    if (newParentStarted(value)) {
+      if (!newParent.firstName.trim() || !newParent.lastName.trim() || !newParent.email.trim()) {
+        setError(t('children.wizard.parent.newParentIncomplete'));
+        return;
       }
-      onNext();
-    } catch (err) {
-      setError(errorMessage(err, t));
-    } finally {
-      setIsSaving(false);
+      if (!EMAIL_PATTERN.test(newParent.email.trim())) {
+        setError(t('children.wizard.parent.invalidEmail'));
+        return;
+      }
     }
+    setError(null);
+    onNext();
   }
 
   return (
@@ -316,7 +366,7 @@ function ParentStep({
           type="button"
           variant={mode === 'existing' ? 'primary' : 'secondary'}
           size="sm"
-          onClick={() => setMode('existing')}
+          onClick={() => onChange((p) => ({ ...p, mode: 'existing' }))}
         >
           {t('children.wizard.parent.selectExisting')}
         </Button>
@@ -324,7 +374,7 @@ function ParentStep({
           type="button"
           variant={mode === 'new' ? 'primary' : 'secondary'}
           size="sm"
-          onClick={() => setMode('new')}
+          onClick={() => onChange((p) => ({ ...p, mode: 'new' }))}
         >
           <UserPlus className="w-4 h-4" />
           {t('children.wizard.parent.createNew')}
@@ -337,7 +387,7 @@ function ParentStep({
             label={t('children.linkParent.parent')}
             name="parent_id"
             value={parentId}
-            onChange={(e) => setParentId(e.target.value)}
+            onChange={(e) => onChange((p) => ({ ...p, parentId: e.target.value }))}
             options={parentOptions}
             placeholder={t('children.linkParent.selectParent')}
           />
@@ -345,7 +395,7 @@ function ParentStep({
             label={t('children.linkParent.relationship')}
             name="relationship"
             value={relationship}
-            onChange={(e) => setRelationship(e.target.value)}
+            onChange={(e) => onChange((p) => ({ ...p, relationship: e.target.value }))}
             options={relationshipOptions}
           />
         </>
@@ -356,14 +406,14 @@ function ParentStep({
               <Input
                 id="wz-parent-first"
                 value={newParent.firstName}
-                onChange={(e) => setNewParent((p) => ({ ...p, firstName: e.target.value }))}
+                onChange={(e) => setNewParent('firstName', e.target.value)}
               />
             </FormField>
             <FormField label={t('users.invite_form.lastName')} htmlFor="wz-parent-last">
               <Input
                 id="wz-parent-last"
                 value={newParent.lastName}
-                onChange={(e) => setNewParent((p) => ({ ...p, lastName: e.target.value }))}
+                onChange={(e) => setNewParent('lastName', e.target.value)}
               />
             </FormField>
           </div>
@@ -372,7 +422,7 @@ function ParentStep({
               id="wz-parent-email"
               type="email"
               value={newParent.email}
-              onChange={(e) => setNewParent((p) => ({ ...p, email: e.target.value }))}
+              onChange={(e) => setNewParent('email', e.target.value)}
             />
           </FormField>
           <FormField label={t('users.invite_form.phone')} htmlFor="wz-parent-phone">
@@ -380,14 +430,14 @@ function ParentStep({
               id="wz-parent-phone"
               type="tel"
               value={newParent.phone}
-              onChange={(e) => setNewParent((p) => ({ ...p, phone: e.target.value }))}
+              onChange={(e) => setNewParent('phone', e.target.value)}
             />
           </FormField>
           <FormSelect
             label={t('children.linkParent.relationship')}
             name="relationship-new"
             value={relationship}
-            onChange={(e) => setRelationship(e.target.value)}
+            onChange={(e) => onChange((p) => ({ ...p, relationship: e.target.value }))}
             options={relationshipOptions}
           />
         </>
@@ -399,8 +449,8 @@ function ParentStep({
         <Button type="button" variant="secondary" onClick={onBack}>
           {t('children.wizard.back')}
         </Button>
-        <Button type="button" onClick={handleNext} disabled={isSaving}>
-          {isSaving ? t('common.loading') : t('children.wizard.next')}
+        <Button type="button" onClick={handleNext}>
+          {t('children.wizard.next')}
         </Button>
       </DialogFooter>
     </div>
@@ -410,13 +460,11 @@ function ParentStep({
 // ─── Step 5: Classroom ───────────────────────────────────────────────────────
 
 function ClassroomStep({
-  childId,
   classroomId,
   onClassroomChange,
   onBack,
   onNext,
 }: {
-  childId: string;
   classroomId: string;
   onClassroomChange: (id: string) => void;
   onBack: () => void;
@@ -425,24 +473,8 @@ function ClassroomStep({
   const { t } = useTranslation();
   const { data: activeYear } = useActiveAcademicYear();
   const { data: classrooms } = useClassrooms(activeYear?.id);
-  const enrollChild = useEnrollChild();
-  const [error, setError] = React.useState<string | null>(null);
 
   const classroomOptions = (classrooms ?? []).map((c) => ({ value: c.id, label: c.name }));
-
-  async function handleNext() {
-    setError(null);
-    if (!classroomId) {
-      onNext();
-      return;
-    }
-    try {
-      await enrollChild.mutateAsync({ childId, classroomId });
-      onNext();
-    } catch (err) {
-      setError(errorMessage(err, t));
-    }
-  }
 
   return (
     <div className="space-y-4">
@@ -457,109 +489,266 @@ function ClassroomStep({
         placeholder={t('children.wizard.classroom.selectPlaceholder')}
       />
 
-      {error && <p className="text-body text-danger">{error}</p>}
-
       <DialogFooter>
         <Button type="button" variant="secondary" onClick={onBack}>
           {t('children.wizard.back')}
         </Button>
-        <Button type="button" onClick={handleNext} disabled={enrollChild.isPending}>
-          {enrollChild.isPending ? t('common.loading') : t('children.wizard.next')}
+        <Button type="button" onClick={onNext}>
+          {t('children.wizard.next')}
         </Button>
       </DialogFooter>
     </div>
   );
 }
 
-// ─── Step 6: Fees & payment ──────────────────────────────────────────────────
+// ─── Step 6: Fees ────────────────────────────────────────────────────────────
 
 function FeesStep({
-  child,
   classroomId,
-  enrollmentDate,
+  selectedFeeIds,
+  onSelectedFeeIdsChange,
   onBack,
+  onNext,
+}: {
+  classroomId: string;
+  selectedFeeIds: string[];
+  onSelectedFeeIdsChange: (ids: string[]) => void;
+  onBack: () => void;
+  /** `bill`: enroll for billing with the fees shown; false: skip billing for now. */
+  onNext: (bill: boolean) => void;
+}) {
+  const { t } = useTranslation();
+  const feeLabel = useFeeLabel();
+  const { fees, schoolFees, optionalFees } = useWizardFees(classroomId);
+  const selected = selectedFeeIds.filter((id) => optionalFees.some((f) => f.id === id));
+
+  function toggleFee(id: string) {
+    onSelectedFeeIdsChange(selected.includes(id) ? selected.filter((f) => f !== id) : [...selected, id]);
+  }
+
+  // Enrolled for billing as soon as there's something to bill.
+  const canEnroll = schoolFees.length > 0 || selected.length > 0;
+
+  return (
+    <div className="space-y-4">
+      <p className="text-body text-text-secondary">{t('children.wizard.fees.description')}</p>
+
+      {fees.length === 0 ? (
+        <p className="text-caption text-text-secondary">{t('children.wizard.fees.noFees')}</p>
+      ) : (
+        <div className="border border-border rounded-md divide-y divide-border max-h-64 overflow-y-auto">
+          {schoolFees.map((fee) => (
+            <label key={fee.id} className="flex items-center gap-2 p-2 opacity-90">
+              <input
+                type="checkbox"
+                checked
+                disabled
+                className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <span className="text-caption text-foreground flex-1">{feeLabel(fee)}</span>
+              <span className="text-micro text-primary font-medium">{t('children.wizard.fees.schoolWide')}</span>
+            </label>
+          ))}
+          {optionalFees.map((fee) => (
+            <label key={fee.id} className="flex items-center gap-2 p-2 cursor-pointer hover:bg-hover">
+              <input
+                type="checkbox"
+                checked={selected.includes(fee.id)}
+                onChange={() => toggleFee(fee.id)}
+                className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <span className="text-caption text-foreground">{feeLabel(fee)}</span>
+            </label>
+          ))}
+        </div>
+      )}
+
+      <DialogFooter>
+        <Button type="button" variant="secondary" onClick={onBack}>
+          {t('children.wizard.back')}
+        </Button>
+        <Button type="button" variant="secondary" onClick={() => onNext(false)}>
+          {t('children.wizard.fees.skipEnrollment')}
+        </Button>
+        <Button type="button" onClick={() => onNext(true)} disabled={!canEnroll}>
+          {t('children.wizard.next')}
+        </Button>
+      </DialogFooter>
+    </div>
+  );
+}
+
+// ─── Step 7: Summary ─────────────────────────────────────────────────────────
+
+function SummarySection({
+  title,
+  onEdit,
+  children,
+}: {
+  title: string;
+  onEdit: () => void;
+  children: React.ReactNode;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-start justify-between gap-3 py-3">
+      <div className="min-w-0">
+        <p className="text-caption font-semibold text-text-secondary">{title}</p>
+        <div className="text-body text-foreground">{children}</div>
+      </div>
+      <Button type="button" variant="ghost" size="sm" onClick={onEdit}>
+        {t('children.wizard.summary.edit')}
+      </Button>
+    </div>
+  );
+}
+
+function SummaryStep({
+  basics,
+  parent,
+  contacts,
+  notes,
+  classroomId,
+  bill,
+  selectedFeeIds,
+  onEditStep,
+  onBack,
+  onCreate,
+  isSaving,
+  error,
+}: {
+  basics: BasicsForm;
+  parent: ParentChoice;
+  contacts: EmergencyContact[];
+  notes: MedicalNote[];
+  classroomId: string;
+  bill: boolean;
+  selectedFeeIds: string[];
+  onEditStep: (step: Step) => void;
+  onBack: () => void;
+  onCreate: () => void;
+  isSaving: boolean;
+  error: string | null;
+}) {
+  const { t } = useTranslation();
+  const parents = useParents();
+  const relationshipOptions = useRelationshipOptions();
+  const { data: activeYear } = useActiveAcademicYear();
+  const { data: classrooms } = useClassrooms(activeYear?.id);
+  const feeLabel = useFeeLabel();
+  const { schoolFees, optionalFees } = useWizardFees(classroomId);
+
+  const chosenParent = parentPayload(parent);
+  const relationshipLabel = relationshipOptions.find((o) => o.value === parent.relationship)?.label;
+  const existingParent = parents.find((p) => p.id === parent.parentId);
+  const classroom = (classrooms ?? []).find((c) => c.id === classroomId);
+  const billedFees = [...schoolFees, ...optionalFees.filter((f) => selectedFeeIds.includes(f.id))];
+  const none = <span className="text-text-secondary">{t('children.wizard.summary.none')}</span>;
+
+  return (
+    <div>
+      <p className="text-body text-text-secondary mb-2">{t('children.wizard.summary.description')}</p>
+
+      <div className="divide-y divide-border">
+        <SummarySection title={t('children.wizard.summary.child')} onEdit={() => onEditStep('basics')}>
+          <p className="font-medium">{basics.first_name.trim()} {basics.last_name.trim()}</p>
+          <p className="text-caption text-text-secondary">
+            {t(`children.form.${basics.gender}`)}
+            {basics.date_of_birth && <> • {t('children.wizard.summary.bornOn', { date: formatDate(basics.date_of_birth) })}</>}
+            {basics.enrollment_date && <> • {t('children.wizard.summary.enrolledOn', { date: formatDate(basics.enrollment_date) })}</>}
+          </p>
+        </SummarySection>
+
+        <SummarySection title={t('children.wizard.summary.parent')} onEdit={() => onEditStep('parent')}>
+          {!chosenParent ? (
+            <span className="text-text-secondary">{t('children.wizard.summary.noParent')}</span>
+          ) : 'newParent' in chosenParent ? (
+            <p>
+              {chosenParent.newParent.firstName} {chosenParent.newParent.lastName} ({relationshipLabel}) •{' '}
+              <span dir="ltr">{chosenParent.newParent.email}</span>{' '}
+              <span className="text-caption text-primary font-medium">{t('children.wizard.summary.newAccount')}</span>
+            </p>
+          ) : (
+            <p>{existingParent ? `${existingParent.first_name} ${existingParent.last_name}` : '—'} ({relationshipLabel})</p>
+          )}
+        </SummarySection>
+
+        <SummarySection title={t('children.wizard.summary.emergency')} onEdit={() => onEditStep('emergency')}>
+          {contacts.length === 0 ? none : (
+            <ul>
+              {contacts.map((c) => (
+                <li key={c.id}>{c.name} • <span dir="ltr">{c.phone}</span></li>
+              ))}
+            </ul>
+          )}
+        </SummarySection>
+
+        <SummarySection title={t('children.wizard.summary.medical')} onEdit={() => onEditStep('medical')}>
+          {notes.length === 0 ? none : (
+            <ul>
+              {notes.map((n) => (
+                <li key={n.id}>{n.title} ({t(`children.medicalNotes.types.${n.type}`)})</li>
+              ))}
+            </ul>
+          )}
+        </SummarySection>
+
+        <SummarySection title={t('children.wizard.summary.classroom')} onEdit={() => onEditStep('classroom')}>
+          {classroom ? classroom.name : <span className="text-text-secondary">{t('children.wizard.summary.noClassroom')}</span>}
+        </SummarySection>
+
+        <SummarySection title={t('children.wizard.summary.fees')} onEdit={() => onEditStep('fees')}>
+          {!bill || billedFees.length === 0 ? (
+            <span className="text-text-secondary">{t('children.wizard.summary.noBilling')}</span>
+          ) : (
+            <ul>
+              {billedFees.map((f) => <li key={f.id}>{feeLabel(f)}</li>)}
+            </ul>
+          )}
+        </SummarySection>
+      </div>
+
+      {error && <p className="text-body text-danger mt-2" role="alert">{error}</p>}
+
+      <DialogFooter>
+        <Button type="button" variant="secondary" onClick={onBack} disabled={isSaving}>
+          {t('children.wizard.back')}
+        </Button>
+        <Button type="button" onClick={onCreate} disabled={isSaving}>
+          {isSaving ? t('common.loading') : t('children.wizard.summary.create')}
+        </Button>
+      </DialogFooter>
+    </div>
+  );
+}
+
+// ─── Step 8: Payment ─────────────────────────────────────────────────────────
+
+function PaymentStep({
+  childId,
+  childName,
   onFinish,
 }: {
-  child: ChildRef;
-  classroomId: string;
-  enrollmentDate: string;
-  onBack: () => void;
+  childId: string;
+  childName: string;
   onFinish: () => void;
 }) {
   const { t, i18n } = useTranslation();
-  const qc = useQueryClient();
   const { branchId } = useDefaultBranch();
-  const { data: activeYear } = useActiveAcademicYear();
-  const { data: classroomFees } = useClassroomFees(classroomId || undefined);
-  const { data: branchFees } = useBranchFees(branchId);
-  const fees: BranchFee[] = (classroomId ? (classroomFees ?? []) : (branchFees ?? [])).filter(
-    (f) => f.showInWizard,
-  );
-  // Whole-school fees are applied automatically (shown ticked, locked); the
-  // others are picked here.
-  const schoolFees = fees.filter((f) => f.appliesToSchool);
-  const optionalFees = fees.filter((f) => !f.appliesToSchool);
-
-  const createEnrollment = useCreateEnrollment();
   const recordPayment = useRecordPayment(branchId);
+  const { data: billingPeriods } = useChildBillingPeriods(childId);
+  const outstanding = totalOutstanding(billingPeriods ?? []);
 
-  const [selectedFeeIds, setSelectedFeeIds] = React.useState<string[]>([]);
-  const [enrollmentCreated, setEnrollmentCreated] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [isSaving, setIsSaving] = React.useState(false);
   const [paymentMode, setPaymentMode] = React.useState<'full' | 'partial' | 'later' | null>(null);
   const [partialAmount, setPartialAmount] = React.useState('');
 
-  const { data: billingPeriods } = useChildBillingPeriods(enrollmentCreated ? child.id : '');
-  const outstanding = totalOutstanding(billingPeriods ?? []);
-
-  function toggleFee(id: string) {
-    setSelectedFeeIds((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
-  }
-
-  function feeLabel(fee: BranchFee): string {
-    const cycle =
-      fee.billingCycle === 'monthly'
-        ? t('children.wizard.fees.perMonth')
-        : fee.billingCycle === 'custom'
-          ? t('children.wizard.fees.perPeriod')
-          : t('children.wizard.fees.oneTime');
-    return `${fee.name} — ${formatDZD(Number(fee.amount), i18n.language)} ${cycle}`;
-  }
-
-  async function handleCreateEnrollment() {
-    if (!canEnroll) return;
-    setError(null);
-    setIsSaving(true);
-    try {
-      const startDate = activeYear
-        ? clampToAcademicYear(enrollmentDate, activeYear.start_date, activeYear.end_date)
-        : enrollmentDate;
-      // One request: the enrollment and all its fees are saved together, and
-      // recurring fees are billed from the enrollment date.
-      await createEnrollment.mutateAsync({
-        childId: child.id,
-        branchId,
-        academicYearId: activeYear?.id ?? '',
-        startDate,
-        feeIds: selectedFeeIds,
-      });
-      await qc.invalidateQueries({ queryKey: ['child-billing-periods', child.id] });
-      setEnrollmentCreated(true);
-    } catch (err) {
-      setError(errorMessage(err, t));
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
   async function handleRecordPayment(amount: number) {
     setError(null);
-    setIsSaving(true);
     try {
       const allocations = suggestAllocations(billingPeriods ?? [], amount);
       await recordPayment.mutateAsync({
-        childId: child.id,
+        childId,
         totalAmount: amount,
         channel: 'cash',
         valueDate: todayString(),
@@ -568,133 +757,74 @@ function FeesStep({
       onFinish();
     } catch (err) {
       setError(errorMessage(err, t));
-    } finally {
-      setIsSaving(false);
     }
   }
 
-  // Enrolled for billing as soon as there's something to bill.
-  const canEnroll = schoolFees.length > 0 || selectedFeeIds.length > 0;
-
   return (
     <div className="space-y-4">
-      {!enrollmentCreated ? (
-        <>
-          <p className="text-body text-text-secondary">{t('children.wizard.fees.description')}</p>
+      <p className="text-body font-medium text-success">{t('children.wizard.created', { name: childName })}</p>
+      <p className="text-body text-text-secondary">
+        {t('children.wizard.fees.paymentPrompt', { amount: formatDZD(outstanding, i18n.language) })}
+      </p>
 
-          {fees.length === 0 ? (
-            <p className="text-caption text-text-secondary">{t('children.wizard.fees.noFees')}</p>
-          ) : (
-            <div className="border border-border rounded-md divide-y divide-border max-h-64 overflow-y-auto">
-              {schoolFees.map((fee) => (
-                <label key={fee.id} className="flex items-center gap-2 p-2 opacity-90">
-                  <input
-                    type="checkbox"
-                    checked
-                    disabled
-                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                  />
-                  <span className="text-caption text-foreground flex-1">{feeLabel(fee)}</span>
-                  <span className="text-micro text-primary font-medium">{t('children.wizard.fees.schoolWide')}</span>
-                </label>
-              ))}
-              {optionalFees.map((fee) => (
-                <label key={fee.id} className="flex items-center gap-2 p-2 cursor-pointer hover:bg-hover">
-                  <input
-                    type="checkbox"
-                    checked={selectedFeeIds.includes(fee.id)}
-                    onChange={() => toggleFee(fee.id)}
-                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                  />
-                  <span className="text-caption text-foreground">{feeLabel(fee)}</span>
-                </label>
-              ))}
-            </div>
-          )}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant={paymentMode === 'full' ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={() => setPaymentMode('full')}
+        >
+          {t('children.wizard.fees.payFull')}
+        </Button>
+        <Button
+          type="button"
+          variant={paymentMode === 'partial' ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={() => setPaymentMode('partial')}
+        >
+          {t('children.wizard.fees.payPartial')}
+        </Button>
+        <Button
+          type="button"
+          variant={paymentMode === 'later' ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={() => setPaymentMode('later')}
+        >
+          {t('children.wizard.fees.payLater')}
+        </Button>
+      </div>
 
-          {error && <p className="text-body text-danger">{error}</p>}
-
-          <DialogFooter>
-            <Button type="button" variant="secondary" onClick={onBack}>
-              {t('children.wizard.back')}
-            </Button>
-            <Button type="button" variant="secondary" onClick={onFinish}>
-              {t('children.wizard.fees.skipEnrollment')}
-            </Button>
-            <Button type="button" onClick={handleCreateEnrollment} disabled={!canEnroll || isSaving}>
-              {isSaving ? t('common.loading') : t('children.wizard.next')}
-            </Button>
-          </DialogFooter>
-        </>
-      ) : (
-        <>
-          <p className="text-body text-text-secondary">
-            {t('children.wizard.fees.paymentPrompt', { amount: formatDZD(outstanding, i18n.language) })}
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant={paymentMode === 'full' ? 'primary' : 'secondary'}
-              size="sm"
-              onClick={() => setPaymentMode('full')}
-            >
-              {t('children.wizard.fees.payFull')}
-            </Button>
-            <Button
-              type="button"
-              variant={paymentMode === 'partial' ? 'primary' : 'secondary'}
-              size="sm"
-              onClick={() => setPaymentMode('partial')}
-            >
-              {t('children.wizard.fees.payPartial')}
-            </Button>
-            <Button
-              type="button"
-              variant={paymentMode === 'later' ? 'primary' : 'secondary'}
-              size="sm"
-              onClick={() => setPaymentMode('later')}
-            >
-              {t('children.wizard.fees.payLater')}
-            </Button>
-          </div>
-
-          {paymentMode === 'partial' && (
-            <FormField label={t('payments.recording.fields.totalAmount')} htmlFor="wz-partial-amount">
-              <Input
-                id="wz-partial-amount"
-                type="number"
-                min="0"
-                step="0.01"
-                max={outstanding}
-                value={partialAmount}
-                onChange={(e) => setPartialAmount(e.target.value)}
-                placeholder="0.00"
-                className="font-mono"
-              />
-            </FormField>
-          )}
-
-          {error && <p className="text-body text-danger">{error}</p>}
-
-          <DialogFooter>
-            <Button type="button" variant="secondary" onClick={onBack}>
-              {t('children.wizard.back')}
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                if (paymentMode === 'full') handleRecordPayment(outstanding);
-                else if (paymentMode === 'partial') handleRecordPayment(Number(partialAmount) || 0);
-                else onFinish();
-              }}
-              disabled={isSaving || (paymentMode === 'partial' && (!partialAmount || Number(partialAmount) <= 0))}
-            >
-              {isSaving ? t('common.loading') : t('children.wizard.finish')}
-            </Button>
-          </DialogFooter>
-        </>
+      {paymentMode === 'partial' && (
+        <FormField label={t('payments.recording.fields.totalAmount')} htmlFor="wz-partial-amount">
+          <Input
+            id="wz-partial-amount"
+            type="number"
+            min="0"
+            step="0.01"
+            max={outstanding}
+            value={partialAmount}
+            onChange={(e) => setPartialAmount(e.target.value)}
+            placeholder="0.00"
+            className="font-mono"
+          />
+        </FormField>
       )}
+
+      {error && <p className="text-body text-danger">{error}</p>}
+
+      <DialogFooter>
+        <Button
+          type="button"
+          onClick={() => {
+            if (paymentMode === 'full') handleRecordPayment(outstanding);
+            else if (paymentMode === 'partial') handleRecordPayment(Number(partialAmount) || 0);
+            else onFinish();
+          }}
+          disabled={recordPayment.isPending || (paymentMode === 'partial' && (!partialAmount || Number(partialAmount) <= 0))}
+        >
+          {recordPayment.isPending ? t('common.loading') : t('children.wizard.finish')}
+        </Button>
+      </DialogFooter>
     </div>
   );
 }
@@ -704,32 +834,129 @@ function FeesStep({
 interface CreateChildWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onFinished?: (child: ChildRef) => void;
+  onFinished?: (child: { id: string; first_name: string; last_name: string }) => void;
 }
+
+const toContact = (input: EmergencyContactInput, id: string): EmergencyContact => ({ id, ...input });
+const toNote = (input: MedicalNoteInput, id: string): MedicalNote => ({
+  id,
+  ...input,
+  details: input.details ?? null,
+  created_at: new Date().toISOString(),
+});
 
 export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChildWizardProps) {
   const { t } = useTranslation();
+  const qc = useQueryClient();
+  const { confirm, dialog: confirmDialog } = useConfirm();
+  const { data: activeYear } = useActiveAcademicYear();
+  const registerChild = useRegisterChild();
+
   const [stepIndex, setStepIndex] = React.useState(0);
-  const [child, setChild] = React.useState<ChildRef | null>(null);
-  const [enrollmentDate, setEnrollmentDate] = React.useState('');
+  const [basics, setBasics] = React.useState<BasicsForm>(emptyBasics);
+  const [parent, setParent] = React.useState<ParentChoice>(emptyParent);
+  const [contacts, setContacts] = React.useState<EmergencyContact[]>([]);
+  const [notes, setNotes] = React.useState<MedicalNote[]>([]);
   const [classroomId, setClassroomId] = React.useState('');
+  const [selectedFeeIds, setSelectedFeeIds] = React.useState<string[]>([]);
+  const [bill, setBill] = React.useState(false);
+  const [createdChildId, setCreatedChildId] = React.useState<string | null>(null);
+  const [createError, setCreateError] = React.useState<string | null>(null);
+  const { branchId, schoolFees, optionalFees } = useWizardFees(classroomId);
+
+  const contactStore = localListStore(contacts, setContacts, toContact);
+  const noteStore = localListStore(notes, setNotes, toNote);
 
   function resetAll() {
     setStepIndex(0);
-    setChild(null);
-    setEnrollmentDate('');
+    setBasics(emptyBasics());
+    setParent(emptyParent);
+    setContacts([]);
+    setNotes([]);
     setClassroomId('');
+    setSelectedFeeIds([]);
+    setBill(false);
+    setCreatedChildId(null);
+    setCreateError(null);
   }
 
-  function handleClose(isOpen: boolean) {
-    if (!isOpen) resetAll();
-    onOpenChange(isOpen);
-  }
-
-  function handleFinish() {
-    if (child) onFinished?.(child);
+  function finish() {
+    if (createdChildId) {
+      onFinished?.({ id: createdChildId, first_name: basics.first_name.trim(), last_name: basics.last_name.trim() });
+    }
     resetAll();
     onOpenChange(false);
+  }
+
+  // Nothing is saved before the summary, so closing midway drops what was typed: ask first.
+  const hasInput =
+    !createdChildId &&
+    (stepIndex > 0 || !!basics.first_name.trim() || !!basics.last_name.trim() || !!basics.date_of_birth);
+
+  async function handleClose(isOpen: boolean) {
+    if (isOpen) {
+      onOpenChange(true);
+      return;
+    }
+    if (registerChild.isPending) return;
+    if (hasInput) {
+      const ok = await confirm({
+        title: t('children.wizard.discard.title'),
+        description: t('children.wizard.discard.description'),
+        confirmLabel: t('children.wizard.discard.confirm'),
+      });
+      if (!ok) return;
+    }
+    finish();
+  }
+
+  async function handleCreate() {
+    if (!activeYear) {
+      setCreateError(t('children.form.noActiveYear'));
+      return;
+    }
+    setCreateError(null);
+    const feeIds = selectedFeeIds.filter((id) => optionalFees.some((f) => f.id === id));
+    const billing =
+      bill && branchId && (schoolFees.length > 0 || feeIds.length > 0)
+        ? {
+            branchId,
+            startDate: clampToAcademicYear(basics.enrollment_date, activeYear.start_date, activeYear.end_date),
+            feeIds,
+          }
+        : undefined;
+    try {
+      const { childId, billed } = await registerChild.mutateAsync({
+        child: {
+          first_name: basics.first_name.trim(),
+          last_name: basics.last_name.trim(),
+          date_of_birth: basics.date_of_birth,
+          gender: basics.gender,
+          enrollment_date: basics.enrollment_date,
+          academic_year_id: activeYear.id,
+          national_id: basics.national_id.trim() || undefined,
+          address: basics.address.trim() || undefined,
+          place_of_birth: basics.place_of_birth.trim() || undefined,
+          blood_type: basics.blood_type || undefined,
+        },
+        parent: parentPayload(parent),
+        emergencyContacts: contacts.map(({ id: _id, ...contact }) => contact),
+        medicalNotes: notes.map(({ type, title, details, severity }) => ({ type, title, details, severity })),
+        classroomId: classroomId || undefined,
+        billing,
+      });
+      if (billed) {
+        setCreatedChildId(childId);
+        await qc.invalidateQueries({ queryKey: ['child-billing-periods', childId] });
+        setStepIndex(STEPS.indexOf('payment'));
+      } else {
+        onFinished?.({ id: childId, first_name: basics.first_name.trim(), last_name: basics.last_name.trim() });
+        resetAll();
+        onOpenChange(false);
+      }
+    } catch (err) {
+      setCreateError(errorMessage(err, t));
+    }
   }
 
   const step: Step = STEPS[stepIndex];
@@ -740,9 +967,11 @@ export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChil
     medical: t('children.wizard.steps.medical'),
     classroom: t('children.wizard.steps.classroom'),
     fees: t('children.wizard.steps.fees'),
+    summary: t('children.wizard.steps.summary'),
+    payment: t('children.wizard.steps.payment'),
   };
 
-  // Emergency/medical steps save each entry via their own "Ajouter" button, so
+  // Emergency/medical steps add each entry via their own "Ajouter" button, so
   // text typed but not added would be silently lost when moving on.
   const [hasUnsavedEntry, setHasUnsavedEntry] = React.useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = React.useState(false);
@@ -776,11 +1005,12 @@ export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChil
     </p>
   );
 
-  const childName = child ? `${child.first_name} ${child.last_name}` : '';
+  const childName = `${basics.first_name.trim()} ${basics.last_name.trim()}`.trim();
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-[560px]">
+        {confirmDialog}
         <DialogHeader>
           <DialogTitle>{t('children.wizard.title')}</DialogTitle>
           <DialogDescription>
@@ -802,23 +1032,16 @@ export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChil
         </div>
 
         {step === 'basics' && (
-          <BasicsStep
-            onCreated={(c, date) => {
-              setChild(c);
-              setEnrollmentDate(date);
-              goNext();
-            }}
-            onCancel={() => handleClose(false)}
-          />
+          <BasicsStep value={basics} onChange={setBasics} onCancel={() => handleClose(false)} onNext={goNext} />
         )}
 
-        {step === 'parent' && child && (
-          <ParentStep childId={child.id} onBack={goBack} onNext={goNext} />
+        {step === 'parent' && (
+          <ParentStep value={parent} onChange={setParent} onBack={goBack} onNext={goNext} />
         )}
 
-        {step === 'emergency' && child && (
+        {step === 'emergency' && (
           <div>
-            <EmergencyContactsManager childId={child.id} childName={childName} onUnsavedChange={setHasUnsavedEntry} />
+            <EmergencyContactsManager store={contactStore} childName={childName} onUnsavedChange={setHasUnsavedEntry} />
             {unsavedWarning}
             <DialogFooter>
               <Button type="button" variant="secondary" onClick={goBack}>
@@ -831,9 +1054,9 @@ export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChil
           </div>
         )}
 
-        {step === 'medical' && child && (
+        {step === 'medical' && (
           <div>
-            <MedicalNotesManager childId={child.id} childName={childName} onUnsavedChange={setHasUnsavedEntry} />
+            <MedicalNotesManager store={noteStore} childName={childName} onUnsavedChange={setHasUnsavedEntry} />
             {unsavedWarning}
             <DialogFooter>
               <Button type="button" variant="secondary" onClick={goBack}>
@@ -846,9 +1069,8 @@ export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChil
           </div>
         )}
 
-        {step === 'classroom' && child && (
+        {step === 'classroom' && (
           <ClassroomStep
-            childId={child.id}
             classroomId={classroomId}
             onClassroomChange={setClassroomId}
             onBack={goBack}
@@ -856,14 +1078,38 @@ export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChil
           />
         )}
 
-        {step === 'fees' && child && (
+        {step === 'fees' && (
           <FeesStep
-            child={child}
             classroomId={classroomId}
-            enrollmentDate={enrollmentDate}
+            selectedFeeIds={selectedFeeIds}
+            onSelectedFeeIdsChange={setSelectedFeeIds}
             onBack={goBack}
-            onFinish={handleFinish}
+            onNext={(withBilling) => {
+              setBill(withBilling);
+              goNext();
+            }}
           />
+        )}
+
+        {step === 'summary' && (
+          <SummaryStep
+            basics={basics}
+            parent={parent}
+            contacts={contacts}
+            notes={notes}
+            classroomId={classroomId}
+            bill={bill}
+            selectedFeeIds={selectedFeeIds}
+            onEditStep={(s) => setStepIndex(STEPS.indexOf(s))}
+            onBack={goBack}
+            onCreate={handleCreate}
+            isSaving={registerChild.isPending}
+            error={createError}
+          />
+        )}
+
+        {step === 'payment' && createdChildId && (
+          <PaymentStep childId={createdChildId} childName={childName} onFinish={finish} />
         )}
       </DialogContent>
     </Dialog>

@@ -2,13 +2,16 @@ import { Router } from 'express';
 import { childrenController } from './children.controller';
 import { requireAdmin, requireTeacherOrAdmin, requireActiveRole } from '../../middleware/rbac.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
-import { createChildSchema, updateChildSchema, enrollChildSchema, createParentLinkSchema, updateParentLinkSchema, parentLinkParamsSchema, createEmergencyContactSchema, updateEmergencyContactSchema, emergencyContactParamsSchema, createMedicalNoteSchema, updateMedicalNoteSchema, medicalNoteParamsSchema } from './children.schema';
+import { registerChildSchema, createChildSchema, updateChildSchema, enrollChildSchema, createParentLinkSchema, updateParentLinkSchema, parentLinkParamsSchema, createEmergencyContactSchema, updateEmergencyContactSchema, emergencyContactParamsSchema, createMedicalNoteSchema, updateMedicalNoteSchema, medicalNoteParamsSchema } from './children.schema';
 import { idParamSchema } from '../../utils/validators';
 
 const router = Router();
 
 // POST /api/children — Register a child (admin only)
 router.post('/', requireAdmin, validate(createChildSchema), childrenController.create);
+
+// POST /api/children/register — Register a child and everything around it in one transaction (admin only)
+router.post('/register', requireAdmin, validate(registerChildSchema), childrenController.register);
 
 // GET /api/children — List children in school (admin or teacher)
 router.get('/', requireTeacherOrAdmin, childrenController.list);

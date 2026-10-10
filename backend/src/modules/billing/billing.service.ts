@@ -114,22 +114,25 @@ export const billingService = {
     if (!plan) throw new BillingError('PLAN_NOT_FOUND', 404);
     if (!plan.isActive) throw new BillingError('PLAN_INACTIVE', 400);
 
-    const start = new Date(input.startDate);
+    const existing = await prisma.schoolSubscription.findUnique({ where: { schoolId: input.schoolId } });
+    if (existing && existing.status === 'active' && existing.currentPeriodEnd > new Date()) {
+      throw new BillingError('SUBSCRIPTION_ALREADY_ACTIVE', 409);
+    }
+
+    const trialStart = new Date(input.startDate);
+    const trialEndsAt = input.trialDays
+      ? new Date(trialStart.getTime() + input.trialDays * 24 * 60 * 60 * 1000)
+      : null;
+
+    // The trial is free: the first billed period starts when it ends, so the
+    // first payment covers the month after the trial, not the trial itself.
+    const start = trialEndsAt ?? trialStart;
     const end = new Date(start);
     if (input.billingCycle === 'annual') {
       end.setFullYear(end.getFullYear() + 1);
     } else {
       end.setMonth(end.getMonth() + 1);
     }
-
-    const existing = await prisma.schoolSubscription.findUnique({ where: { schoolId: input.schoolId } });
-    if (existing && existing.status === 'active' && existing.currentPeriodEnd > new Date()) {
-      throw new BillingError('SUBSCRIPTION_ALREADY_ACTIVE', 409);
-    }
-
-    const trialEndsAt = input.trialDays
-      ? new Date(start.getTime() + input.trialDays * 24 * 60 * 60 * 1000)
-      : null;
 
     return prisma.schoolSubscription.upsert({
       where: { schoolId: input.schoolId },

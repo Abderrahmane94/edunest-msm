@@ -65,7 +65,7 @@ describe('paymentService.sendLateReminder', () => {
     const [other] = notify.mock.calls.find(([p]) => p.userId === 'p-2')!;
     expect(primary.channels).toEqual(['push', 'email', 'sms']);
     expect(other.channels).toEqual(['push', 'email']);
-    expect(primary.body).toContain('1500.00 DA');
+    expect(primary.body).toContain('1 500,00⁩ DA');
     expect(primary.body).toContain('Mensualité');
     expect(other.title).toBe('تذكير بالدفع');
     expect(primary.referenceId).toBe('bp-1');
@@ -105,5 +105,36 @@ describe('lateReminderMessage', () => {
     });
     expect(msg.body).toContain("frais d'inscription");
     expect(msg.body).toContain('1 jour.');
+  });
+
+  it('isolates inserted names so mixed Arabic/French text keeps its order', () => {
+    const msg = lateReminderMessage('fr', {
+      childName: 'Rayan Lounis',
+      feeName: 'الاشتراك الشهري',
+      periodLabel: '9/2026',
+      outstanding: '733.33',
+      daysLate: 30,
+    });
+    expect(msg.body).toContain('« ⁨الاشتراك الشهري⁩ »');
+    expect(msg.body).toContain('⁨Rayan Lounis⁩');
+    expect(msg.body).toContain('⁨733,33⁩ DA');
+  });
+
+  it.each([
+    [1, 'منذ يوم واحد'],
+    [2, 'منذ يومين'],
+    [4, 'منذ 4 أيام'],
+    [10, 'منذ 10 أيام'],
+    [30, 'منذ 30 يومًا'],
+  ])('counts %i days in correct Arabic', (daysLate, expected) => {
+    const msg = lateReminderMessage('ar', {
+      childName: 'Adam Boudiaf',
+      feeName: null,
+      periodLabel: '9/2026',
+      outstanding: '2000',
+      daysLate,
+    });
+    expect(msg.body).toContain(`متأخر ${expected}.`);
+    expect(msg.body).toContain('⁨2 000,00⁩ د.ج');
   });
 });

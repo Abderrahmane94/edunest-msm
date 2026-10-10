@@ -195,12 +195,30 @@ const config: Config = {
           from: { opacity: '0', transform: 'scale(0.96)' },
           to: { opacity: '1', transform: 'scale(1)' },
         },
+        /* Attendance: a card answering a tap (pop + halo in its status colour) */
+        'mark-pop': {
+          '0%': { transform: 'scale(1)' },
+          '35%': { transform: 'scale(1.02)' },
+          '100%': { transform: 'scale(1)' },
+        },
+        'mark-halo': {
+          '0%': { opacity: '0.55', boxShadow: '0 0 0 0 currentColor' },
+          '100%': { opacity: '0', boxShadow: '0 0 0 10px currentColor' },
+        },
+        'badge-pop': {
+          '0%': { transform: 'scale(0)' },
+          '60%': { transform: 'scale(1.25)' },
+          '100%': { transform: 'scale(1)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 200ms ease-out',
         'accordion-up': 'accordion-up 200ms ease-out',
         'fade-in': 'fade-in 150ms ease',
         'scale-in': 'scale-in 200ms ease-out',
+        'mark-pop': 'mark-pop 280ms ease-out both',
+        'mark-halo': 'mark-halo 550ms ease-out both',
+        'badge-pop': 'badge-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
       },
     },
   },

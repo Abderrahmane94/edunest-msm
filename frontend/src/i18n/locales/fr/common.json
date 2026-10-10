@@ -2541,6 +2541,7 @@
         "description": "Les parents reçoivent le montant restant, la période et le nombre de jours de retard.",
         "channels": "Notification et e-mail à chaque parent, SMS au parent principal.",
         "lastSent": "Dernier rappel envoyé le {{date}}.",
+        "onePerDay": "Un seul rappel par jour : vous pourrez relancer demain.",
         "send": "Envoyer un rappel",
         "sending": "Envoi…",
         "sent_one": "Rappel envoyé à {{count}} parent.",

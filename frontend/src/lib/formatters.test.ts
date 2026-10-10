@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDZD, formatDate, formatDateTime, formatCurrency } from './formatters';
+import { formatDZD, formatDate, formatDateTime, formatCurrency, formatMonthYear, bidiIsolate } from './formatters';
 
 describe('formatDZD', () => {
   it('formats amount with French locale by default', () => {
@@ -37,6 +37,31 @@ describe('formatDate', () => {
   it('returns original string for invalid date', () => {
     const result = formatDate('not-a-date', 'fr');
     expect(result).toBe('not-a-date');
+  });
+});
+
+describe('formatMonthYear', () => {
+  it('uses French month names for the French locale', () => {
+    expect(formatMonthYear('2026-09-15', 'fr')).toBe('septembre 2026');
+  });
+
+  it('uses Algerian Arabic month names with Western digits for the Arabic locale', () => {
+    expect(formatMonthYear('2026-09-15', 'ar')).toBe('سبتمبر 2026');
+    expect(formatMonthYear('2027-01-15', 'ar')).toBe('جانفي 2027');
+  });
+
+  it('treats regional Arabic codes as Arabic', () => {
+    expect(formatMonthYear('2026-09-15', 'ar-DZ')).toBe('سبتمبر 2026');
+  });
+
+  it('returns original string for invalid date', () => {
+    expect(formatMonthYear('invalid', 'ar')).toBe('invalid');
+  });
+});
+
+describe('bidiIsolate', () => {
+  it('wraps text in first-strong isolate marks', () => {
+    expect(bidiIsolate('abc')).toBe('⁨abc⁩');
   });
 });
 

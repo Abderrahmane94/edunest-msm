@@ -170,14 +170,14 @@ export function NotificationBell() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <p className={cn('text-caption truncate', n.is_read ? 'text-text-primary' : 'font-medium text-text-heading')}>
+                            <p dir="auto" className={cn('text-caption truncate flex-1 min-w-0', n.is_read ? 'text-text-primary' : 'font-medium text-text-heading')}>
                               {n.title}
                             </p>
                             {!n.is_read && (
                               <span className="shrink-0 w-2 h-2 mt-1 rounded-full bg-[var(--color-accent)]" aria-hidden="true" />
                             )}
                           </div>
-                          <p className="text-caption text-text-secondary line-clamp-2 mt-0.5">{n.body}</p>
+                          <p dir="auto" className="text-caption text-text-secondary line-clamp-2 mt-0.5">{n.body}</p>
                           <p className="text-micro text-text-disabled mt-1">
                             {formatRelativeTime(n.created_at, i18n.language)}
                           </p>

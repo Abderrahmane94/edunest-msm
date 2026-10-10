@@ -594,6 +594,7 @@
     "resetFilters": "إعادة ضبط التصفية",
     "clearSearch": "مسح البحث",
     "save": "حفظ",
+    "fieldRequired": "هذا الحقل مطلوب.",
     "saved": "تم حفظ التغييرات",
     "cancel": "إلغاء",
     "close": "إغلاق",

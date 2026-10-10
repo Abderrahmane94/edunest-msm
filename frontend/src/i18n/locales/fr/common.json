@@ -594,6 +594,7 @@
     "resetFilters": "Réinitialiser les filtres",
     "clearSearch": "Effacer la recherche",
     "save": "Enregistrer",
+    "fieldRequired": "Ce champ est obligatoire.",
     "saved": "Modifications enregistrées",
     "cancel": "Annuler",
     "closeDialog": "Fermer la boîte de dialogue",

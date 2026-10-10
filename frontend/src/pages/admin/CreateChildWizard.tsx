@@ -92,6 +92,7 @@ function BasicsStep({
     if (!formData.first_name.trim()) newErrors.first_name = t('children.form.firstNameRequired');
     if (!formData.last_name.trim()) newErrors.last_name = t('children.form.lastNameRequired');
     if (!formData.date_of_birth) newErrors.date_of_birth = t('children.form.dobRequired');
+    if (!formData.enrollment_date) newErrors.enrollment_date = t('common.fieldRequired');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -177,7 +178,7 @@ function BasicsStep({
         />
       </div>
 
-      <FormField label={t('children.form.enrollmentDate')} htmlFor="wz-enrollment-date" required>
+      <FormField label={t('children.form.enrollmentDate')} htmlFor="wz-enrollment-date" error={errors.enrollment_date} required>
         <Input
           id="wz-enrollment-date"
           name="enrollment_date"

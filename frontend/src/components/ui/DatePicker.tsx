@@ -87,6 +87,7 @@ export function DatePickerInput({
   min,
   max,
   disabled,
+  required,
   placeholder,
   className,
   ...aria
@@ -173,6 +174,18 @@ export function DatePickerInput({
 
   return (
     <div className="relative" ref={containerRef}>
+      {/* The trigger is a button, which the browser never validates: this hidden
+          twin carries the value so a required date blocks the form like any input. */}
+      <input
+        tabIndex={-1}
+        aria-hidden
+        required={required}
+        disabled={disabled}
+        value={value}
+        onChange={() => {}}
+        onFocus={() => setOpen(true)}
+        className="absolute bottom-0 start-4 w-px h-px opacity-0 pointer-events-none"
+      />
       <button
         type="button"
         id={id}

@@ -42,6 +42,7 @@ import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotific
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { AdminLayout, ParentLayout } from '@/components/layout';
 import { BrandMark } from '@/components/layout/BrandMark';
+import { Avatar } from '@/components/ui';
 import type { NavItem } from '@/components/layout';
 import { useSchool } from '@/hooks/useSchool';
 import {
@@ -204,9 +205,7 @@ function SidebarFooterContent() {
     <div className="space-y-2">
       {user && (
         <div className="flex items-center gap-2 px-1 mb-2">
-          <div className="w-7 h-7 rounded-full bg-subtle flex items-center justify-center text-micro font-semibold text-text-secondary">
-            {user.firstName.charAt(0)}{user.lastName.charAt(0)}
-          </div>
+          <Avatar name={`${user.firstName} ${user.lastName}`} size="sm" />
           <div className="flex-1 min-w-0">
             <p className="text-caption font-medium text-text-primary truncate">
               {user.firstName} {user.lastName}
@@ -242,7 +241,7 @@ function SchoolSidebarHeader() {
       ) : (
         <BrandMark size={34} className="shrink-0" />
       )}
-      <span className="text-body font-semibold text-text-heading truncate">
+      <span className="font-playful text-body-lg font-bold leading-tight text-text-heading truncate">
         {school?.name || 'EduNest'}
       </span>
     </div>
@@ -287,7 +286,7 @@ function AdminLayoutWrapper() {
           ) : (
             <div className="flex items-center gap-2 px-1">
               <BrandMark size={34} className="shrink-0" />
-              <span className="text-body font-semibold text-text-heading">EduNest</span>
+              <span className="font-playful text-[19px] font-extrabold leading-none" dir="ltr"><span className="text-text-heading">Edu</span><span className="text-primary">Nest</span></span>
             </div>
           )
         }
@@ -304,7 +303,7 @@ function TeacherLayoutWrapper() {
       sidebarHeader={
         <div className="flex items-center gap-2 px-1">
           <BrandMark size={34} className="shrink-0" />
-          <span className="text-body font-semibold text-text-heading">EduNest</span>
+          <span className="font-playful text-[19px] font-extrabold leading-none" dir="ltr"><span className="text-text-heading">Edu</span><span className="text-primary">Nest</span></span>
         </div>
       }
       sidebarFooter={<SidebarFooterContent />}

@@ -12,7 +12,10 @@ import { TONE_FILL, TONE_ICON, TONE_TEXT, type Tone } from './theme';
 export function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-label font-semibold uppercase tracking-wide text-text-secondary">{title}</h2>
+      <h2 className="flex items-center gap-2 text-label font-bold uppercase tracking-wide text-[var(--color-accent-hover)]">
+        <span className="w-1.5 h-4 rounded-full bg-gradient-to-b from-[var(--color-warning-light)] to-[var(--color-pink)]" aria-hidden="true" />
+        {title}
+      </h2>
       {children}
     </section>
   );
@@ -38,7 +41,7 @@ export function Tile({
   const body = (
     <>
       <div className="flex items-center gap-3">
-        <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', TONE_ICON[tone])}>{icon}</div>
+        <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0', TONE_ICON[tone])}>{icon}</div>
         <p className="text-label font-medium text-text-secondary flex-1 min-w-0 truncate">{title}</p>
         {to && (
           <Chevron className="w-4 h-4 text-text-disabled shrink-0 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
@@ -47,13 +50,13 @@ export function Tile({
       <div className="mt-3">{children}</div>
     </>
   );
-  const base = 'group block bg-card border border-border rounded-lg p-4 sm:p-5';
+  const base = 'group block bg-card border border-border rounded-lg shadow-level-1 p-4 sm:p-5';
   return to ? (
     <Link
       to={to}
       className={cn(
         base,
-        'transition-[box-shadow,border-color] duration-150 hover:shadow-level-2 hover:border-[var(--color-accent-muted)] focus-visible:outline-none focus-visible:shadow-focus-ring',
+        'transition-[box-shadow,border-color,transform] duration-150 hover:-translate-y-0.5 hover:shadow-level-3 hover:border-[var(--color-accent-muted)] focus-visible:outline-none focus-visible:shadow-focus-ring',
         className,
       )}
     >

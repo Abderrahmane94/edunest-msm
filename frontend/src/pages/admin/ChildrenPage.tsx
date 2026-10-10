@@ -20,7 +20,8 @@ import {
   ListSkeleton,
   PageHeader,
 } from '@/components/ui';
-import type { Column } from '@/components/ui';
+import type { Column } from '@/components/ui';
+import { avatarColor } from '@/components/ui/Avatar';
 import { FormSelect } from '@/components/forms';
 import {
   useChildren, useLinkParent, useMedicalNotes,
@@ -231,7 +232,7 @@ export function ChildrenPage() {
         // beside the action icons) instead of running over them.
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 min-w-0">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 shrink-0 rounded-full bg-[var(--color-accent-muted)] text-primary flex items-center justify-center text-label font-semibold">
+            <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-label font-semibold ${avatarColor(`${child.first_name} ${child.last_name}`)}`}>
               {child.first_name.charAt(0)}{child.last_name.charAt(0)}
             </div>
             <div className="min-w-0">

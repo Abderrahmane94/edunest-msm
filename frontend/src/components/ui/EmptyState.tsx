@@ -24,7 +24,7 @@ export function EmptyState({ icon, title, message, action, bare, className }: Em
         className,
       )}
     >
-      <div className="w-12 h-12 rounded-full bg-subtle flex items-center justify-center text-text-secondary [&>svg]:w-6 [&>svg]:h-6">
+      <div className="w-14 h-14 rounded-2xl rotate-3 bg-gradient-to-br from-[var(--color-accent-muted)] to-[var(--color-pink-muted)] flex items-center justify-center text-primary [&>svg]:w-7 [&>svg]:h-7 [&>svg]:-rotate-3">
         {icon ?? <Inbox />}
       </div>
       <div className="space-y-1 max-w-sm">

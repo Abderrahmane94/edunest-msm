@@ -14,6 +14,7 @@ import {
   StatusBadge,
   useConfirm,
   useEditMode,
+  Avatar,
 } from '@/components/ui';
 import { userToggleConfirm } from './UsersPage';
 import { FormField, FormSelect } from '@/components/forms';
@@ -145,6 +146,7 @@ export function UserDetailPage() {
       {confirmDialog}
       <PageHeader
         back="/admin/users"
+        leading={<Avatar name={`${user.first_name} ${user.last_name}`} size="lg" className="ring-4 ring-white shadow-level-2" />}
         title={`${user.first_name} ${user.last_name}`}
         description={user.email}
         badge={

@@ -27,7 +27,7 @@ export function AdminLayout({ navItems, sidebarHeader, sidebarFooter }: AdminLay
         {/* Slim top bar with the notification bell (data-dense admin/teacher UI).
             Below lg the sidebar is hidden, so the bar also carries the school
             name and the account menu (language, logout). */}
-        <header className="h-14 bg-card border-b border-border px-4 lg:px-6 flex items-center justify-end gap-2 sticky top-0 z-30">
+        <header className="h-14 bg-white/85 backdrop-blur-md border-b border-border px-4 lg:px-6 flex items-center justify-end gap-2 sticky top-0 z-30">
           {sidebarHeader && <div className="lg:hidden min-w-0 flex-1">{sidebarHeader}</div>}
           <OfflineStatus />
           <NotificationBell />

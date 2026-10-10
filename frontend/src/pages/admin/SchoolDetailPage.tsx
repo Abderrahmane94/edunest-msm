@@ -4,7 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Shield, ShieldOff, Users, UserPlus, Settings } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { Button, DangerZone, DataTable, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, EditButton, EditFormActions, EmptyState, EntityDeleteButton, ErrorAlert, Input, ListSkeleton, PageHeader, ReadOnlyFieldset, RoleBadge, StatusBadge, Tabs, useConfirm, useEditMode } from '@/components/ui';
+import { Button, DangerZone, DataTable, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, EditButton, EditFormActions, EmptyState, EntityDeleteButton, ErrorAlert, Input, ListSkeleton, PageHeader, ReadOnlyFieldset, RoleBadge, StatusBadge, Tabs, useConfirm, useEditMode } from '@/components/ui';
+import { avatarColor } from '@/components/ui/Avatar';
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { apiClient, apiError } from '@/lib/api-client';
@@ -268,7 +269,7 @@ function UsersTab({ schoolId }: { schoolId: string }) {
       header: t('users.columns.name'),
       render: (u) => (
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[var(--color-accent-muted)] text-primary flex items-center justify-center text-label font-semibold">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-label font-semibold ${avatarColor(`${u.firstName} ${u.lastName}`)}`}>
             {u.firstName.charAt(0)}{u.lastName.charAt(0)}
           </div>
           <div>

@@ -18,7 +18,8 @@ import {
   type ConfirmOptions,
 } from '@/components/ui';
 import type { TFunction } from 'i18next';
-import type { Column } from '@/components/ui';
+import type { Column } from '@/components/ui';
+import { avatarColor } from '@/components/ui/Avatar';
 import { FormSelect } from '@/components/forms';
 import { useUsers, useToggleUserActive, type User } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
@@ -96,7 +97,7 @@ export function UsersPage() {
       sortable: true,
       render: (user) => (
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[var(--color-accent-muted)] text-primary flex items-center justify-center text-label font-semibold">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-label font-semibold ${avatarColor(`${user.first_name} ${user.last_name}`)}`}>
             {user.first_name.charAt(0)}{user.last_name.charAt(0)}
           </div>
           <div>

@@ -9,19 +9,19 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'bg-gradient-to-b from-[var(--color-accent-light)] to-[var(--color-accent)] text-white hover:text-white border-none shadow-level-1 hover:shadow-level-2 hover:from-[var(--color-accent)] hover:to-[var(--color-accent-hover)]',
+          'bg-gradient-to-br from-[var(--color-accent-light)] to-[var(--color-accent)] text-white hover:text-white border-none shadow-[0_4px_14px_rgba(91,85,214,0.32)] hover:shadow-[0_6px_20px_rgba(91,85,214,0.42)] hover:from-[var(--color-accent)] hover:to-[var(--color-accent-hover)]',
         secondary:
-          'bg-card text-foreground border border-border hover:bg-hover hover:border-border-strong shadow-level-0',
+          'bg-card text-text-heading border border-border-strong hover:bg-[var(--color-accent-subtle)] hover:border-[var(--color-accent-muted)] hover:text-primary shadow-level-0',
         danger:
           'bg-card text-danger border border-danger-muted hover:bg-[var(--color-danger-subtle)] hover:border-danger focus-visible:shadow-focus-danger',
         ghost:
           'bg-transparent text-text-secondary border-none hover:bg-subtle hover:text-text-primary',
       },
       size: {
-        sm: 'px-3 py-[5px] text-label rounded-sm',
-        md: 'px-4 py-2 text-body rounded-md',
-        lg: 'px-5 py-[10px] text-body-lg rounded-md',
-        icon: 'h-9 w-9 rounded-md',
+        sm: 'px-3 py-[5px] text-label rounded-lg',
+        md: 'px-4 py-2 text-body rounded-xl',
+        lg: 'px-5 py-[10px] text-body-lg rounded-xl',
+        icon: 'h-9 w-9 rounded-xl',
       },
     },
     defaultVariants: {

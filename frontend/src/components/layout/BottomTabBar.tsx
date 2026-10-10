@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { MoreHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { NavItem } from './Sidebar';
+import { navChip } from './navColors';
 
 interface BottomTabBarProps {
   items: NavItem[];
@@ -53,7 +54,7 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
 
   return (
     <>
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-card border-t border-border flex items-center justify-around h-[var(--tabbar-h)] pb-[env(safe-area-inset-bottom)]">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_16px_rgba(46,42,107,0.06)] flex items-center justify-around h-[var(--tabbar-h)] pb-[env(safe-area-inset-bottom)]">
         {visibleItems.map((item) => (
           <NavLink
             key={item.href}
@@ -67,11 +68,22 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
               )
             }
           >
-            <item.icon className="w-5 h-5" />
+            {({ isActive }) => (
+              <>
+                <span
+                  className={cn(
+                    'flex items-center justify-center w-12 h-7 rounded-full transition-colors duration-150',
+                    isActive && 'bg-[var(--color-accent-muted)]',
+                  )}
+                >
+                  <item.icon className="w-5 h-5" />
+                </span>
             {/* A short name when the full one wouldn't fit (e.g. "Accueil" for the dashboard). */}
             <span className="text-micro font-medium truncate max-w-[72px]">
               {t(item.label.replace(/^nav./, 'navShort.'), { defaultValue: t(item.label, item.label) })}
             </span>
+              </>
+            )}
           </NavLink>
         ))}
 
@@ -86,7 +98,14 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
             aria-haspopup="dialog"
             aria-expanded={moreOpen}
           >
-            <MoreHorizontal className="w-5 h-5" />
+            <span
+              className={cn(
+                'flex items-center justify-center w-12 h-7 rounded-full transition-colors duration-150',
+                isOverflowActive && 'bg-[var(--color-accent-muted)]',
+              )}
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </span>
             <span className="text-micro font-medium">{t('common.more')}</span>
           </button>
         )}
@@ -119,21 +138,23 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              {overflowItems.map((item) => (
+              {overflowItems.map((item, i) => (
                 <NavLink
                   key={item.href}
                   to={item.href}
                   end={item.href === '/admin' || item.href === '/teacher' || item.href === '/parent'}
                   className={({ isActive }) =>
                     cn(
-                      'flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg text-center transition-colors duration-150',
+                      'flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl text-center transition-colors duration-150',
                       isActive
-                        ? 'bg-[var(--color-accent-subtle)] text-primary'
+                        ? 'bg-[var(--color-accent-subtle)] text-primary ring-1 ring-[var(--color-accent-muted)]'
                         : 'text-text-secondary hover:bg-subtle'
                     )
                   }
                 >
-                  <item.icon className="w-5 h-5" />
+                  <span className={cn('w-10 h-10 rounded-xl flex items-center justify-center', navChip(MAX_VISIBLE_WITH_OVERFLOW + i))}>
+                    <item.icon className="w-5 h-5" />
+                  </span>
                   <span className="text-micro font-medium">{t(item.label, item.label)}</span>
                 </NavLink>
               ))}

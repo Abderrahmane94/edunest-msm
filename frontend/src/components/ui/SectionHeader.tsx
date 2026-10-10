@@ -16,7 +16,7 @@ export function SectionHeader({
   return (
     <div className={cn('flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between', className)}>
       <div className="min-w-0">
-        <h2 className="text-section font-semibold text-text-heading">{title}</h2>
+        <h2 className="font-playful text-section font-bold text-text-heading">{title}</h2>
         {description && <p className="mt-1 text-body text-text-secondary">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2 shrink-0">{actions}</div>}

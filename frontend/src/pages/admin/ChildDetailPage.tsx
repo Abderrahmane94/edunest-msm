@@ -19,6 +19,7 @@ import {
   StatusBadge,
   useConfirm,
   useEditMode,
+  Avatar,
 } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
@@ -225,6 +226,7 @@ export function ChildDetailPage() {
       {confirmDialog}
       <PageHeader
         back="/admin/children"
+        leading={<Avatar name={`${child.first_name} ${child.last_name}`} size="lg" className="ring-4 ring-white shadow-level-2" />}
         title={`${child.first_name} ${child.last_name}`}
         description={child.classroom_name}
         badge={

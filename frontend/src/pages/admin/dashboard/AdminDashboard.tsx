@@ -502,14 +502,20 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="text-page-title font-semibold text-text-heading">
-          {t('dashboard.admin.welcome', { name: user?.firstName ?? '' })}
-        </h1>
-        <p className="mt-1 text-body text-text-secondary">
-          <span className="first-letter:uppercase inline-block">{date}</span>
-          {data.schoolName && <span> · {data.schoolName}</span>}
-        </p>
+      <header className="relative overflow-hidden rounded-2xl px-5 py-6 sm:px-8 sm:py-7 text-white bg-gradient-to-br rtl:bg-gradient-to-bl from-[#6E66EC] via-[#5B55D6] to-[#8E5BD6] shadow-[0_12px_32px_rgba(91,85,214,0.30)]">
+        {/* Sun and bubbles, as on the logo */}
+        <span className="pointer-events-none absolute -top-12 -end-12 w-28 h-28 sm:-top-10 sm:end-10 sm:w-36 sm:h-36 rounded-full bg-[#FFC145]/90" aria-hidden="true" />
+        <span className="pointer-events-none absolute -bottom-12 end-44 w-28 h-28 rounded-full bg-[#F47B8C]/70 hidden sm:block" aria-hidden="true" />
+        <span className="pointer-events-none absolute top-6 end-56 w-6 h-6 rounded-full bg-[#A2CD79] hidden sm:block" aria-hidden="true" />
+        <div className="relative">
+          <h1 className="font-playful text-page-title sm:text-display font-bold text-white">
+            {t('dashboard.admin.welcome', { name: user?.firstName ?? '' })}
+          </h1>
+          <p className="mt-1 text-body text-white/85">
+            <span className="first-letter:uppercase inline-block">{date}</span>
+            {data.schoolName && <span> · {data.schoolName}</span>}
+          </p>
+        </div>
       </header>
 
       <TodoList data={data} />

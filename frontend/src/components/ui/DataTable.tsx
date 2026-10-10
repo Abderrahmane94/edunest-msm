@@ -100,12 +100,12 @@ export function DataTable<T>({
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-hover border-b border-border">
+                  <tr className="bg-[var(--color-accent-subtle)] border-b border-border">
                     {columns.map((col) => (
                       <th
                         key={col.key}
                         className={cn(
-                          'px-4 py-[10px] text-start text-caption font-medium text-text-secondary uppercase tracking-wider',
+                          'px-4 py-[10px] text-start text-caption font-semibold text-[var(--color-accent-hover)] uppercase tracking-wider',
                           col.sortable && 'cursor-pointer select-none hover:text-text-primary',
                           col.className
                         )}
@@ -131,7 +131,7 @@ export function DataTable<T>({
                     <tr
                       key={keyExtractor(row)}
                       className={cn(
-                        'border-b border-subtle last:border-b-0 hover:bg-hover transition-colors duration-150',
+                        'border-b border-border last:border-b-0 hover:bg-hover transition-colors duration-150',
                         onRowClick && 'cursor-pointer'
                       )}
                       onClick={onRowClick ? () => onRowClick(row) : undefined}

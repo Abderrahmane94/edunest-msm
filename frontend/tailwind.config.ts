@@ -93,6 +93,12 @@ const config: Config = {
         'text-disabled': 'var(--color-text-disabled)',
         'text-inverse': 'var(--color-text-inverse)',
 
+        // Extra colors (icons, avatars, menus)
+        sun: { DEFAULT: 'var(--color-sun)', muted: 'var(--color-sun-muted)' },
+        sky: { DEFAULT: 'var(--color-sky)', muted: 'var(--color-sky-muted)' },
+        pink: { DEFAULT: 'var(--color-pink)', muted: 'var(--color-pink-muted)' },
+        teal: { DEFAULT: 'var(--color-teal)', muted: 'var(--color-teal-muted)' },
+
         // Attendance / Finance status
         present: 'var(--color-present)',
         absent: 'var(--color-absent)',
@@ -118,11 +124,11 @@ const config: Config = {
 
       /* ─── Border Radius ─── */
       borderRadius: {
-        sm: '6px',
-        DEFAULT: '8px',
-        md: '8px',
-        lg: '12px',
-        xl: '16px',
+        sm: '8px',
+        DEFAULT: '10px',
+        md: '10px',
+        lg: '16px',
+        xl: '20px',
         full: '9999px',
       },
 
@@ -149,16 +155,12 @@ const config: Config = {
       /* ─── Box Shadows (Elevation System) ─── */
       boxShadow: {
         'level-0': 'none',
-        'level-1':
-          '0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04)',
-        'level-2':
-          '0 4px 12px rgba(15,23,42,0.08), 0 2px 4px rgba(15,23,42,0.04)',
-        'level-3':
-          '0 10px 30px rgba(15,23,42,0.12), 0 4px 8px rgba(15,23,42,0.06)',
-        'level-4':
-          '0 20px 60px rgba(15,23,42,0.15), 0 8px 16px rgba(15,23,42,0.08)',
-        'focus-ring': '0 0 0 3px rgba(79,70,229,0.25)',
-        'focus-danger': '0 0 0 3px rgba(220,38,38,0.20)',
+        'level-1': 'var(--shadow-level-1)',
+        'level-2': 'var(--shadow-level-2)',
+        'level-3': 'var(--shadow-level-3)',
+        'level-4': 'var(--shadow-level-4)',
+        'focus-ring': 'var(--shadow-focus-ring)',
+        'focus-danger': 'var(--shadow-focus-danger)',
       },
 
       /* ─── Font Sizes (Type Scale) ─── */

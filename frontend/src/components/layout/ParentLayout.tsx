@@ -32,12 +32,15 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
   return (
     <div className="flex flex-col min-h-screen bg-page pb-[calc(var(--tabbar-h)+0.5rem)] lg:pb-0">
       {/* Top bar with branding, desktop nav, and actions */}
-      <header className="sticky top-0 z-40 bg-card border-b border-border">
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-border">
         <div className="max-w-[900px] mx-auto px-4 h-14 flex items-center justify-between">
           {/* Left: Logo */}
           <div className="flex items-center gap-2">
             <BrandMark size={30} className="shrink-0" />
-            <span className="text-body font-semibold text-text-heading">EduNest</span>
+            <span className="font-playful text-[19px] font-extrabold leading-none" dir="ltr">
+              <span className="text-text-heading">Edu</span>
+              <span className="text-primary">Nest</span>
+            </span>
           </div>
 
           {/* Center: Desktop navigation */}
@@ -50,9 +53,9 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
                   end={item.href === '/parent'}
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-1.5 px-3 py-2 rounded-md text-caption font-medium transition-colors duration-150',
+                      'flex items-center gap-1.5 px-3 py-2 rounded-full text-caption font-medium transition-colors duration-150',
                       isActive
-                        ? 'bg-[var(--color-accent-subtle)] text-primary'
+                        ? 'bg-[var(--color-accent-muted)] text-primary'
                         : 'text-text-secondary hover:bg-subtle hover:text-text-primary'
                     )
                   }

@@ -12,13 +12,15 @@ export interface PageHeaderProps {
   back?: string | (() => void);
   /** Next to the title (e.g. a status badge). */
   badge?: React.ReactNode;
+  /** Before the title and its description (e.g. the person's avatar). */
+  leading?: React.ReactNode;
   /** The page's buttons, at the end of the title line (below it on a phone). */
   actions?: React.ReactNode;
   className?: string;
 }
 
 /** The top of every page: title, a line of context, and the page's actions. */
-export function PageHeader({ title, description, back, badge, actions, className }: PageHeaderProps) {
+export function PageHeader({ title, description, back, badge, leading, actions, className }: PageHeaderProps) {
   const { t } = useTranslation();
   const backClass =
     'inline-flex items-center gap-1.5 text-label font-medium text-text-secondary hover:text-text-heading transition-colors -ms-1 px-1 py-0.5 rounded focus-visible:outline-none focus-visible:shadow-focus-ring';
@@ -42,12 +44,15 @@ export function PageHeader({ title, description, back, badge, actions, className
           </button>
         ))}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
+        <div className="min-w-0 flex items-center gap-4">
+          {leading && <div className="shrink-0">{leading}</div>}
+          <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-page-title font-semibold text-text-heading break-words min-w-0">{title}</h1>
+            <h1 className="font-playful text-page-title font-bold text-text-heading break-words min-w-0">{title}</h1>
             {badge}
           </div>
           {description && <p className="mt-1 text-body text-text-secondary">{description}</p>}
+          </div>
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2 shrink-0">{actions}</div>}
       </div>

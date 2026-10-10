@@ -2,7 +2,8 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '@/lib/formatters';
-import { DataTable, FilterBar, ListSkeleton, PageHeader, RoleBadge, StatusBadge } from '@/components/ui';
+import { DataTable, FilterBar, ListSkeleton, PageHeader, RoleBadge, StatusBadge } from '@/components/ui';
+import { avatarColor } from '@/components/ui/Avatar';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useUsers, type User } from '@/hooks/useUsers';
@@ -92,7 +93,7 @@ export function StaffListPage() {
       header: t('staff.columns.name'),
       render: (row) => (
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[var(--color-accent-muted)] text-primary flex items-center justify-center text-label font-semibold">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-label font-semibold ${avatarColor(`${row.user.first_name} ${row.user.last_name}`)}`}>
             {row.user.first_name.charAt(0)}{row.user.last_name.charAt(0)}
           </div>
           <div>

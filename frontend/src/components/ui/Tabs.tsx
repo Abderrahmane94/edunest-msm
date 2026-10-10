@@ -78,7 +78,7 @@ export function Tabs<T extends string>({ items, value, onChange, label, classNam
               'inline-flex items-center gap-2 px-3 py-2.5 -mb-px border-b-2 whitespace-nowrap text-label font-medium transition-colors',
               'focus-visible:outline-none focus-visible:bg-hover rounded-t-md',
               active
-                ? 'border-[var(--color-accent)] text-primary'
+                ? 'border-[var(--color-accent)] text-primary font-semibold'
                 : 'border-transparent text-text-secondary hover:text-text-heading hover:border-border',
             )}
           >

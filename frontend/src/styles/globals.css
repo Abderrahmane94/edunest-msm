@@ -37,74 +37,87 @@
     /* Mobile bottom tab bar height, plus the iPhone home-bar inset when the
        app is installed (viewport-fit=cover). */
     --tabbar-h: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    /* Colors come from the logo: violet house, orange child, yellow sun,
+       pink heart, green leaves. Text and borders lean violet to match. */
+
     /* Background Surfaces */
-    --color-bg-page: #FAFAF8;
+    --color-bg-page: #FFF8F1;
     --color-bg-card: #FFFFFF;
-    --color-bg-subtle: #F1F5F9;
-    --color-bg-hover: #F8FAFC;
-    --color-overlay: rgba(15, 23, 42, 0.5);
+    --color-bg-subtle: #F3F1FB;
+    --color-bg-hover: #F8F6FF;
+    --color-overlay: rgba(36, 32, 79, 0.45);
 
     /* Borders */
-    --color-border: #E2E8F0;
-    --color-border-strong: #CBD5E1;
+    --color-border: #E9E5F4;
+    --color-border-strong: #D4CEEA;
 
     /* Text */
-    --color-text-primary: #334155;
-    --color-text-secondary: #64748B;
-    --color-text-heading: #0F172A;
-    --color-text-disabled: #94A3B8;
+    --color-text-primary: #3A365F;
+    --color-text-secondary: #6A6690;
+    --color-text-heading: #221E4C;
+    --color-text-disabled: #A29EBF;
     --color-text-inverse: #FFFFFF;
 
-    /* Primary Accent — Indigo */
-    --color-accent: #4F46E5;
-    --color-accent-hover: #4338CA;
-    --color-accent-muted: #E0E7FF;
-    --color-accent-light: #6366F1;
-    --color-accent-subtle: #EEF2FF;
+    /* Primary Accent — the logo's violet */
+    --color-accent: #5B55D6;
+    --color-accent-hover: #4A43C2;
+    --color-accent-muted: #E4E1FF;
+    --color-accent-light: #7C75F0;
+    --color-accent-subtle: #F1EFFF;
 
-    /* Success — Teal */
-    --color-success: #0D9488;
-    --color-success-muted: #CCFBF1;
-    --color-success-light: #14B8A6;
-    --color-success-subtle: #F0FDFA;
+    /* Success — leaf green */
+    --color-success: #16956C;
+    --color-success-muted: #D4F4E6;
+    --color-success-light: #3DBF8E;
+    --color-success-subtle: #EDFBF4;
 
-    /* Warning — Amber */
-    --color-warning: #D97706;
-    --color-warning-muted: #FEF3C7;
-    --color-warning-light: #F59E0B;
-    --color-warning-subtle: #FFFBEB;
+    /* Warning — the child's orange */
+    --color-warning: #D9691A;
+    --color-warning-muted: #FFE6CF;
+    --color-warning-light: #F79A57;
+    --color-warning-subtle: #FFF5EA;
 
-    /* Danger — Red */
-    --color-danger: #DC2626;
-    --color-danger-muted: #FEE2E2;
-    --color-danger-light: #EF4444;
-    --color-danger-subtle: #FEF2F2;
+    /* Danger — the heart's pink, deepened */
+    --color-danger: #DC3157;
+    --color-danger-muted: #FFDFE6;
+    --color-danger-light: #F47B8C;
+    --color-danger-subtle: #FFF1F4;
+
+    /* Extra colors for icons, avatars and menus */
+    --color-sun: #F5A90A;
+    --color-sun-muted: #FFF0C7;
+    --color-sky: #2F8FDB;
+    --color-sky-muted: #DCEEFF;
+    --color-pink: #E2457A;
+    --color-pink-muted: #FFE1EC;
+    --color-teal: #0F9A9A;
+    --color-teal-muted: #D3F3F1;
 
     /* Attendance & Finance Status */
-    --color-present: #0D9488;
-    --color-absent: #DC2626;
-    --color-late: #D97706;
-    --color-paid: #0D9488;
-    --color-overdue: #DC2626;
-    --color-pending: #D97706;
+    --color-present: #16956C;
+    --color-absent: #DC3157;
+    --color-late: #D9691A;
+    --color-paid: #16956C;
+    --color-overdue: #DC3157;
+    --color-pending: #D9691A;
 
-    /* Elevation Shadows */
-    --shadow-level-1: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
-    --shadow-level-2: 0 4px 12px rgba(15,23,42,0.08), 0 2px 4px rgba(15,23,42,0.04);
-    --shadow-level-3: 0 10px 30px rgba(15,23,42,0.12), 0 4px 8px rgba(15,23,42,0.06);
-    --shadow-level-4: 0 20px 60px rgba(15,23,42,0.15), 0 8px 16px rgba(15,23,42,0.08);
-    --shadow-focus-ring: 0 0 0 3px rgba(79,70,229,0.25);
-    --shadow-focus-danger: 0 0 0 3px rgba(220,38,38,0.20);
+    /* Elevation Shadows (tinted violet, softer than grey) */
+    --shadow-level-1: 0 1px 2px rgba(46,42,107,0.05), 0 2px 8px rgba(46,42,107,0.05);
+    --shadow-level-2: 0 6px 18px rgba(46,42,107,0.09), 0 2px 4px rgba(46,42,107,0.04);
+    --shadow-level-3: 0 14px 36px rgba(46,42,107,0.13), 0 4px 8px rgba(46,42,107,0.06);
+    --shadow-level-4: 0 24px 64px rgba(46,42,107,0.18), 0 8px 16px rgba(46,42,107,0.08);
+    --shadow-focus-ring: 0 0 0 3px rgba(91,85,214,0.28);
+    --shadow-focus-danger: 0 0 0 3px rgba(220,49,87,0.22);
 
     /* Border Radius */
-    --radius-sm: 6px;
-    --radius-default: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
+    --radius-sm: 8px;
+    --radius-default: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
     --radius-full: 9999px;
 
     /* shadcn/ui compatibility */
-    --radius: 8px;
+    --radius: 10px;
   }
 
   /* ─── Base Styles ─── */
@@ -157,6 +170,13 @@
   h1, h2, h3, h4, h5, h6 {
     color: var(--color-text-heading);
     font-weight: 600;
+  }
+
+  /* Page titles use the logo's rounded font, in French and in Arabic. */
+  h1 {
+    font-family: 'Baloo Bhaijaan 2', 'Noto Sans Arabic', system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
   }
 
   /* ─── Focus Styles ─── */
@@ -243,6 +263,16 @@
   /* Ensure borders are visible in print */
   .receipt-content .border {
     border-color: #ccc !important;
+  }
+}
+
+/* ─── Cards ─── */
+/* Every framed card gets a soft violet shadow, so it lifts off the cream page.
+   In the components layer: a shadow utility on the card still wins. */
+@layer components {
+  .bg-card.border.rounded-lg,
+  .bg-card.border.rounded-xl {
+    box-shadow: var(--shadow-level-1);
   }
 }
 

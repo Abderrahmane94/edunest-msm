@@ -11,6 +11,7 @@ import {
   ReadOnlyFieldset,
   useConfirm,
   useEditMode,
+  Avatar,
 } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
@@ -188,6 +189,7 @@ export function StaffProfilePage() {
       {confirmDialog}
       <PageHeader
         back="/admin/staff"
+        leading={<Avatar name={`${user.first_name} ${user.last_name}`} size="lg" className="ring-4 ring-white shadow-level-2" />}
         title={`${user.first_name} ${user.last_name}`}
         description={profile?.position || t('staff.noPosition')}
       />

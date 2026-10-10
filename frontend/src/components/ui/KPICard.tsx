@@ -16,13 +16,13 @@ export function KPICard({ label, value, trend, icon, className }: KPICardProps) 
   return (
     <div
       className={cn(
-        'bg-hover rounded-[10px] p-4 flex flex-col gap-2',
+        'bg-card border border-border rounded-lg shadow-level-1 p-4 flex flex-col gap-2',
         className
       )}
     >
       <div className="flex items-center justify-between">
         <span className="text-caption text-text-secondary font-medium">{label}</span>
-        {icon && <span className="text-text-secondary">{icon}</span>}
+        {icon && <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--color-accent-muted)] text-primary [&>svg]:w-4 [&>svg]:h-4">{icon}</span>}
       </div>
 
       <div className="flex items-end gap-2">

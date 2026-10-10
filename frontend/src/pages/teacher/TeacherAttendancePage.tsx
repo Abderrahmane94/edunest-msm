@@ -32,6 +32,29 @@ interface ChildAttendanceState {
   markedAt?: string;
 }
 
+/** How a marked child's card shows its status: colour, side band, avatar badge. */
+const STATUS_LOOK: Record<AttendanceStatus, { color: string; bg: string; band: string; icon: React.ElementType }> = {
+  present: {
+    color: 'text-[var(--color-present)]',
+    bg: 'bg-[var(--color-present)]',
+    band: 'border-s-[var(--color-present)]',
+    icon: Check,
+  },
+  late: { color: 'text-[var(--color-late)]', bg: 'bg-[var(--color-late)]', band: 'border-s-[var(--color-late)]', icon: Clock },
+  absent: {
+    color: 'text-[var(--color-absent)]',
+    bg: 'bg-[var(--color-absent)]',
+    band: 'border-s-[var(--color-absent)]',
+    icon: X,
+  },
+};
+
+/** A tap the card answers visually: `n` restarts the animation, `delay` staggers "all present". */
+interface MarkBump {
+  n: number;
+  delay: number;
+}
+
 function getTodayString(): string {
   return new Date().toISOString().split('T')[0];
 }
@@ -96,8 +119,12 @@ export function TeacherAttendancePage() {
     setSaveError(null);
   }, [selectedDate]);
 
+  // Cards the teacher just marked, to play their animation (not on load).
+  const [bumps, setBumps] = React.useState<Record<string, MarkBump>>({});
+
   // Mark a single child's attendance
   const markChild = React.useCallback((childId: string, status: AttendanceStatus) => {
+    setBumps((prev) => ({ ...prev, [childId]: { n: (prev[childId]?.n ?? 0) + 1, delay: 0 } }));
     setAttendanceMap((prev) => {
       const next = new Map(prev);
       const current = next.get(childId);
@@ -113,6 +140,14 @@ export function TeacherAttendancePage() {
   // Mark all children as present
   const markAllPresent = React.useCallback(() => {
     const now = new Date().toISOString();
+    // The cards light up one after the other, top to bottom.
+    setBumps((prev) => {
+      const next = { ...prev };
+      (children ?? []).forEach((child, i) => {
+        next[child.id] = { n: (prev[child.id]?.n ?? 0) + 1, delay: Math.min(i, 12) * 45 };
+      });
+      return next;
+    });
     setAttendanceMap((prev) => {
       const next = new Map(prev);
       next.forEach((value, key) => {
@@ -122,7 +157,7 @@ export function TeacherAttendancePage() {
     });
     setHasChanges(true);
     setSubmitted(false);
-  }, []);
+  }, [children]);
 
   // Save: queued on the device and sent right away when online (or as soon
   // as the connection returns).
@@ -299,25 +334,61 @@ export function TeacherAttendancePage() {
             children.map((child) => {
               const state = attendanceMap.get(child.id);
               const currentStatus = state?.status ?? null;
+              const look = currentStatus ? STATUS_LOOK[currentStatus] : null;
+              // Only cards the teacher just marked animate (not on load).
+              const bump = currentStatus ? bumps[child.id] : undefined;
+              const delay = bump ? { animationDelay: `${bump.delay}ms` } : undefined;
+              const BadgeIcon = look?.icon;
 
               return (
                 <div
                   key={child.id}
                   className={cn(
-                    'bg-card border rounded-lg p-4 transition-all duration-150',
+                    'relative bg-card border rounded-lg p-4 transition-colors duration-200',
                     currentStatus === 'present' && 'border-[var(--color-present)] border-opacity-50',
                     currentStatus === 'late' && 'border-[var(--color-late)] border-opacity-50',
                     currentStatus === 'absent' && 'border-[var(--color-absent)] border-opacity-50',
+                    look && ['border-s-4', look.band],
                     !currentStatus && 'border-border'
                   )}
                 >
+                  {/* Halo in the status colour, replayed on each tap */}
+                  {bump && look && (
+                    <span
+                      key={bump.n}
+                      aria-hidden="true"
+                      className={cn('pointer-events-none absolute inset-0 rounded-lg animate-mark-halo', look.color)}
+                      style={delay}
+                    />
+                  )}
+
                   {/* Child info */}
                   <div className="flex items-center gap-3 mb-3">
-                    <Avatar
-                      src={child.photo_url}
-                      name={`${child.first_name} ${child.last_name}`}
-                      size="md"
-                    />
+                    {/* Keyed on the tap so the pop replays; the buttons keep their focus. */}
+                    <div
+                      key={bump?.n ?? 0}
+                      className={cn('relative shrink-0', bump && 'animate-mark-pop')}
+                      style={delay}
+                    >
+                      <Avatar
+                        src={child.photo_url}
+                        name={`${child.first_name} ${child.last_name}`}
+                        size="md"
+                      />
+                      {look && BadgeIcon && (
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            'absolute -bottom-1 -end-1 grid place-items-center w-5 h-5 rounded-full ring-2 ring-card text-[var(--color-text-inverse)]',
+                            look.bg,
+                            bump && 'animate-badge-pop',
+                          )}
+                          style={delay}
+                        >
+                          <BadgeIcon className="w-3 h-3" strokeWidth={3} />
+                        </span>
+                      )}
+                    </div>
                     <div className="min-w-0">
                       <p className="text-body font-medium text-text-heading [overflow-wrap:anywhere]">
                         {child.first_name} {child.last_name}

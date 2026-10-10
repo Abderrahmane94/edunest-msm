@@ -1,11 +1,46 @@
 import { Request, Response, NextFunction } from 'express';
 import { childrenService, ChildServiceError } from './children.service';
+import { UserServiceError } from '../users/users.service';
+import { EnrollmentServiceError } from '../payments/enrollment.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
-import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, UpdateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput, CreateMedicalNoteInput, UpdateMedicalNoteInput } from './children.schema';
+import type { RegisterChildInput, CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, UpdateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput, CreateMedicalNoteInput, UpdateMedicalNoteInput } from './children.schema';
 import { paginationSchema } from '../../utils/validators';
 import { softDeleteService, SoftDeleteError } from '../../services/soft-delete.service';
 
 export const childrenController = {
+  /**
+   * POST /api/children/register — Register a child with parent, contacts,
+   * notes, classroom and billing, all or nothing
+   */
+  async register(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const input = req.body as RegisterChildInput;
+      // Staff tied to one branch may only bill on that branch.
+      if (input.billing && req.user!.branchId && req.user!.branchId !== input.billing.branchId) {
+        res.status(403).json(errorResponse('FORBIDDEN', 'Access denied: you can only access your assigned branch'));
+        return;
+      }
+      const result = await childrenService.register(schoolId, input);
+      res.status(201).json(successResponse(result));
+    } catch (error) {
+      if (error instanceof ChildServiceError) {
+        res.status(error.statusCode).json(errorResponse('CHILD_ERROR', error.message));
+        return;
+      }
+      if (error instanceof UserServiceError) {
+        const code = error.meta?.restorable ? 'RESTORABLE_USER_EXISTS' : 'USER_ERROR';
+        res.status(error.statusCode).json(errorResponse(code, error.message, undefined, error.meta));
+        return;
+      }
+      if (error instanceof EnrollmentServiceError) {
+        res.status(error.statusCode).json(errorResponse(error.code, error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
   /**
    * POST /api/children — Register a new child
    */

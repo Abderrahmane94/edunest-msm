@@ -10,6 +10,31 @@ import {
   useEmergencyContacts, useAddEmergencyContact, useUpdateEmergencyContact, useRemoveEmergencyContact,
   type EmergencyContact,
 } from '@/hooks/useChildren';
+import type { ListStore } from './listStore';
+
+export type EmergencyContactInput = Omit<EmergencyContact, 'id'>;
+export type EmergencyContactStore = ListStore<EmergencyContact, EmergencyContactInput>;
+
+/** The child's contacts on the server, each change saved at once. */
+export function useEmergencyContactStore(childId: string): EmergencyContactStore {
+  const { data: items = [], isLoading } = useEmergencyContacts(childId);
+  const addContact = useAddEmergencyContact();
+  const updateContact = useUpdateEmergencyContact();
+  const removeContact = useRemoveEmergencyContact();
+  const fields = (input: EmergencyContactInput) => ({
+    ...input,
+    address: input.address ?? undefined,
+    national_id: input.national_id ?? undefined,
+  });
+  return {
+    items,
+    isLoading,
+    isSaving: addContact.isPending || updateContact.isPending || removeContact.isPending,
+    add: async (input) => { await addContact.mutateAsync({ childId, ...fields(input) }); },
+    update: async (contactId, input) => { await updateContact.mutateAsync({ childId, contactId, ...fields(input) }); },
+    remove: async (contactId) => { await removeContact.mutateAsync({ childId, contactId }); },
+  };
+}
 
 const PHONE_PATTERN = /^\+?[0-9\s\-().]{6,50}$/;
 
@@ -32,24 +57,20 @@ const emptyForm: ContactFormState = {
 };
 
 interface EmergencyContactsManagerProps {
-  childId: string;
+  store: EmergencyContactStore;
   childName: string;
   /** Called whenever the add/edit form starts or stops holding unsaved input. */
   onUnsavedChange?: (hasUnsaved: boolean) => void;
 }
 
 /**
- * List + inline add/edit form for a child's emergency contacts. Each
- * mutation saves immediately (no outer form submit) — used both as the body
- * of the standalone EmergencyContactsDialog and as a step in the child
- * creation wizard.
+ * List + inline add/edit form for a child's emergency contacts. Each change
+ * goes to the store at once (no outer form submit): the server in the
+ * standalone EmergencyContactsDialog, memory in the child creation wizard.
  */
-export function EmergencyContactsManager({ childId, childName, onUnsavedChange }: EmergencyContactsManagerProps) {
+export function EmergencyContactsManager({ store, childName, onUnsavedChange }: EmergencyContactsManagerProps) {
   const { t } = useTranslation();
-  const { data: contacts = [], isLoading: contactsLoading } = useEmergencyContacts(childId);
-  const addContact = useAddEmergencyContact();
-  const updateContact = useUpdateEmergencyContact();
-  const removeContact = useRemoveEmergencyContact();
+  const { items: contacts, isLoading: contactsLoading, isSaving } = store;
   const { confirm, dialog: confirmDialog } = useConfirm();
 
   const relationshipOptions = [
@@ -70,6 +91,17 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
     return form.relationshipOption === 'other'
       ? form.relationshipOther.trim()
       : t(`children.emergencyContacts.relationships.${form.relationshipOption}`);
+  }
+
+  function toInput(form: ContactFormState): EmergencyContactInput {
+    return {
+      name: form.name.trim(),
+      relationship: resolveRelationship(form),
+      phone: form.phone.trim(),
+      address: form.address.trim() || undefined,
+      national_id: form.national_id.trim() || undefined,
+      is_authorized_pickup: form.is_authorized_pickup,
+    };
   }
 
   const [newContact, setNewContact] = React.useState<ContactFormState>(emptyForm);
@@ -108,15 +140,7 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
     if (Object.keys(errs).length > 0) return;
     setSubmitError(null);
     try {
-      await addContact.mutateAsync({
-        childId,
-        name: newContact.name.trim(),
-        relationship: resolveRelationship(newContact),
-        phone: newContact.phone.trim(),
-        address: newContact.address.trim() || undefined,
-        national_id: newContact.national_id.trim() || undefined,
-        is_authorized_pickup: newContact.is_authorized_pickup,
-      });
+      await store.add(toInput(newContact));
       setNewContact(emptyForm);
       setErrors({});
     } catch (err) {
@@ -133,7 +157,7 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
     if (!ok) return;
     setSubmitError(null);
     try {
-      await removeContact.mutateAsync({ childId, contactId: contact.id });
+      await store.remove(contact.id);
     } catch (err) {
       setSubmitError(errorMessage(err, t));
     }
@@ -167,16 +191,7 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
     if (Object.keys(errs).length > 0) return;
     setEditError(null);
     try {
-      await updateContact.mutateAsync({
-        childId,
-        contactId,
-        name: editForm.name.trim(),
-        relationship: resolveRelationship(editForm),
-        phone: editForm.phone.trim(),
-        address: editForm.address.trim() || undefined,
-        national_id: editForm.national_id.trim() || undefined,
-        is_authorized_pickup: editForm.is_authorized_pickup,
-      });
+      await store.update(contactId, toInput(editForm));
       setEditingId(null);
     } catch (err) {
       setEditError(errorMessage(err, t));
@@ -272,7 +287,7 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
                 </label>
                 {editError && <p className="text-body text-danger">{editError}</p>}
                 <div className="flex items-center gap-2">
-                  <Button type="button" variant="secondary" size="sm" onClick={() => handleSaveEdit(contact.id)} disabled={updateContact.isPending}>
+                  <Button type="button" variant="secondary" size="sm" onClick={() => handleSaveEdit(contact.id)} disabled={isSaving}>
                     <Check className="w-4 h-4" />
                     {t('children.emergencyContacts.save')}
                   </Button>
@@ -311,7 +326,7 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
                     variant="secondary"
                     size="sm"
                     onClick={() => handleRemoveContact(contact)}
-                    disabled={removeContact.isPending}
+                    disabled={isSaving}
                     aria-label={t('common.delete')}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -419,9 +434,9 @@ export function EmergencyContactsManager({ childId, childName, onUnsavedChange }
 
         {submitError && <p className="text-body text-danger">{submitError}</p>}
 
-        <Button type="button" variant="secondary" size="sm" onClick={handleAddContact} disabled={addContact.isPending}>
+        <Button type="button" variant="secondary" size="sm" onClick={handleAddContact} disabled={isSaving}>
           <Plus className="w-4 h-4" />
-          {addContact.isPending ? t('common.loading') : t('children.emergencyContacts.add')}
+          {isSaving ? t('common.loading') : t('children.emergencyContacts.add')}
         </Button>
       </div>
     </>
@@ -437,6 +452,7 @@ interface EmergencyContactsDialogProps {
 
 export function EmergencyContactsDialog({ open, onOpenChange, childId, childName }: EmergencyContactsDialogProps) {
   const { t } = useTranslation();
+  const store = useEmergencyContactStore(childId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -445,7 +461,7 @@ export function EmergencyContactsDialog({ open, onOpenChange, childId, childName
           <DialogTitle>{t('children.emergencyContacts.title')}</DialogTitle>
         </DialogHeader>
 
-        <EmergencyContactsManager childId={childId} childName={childName} />
+        <EmergencyContactsManager store={store} childName={childName} />
 
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)}>

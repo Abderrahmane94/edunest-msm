@@ -1,7 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
-import prisma from '../../lib/prisma';
+import prisma, { type DbClient } from '../../lib/prisma';
 import { emailService } from '../../services/email.service';
 import type { UserRole, Language } from '@prisma/client';
 import type { CreateUserDirectlyInput } from './users.schema';
@@ -410,9 +410,9 @@ export const usersService = {
    * Create a user directly in a school (no invitation token required).
    * Used by super_admin (any school) and admin (their own school).
    */
-  async createDirectly(schoolId: string, input: CreateUserDirectlyInput) {
+  async createDirectly(schoolId: string, input: CreateUserDirectlyInput, db: DbClient = prisma) {
     // Scoped to this school — the same email can already exist in a different school.
-    const existing = await prisma.user.findFirst({ where: { email: input.email, schoolId } });
+    const existing = await db.user.findFirst({ where: { email: input.email, schoolId } });
     if (existing) {
       throw new UserServiceError('A user with this email already exists', 409);
     }
@@ -428,7 +428,7 @@ export const usersService = {
 
     const passwordHash = await bcrypt.hash('edunest26', BCRYPT_SALT_ROUNDS);
 
-    const user = await prisma.user.create({
+    const user = await db.user.create({
       data: {
         schoolId,
         firstName: input.firstName,

@@ -1,7 +1,10 @@
-import prisma from '../../lib/prisma';
+import prisma, { type DbClient } from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { softDeleteService } from '../../services/soft-delete.service';
-import type { CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, UpdateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput, CreateMedicalNoteInput, UpdateMedicalNoteInput } from './children.schema';
+import { usersService } from '../users/users.service';
+import { enrollmentService } from '../payments/enrollment.service';
+import type { EnrollmentGenerationResult } from '../payments/payments.types';
+import type { RegisterChildInput, CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, UpdateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput, CreateMedicalNoteInput, UpdateMedicalNoteInput } from './children.schema';
 import type { ChildWithEnrollments, ClassroomEnrollmentResponse, PhotoUrlResponse, ParentChildLinkResponse, EmergencyContactResponse, MedicalNoteResponse } from './children.types';
 
 export class ChildServiceError extends Error {
@@ -30,13 +33,72 @@ const enrollmentInclude = {
 
 class ChildrenService {
   /**
+   * Register a child with everything the creation wizard collected — parent
+   * (existing or new account), emergency contacts, medical notes, classroom and
+   * billing enrollment — in one transaction: if any part fails, nothing is saved.
+   */
+  async register(
+    schoolId: string,
+    input: RegisterChildInput,
+  ): Promise<{ child: ChildWithEnrollments; billing: EnrollmentGenerationResult | null }> {
+    return prisma.$transaction(
+      async (tx) => {
+        const child = await this.create(schoolId, input.child, tx);
+
+        if (input.parent) {
+          const { relationship, newParent } = input.parent;
+          let parentUserId = input.parent.parentUserId;
+          if (newParent) {
+            const user = await usersService.createDirectly(
+              schoolId,
+              { ...newParent, role: 'parent', preferredLanguage: 'fr' },
+              tx,
+            );
+            parentUserId = user.id;
+          }
+          await this.createParentLink(child.id, schoolId, { parentUserId: parentUserId!, relationship }, tx);
+        }
+
+        for (const contact of input.emergencyContacts) {
+          await this.addEmergencyContact(child.id, schoolId, contact, tx);
+        }
+        for (const note of input.medicalNotes) {
+          await this.addMedicalNote(child.id, schoolId, note, tx);
+        }
+        if (input.classroomId) {
+          await this.enrollInClassroom(child.id, schoolId, { classroomId: input.classroomId }, tx);
+        }
+
+        let billing: EnrollmentGenerationResult | null = null;
+        if (input.billing) {
+          const branch = await tx.branch.findFirst({ where: { id: input.billing.branchId, schoolId } });
+          if (!branch) {
+            throw new ChildServiceError('Branch not found or does not belong to this school', 404);
+          }
+          billing = await enrollmentService.createInTransaction(tx, {
+            childId: child.id,
+            branchId: input.billing.branchId,
+            academicYearId: input.child.academicYearId,
+            startDate: new Date(input.billing.startDate),
+            feeIds: input.billing.feeIds,
+          });
+        }
+
+        return { child, billing };
+      },
+      // Many small writes against a remote database: the 5 s default is too tight.
+      { maxWait: 10_000, timeout: 30_000 },
+    );
+  }
+
+  /**
    * Register a new child for a school.
    * Validates that the academic year belongs to the same school.
    * Defaults learnerType to "child".
    */
-  async create(schoolId: string, input: CreateChildInput): Promise<ChildWithEnrollments> {
+  async create(schoolId: string, input: CreateChildInput, db: DbClient = prisma): Promise<ChildWithEnrollments> {
     // Validate academic year belongs to the same school
-    const academicYear = await prisma.academicYear.findFirst({
+    const academicYear = await db.academicYear.findFirst({
       where: { id: input.academicYearId, schoolId },
     });
 
@@ -44,7 +106,7 @@ class ChildrenService {
       throw new ChildServiceError('Academic year not found or does not belong to this school', 404);
     }
 
-    const child = await prisma.child.create({
+    const child = await db.child.create({
       data: {
         schoolId,
         academicYearId: input.academicYearId,
@@ -228,10 +290,11 @@ class ChildrenService {
     childId: string,
     schoolId: string,
     input: EnrollChildInput,
+    db: DbClient = prisma,
   ): Promise<ClassroomEnrollmentResponse> {
     // Verify child exists and belongs to the school
     // Soft-deleted records are automatically excluded by the Prisma extension
-    const child = await prisma.child.findFirst({
+    const child = await db.child.findFirst({
       where: { id: childId, schoolId },
     });
 
@@ -240,7 +303,7 @@ class ChildrenService {
     }
 
     // Verify classroom exists and belongs to the same school
-    const classroom = await prisma.classroom.findFirst({
+    const classroom = await db.classroom.findFirst({
       where: { id: input.classroomId, schoolId },
     });
 
@@ -250,7 +313,7 @@ class ChildrenService {
 
     // Enforce one classroom per academic year:
     // Check if the child already has an enrollment in any classroom for the same academic year
-    const existingEnrollment = await prisma.classroomEnrollment.findFirst({
+    const existingEnrollment = await db.classroomEnrollment.findFirst({
       where: {
         childId,
         classroom: {
@@ -272,7 +335,7 @@ class ChildrenService {
     }
 
     // Enforce classroom capacity
-    const enrollmentCount = await prisma.classroomEnrollment.count({
+    const enrollmentCount = await db.classroomEnrollment.count({
       where: { classroomId: input.classroomId },
     });
 
@@ -297,7 +360,7 @@ class ChildrenService {
     // Already enrolled in another classroom for this academic year: transfer
     // the existing enrollment instead of creating a second one.
     if (existingEnrollment) {
-      return prisma.classroomEnrollment.update({
+      return db.classroomEnrollment.update({
         where: { id: existingEnrollment.id },
         data: { classroomId: input.classroomId, enrolledAt: new Date() },
         include: enrollmentResponseInclude,
@@ -305,7 +368,7 @@ class ChildrenService {
     }
 
     // Create the enrollment
-    const enrollment = await prisma.classroomEnrollment.create({
+    const enrollment = await db.classroomEnrollment.create({
       data: {
         childId,
         classroomId: input.classroomId,
@@ -394,9 +457,10 @@ class ChildrenService {
     childId: string,
     schoolId: string,
     input: CreateParentLinkInput,
+    db: DbClient = prisma,
   ): Promise<ParentChildLinkResponse> {
     // Verify child exists and belongs to the school
-    const child = await prisma.child.findFirst({
+    const child = await db.child.findFirst({
       where: { id: childId, schoolId },
     });
 
@@ -405,7 +469,7 @@ class ChildrenService {
     }
 
     // Verify parent user exists, belongs to the same school, and has role 'parent'
-    const parentUser = await prisma.user.findFirst({
+    const parentUser = await db.user.findFirst({
       where: { id: input.parentUserId, schoolId, role: 'parent', isActive: true },
     });
 
@@ -414,7 +478,7 @@ class ChildrenService {
     }
 
     // Check maximum 2 parent links per child
-    const existingLinksCount = await prisma.parentChildLink.count({
+    const existingLinksCount = await db.parentChildLink.count({
       where: { childId },
     });
 
@@ -423,7 +487,7 @@ class ChildrenService {
     }
 
     // Check for duplicate link (unique constraint)
-    const existingLink = await prisma.parentChildLink.findUnique({
+    const existingLink = await db.parentChildLink.findUnique({
       where: { childId_parentUserId: { childId, parentUserId: input.parentUserId } },
     });
 
@@ -432,7 +496,7 @@ class ChildrenService {
     }
 
     // Create the link
-    const link = await prisma.parentChildLink.create({
+    const link = await db.parentChildLink.create({
       data: {
         childId,
         parentUserId: input.parentUserId,
@@ -622,9 +686,10 @@ class ChildrenService {
     childId: string,
     schoolId: string,
     input: CreateEmergencyContactInput,
+    db: DbClient = prisma,
   ): Promise<EmergencyContactResponse> {
     // Verify child exists and belongs to the school
-    const child = await prisma.child.findFirst({
+    const child = await db.child.findFirst({
       where: { id: childId, schoolId },
     });
 
@@ -632,7 +697,7 @@ class ChildrenService {
       throw new ChildServiceError('Child not found', 404);
     }
 
-    const contact = await prisma.emergencyContact.create({
+    const contact = await db.emergencyContact.create({
       data: {
         childId,
         name: input.name,
@@ -746,8 +811,9 @@ class ChildrenService {
     childId: string,
     schoolId: string,
     input: CreateMedicalNoteInput,
+    db: DbClient = prisma,
   ): Promise<MedicalNoteResponse> {
-    const child = await prisma.child.findFirst({
+    const child = await db.child.findFirst({
       where: { id: childId, schoolId },
     });
 
@@ -755,7 +821,7 @@ class ChildrenService {
       throw new ChildServiceError('Child not found', 404);
     }
 
-    const note = await prisma.medicalNote.create({
+    const note = await db.medicalNote.create({
       data: {
         childId,
         type: input.type,

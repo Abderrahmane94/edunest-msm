@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import prisma from '../../lib/prisma';
+import prisma, { type DbClient } from '../../lib/prisma';
 import { branchFeeService, BranchFeeServiceError } from './branch-fee.service';
 import { derivePeriodStatus } from './billing-period.service';
 import type { CreateEnrollmentSchemaInput } from './payments.schema';
@@ -27,81 +27,87 @@ class EnrollmentService {
     input: CreateEnrollmentSchemaInput,
     _userId: string,
   ): Promise<EnrollmentGenerationResult> {
+    return await prisma.$transaction((tx) => this.createInTransaction(tx, input));
+  }
+
+  /** Same as `create`, inside the caller's transaction (used by the child registration). */
+  async createInTransaction(
+    tx: DbClient,
+    input: CreateEnrollmentSchemaInput,
+  ): Promise<EnrollmentGenerationResult> {
     const { childId, branchId, academicYearId, startDate, feeIds = [] } = input;
 
-    return await prisma.$transaction(async (tx) => {
-      const branch = await tx.branch.findUnique({ where: { id: branchId } });
-      if (!branch) {
-        throw new EnrollmentServiceError('Branch not found', 404, 'NOT_FOUND');
-      }
+    const branch = await tx.branch.findUnique({ where: { id: branchId } });
+    if (!branch) {
+      throw new EnrollmentServiceError('Branch not found', 404, 'NOT_FOUND');
+    }
 
-      const academicYear = await tx.academicYear.findUnique({ where: { id: academicYearId } });
-      if (!academicYear) {
-        throw new EnrollmentServiceError('Academic year not found', 404, 'NOT_FOUND');
-      }
+    const academicYear = await tx.academicYear.findUnique({ where: { id: academicYearId } });
+    if (!academicYear) {
+      throw new EnrollmentServiceError('Academic year not found', 404, 'NOT_FOUND');
+    }
 
-      const enrollStart = new Date(startDate);
-      const ayStart = new Date(academicYear.startDate);
-      const ayEnd = new Date(academicYear.endDate);
-      if (enrollStart < ayStart || enrollStart > ayEnd) {
-        const formatDate = (d: Date) => d.toISOString().split('T')[0];
-        throw new EnrollmentServiceError(
-          `Start date must be within the academic year range (${formatDate(ayStart)} to ${formatDate(ayEnd)})`,
-          400,
-          'VALIDATION_ERROR',
-        );
-      }
+    const enrollStart = new Date(startDate);
+    const ayStart = new Date(academicYear.startDate);
+    const ayEnd = new Date(academicYear.endDate);
+    if (enrollStart < ayStart || enrollStart > ayEnd) {
+      const formatDate = (d: Date) => d.toISOString().split('T')[0];
+      throw new EnrollmentServiceError(
+        `Start date must be within the academic year range (${formatDate(ayStart)} to ${formatDate(ayEnd)})`,
+        400,
+        'VALIDATION_ERROR',
+      );
+    }
 
-      const existing = await tx.enrollment.findUnique({
-        where: { childId_academicYearId: { childId, academicYearId } },
-      });
-      if (existing) {
-        throw new EnrollmentServiceError(
-          `An enrollment already exists for this child in the specified academic year (id: ${existing.id})`,
-          409,
-          'CONFLICT',
-        );
-      }
-
-      // Billing comes from the fees applied below; the enrollment itself
-      // carries no fee of its own (legacy columns left at their defaults).
-      const enrollment = await tx.enrollment.create({
-        data: {
-          childId,
-          branchId,
-          academicYearId,
-          baseFeeId: null,
-          startDate: enrollStart,
-          status: 'active',
-          recurringFee: new Prisma.Decimal(0),
-        },
-      });
-
-      try {
-        await branchFeeService.applyFeesToNewEnrollment(tx, { ...enrollment, academicYear }, feeIds);
-      } catch (err) {
-        if (err instanceof BranchFeeServiceError) {
-          throw new EnrollmentServiceError(err.message, err.statusCode, err.code);
-        }
-        throw err;
-      }
-
-      const periods = await tx.billingPeriod.findMany({
-        where: { enrollmentId: enrollment.id, cancelledAt: null },
-        select: { periodStart: true, periodEnd: true, amountDue: true },
-      });
-
-      return {
-        enrollmentId: enrollment.id,
-        periodsCreated: periods.length,
-        earliestPeriodStart: periods.reduce(
-          (min, p) => (p.periodStart < min ? p.periodStart : min),
-          enrollStart,
-        ),
-        latestPeriodEnd: periods.reduce((max, p) => (p.periodEnd > max ? p.periodEnd : max), enrollStart),
-        totalAmountDue: periods.reduce((sum, p) => sum.add(p.amountDue), new Prisma.Decimal(0)),
-      };
+    const existing = await tx.enrollment.findUnique({
+      where: { childId_academicYearId: { childId, academicYearId } },
     });
+    if (existing) {
+      throw new EnrollmentServiceError(
+        `An enrollment already exists for this child in the specified academic year (id: ${existing.id})`,
+        409,
+        'CONFLICT',
+      );
+    }
+
+    // Billing comes from the fees applied below; the enrollment itself
+    // carries no fee of its own (legacy columns left at their defaults).
+    const enrollment = await tx.enrollment.create({
+      data: {
+        childId,
+        branchId,
+        academicYearId,
+        baseFeeId: null,
+        startDate: enrollStart,
+        status: 'active',
+        recurringFee: new Prisma.Decimal(0),
+      },
+    });
+
+    try {
+      await branchFeeService.applyFeesToNewEnrollment(tx, { ...enrollment, academicYear }, feeIds);
+    } catch (err) {
+      if (err instanceof BranchFeeServiceError) {
+        throw new EnrollmentServiceError(err.message, err.statusCode, err.code);
+      }
+      throw err;
+    }
+
+    const periods = await tx.billingPeriod.findMany({
+      where: { enrollmentId: enrollment.id, cancelledAt: null },
+      select: { periodStart: true, periodEnd: true, amountDue: true },
+    });
+
+    return {
+      enrollmentId: enrollment.id,
+      periodsCreated: periods.length,
+      earliestPeriodStart: periods.reduce(
+        (min, p) => (p.periodStart < min ? p.periodStart : min),
+        enrollStart,
+      ),
+      latestPeriodEnd: periods.reduce((max, p) => (p.periodEnd > max ? p.periodEnd : max), enrollStart),
+      totalAmountDue: periods.reduce((sum, p) => sum.add(p.amountDue), new Prisma.Decimal(0)),
+    };
   }
 
   /**

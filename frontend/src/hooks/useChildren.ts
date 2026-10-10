@@ -338,6 +338,63 @@ export function useCreateChild() {
   });
 }
 
+export interface RegisterChildInput {
+  child: {
+    first_name: string; last_name: string; date_of_birth: string; gender: string; enrollment_date: string;
+    academic_year_id: string; national_id?: string; address?: string; place_of_birth?: string; blood_type?: BloodType;
+  };
+  parent?:
+    | { relationship: string; parentUserId: string }
+    | { relationship: string; newParent: { firstName: string; lastName: string; email: string; phone?: string } };
+  emergencyContacts: Omit<EmergencyContact, 'id'>[];
+  medicalNotes: { type: MedicalNoteType; title: string; details?: string | null; severity: MedicalNoteSeverity }[];
+  classroomId?: string;
+  billing?: { branchId: string; startDate: string; feeIds: string[] };
+}
+
+/** Saves the child and everything the wizard collected in one request: all or nothing. */
+export function useRegisterChild() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: RegisterChildInput): Promise<{ childId: string; billed: boolean }> => {
+      const { child } = data;
+      const res = await apiClient.post<{ child: { id: string }; billing: unknown }>('/children/register', {
+        child: {
+          firstName: child.first_name,
+          lastName: child.last_name,
+          dateOfBirth: child.date_of_birth,
+          gender: child.gender,
+          enrollmentDate: child.enrollment_date,
+          academicYearId: child.academic_year_id,
+          nationalId: child.national_id,
+          address: child.address,
+          placeOfBirth: child.place_of_birth,
+          bloodType: child.blood_type,
+        },
+        parent: data.parent,
+        emergencyContacts: data.emergencyContacts.map((c) => ({
+          name: c.name,
+          relationship: c.relationship,
+          phone: c.phone,
+          address: c.address || undefined,
+          nationalId: c.national_id || undefined,
+          isAuthorizedPickup: c.is_authorized_pickup,
+        })),
+        medicalNotes: data.medicalNotes.map((n) => ({ ...n, details: n.details || undefined })),
+        classroomId: data.classroomId,
+        billing: data.billing,
+      });
+      if (!res.success) throw apiError(res.error, 'Failed to register child');
+      return { childId: res.data!.child.id, billed: !!res.data!.billing };
+    },
+    onSuccess: () => {
+      for (const key of ['children', 'users', 'classrooms', 'enrollments', 'parent-links']) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    },
+  });
+}
+
 function mapMedicalNote(n: Record<string, unknown>): MedicalNote {
   return {
     id: n.id as string,

@@ -160,6 +160,9 @@ function applyQueryFilters(
 export const prisma =
   globalForPrisma.prisma ?? createTenantScopedClient();
 
+/** The client or an interactive transaction: lets one service step run inside another's transaction. */
+export type DbClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }

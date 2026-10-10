@@ -1048,7 +1048,33 @@
         "emergency": "Contacts d'urgence",
         "medical": "Notes médicales",
         "classroom": "Classe",
-        "fees": "Frais et paiement"
+        "fees": "Frais",
+        "summary": "Récapitulatif",
+        "payment": "Paiement"
+      },
+      "summary": {
+        "description": "Vérifiez les informations : rien n'est enregistré avant de cliquer sur « Créer l'inscription ». Si une partie échoue, rien n'est créé.",
+        "child": "Enfant",
+        "bornOn": "né(e) le {{date}}",
+        "enrolledOn": "inscrit(e) le {{date}}",
+        "parent": "Parent",
+        "noParent": "Aucun parent lié pour le moment",
+        "newAccount": "nouveau compte",
+        "emergency": "Contacts d'urgence",
+        "medical": "Notes médicales",
+        "none": "Aucun",
+        "classroom": "Classe",
+        "noClassroom": "Pas encore de classe",
+        "fees": "Frais",
+        "noBilling": "Pas de facturation pour le moment",
+        "edit": "Modifier",
+        "create": "Créer l'inscription"
+      },
+      "created": "L'inscription de {{name}} est enregistrée.",
+      "discard": {
+        "title": "Abandonner l'inscription ?",
+        "description": "Les informations saisies seront perdues : rien n'a encore été enregistré.",
+        "confirm": "Abandonner"
       },
       "next": "Suivant",
       "back": "Précédent",
@@ -1057,7 +1083,8 @@
         "description": "Liez un parent existant à cet enfant, ou créez-en un nouveau. Vous pouvez aussi passer cette étape et le faire plus tard.",
         "selectExisting": "Parent existant",
         "createNew": "Créer un nouveau parent",
-        "newParentIncomplete": "Veuillez renseigner le prénom, le nom et l'email du nouveau parent, ou laisser les champs vides pour passer cette étape."
+        "newParentIncomplete": "Veuillez renseigner le prénom, le nom et l'email du nouveau parent, ou laisser les champs vides pour passer cette étape.",
+        "invalidEmail": "L'email du nouveau parent n'est pas valide."
       },
       "classroom": {
         "description": "Choisissez la classe dans laquelle inscrire cet enfant, ou passez cette étape pour l'assigner plus tard.",

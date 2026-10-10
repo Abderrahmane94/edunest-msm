@@ -1,7 +1,7 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Clock, X, CheckCheck, Send, CloudOff, RefreshCw, AlertTriangle, Trash2 } from 'lucide-react';
+import { Check, Clock, X, CheckCheck, Send, CloudOff, RefreshCw, AlertTriangle, Trash2, Search, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/formatters';
 import { Avatar, Input, useConfirm } from '@/components/ui';
@@ -55,6 +55,50 @@ interface MarkBump {
   delay: number;
 }
 
+type StatusFilter = 'all' | 'unmarked' | AttendanceStatus;
+type SortOrder = 'firstName' | 'lastName' | 'unmarkedFirst';
+
+const STATUS_FILTERS: StatusFilter[] = ['all', 'unmarked', 'present', 'late', 'absent'];
+const SORT_ORDERS: SortOrder[] = ['firstName', 'lastName', 'unmarkedFirst'];
+
+/** Lower-case, accents removed: "Hélène" matches "helene". */
+function normalize(text: string): string {
+  return text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+}
+
+/** The children to show, in order, for a filter, a sort and a search. */
+function listChildren(
+  children: { id: string; first_name: string; last_name: string }[],
+  statusOf: (id: string) => AttendanceStatus | null,
+  filter: StatusFilter,
+  sort: SortOrder,
+  query: string,
+  collator: Intl.Collator,
+): string[] {
+  const needle = normalize(query.trim());
+  const byFirst = (a: (typeof children)[number], b: (typeof children)[number]) =>
+    collator.compare(a.first_name, b.first_name) || collator.compare(a.last_name, b.last_name);
+  const byLast = (a: (typeof children)[number], b: (typeof children)[number]) =>
+    collator.compare(a.last_name, b.last_name) || collator.compare(a.first_name, b.first_name);
+  return children
+    .filter((c) => {
+      if (needle && !normalize(`${c.first_name} ${c.last_name}`).includes(needle)) return false;
+      const status = statusOf(c.id);
+      if (filter === 'unmarked') return status === null;
+      if (filter !== 'all') return status === filter;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sort === 'lastName') return byLast(a, b);
+      if (sort === 'unmarkedFirst') {
+        const marked = Number(statusOf(a.id) !== null) - Number(statusOf(b.id) !== null);
+        if (marked !== 0) return marked;
+      }
+      return byFirst(a, b);
+    })
+    .map((c) => c.id);
+}
+
 function getTodayString(): string {
   return new Date().toISOString().split('T')[0];
 }
@@ -65,7 +109,7 @@ function getTodayString(): string {
  * lib/offlineQueue); what's waiting is shown on the children concerned.
  */
 export function TeacherAttendancePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { confirm, dialog: confirmDialog } = useConfirm();
   const [selectedDate, setSelectedDate] = React.useState<string>(getTodayString());
   const [attendanceMap, setAttendanceMap] = React.useState<Map<string, ChildAttendanceState>>(
@@ -111,7 +155,51 @@ export function TeacherAttendancePage() {
     });
     setAttendanceMap(newMap);
     setHasChanges(false);
+    setListVersion((v) => v + 1);
   }, [children, existingRecords, pending]);
+
+  // ─── Search, filter, sort ───
+  const [query, setQuery] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('all');
+  const [sortOrder, setSortOrder] = React.useState<SortOrder>('firstName');
+  // Bumped to rebuild the list: after loading a day, or on "refresh".
+  const [listVersion, setListVersion] = React.useState(0);
+  const collator = React.useMemo(
+    () => new Intl.Collator(i18n.language === 'ar' ? 'ar' : 'fr', { sensitivity: 'base' }),
+    [i18n.language],
+  );
+  const attendanceMapRef = React.useRef(attendanceMap);
+  attendanceMapRef.current = attendanceMap;
+
+  // The list is frozen while the teacher marks: a child marked in "not marked"
+  // (or with "not marked first") stays in place instead of vanishing or jumping
+  // under their finger. It's rebuilt when the search, filter or sort changes.
+  const visibleIds = React.useMemo(
+    () =>
+      listChildren(
+        children ?? [],
+        (id) => attendanceMapRef.current.get(id)?.status ?? null,
+        statusFilter,
+        sortOrder,
+        query,
+        collator,
+      ),
+    // attendanceMap is left out on purpose (read through the ref): see above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [children, statusFilter, sortOrder, query, collator, listVersion],
+  );
+  // Whether the frozen list differs from what the current marks would give.
+  const listOutdated = React.useMemo(() => {
+    const live = listChildren(
+      children ?? [],
+      (id) => attendanceMap.get(id)?.status ?? null,
+      statusFilter,
+      sortOrder,
+      query,
+      collator,
+    );
+    return live.join() !== visibleIds.join();
+  }, [children, attendanceMap, statusFilter, sortOrder, query, collator, visibleIds]);
 
   // A new day starts fresh.
   React.useEffect(() => {
@@ -140,11 +228,12 @@ export function TeacherAttendancePage() {
   // Mark all children as present
   const markAllPresent = React.useCallback(() => {
     const now = new Date().toISOString();
-    // The cards light up one after the other, top to bottom.
+    // The cards light up one after the other, top to bottom as shown.
     setBumps((prev) => {
       const next = { ...prev };
-      (children ?? []).forEach((child, i) => {
-        next[child.id] = { n: (prev[child.id]?.n ?? 0) + 1, delay: Math.min(i, 12) * 45 };
+      (children ?? []).forEach((child) => {
+        const position = Math.max(0, visibleIds.indexOf(child.id));
+        next[child.id] = { n: (prev[child.id]?.n ?? 0) + 1, delay: Math.min(position, 12) * 45 };
       });
       return next;
     });
@@ -157,7 +246,7 @@ export function TeacherAttendancePage() {
     });
     setHasChanges(true);
     setSubmitted(false);
-  }, [children]);
+  }, [children, visibleIds]);
 
   // Save: queued on the device and sent right away when online (or as soon
   // as the connection returns).
@@ -195,6 +284,13 @@ export function TeacherAttendancePage() {
     const late = values.filter((v) => v.status === 'late').length;
     return { total, marked, present, absent, late };
   }, [attendanceMap]);
+
+  /** How many children a status chip covers, live. */
+  function countFor(filter: StatusFilter): number {
+    if (filter === 'all') return stats.total;
+    if (filter === 'unmarked') return stats.total - stats.marked;
+    return stats[filter];
+  }
 
   const isFetching = (q: { isPending: boolean; fetchStatus: string }) => q.isPending && q.fetchStatus === 'fetching';
   const isLoading = isFetching(classroomQuery) || isFetching(childrenQuery) || isFetching(recordsQuery);
@@ -327,11 +423,121 @@ export function TeacherAttendancePage() {
         </button>
       </div>
 
+      {/* Search, sort and status filter */}
+      {children && children.length > 0 && (
+        <div className="px-4 pb-3 max-w-2xl mx-auto w-full space-y-2">
+          <div className="flex gap-2">
+            <div className="relative flex-1 min-w-0">
+              <Search className="pointer-events-none absolute top-1/2 -translate-y-1/2 start-3 w-4 h-4 text-text-disabled" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t('teacherAttendance.list.search')}
+                aria-label={t('teacherAttendance.list.search')}
+                className="w-full min-h-[44px] ps-9 pe-3 rounded-lg border border-border bg-card text-body text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-primary"
+              />
+            </div>
+            {/* On a phone just the icon (the search keeps the room); the full menu from sm up. */}
+            <div className="relative shrink-0">
+              <ArrowUpDown
+                className={cn(
+                  'pointer-events-none absolute top-1/2 -translate-y-1/2 start-3.5 sm:start-3 w-4 h-4',
+                  sortOrder === 'firstName' ? 'text-text-secondary' : 'text-primary',
+                )}
+              />
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                aria-label={t('teacherAttendance.list.sortLabel')}
+                title={t(`teacherAttendance.list.sort.${sortOrder}`)}
+                className={cn(
+                  'min-h-[44px] w-[44px] sm:w-auto ps-9 pe-0 sm:pe-3 rounded-lg border bg-card text-caption appearance-none sm:appearance-auto',
+                  'text-transparent sm:text-text-primary focus:outline-none focus:border-primary',
+                  sortOrder === 'firstName' ? 'border-border' : 'border-primary',
+                )}
+              >
+                {SORT_ORDERS.map((s) => (
+                  <option key={s} value={s} className="text-text-primary">
+                    {t(`teacherAttendance.list.sort.${s}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* One row of chips, scrolling sideways on a phone */}
+          <div
+            role="group"
+            aria-label={t('teacherAttendance.list.filterLabel')}
+            className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1"
+          >
+            {STATUS_FILTERS.map((f) => {
+              const count = countFor(f);
+              const active = statusFilter === f;
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setStatusFilter(f)}
+                  aria-pressed={active}
+                  className={cn(
+                    'shrink-0 inline-flex items-center gap-1.5 min-h-[36px] rounded-full px-3 text-caption font-medium border transition-colors',
+                    active
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-card text-text-secondary border-border hover:bg-hover',
+                  )}
+                >
+                  {f !== 'all' && f !== 'unmarked' && (
+                    <span className={cn('w-2 h-2 rounded-full', STATUS_LOOK[f].bg)} aria-hidden="true" />
+                  )}
+                  {t(`teacherAttendance.list.filters.${f}`)}
+                  <span className={cn('rounded-full px-1.5 text-micro', active ? 'bg-white/20' : 'bg-subtle')}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* The list is kept still while marking; offer to bring it up to date. */}
+          {listOutdated && (
+            <div className="flex items-center justify-between gap-2 rounded-lg bg-subtle px-3 py-2">
+              <p className="text-caption text-text-secondary">{t('teacherAttendance.list.outdated')}</p>
+              <button
+                type="button"
+                onClick={() => setListVersion((v) => v + 1)}
+                className="shrink-0 inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-lg text-caption font-medium text-primary hover:bg-hover"
+              >
+                <RefreshCw className="w-4 h-4" />
+                {t('teacherAttendance.list.refresh')}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Children list */}
       <div className="flex-1 px-4 pb-4 max-w-2xl mx-auto w-full">
         <div className="space-y-3">
-          {children && children.length > 0 ? (
-            children.map((child) => {
+          {children && children.length > 0 && visibleIds.length === 0 ? (
+            <div className="text-center py-12 space-y-3">
+              <p className="text-body text-text-secondary">{t('teacherAttendance.list.noMatch')}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery('');
+                  setStatusFilter('all');
+                }}
+                className="inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-lg border border-border bg-card text-caption font-medium text-text-primary hover:bg-hover"
+              >
+                {t('teacherAttendance.list.clear')}
+              </button>
+            </div>
+          ) : children && children.length > 0 ? (
+            visibleIds.map((id) => {
+              const child = children.find((c) => c.id === id);
+              if (!child) return null;
               const state = attendanceMap.get(child.id);
               const currentStatus = state?.status ?? null;
               const look = currentStatus ? STATUS_LOOK[currentStatus] : null;

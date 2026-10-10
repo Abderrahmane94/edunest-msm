@@ -1660,6 +1660,27 @@
     "selectDate": "اختر التاريخ",
     "marked": "تم تسجيلهم",
     "markAllPresent": "تسجيل الجميع حاضرين",
+    "list": {
+      "search": "ابحث عن طفل…",
+      "filterLabel": "تصفية حسب الحالة",
+      "filters": {
+        "all": "الكل",
+        "unmarked": "غير مسجلين",
+        "present": "حاضرون",
+        "late": "متأخرون",
+        "absent": "غائبون"
+      },
+      "sortLabel": "ترتيب",
+      "sort": {
+        "firstName": "الاسم (أ → ي)",
+        "lastName": "اللقب (أ → ي)",
+        "unmarkedFirst": "غير المسجلين أولًا"
+      },
+      "refresh": "تحديث القائمة",
+      "outdated": "بعض الأطفال لم يعودوا مطابقين للتصفية.",
+      "noMatch": "لا يوجد طفل مطابق.",
+      "clear": "عرض الكل"
+    },
     "submit": "حفظ الحضور",
     "submitting": "جاري الحفظ...",
     "submitSuccess": "تم حفظ الحضور بنجاح",

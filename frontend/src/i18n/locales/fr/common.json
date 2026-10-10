@@ -1245,6 +1245,7 @@
       "annual": "Annuel",
       "startDate": "Date de début",
       "trialDays": "Jours d'essai",
+      "trialUntil": "Essai gratuit, facturé à partir du {{date}}",
       "status": "Statut",
       "period": "Période",
       "price": "Tarif",

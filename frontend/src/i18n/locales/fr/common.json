@@ -1655,6 +1655,27 @@
     "selectDate": "Sélectionner la date",
     "marked": "marqués",
     "markAllPresent": "Marquer tous présents",
+    "list": {
+      "search": "Rechercher un enfant…",
+      "filterLabel": "Filtrer par statut",
+      "filters": {
+        "all": "Tous",
+        "unmarked": "Non marqués",
+        "present": "Présents",
+        "late": "En retard",
+        "absent": "Absents"
+      },
+      "sortLabel": "Trier",
+      "sort": {
+        "firstName": "Prénom (A → Z)",
+        "lastName": "Nom (A → Z)",
+        "unmarkedFirst": "Non marqués d'abord"
+      },
+      "refresh": "Actualiser la liste",
+      "outdated": "Des enfants ne correspondent plus au filtre.",
+      "noMatch": "Aucun enfant ne correspond.",
+      "clear": "Tout afficher"
+    },
     "submit": "Enregistrer la présence",
     "submitting": "Enregistrement...",
     "submitSuccess": "Présence enregistrée avec succès",

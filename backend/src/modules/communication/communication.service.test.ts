@@ -2013,3 +2013,42 @@ describe('CommunicationService', () => {
     });
   });
 });
+
+describe('communicationService.getClassroomDayReports', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("lists the day's reports for the teacher's own classroom", async () => {
+    mockPrisma.classroom.findFirst.mockResolvedValue({ teacherUserId: 'teacher-1' });
+    mockPrisma.dailyReport.findMany.mockResolvedValue([
+      { id: 'r1', childId: 'c1', mood: 'happy' },
+      { id: 'r2', childId: 'c2', mood: 'tired' },
+    ]);
+
+    const result = await communicationService.getClassroomDayReports('room-1', 'school-1', 'teacher-1', 'teacher', '2026-10-10');
+
+    expect(result).toEqual([
+      { childId: 'c1', reportId: 'r1', mood: 'happy' },
+      { childId: 'c2', reportId: 'r2', mood: 'tired' },
+    ]);
+    const where = mockPrisma.dailyReport.findMany.mock.calls[0][0].where;
+    expect(where.date).toEqual(new Date('2026-10-10'));
+    expect(where.child).toEqual({ schoolId: 'school-1', enrollments: { some: { classroomId: 'room-1' } } });
+  });
+
+  it("refuses another teacher's classroom", async () => {
+    mockPrisma.classroom.findFirst.mockResolvedValue({ teacherUserId: 'teacher-2' });
+    await expect(
+      communicationService.getClassroomDayReports('room-1', 'school-1', 'teacher-1', 'teacher', '2026-10-10'),
+    ).rejects.toMatchObject({ statusCode: 403 });
+    expect(mockPrisma.dailyReport.findMany).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 for a classroom outside the school', async () => {
+    mockPrisma.classroom.findFirst.mockResolvedValue(null);
+    await expect(
+      communicationService.getClassroomDayReports('room-x', 'school-1', 'admin-1', 'admin', '2026-10-10'),
+    ).rejects.toMatchObject({ statusCode: 404 });
+  });
+});

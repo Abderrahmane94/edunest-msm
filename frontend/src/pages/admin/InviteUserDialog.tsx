@@ -121,6 +121,7 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
     { value: 'teacher', label: t('users.roles.teacher') },
     { value: 'parent', label: t('users.roles.parent') },
     { value: 'admin', label: t('users.roles.admin') },
+    { value: 'administrative', label: t('users.roles.administrative') },
   ];
 
   const langOptions = [

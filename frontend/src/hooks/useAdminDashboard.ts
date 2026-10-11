@@ -22,9 +22,10 @@ export interface AdminDashboard {
     month: string;
     collected: number;
     collectedPreviousMonth: number;
-    expenses: number;
-    salaries: number;
-    net: number;
+    /** null for the administrative staff, who don't see expenses and payroll. */
+    expenses: number | null;
+    salaries: number | null;
+    net: number | null;
     late: { amount: number; children: number };
     recoveryRate: number | null;
     monthly: { month: string; collected: number }[];
@@ -43,7 +44,7 @@ export interface AdminDashboard {
 
 export type SchoolState = 'none' | 'trial' | 'active' | 'overdue' | 'cancelled' | 'suspended' | 'disabled';
 export type SchoolAlert = 'overdue' | 'renewalDue' | 'trialEnding' | 'noSubscription' | 'overLimit' | 'dormant';
-type PerRole = { admin: number; teacher: number; parent: number };
+type PerRole = { admin: number; administrative: number; teacher: number; parent: number };
 
 export interface PlatformSchoolRow {
   id: string;

@@ -6,7 +6,8 @@ import { validateBranchAccess, validateEnrollmentAccess, resolveBranchFilter } f
 import { ZodError } from 'zod';
 
 /** Roles considered "Staff" for enrollment access. */
-const STAFF_ROLES = ['admin', 'super_admin'] as const;
+// Route guards decide which of them may use each endpoint.
+const STAFF_ROLES = ['admin', 'administrative', 'super_admin'] as const;
 
 export const enrollmentController = {
   /**

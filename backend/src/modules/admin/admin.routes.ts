@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { adminController } from './admin.controller';
-import { requireAdmin, requireSuperAdmin } from '../../middleware/rbac.middleware';
+import { requireSuperAdmin, requireOffice } from '../../middleware/rbac.middleware';
 
 const router = Router();
 
 // GET /api/admin/dashboard — School-level KPI stats (admin only)
-router.get('/dashboard', requireAdmin, adminController.getDashboard);
+router.get('/dashboard', requireOffice, adminController.getDashboard);
 
 // GET /api/admin/platform-stats — The platform admin's dashboard (super_admin only)
 router.get('/platform-stats', requireSuperAdmin, adminController.getPlatformStats);

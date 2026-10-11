@@ -109,6 +109,10 @@ class InventoryService {
     if (role === 'teacher' && input.type !== 'use') {
       throw new InventoryServiceError('Only an administrator can record purchases and counts', 403);
     }
+    // Expenses are the director's: the administrative staff record the purchase only.
+    if (role === 'administrative' && input.type === 'purchase' && input.expense) {
+      throw new InventoryServiceError('Only the director can record expenses', 403);
+    }
     const item = await this.find(id, schoolId);
     if (!item.isActive) throw new InventoryServiceError('This supply is put aside', 400);
     return prisma.$transaction(async (tx) => {

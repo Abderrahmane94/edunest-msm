@@ -118,6 +118,7 @@ function getDefaultPath(role?: string): string {
   switch (role) {
     case 'super_admin':
     case 'admin':
+    case 'administrative':
       return '/admin';
     case 'teacher':
       return '/teacher';
@@ -140,6 +141,19 @@ function getAdminNavItems(role: string): NavItem[] {
       { label: 'nav.users',     href: '/admin/users', icon: Users },
       { label: 'nav.billing',   href: '/admin/billing', icon: Wallet },
       { label: 'nav.trash',     href: '/admin/trash', icon: Trash2 },
+    ];
+  }
+
+  // administrative (إداري): the office's day-to-day work, no management
+  if (role === 'administrative') {
+    return [
+      { label: 'nav.dashboard',     href: '/admin', icon: LayoutDashboard },
+      { label: 'nav.classrooms',    href: '/admin/classrooms', icon: School },
+      { label: 'nav.children',      href: '/admin/children', icon: Baby },
+      { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck },
+      { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle },
+      { label: 'nav.payments',      href: '/admin/payments', icon: CreditCard },
+      { label: 'nav.inventory',     href: '/admin/inventory', icon: Package },
     ];
   }
 
@@ -279,7 +293,8 @@ function TrashRoute() {
 function AdminLayoutWrapper() {
   const { user } = useAuth();
   const navItems = getAdminNavItems(user?.role || 'admin');
-  const isAdmin = user?.role === 'admin';
+  // The school's office: the director and the administrative staff (not super_admin).
+  const isAdmin = user?.role === 'admin' || user?.role === 'administrative';
 
   return (
     <>
@@ -349,39 +364,45 @@ export const routes: RouteObject[] = [
       // Admin portal
       {
         path: '/admin',
-        element: <RoleRoute allowedRoles={['super_admin', 'admin']} />,
+        element: <RoleRoute allowedRoles={['super_admin', 'admin', 'administrative']} />,
         children: [
           {
             element: <AdminLayoutWrapper />,
             children: [
               { index: true, element: <DashboardPage /> },
-              { path: 'schools', element: <SchoolsPage /> },
-              { path: 'schools/:schoolId', element: <SchoolDetailPage /> },
-              { path: 'users', element: <UsersPage /> },
-              { path: 'users/:userId', element: <UserDetailPage /> },
-              { path: 'staff', element: <StaffListPage /> },
-              { path: 'staff/:userId', element: <StaffProfilePage /> },
-              // Academic years moved into Settings; old links still land there.
-              { path: 'academic-years', element: <Navigate to="/admin/settings?tab=years" replace /> },
-              { path: 'academic-years/:yearId', element: <OldAcademicYearRedirect /> },
+              // Management: the director only (the administrative staff land on the dashboard).
+              {
+                element: <RoleRoute allowedRoles={['super_admin', 'admin']} />,
+                children: [
+                  { path: 'schools', element: <SchoolsPage /> },
+                  { path: 'schools/:schoolId', element: <SchoolDetailPage /> },
+                  { path: 'users', element: <UsersPage /> },
+                  { path: 'users/:userId', element: <UserDetailPage /> },
+                  { path: 'staff', element: <StaffListPage /> },
+                  { path: 'staff/:userId', element: <StaffProfilePage /> },
+                  // Academic years moved into Settings; old links still land there.
+                  { path: 'academic-years', element: <Navigate to="/admin/settings?tab=years" replace /> },
+                  { path: 'academic-years/:yearId', element: <OldAcademicYearRedirect /> },
+                  { path: 'timetable', element: <Navigate to="/admin/settings?tab=days" replace /> },
+                  { path: 'billing', element: <BillingPage /> },
+                  { path: 'payroll', element: <PayrollPage /> },
+                  { path: 'payments/enrollments/:enrollmentId', element: <EnrollmentDetailPage /> },
+                  { path: 'trash', element: <TrashRoute /> },
+                  { path: 'settings', element: <SchoolSettingsPage /> },
+                  { path: 'settings/academic-years/:yearId', element: <AcademicYearDetailPage /> },
+                  { path: 'settings/academic-years/:yearId/prepare', element: <YearRolloverPage /> },
+                ],
+              },
               { path: 'classrooms', element: <ClassroomsPage /> },
               { path: 'classrooms/:classroomId', element: <ClassroomDetailPage /> },
-              { path: 'timetable', element: <Navigate to="/admin/settings?tab=days" replace /> },
               { path: 'children', element: <ChildrenPage /> },
               { path: 'children/:childId', element: <ChildDetailPage /> },
               { path: 'attendance', element: <AttendancePage /> },
               { path: 'communication', element: <CommunicationPage /> },
               { path: 'communication/announcements/:announcementId', element: <AnnouncementDetailPage /> },
               { path: 'communication/events/:eventId', element: <EventDetailPage /> },
-              { path: 'billing', element: <BillingPage /> },
-              { path: 'payroll', element: <PayrollPage /> },
               { path: 'inventory', element: <InventoryPage /> },
               { path: 'payments', element: <PaymentManagementPage /> },
-              { path: 'payments/enrollments/:enrollmentId', element: <EnrollmentDetailPage /> },
-              { path: 'trash', element: <TrashRoute /> },
-              { path: 'settings', element: <SchoolSettingsPage /> },
-              { path: 'settings/academic-years/:yearId', element: <AcademicYearDetailPage /> },
-              { path: 'settings/academic-years/:yearId/prepare', element: <YearRolloverPage /> },
             ],
           },
         ],

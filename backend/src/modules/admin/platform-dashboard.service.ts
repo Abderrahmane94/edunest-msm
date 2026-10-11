@@ -67,8 +67,8 @@ export interface PlatformDashboard {
   };
   usage: {
     /** Users who used the app in the last 7 days, per role. */
-    activeUsers: { admin: number; teacher: number; parent: number };
-    totalUsers: { admin: number; teacher: number; parent: number };
+    activeUsers: { admin: number; administrative: number; teacher: number; parent: number };
+    totalUsers: { admin: number; administrative: number; teacher: number; parent: number };
     totalChildren: number;
     /** Platform-wide activity in the last 7 days. */
     lastWeek: { attendance: number; dailyReports: number; messages: number; payments: number };
@@ -158,7 +158,7 @@ export const platformDashboardService = {
     const growthMonths = monthKeys(today, GROWTH_MONTHS);
     const weekAgo = new Date(now.getTime() - ACTIVE_WINDOW_DAYS * DAY_MS);
     const live = { deletedAt: null };
-    const roles = ['admin', 'teacher', 'parent'] as const;
+    const roles = ['admin', 'administrative', 'teacher', 'parent'] as const;
 
     const [
       schools,

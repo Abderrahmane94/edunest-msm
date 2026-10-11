@@ -129,6 +129,7 @@
         "activeOf": "sur {{total}} comptes",
         "roles": {
           "admin": "Directeurs",
+          "administrative": "Agents administratifs",
           "teacher": "Enseignants",
           "parent": "Parents"
         },
@@ -476,6 +477,7 @@
       "supplyAside": "Cet article est mis de côté.",
       "supplyNotEnough": "Pas assez en stock : il reste {{left}}.",
       "supplyAdminOnly": "Seul un administrateur peut enregistrer les achats et les inventaires.",
+      "expenseDirectorOnly": "Seul le directeur peut enregistrer les dépenses.",
       "equipmentNotFound": "Matériel introuvable.",
       "rolloverSameYear": "Choisissez une autre année à copier.",
       "rolloverStartOutside": "La date de début de facturation doit être dans la nouvelle année.",
@@ -751,6 +753,7 @@
     "roles": {
       "super_admin": "Super Admin",
       "admin": "Administrateur",
+      "administrative": "Agent administratif",
       "teacher": "Enseignant",
       "parent": "Parent"
     },
@@ -2057,7 +2060,8 @@
       "start": "Démarrer",
       "selectPrompt": "Sélectionnez une conversation",
       "roleTeacher": "Enseignant",
-      "roleAdmin": "Directeur"
+      "roleAdmin": "Directeur",
+      "roleAdministrative": "Agent administratif"
     }
   },
   "teacherCommunication": {
@@ -2144,6 +2148,7 @@
     "noColleagues": "Aucun collègue trouvé dans cette école",
     "roleTeacher": "Enseignant",
     "roleAdmin": "Directeur",
+    "roleAdministrative": "Agent administratif",
     "waiting": "En attente d'envoi",
     "sending": "Envoi…",
     "notSent": "Non envoyé",

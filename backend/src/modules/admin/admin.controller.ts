@@ -11,6 +11,10 @@ export const adminController = {
     try {
       const schoolId = req.user!.schoolId!;
       const stats = await dashboardService.getAdminDashboard(schoolId);
+      // The administrative staff see collections, not expenses and payroll.
+      if (req.user!.role === 'administrative') {
+        stats.finance = { ...stats.finance, expenses: null, salaries: null, net: null };
+      }
       res.status(200).json(successResponse(stats));
     } catch (error) {
       next(error);

@@ -262,7 +262,7 @@ function UsageSection({ data }: { data: Dashboard }) {
   const { t } = useTranslation();
   const n = useNumbers();
   const u = data.usage;
-  const roles = ['admin', 'teacher', 'parent'] as const;
+  const roles = ['admin', 'administrative', 'teacher', 'parent'] as const;
   const active = roles.reduce((sum, r) => sum + u.activeUsers[r], 0);
   const total = roles.reduce((sum, r) => sum + u.totalUsers[r], 0);
   const activity = [

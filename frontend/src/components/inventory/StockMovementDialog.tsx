@@ -7,6 +7,7 @@ import { FormField } from '@/components/forms';
 import { cn } from '@/lib/utils';
 import { errorMessage } from '@/lib/errorMessage';
 import { qty, useRecordStockMovement, type StockItem, type StockMovementInput } from '@/hooks/useInventory';
+import { useIsDirector } from '@/lib/roles';
 
 export type MovementType = StockMovementInput['type'];
 
@@ -39,6 +40,8 @@ export function StockMovementDialog({
 }) {
   const { t } = useTranslation();
   const record = useRecordStockMovement();
+  // Expenses are the director's: the administrative staff record the purchase only.
+  const canRecordExpense = useIsDirector();
   const [type, setType] = React.useState<MovementType>(initialType);
   const [quantity, setQuantity] = React.useState('');
   const [date, setDate] = React.useState(localToday());
@@ -59,7 +62,7 @@ export function StockMovementDialog({
     setQuantity(initialType === 'adjustment' ? qty(item.quantity) : '');
     setDate(localToday());
     setNote('');
-    setWithExpense(true);
+    setWithExpense(canRecordExpense);
     setAmount('');
     setCategory(item.category === 'food' ? 'food' : 'supplies');
     setError(null);
@@ -168,7 +171,7 @@ export function StockMovementDialog({
             </p>
           )}
 
-          {type === 'purchase' && (
+          {type === 'purchase' && canRecordExpense && (
             <div className="rounded-md border border-border p-3 space-y-2">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input

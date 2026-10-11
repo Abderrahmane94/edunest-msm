@@ -59,6 +59,17 @@ describe('recordMovement', () => {
     expect((movement as unknown as { quantity: Prisma.Decimal }).quantity.toNumber()).toBe(-2);
   });
 
+  it('the administrative staff buy without recording the expense', async () => {
+    await expect(
+      inventoryService.recordMovement('i1', 's1', 'u3', 'administrative', {
+        type: 'purchase', quantity: 1, date: '2026-10-11', expense: { amount: 100, category: 'supplies' },
+      }),
+    ).rejects.toMatchObject({ statusCode: 403 });
+    await inventoryService.recordMovement('i1', 's1', 'u3', 'administrative', { type: 'purchase', quantity: 1, date: '2026-10-11' });
+    expect(db.expense.create).not.toHaveBeenCalled();
+    expect(stockSetTo()).toBe(6);
+  });
+
   it('teachers record uses only', async () => {
     await expect(
       inventoryService.recordMovement('i1', 's1', 'u2', 'teacher', { type: 'purchase', quantity: 1, date: '2026-10-11' }),

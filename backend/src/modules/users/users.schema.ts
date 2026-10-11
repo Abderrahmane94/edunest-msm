@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const inviteUserSchema = z.object({
   email: z.string().email('Invalid email address'),
-  role: z.enum(['admin', 'teacher', 'parent', 'student'], {
+  role: z.enum(['admin', 'administrative', 'teacher', 'parent', 'student'], {
     errorMap: () => ({ message: 'Role must be admin, teacher, parent, or student' }),
   }),
 });
@@ -36,7 +36,7 @@ export const updateLanguageSchema = z.object({
 export const updateUserSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(100).optional(),
   lastName: z.string().min(1, 'Last name is required').max(100).optional(),
-  role: z.enum(['admin', 'teacher', 'parent'], {
+  role: z.enum(['admin', 'administrative', 'teacher', 'parent'], {
     errorMap: () => ({ message: 'Role must be admin, teacher, or parent' }),
   }).optional(),
   preferredLanguage: z.enum(['ar', 'fr']).optional(),
@@ -49,7 +49,7 @@ export const createUserDirectlySchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(100),
   lastName: z.string().min(1, 'Last name is required').max(100),
   email: z.string().email('Invalid email address'),
-  role: z.enum(['admin', 'teacher', 'parent'], {
+  role: z.enum(['admin', 'administrative', 'teacher', 'parent'], {
     errorMap: () => ({ message: 'Role must be admin, teacher, or parent' }),
   }),
   preferredLanguage: z.enum(['ar', 'fr']).optional().default('fr'),

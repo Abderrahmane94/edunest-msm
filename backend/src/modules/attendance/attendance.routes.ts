@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { attendanceController } from './attendance.controller';
-import { requireTeacherOrAdmin, requireActiveRole, requireAdmin } from '../../middleware/rbac.middleware';
+import { requireOffice, requireTeacherOrOffice, requireActiveRole } from '../../middleware/rbac.middleware';
 import { validate, validateParams, validateQuery } from '../../middleware/validation.middleware';
 import {
   bulkMarkAttendanceSchema,
@@ -21,7 +21,7 @@ const router = Router();
 // POST /api/attendance/bulk-mark — Bulk mark attendance (teacher or admin)
 router.post(
   '/bulk-mark',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   validate(bulkMarkAttendanceSchema),
   rejectClosedYear((req) => yearOf.classroom((req.body as { classroomId: string }).classroomId)),
   attendanceController.bulkMark,
@@ -31,7 +31,7 @@ router.post(
 // or updating each child (safe to send again; used for offline attendance)
 router.put(
   '/day',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   validate(saveAttendanceDaySchema),
   rejectClosedYear((req) => yearOf.classroom((req.body as { classroomId: string }).classroomId)),
   attendanceController.saveDay,
@@ -40,7 +40,7 @@ router.put(
 // GET /api/attendance/tracking — Get marking status for all classrooms (admin only)
 router.get(
   '/tracking',
-  requireAdmin,
+  requireOffice,
   attendanceController.getMarkingStatus,
 );
 
@@ -55,7 +55,7 @@ router.get(
 // PATCH /api/attendance/:id — Update a single attendance record (teacher or admin)
 router.patch(
   '/:id',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   validateParams(idParamSchema),
   validate(updateAttendanceSchema),
   rejectClosedYear((req) => yearOf.attendance(req.params.id)),
@@ -65,7 +65,7 @@ router.patch(
 // GET /api/attendance/report/classroom/:classroomId — Monthly classroom attendance report (admin only)
 router.get(
   '/report/classroom/:classroomId',
-  requireAdmin,
+  requireOffice,
   validateParams(classroomIdParamSchema),
   validateQuery(attendanceReportQuerySchema),
   attendanceController.getClassroomReport,
@@ -83,7 +83,7 @@ router.get(
 // GET /api/attendance/classroom/:classroomId — Get attendance for a classroom on a date (teacher or admin)
 router.get(
   '/classroom/:classroomId',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   validateParams(classroomIdParamSchema),
   validateQuery(classroomAttendanceQuerySchema),
   attendanceController.getByClassroom,

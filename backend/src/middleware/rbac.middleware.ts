@@ -9,6 +9,7 @@ import { UserRole } from '@prisma/client';
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
   super_admin: 5,
   admin: 4,
+  administrative: 3.5,
   teacher: 3,
   parent: 2,
   student: 1,
@@ -48,6 +49,11 @@ export function rbac(allowedRoles: UserRole[]) {
   };
 }
 
+/** The school office: the director (admin), the administrative staff (إداري), or super_admin. */
+export function isOfficeRole(role: string | undefined): boolean {
+  return role === 'admin' || role === 'administrative' || role === 'super_admin';
+}
+
 /**
  * Shorthand middleware that restricts access to super_admin only.
  * Use for platform-level operations like creating/deactivating schools.
@@ -59,6 +65,20 @@ export const requireSuperAdmin = rbac(['super_admin']);
  * Use for school administration endpoints.
  */
 export const requireAdmin = rbac(['super_admin', 'admin']);
+
+/**
+ * The school office: the director (admin) and the administrative staff
+ * (إداري). Use for day-to-day work — children, classes, attendance,
+ * communication, inventory, collecting payments — not for management
+ * (users, settings, fees, expenses, payroll), which stays requireAdmin.
+ */
+export const requireOffice = rbac(['super_admin', 'admin', 'administrative']);
+
+/** Teachers and the school office. */
+export const requireTeacherOrOffice = rbac(['super_admin', 'admin', 'administrative', 'teacher']);
+
+/** Parents and the school office. */
+export const requireParentOrOffice = rbac(['super_admin', 'admin', 'administrative', 'parent']);
 
 /**
  * Shorthand middleware that restricts access to teacher, admin, or super_admin.
@@ -76,4 +96,4 @@ export const requireParentOrAdmin = rbac(['super_admin', 'admin', 'parent']);
  * Middleware that restricts access to authenticated users with any active role.
  * Excludes the inactive student role.
  */
-export const requireActiveRole = rbac(['super_admin', 'admin', 'teacher', 'parent']);
+export const requireActiveRole = rbac(['super_admin', 'admin', 'administrative', 'teacher', 'parent']);

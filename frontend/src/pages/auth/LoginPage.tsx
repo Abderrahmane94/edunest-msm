@@ -25,7 +25,8 @@ const ERROR_ICONS: Record<LoginError['type'], typeof AlertCircle> = {
 function getDefaultRoute(role?: string): string {
   switch (role) {
     case 'super_admin':
-    case 'admin': return '/admin';
+    case 'admin':
+    case 'administrative': return '/admin';
     case 'teacher': return '/teacher';
     case 'parent': return '/parent';
     default: return '/admin';

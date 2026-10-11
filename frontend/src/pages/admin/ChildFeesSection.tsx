@@ -14,6 +14,7 @@ import { useCreateEnrollment } from '@/hooks/useEnrollments';
 import { setSelectedYearId, useSelectedYear, useYearClosed } from '@/hooks/useSelectedYear';
 import type { AcademicYear } from '@/hooks/useAcademicYears';
 import { FeeChecklist, clampToAcademicYear, useOfferedFees } from './FeeChecklist';
+import { useIsDirector } from '@/lib/roles';
 
 interface AssignedFee {
   key: string;
@@ -188,6 +189,7 @@ export function ChildFeesSection({
   const { year, enabled: byYear } = useSelectedYear();
   // A closed year is looked at, not changed.
   const closed = useYearClosed();
+  const isDirector = useIsDirector();
   const [enrollOpen, setEnrollOpen] = React.useState(false);
   const notBilled = byYear && !!year && !isLoading && !isError && (periods ?? []).length === 0;
   const fees = React.useMemo(() => groupByFee(periods ?? [], localToday()), [periods]);
@@ -224,7 +226,8 @@ export function ChildFeesSection({
             {t('children.fees.enroll')}
           </Button>
         )}
-        {showManageBilling && currentEnrollmentId && (
+        {/* Discounts, withdrawal…: the director's. */}
+        {showManageBilling && isDirector && currentEnrollmentId && (
           <Button
             type="button"
             variant="secondary"

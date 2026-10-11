@@ -102,6 +102,7 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^This supply is put aside$/, 'supplyAside'],
   [/^Not enough in stock \((?<left>.+) left\)$/, 'supplyNotEnough'],
   [/^Only an administrator can record purchases and counts$/, 'supplyAdminOnly'],
+  [/^Only the director can record expenses$/, 'expenseDirectorOnly'],
   [/^Equipment not found$/, 'equipmentNotFound'],
   [/^The billing start date must be within the new school year$/, 'rolloverStartOutside'],
   [/^A child is sent to a class that is not copied$/, 'rolloverClassNotCopied'],

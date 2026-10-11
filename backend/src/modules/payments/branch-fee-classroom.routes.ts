@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { branchFeeClassroomController } from './branch-fee-classroom.controller';
-import { requireAdmin } from '../../middleware/rbac.middleware';
+import { requireAdmin, requireOffice } from '../../middleware/rbac.middleware';
 
 const router = Router();
 
@@ -14,6 +14,6 @@ router.put('/fees/:branchFeeId/classrooms', requireAdmin, branchFeeClassroomCont
 router.put('/fees/:branchFeeId/scope', requireAdmin, branchFeeClassroomController.changeScope);
 
 // GET /api/payments/classrooms/:classroomId/fees — Fees applicable to a classroom
-router.get('/classrooms/:classroomId/fees', requireAdmin, branchFeeClassroomController.listForClassroom);
+router.get('/classrooms/:classroomId/fees', requireOffice, branchFeeClassroomController.listForClassroom);
 
 export default router;

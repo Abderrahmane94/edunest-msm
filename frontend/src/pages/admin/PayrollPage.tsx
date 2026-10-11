@@ -689,6 +689,7 @@ function EmployeesTab() {
             >
               <option value="">{t('payroll.filters.allRoles')}</option>
               <option value="admin">{t('users.roles.admin')}</option>
+              <option value="administrative">{t('users.roles.administrative')}</option>
               <option value="teacher">{t('users.roles.teacher')}</option>
             </select>
           </FormField>
@@ -967,7 +968,7 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
   const [filterUserId, setFilterUserId] = React.useState('');
   const [filterYear, setFilterYear] = React.useState<number | undefined>();
   const [filterMonth, setFilterMonth] = React.useState<number | undefined>();
-  const [filterRole, setFilterRole] = React.useState<'' | 'admin' | 'teacher'>('');
+  const [filterRole, setFilterRole] = React.useState<'' | 'admin' | 'administrative' | 'teacher'>('');
   const [filterPaidFrom, setFilterPaidFrom] = React.useState('');
   const [filterPaidTo, setFilterPaidTo] = React.useState('');
   const hasPaymentFilters = !!(
@@ -1185,11 +1186,12 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
             <select
               id="pay-filter-role"
               value={filterRole}
-              onChange={(e) => { setFilterRole(e.target.value as '' | 'admin' | 'teacher'); setPage(1); }}
+              onChange={(e) => { setFilterRole(e.target.value as '' | 'admin' | 'administrative' | 'teacher'); setPage(1); }}
               className="w-full bg-card border border-border rounded-md px-3 py-2 text-body text-foreground transition-all duration-150 focus:outline-none focus:border-primary focus:shadow-focus-ring"
             >
               <option value="">{t('payroll.filters.allRoles')}</option>
               <option value="admin">{t('users.roles.admin')}</option>
+              <option value="administrative">{t('users.roles.administrative')}</option>
               <option value="teacher">{t('users.roles.teacher')}</option>
             </select>
           </FormField>

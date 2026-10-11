@@ -7,7 +7,7 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'super_admin' | 'admin' | 'teacher' | 'parent';
+  role: 'super_admin' | 'admin' | 'administrative' | 'teacher' | 'parent';
   schoolId: string | null;
   preferredLanguage: 'ar' | 'fr';
   mustChangePassword?: boolean;

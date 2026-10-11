@@ -25,7 +25,8 @@ function normalizeBranchConfigBody(body: Record<string, unknown>): Record<string
 }
 
 /** Roles considered "Staff" for billing configuration access. */
-const STAFF_ROLES = ['admin', 'super_admin'] as const;
+// Route guards decide which of them may use each endpoint.
+const STAFF_ROLES = ['admin', 'administrative', 'super_admin'] as const;
 
 export const branchConfigController = {
   /**

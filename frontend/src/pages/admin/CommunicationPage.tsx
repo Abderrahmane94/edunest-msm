@@ -1151,6 +1151,8 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
                           <p className="text-micro text-text-disabled truncate">
                             {other.role === 'admin'
                               ? t('communication.staffMessages.roleAdmin')
+                              : other.role === 'administrative'
+                              ? t('communication.staffMessages.roleAdministrative')
                               : t('communication.staffMessages.roleTeacher')}
                           </p>
                           {conv.last_message && (
@@ -1202,6 +1204,8 @@ function AdminStaffMessagingTab({ initialConversationId }: { initialConversation
                   <p className="text-caption text-text-secondary">
                     {activeOther?.role === 'admin'
                       ? t('communication.staffMessages.roleAdmin')
+                      : activeOther?.role === 'administrative'
+                      ? t('communication.staffMessages.roleAdministrative')
                       : t('communication.staffMessages.roleTeacher')}
                   </p>
                 </div>
@@ -1367,6 +1371,8 @@ function AdminNewStaffConversationDialog({
                   <p className="text-caption text-text-secondary">
                     {c.role === 'admin'
                       ? t('communication.staffMessages.roleAdmin')
+                      : c.role === 'administrative'
+                      ? t('communication.staffMessages.roleAdministrative')
                       : t('communication.staffMessages.roleTeacher')}
                   </p>
                 </div>

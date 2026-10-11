@@ -242,7 +242,7 @@ export const usersService = {
     search?: string,
     sortBy: string = 'createdAt',
     sortDir: 'asc' | 'desc' = 'desc',
-    filters: { role?: 'admin' | 'teacher' | 'parent'; status?: 'active' | 'inactive' } = {},
+    filters: { role?: 'admin' | 'administrative' | 'teacher' | 'parent'; status?: 'active' | 'inactive' } = {},
   ) {
     const skip = (page - 1) * pageSize;
 

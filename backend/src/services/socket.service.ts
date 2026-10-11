@@ -1,4 +1,5 @@
 import { Server as HttpServer } from 'http';
+import { isOfficeRole } from '../middleware/rbac.middleware';
 import { Server, Socket } from 'socket.io';
 import { authService } from '../modules/auth/auth.service';
 import prisma from '../lib/prisma';
@@ -134,7 +135,7 @@ class SocketService implements ISocketService {
     const conversation = await prisma.conversation.findUnique({ where: { id: match[1] } });
     if (!conversation || conversation.schoolId !== schoolId) return false;
 
-    if (role === 'admin' || role === 'super_admin') return true;
+    if (isOfficeRole(role)) return true;
     return userId === conversation.teacherUserId || userId === conversation.parentUserId;
   }
 

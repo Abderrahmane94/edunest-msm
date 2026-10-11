@@ -601,6 +601,8 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
                       <p className="text-caption text-text-secondary truncate mt-0.5">
                         {other.role === 'admin'
                           ? t('messages.roleAdmin')
+                          : other.role === 'administrative'
+                          ? t('messages.roleAdministrative')
                           : t('messages.roleTeacher')}
                       </p>
                       {conv.last_message && (
@@ -647,6 +649,8 @@ function StaffMessagingPanel({ initialConversationId }: { initialConversationId?
                   <p className="text-caption text-text-secondary truncate">
                     {activeOther?.role === 'admin'
                       ? t('messages.roleAdmin')
+                      : activeOther?.role === 'administrative'
+                      ? t('messages.roleAdministrative')
                       : t('messages.roleTeacher')}
                   </p>
                 </div>
@@ -996,6 +1000,8 @@ function NewStaffConversationDialog({
                   <p className="text-caption text-text-secondary">
                     {colleague.role === 'admin'
                       ? t('messages.roleAdmin')
+                      : colleague.role === 'administrative'
+                      ? t('messages.roleAdministrative')
                       : t('messages.roleTeacher')}
                   </p>
                 </div>

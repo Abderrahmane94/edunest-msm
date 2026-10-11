@@ -7,7 +7,7 @@ export interface StaffColleague {
   id: string;
   firstName: string;
   lastName: string;
-  role: 'teacher' | 'admin';
+  role: 'teacher' | 'admin' | 'administrative';
 }
 
 export interface StaffConversation {
@@ -43,7 +43,7 @@ function mapColleague(raw: Record<string, unknown>): StaffColleague {
     id: raw.id as string,
     firstName: (raw.firstName ?? raw.first_name) as string,
     lastName: (raw.lastName ?? raw.last_name) as string,
-    role: raw.role as 'teacher' | 'admin',
+    role: raw.role as 'teacher' | 'admin' | 'administrative',
   };
 }
 

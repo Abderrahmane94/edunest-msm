@@ -1096,6 +1096,16 @@
     "delete": "Supprimer",
     "deactivate": "Désactiver",
     "activate": "Réactiver",
+    "deactivateConfirm": {
+      "title": "Désactiver la salle « {{name}} » ?",
+      "description": "Elle ne sera plus proposée pour les classes. Vous pourrez la réactiver à tout moment.",
+      "classes_one": "La classe qui y est en {{year}} ({{names}}) la garde.",
+      "classes_many": "Les {{count}} classes qui y sont en {{year}} ({{names}}) la gardent.",
+      "classes_other": "Les {{count}} classes qui y sont en {{year}} ({{names}}) la gardent.",
+      "equipment_one": "Le matériel qui s'y trouve (1 objet) y reste.",
+      "equipment_many": "Le matériel qui s'y trouve ({{count}} objets) y reste.",
+      "equipment_other": "Le matériel qui s'y trouve ({{count}} objets) y reste."
+    },
     "deleteConfirm": {
       "title": "Supprimer la salle « {{name}} » ?",
       "description": "Seule une salle qu'aucune classe n'a utilisée peut être supprimée. Sinon, désactivez-la."

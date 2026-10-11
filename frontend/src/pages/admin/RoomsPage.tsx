@@ -24,6 +24,7 @@ import { FormField } from '@/components/forms';
 import { cn } from '@/lib/utils';
 import { useViewedYear } from '@/hooks/useSelectedYear';
 import { useCreateRoom, useDeleteRoom, useRooms, useUpdateRoom, type Room } from '@/hooks/useRooms';
+import { useEquipment } from '@/hooks/useEquipment';
 import { roomCardWarnings } from './RoomField';
 
 function RoomDialog({
@@ -232,11 +233,12 @@ function RoomCard({
 
 /** The "Salles" tab of Settings: the school's rooms and the classes in them this year. */
 export function RoomsSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: activeYear } = useViewedYear();
   const { data: rooms, isLoading } = useRooms(activeYear?.id);
   const updateRoom = useUpdateRoom();
   const deleteRoom = useDeleteRoom();
+  const { data: equipment } = useEquipment();
   const { confirm, dialog: confirmDialog } = useConfirm();
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Room | null>(null);
@@ -251,6 +253,32 @@ export function RoomsSection() {
   }
 
   async function handleToggleActive(room: Room) {
+    // Deactivating says what it changes first; reactivating changes nothing for anyone.
+    if (room.is_active) {
+      const classes = room.classrooms.map((c) => c.name);
+      const pieces = (equipment ?? []).filter((e) => e.roomId === room.id).reduce((n, e) => n + e.quantity, 0);
+      const ok = await confirm({
+        title: t('rooms.deactivateConfirm.title', { name: room.name }),
+        description: (
+          <>
+            {t('rooms.deactivateConfirm.description')}
+            {classes.length > 0 && (
+              <>
+                {' '}
+                {t('rooms.deactivateConfirm.classes', {
+                  count: classes.length,
+                  year: activeYear ? `⁦${activeYear.name}⁩` : '',
+                  names: classes.join(i18n.language === 'ar' ? '، ' : ', '),
+                })}
+              </>
+            )}
+            {pieces > 0 && <> {t('rooms.deactivateConfirm.equipment', { count: pieces })}</>}
+          </>
+        ),
+        confirmLabel: t('rooms.deactivate'),
+      });
+      if (!ok) return;
+    }
     setActionError(null);
     try {
       await updateRoom.mutateAsync({ id: room.id, isActive: !room.is_active });

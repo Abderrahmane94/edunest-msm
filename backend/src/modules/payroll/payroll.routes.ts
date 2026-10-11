@@ -12,6 +12,7 @@ router.use(requireAdmin);
 router.get('/employees', payrollController.listEmployees);
 router.put('/employees/:userId/salary', payrollController.setSalary);
 router.get('/employees/:userId/student-days', payrollController.studentDays);
+router.get('/employees/:userId/substitution-days', payrollController.substitutionDays);
 
 router.get('/payments', payrollController.listPayments);
 router.post(

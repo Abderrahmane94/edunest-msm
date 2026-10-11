@@ -115,6 +115,39 @@ export function useStudentDays(userId: string | undefined, year: number, month: 
   });
 }
 
+export interface SubstitutionMonthEntry {
+  id: string;
+  classroom: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  /** Who replaced (away entries); who was away (replacing entries). */
+  otherName: string | null;
+  days: number;
+}
+
+export interface SubstitutionDays {
+  replacing: SubstitutionMonthEntry[];
+  away: SubstitutionMonthEntry[];
+  replacingDays: number;
+  awayDays: number;
+}
+
+/** A month's replacements of an employee (as substitute, and as the teacher away), in class working days. */
+export function useSubstitutionDays(userId: string | undefined, year: number, month: number, enabled: boolean) {
+  return useQuery<SubstitutionDays>({
+    queryKey: ['payroll', 'substitution-days', userId, year, month],
+    queryFn: async () => {
+      const res = await apiClient.get<SubstitutionDays>(
+        `/payroll/employees/${userId}/substitution-days?year=${year}&month=${month}`,
+      );
+      if (!res.success || !res.data) throw apiError(res.error, 'PAYROLL_ERROR');
+      return res.data;
+    },
+    enabled: enabled && !!userId,
+  });
+}
+
 export function useSetSalary() {
   const qc = useQueryClient();
   return useMutation({

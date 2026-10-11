@@ -13,6 +13,27 @@ export class PayrollError extends Error {
   }
 }
 
+/** A replacement's share of a month: the class's working days within it. */
+export interface SubstitutionMonthEntry {
+  id: string;
+  classroom: string;
+  startDate: Date;
+  endDate: Date;
+  reason: string;
+  /** Who replaced (away entries); who was away (replacing entries). */
+  otherName: string | null;
+  days: number;
+}
+
+export interface SubstitutionDaysResult {
+  /** Days this employee took another teacher's class. */
+  replacing: SubstitutionMonthEntry[];
+  /** Days this employee was away from their class. */
+  away: SubstitutionMonthEntry[];
+  replacingDays: number;
+  awayDays: number;
+}
+
 export interface StudentDaysResult {
   basis: 'working_day' | 'present_day';
   classes: {
@@ -268,6 +289,51 @@ export const payrollService = {
       classes,
       totals,
       units: basis === 'present_day' ? totals.presentDays : totals.studentWorkingDays,
+    };
+  },
+
+  /**
+   * A month's replacements of an employee, as substitute and as the teacher
+   * away, counted in the class's working days. Shown when recording pay; the
+   * pay itself isn't computed from it.
+   */
+  async substitutionDays(schoolId: string, userId: string, year: number, month: number): Promise<SubstitutionDaysResult> {
+    const monthStart = new Date(Date.UTC(year, month - 1, 1));
+    const monthEnd = new Date(Date.UTC(year, month, 0));
+    const rows = await prisma.substitution.findMany({
+      where: {
+        schoolId,
+        cancelledAt: null,
+        startDate: { lte: monthEnd },
+        endDate: { gte: monthStart },
+        OR: [{ substituteUserId: userId }, { absentTeacherId: userId }],
+      },
+      include: {
+        classroom: { select: { name: true, workingDays: true } },
+        substitute: { select: { firstName: true, lastName: true } },
+        absentTeacher: { select: { firstName: true, lastName: true } },
+      },
+      orderBy: { startDate: 'asc' },
+    });
+    const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const name = (u: { firstName: string; lastName: string } | null) => (u ? `${u.firstName} ${u.lastName}`.trim() : null);
+    const entry = (r: (typeof rows)[number], other: string | null): SubstitutionMonthEntry => {
+      const days = new Set(Array.isArray(r.classroom.workingDays) ? (r.classroom.workingDays as string[]) : []);
+      const from = r.startDate > monthStart ? r.startDate : monthStart;
+      const to = r.endDate < monthEnd ? r.endDate : monthEnd;
+      let count = 0;
+      for (let d = new Date(from); d <= to; d.setUTCDate(d.getUTCDate() + 1)) {
+        if (days.has(WEEKDAYS[d.getUTCDay()])) count++;
+      }
+      return { id: r.id, classroom: r.classroom.name, startDate: r.startDate, endDate: r.endDate, reason: r.reason, otherName: other, days: count };
+    };
+    const replacing = rows.filter((r) => r.substituteUserId === userId).map((r) => entry(r, name(r.absentTeacher)));
+    const away = rows.filter((r) => r.absentTeacherId === userId).map((r) => entry(r, name(r.substitute)));
+    return {
+      replacing,
+      away,
+      replacingDays: replacing.reduce((n, e) => n + e.days, 0),
+      awayDays: away.reduce((n, e) => n + e.days, 0),
     };
   },
 

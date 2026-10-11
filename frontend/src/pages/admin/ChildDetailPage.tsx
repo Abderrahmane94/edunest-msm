@@ -37,7 +37,7 @@ import {
   type BloodType,
 } from '@/hooks/useChildren';
 import { useClassrooms } from '@/hooks/useClassrooms';
-import { setSelectedYearId, useSelectedYear } from '@/hooks/useSelectedYear';
+import { setSelectedYearId, useSelectedYear, useYearClosed } from '@/hooks/useSelectedYear';
 import { useUsers } from '@/hooks/useUsers';
 import { EmergencyContactsDialog } from './EmergencyContactsDialog';
 import { MedicalNotesDialog, severityBadgeVariant } from './MedicalNotesDialog';
@@ -61,6 +61,8 @@ export function ChildDetailPage() {
   const linkParent = useLinkParent();
 
   const { year: schoolYear, enabled: canPickYear } = useSelectedYear();
+  // A closed year is looked at, not changed.
+  const closed = useYearClosed();
   const { data: classrooms } = useClassrooms(schoolYear?.id);
   const { data: usersData } = useUsers({ pageSize: 100 });
   const parents = (usersData?.users ?? []).filter((u) => u.role === 'parent');
@@ -325,6 +327,7 @@ export function ChildDetailPage() {
               type="button"
               variant="secondary"
               size="sm"
+              className={closed ? 'hidden' : undefined}
               onClick={() => {
                 setEnrollClassroomId('');
                 setEnrollError(null);

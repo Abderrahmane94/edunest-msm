@@ -30,7 +30,7 @@ import {
   type Expense,
 } from '@/hooks/useExpenses';
 import { FilterBar, SectionHeader } from '@/components/ui';
-import { useViewedYear } from '@/hooks/useSelectedYear';
+import { useViewedYear, useYearClosed } from '@/hooks/useSelectedYear';
 
 /** Today, or the nearest day of the school year being looked at (an expense counts in that year). */
 function defaultExpenseDate(year: { start_date: string; end_date: string } | undefined): string {
@@ -146,6 +146,8 @@ function useExpenseReceiptActions() {
 
 export function ExpensesTab() {
   const { t } = useTranslation();
+  // A closed year is looked at, not changed.
+  const closed = useYearClosed();
   // ─── Filters ───
   const [filters, setFilters] = React.useState<ExpenseFilters>({});
   const [searchInput, setSearchInput] = React.useState('');
@@ -280,7 +282,7 @@ export function ExpensesTab() {
     <div className="space-y-6">
       <SectionHeader
         title={t('finance.tabs.expenses')}
-        actions={<CreateButton label={t('finance.expenses.create')} onClick={() => setShowCreateDialog(true)} />}
+        actions={!closed && <CreateButton label={t('finance.expenses.create')} onClick={() => setShowCreateDialog(true)} />}
       />
 
       {receipt.error && (
@@ -342,7 +344,7 @@ export function ExpensesTab() {
       </FilterBar>
 
       <DataTable<Expense>
-        columns={columns}
+        columns={closed ? columns.filter((c) => c.key !== 'actions') : columns}
         data={expenses ?? []}
         keyExtractor={(row) => row.id}
         page={page}

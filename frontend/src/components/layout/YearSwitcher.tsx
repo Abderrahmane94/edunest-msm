@@ -43,7 +43,7 @@ export function YearSwitcher() {
 /** Says which year is shown when it isn't the current one, with a way back. */
 export function YearBanner() {
   const { t } = useTranslation();
-  const { year, activeYear, isActiveYear, enabled } = useSelectedYear();
+  const { year, activeYear, isActiveYear, isClosed, enabled } = useSelectedYear();
   if (!enabled || !year || isActiveYear) return null;
 
   return (
@@ -53,7 +53,7 @@ export function YearBanner() {
     >
       <History className="w-4 h-4 text-warning shrink-0" />
       <span className="flex-1 min-w-[12rem]">
-        {t('yearSwitcher.banner', { name: year.name })}
+        {t(isClosed ? 'yearSwitcher.closedBanner' : 'yearSwitcher.banner', { name: `⁦${year.name}⁩` })}
       </span>
       {activeYear && (
         <button

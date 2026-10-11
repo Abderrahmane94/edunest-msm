@@ -462,6 +462,7 @@
       "schoolAlreadyActive": "Cet établissement est déjà actif.",
       "schoolAlreadyDeactivated": "Cet établissement est déjà désactivé.",
       "yearNotFound": "Année scolaire introuvable.",
+      "yearClosed": "Cette année scolaire est clôturée : on peut seulement encaisser ses impayés. Pour la modifier, réactivez-la.",
       "rolloverSameYear": "Choisissez une autre année à copier.",
       "rolloverStartOutside": "La date de début de facturation doit être dans la nouvelle année.",
       "rolloverClassNotCopied": "Un enfant est envoyé dans une classe qui n'est pas copiée.",
@@ -926,6 +927,7 @@
     "label": "Année scolaire affichée",
     "current": "en cours",
     "banner": "Vous consultez l'année {{name}} : les listes ne montrent que ses données.",
+    "closedBanner": "Vous consultez l'année {{name}}, clôturée : on peut la consulter et encaisser ses impayés, sans rien modifier.",
     "back": "Revenir à l'année en cours ({{name}})"
   },
   "rooms": {

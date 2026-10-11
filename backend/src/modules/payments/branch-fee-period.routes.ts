@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { branchFeePeriodController } from './branch-fee-period.controller';
 import { requireAdmin } from '../../middleware/rbac.middleware';
+import { rejectClosedYear, yearOf } from '../../middleware/closed-year.middleware';
 
 const router = Router();
 
@@ -8,6 +9,6 @@ const router = Router();
 router.get('/fees/:branchFeeId/periods', requireAdmin, branchFeePeriodController.list);
 
 // PUT /api/payments/fees/:branchFeeId/periods — Replace this fee's period assignments for a year
-router.put('/fees/:branchFeeId/periods', requireAdmin, branchFeePeriodController.setAssignments);
+router.put('/fees/:branchFeeId/periods', requireAdmin, rejectClosedYear(yearOf.body()), branchFeePeriodController.setAssignments);
 
 export default router;

@@ -28,6 +28,7 @@ import {
 import { useUsers } from '@/hooks/useUsers';
 import { ClassroomFeesSection } from './ClassroomFeesSection';
 import { RoomField } from './RoomField';
+import { useYearClosed } from '@/hooks/useSelectedYear';
 
 export function ClassroomDetailPage() {
   const { t } = useTranslation();
@@ -35,6 +36,8 @@ export function ClassroomDetailPage() {
   const navigate = useNavigate();
 
   const { data: classroom, isLoading } = useClassroom(classroomId!);
+  // A class of a closed year is looked at, not changed.
+  const closed = useYearClosed(classroom?.academic_year_id);
   const updateClassroom = useUpdateClassroom();
   const assignTeacher = useAssignTeacher();
 
@@ -149,7 +152,7 @@ export function ClassroomDetailPage() {
         <div className="bg-card border border-border rounded-lg p-6 space-y-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-subsection font-semibold text-text-heading">{t('classrooms.detail.info')}</h2>
-            <EditButton onClick={edit.startEditing} hidden={edit.editing} />
+            <EditButton onClick={edit.startEditing} hidden={edit.editing || closed} />
           </div>
           <ReadOnlyFieldset readOnly={!edit.editing}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
@@ -188,6 +191,7 @@ export function ClassroomDetailPage() {
             type="button"
             variant="secondary"
             size="sm"
+            className={closed ? 'hidden' : undefined}
             onClick={() => {
               setTeacherId(classroom.teacher_id ?? '');
               setTeacherError(null);
@@ -238,7 +242,7 @@ export function ClassroomDetailPage() {
       <ClassroomFeesSection classroomId={classroomId!} />
 
       {/* Danger zone */}
-      <div className="bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3">
+      <div className={`${closed ? 'hidden ' : ''}bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3`}>
         <h2 className="text-subsection font-semibold text-danger">{t('classrooms.detail.dangerZone')}</h2>
         <p className="text-body text-text-secondary">{t('classrooms.detail.deleteWarning')}</p>
         <EntityDeleteButton

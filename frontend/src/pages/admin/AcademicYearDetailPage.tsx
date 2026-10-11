@@ -24,6 +24,7 @@ import {
   useDeleteAcademicYear,
   useActivateAcademicYear,
 } from '@/hooks/useAcademicYears';
+import { useYearClosed } from '@/hooks/useSelectedYear';
 
 export function AcademicYearDetailPage() {
   const { t } = useTranslation();
@@ -32,6 +33,7 @@ export function AcademicYearDetailPage() {
 
   const { data: year, isLoading } = useAcademicYear(yearId!);
   const { data: years } = useAcademicYears();
+  const closed = useYearClosed(yearId);
   // The year this one can be prepared from: the one just before it.
   const previousYear = year
     ? [...(years ?? [])]
@@ -223,7 +225,7 @@ export function AcademicYearDetailPage() {
         </div>
       </form>
 
-      {previousYear && (
+      {previousYear && !closed && (
         <div className="bg-card border border-border rounded-lg p-6 space-y-3">
           <h2 className="text-subsection font-semibold text-text-heading">{t('yearRollover.entry.title')}</h2>
           <p className="text-body text-text-secondary">

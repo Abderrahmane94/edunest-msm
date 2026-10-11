@@ -52,3 +52,27 @@ describe('yearWindow', () => {
     expect(await academicYearsService.yearWindow('s1', 'other')).toBeNull();
   });
 });
+
+describe('isClosed', () => {
+  const findFirst = (prisma as unknown as { academicYear: { findFirst: ReturnType<typeof vi.fn> } }).academicYear.findFirst;
+  // First call: the year asked about; second: the active year.
+  const given = (year: string | null, active: string | null) =>
+    findFirst
+      .mockResolvedValueOnce(year ? { startDate: day(year) } : null)
+      .mockResolvedValueOnce(active ? { startDate: day(active) } : null);
+
+  it('closes a year that started before the current one', async () => {
+    given('2025-09-01', '2026-09-01');
+    expect(await academicYearsService.isClosed('s1', 'y25')).toBe(true);
+  });
+  it('keeps the current year and the next ones open', async () => {
+    given('2026-09-01', '2026-09-01');
+    expect(await academicYearsService.isClosed('s1', 'y26')).toBe(false);
+    given('2027-09-01', '2026-09-01');
+    expect(await academicYearsService.isClosed('s1', 'y27')).toBe(false);
+  });
+  it('closes nothing while no year is active', async () => {
+    given('2025-09-01', null);
+    expect(await academicYearsService.isClosed('s1', 'y25')).toBe(false);
+  });
+});

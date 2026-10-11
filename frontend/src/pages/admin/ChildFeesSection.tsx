@@ -11,7 +11,7 @@ import { FormField } from '@/components/forms';
 import { formatDZD } from '@/lib/formatters';
 import { useChildBillingPeriods, type BillingPeriod } from '@/hooks/usePayments';
 import { useCreateEnrollment } from '@/hooks/useEnrollments';
-import { setSelectedYearId, useSelectedYear } from '@/hooks/useSelectedYear';
+import { setSelectedYearId, useSelectedYear, useYearClosed } from '@/hooks/useSelectedYear';
 import type { AcademicYear } from '@/hooks/useAcademicYears';
 import { FeeChecklist, clampToAcademicYear, useOfferedFees } from './FeeChecklist';
 
@@ -186,6 +186,8 @@ export function ChildFeesSection({
   const { data: periods, isLoading, isError, error } = useChildBillingPeriods(childId);
   // The fees shown are those of the year being looked at (admins).
   const { year, enabled: byYear } = useSelectedYear();
+  // A closed year is looked at, not changed.
+  const closed = useYearClosed();
   const [enrollOpen, setEnrollOpen] = React.useState(false);
   const notBilled = byYear && !!year && !isLoading && !isError && (periods ?? []).length === 0;
   const fees = React.useMemo(() => groupByFee(periods ?? [], localToday()), [periods]);
@@ -216,7 +218,7 @@ export function ChildFeesSection({
         <h2 className="text-subsection font-semibold text-text-heading">
           {byYear && year ? t('children.fees.titleInYear', { year: year.name }) : t('children.fees.title')}
         </h2>
-        {showManageBilling && notBilled && (
+        {showManageBilling && notBilled && !closed && (
           <Button type="button" size="sm" onClick={() => setEnrollOpen(true)}>
             <PlusCircle className="w-4 h-4" />
             {t('children.fees.enroll')}

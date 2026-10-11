@@ -14,6 +14,7 @@ import {
   parentChildrenMonthQuerySchema,
 } from './attendance.schema';
 import { idParamSchema } from '../../utils/validators';
+import { rejectClosedYear, yearOf } from '../../middleware/closed-year.middleware';
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.post(
   '/bulk-mark',
   requireTeacherOrAdmin,
   validate(bulkMarkAttendanceSchema),
+  rejectClosedYear((req) => yearOf.classroom((req.body as { classroomId: string }).classroomId)),
   attendanceController.bulkMark,
 );
 
@@ -31,6 +33,7 @@ router.put(
   '/day',
   requireTeacherOrAdmin,
   validate(saveAttendanceDaySchema),
+  rejectClosedYear((req) => yearOf.classroom((req.body as { classroomId: string }).classroomId)),
   attendanceController.saveDay,
 );
 
@@ -55,6 +58,7 @@ router.patch(
   requireTeacherOrAdmin,
   validateParams(idParamSchema),
   validate(updateAttendanceSchema),
+  rejectClosedYear((req) => yearOf.attendance(req.params.id)),
   attendanceController.update,
 );
 

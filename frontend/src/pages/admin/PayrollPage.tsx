@@ -33,6 +33,7 @@ import {
 } from '@/hooks/usePayroll';
 import { FilterBar, PageHeader, RoleBadge, Tabs } from '@/components/ui';
 import { useTabParam } from '@/hooks/useTabParam';
+import { useYearClosed } from '@/hooks/useSelectedYear';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -960,6 +961,8 @@ function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName:
 
 function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
   const { t } = useTranslation();
+  // A closed year is looked at, not changed.
+  const closed = useYearClosed();
   const [recordOpen, setRecordOpen] = React.useState(false);
   const [filterUserId, setFilterUserId] = React.useState('');
   const [filterYear, setFilterYear] = React.useState<number | undefined>();
@@ -1145,7 +1148,7 @@ function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
             {pdfBulkLoading ? t('common.loading') : t('payroll.pdf.exportList')}
           </Button>
         )}
-        <CreateButton label={t('payroll.payments.record')} onClick={() => setRecordOpen(true)} />
+        {!closed && <CreateButton label={t('payroll.payments.record')} onClick={() => setRecordOpen(true)} />}
       </div>
 
       {/* Filters — same layout as the Employees tab */}

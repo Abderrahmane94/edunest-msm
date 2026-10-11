@@ -55,6 +55,19 @@ class AcademicYearsService {
     };
   }
 
+  /**
+   * A closed year: one that started before the current (active) year. It can
+   * be looked at and its unpaid charges collected, nothing else. Activating it
+   * again opens it. No year is closed while none is active.
+   */
+  async isClosed(schoolId: string, academicYearId: string, db: DbClient = prisma): Promise<boolean> {
+    const [year, active] = await Promise.all([
+      db.academicYear.findFirst({ where: { id: academicYearId, schoolId }, select: { startDate: true } }),
+      db.academicYear.findFirst({ where: { schoolId, isActive: true }, select: { startDate: true } }),
+    ]);
+    return !!year && !!active && year.startDate < active.startDate;
+  }
+
   /** A school year id sent by a client, if it is one of this school's. */
   async isSchoolYear(schoolId: string, id: string, db: DbClient = prisma): Promise<boolean> {
     return !!(await db.academicYear.findFirst({ where: { id, schoolId }, select: { id: true } }));

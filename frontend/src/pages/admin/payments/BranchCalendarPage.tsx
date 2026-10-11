@@ -18,7 +18,7 @@ import {
   DialogFooter,
 } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
-import { useViewedYear } from '@/hooks/useSelectedYear';
+import { useViewedYear, useYearClosed } from '@/hooks/useSelectedYear';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import {
   useBranchCalendar,
@@ -57,6 +57,8 @@ export function BranchCalendarPage() {
   // Data fetching
   const { branchId: selectedBranchId } = useDefaultBranch();
   const { data: activeAcademicYear, isLoading: yearLoading } = useViewedYear();
+  // A closed year is looked at, not changed.
+  const closed = useYearClosed();
   const selectedAcademicYearId = activeAcademicYear?.id ?? '';
   // Periods must fall within the academic year.
   const yearMin = activeAcademicYear?.start_date?.slice(0, 10);
@@ -219,7 +221,7 @@ export function BranchCalendarPage() {
         title={t('payments.branchCalendar.title')}
         description={t('payments.branchCalendar.description')}
         actions={
-          isReady && (
+          isReady && !closed && (
             <Button onClick={handleOpenCreate}>
               <Plus className="w-4 h-4" />
               {t('payments.branchCalendar.addEntry')}
@@ -237,7 +239,7 @@ export function BranchCalendarPage() {
         <LoadingSkeleton />
       ) : (
         <DataTable
-          columns={columns}
+          columns={closed ? columns.filter((c) => c.key !== 'actions') : columns}
           data={calendarEntries ?? []}
           keyExtractor={(row) => row.id}
           emptyMessage={t('payments.branchCalendar.noEntries')}

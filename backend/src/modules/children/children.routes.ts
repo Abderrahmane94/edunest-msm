@@ -4,14 +4,24 @@ import { requireAdmin, requireTeacherOrAdmin, requireActiveRole } from '../../mi
 import { validate, validateParams } from '../../middleware/validation.middleware';
 import { registerChildSchema, createChildSchema, updateChildSchema, enrollChildSchema, createParentLinkSchema, updateParentLinkSchema, parentLinkParamsSchema, createEmergencyContactSchema, updateEmergencyContactSchema, emergencyContactParamsSchema, createMedicalNoteSchema, updateMedicalNoteSchema, medicalNoteParamsSchema } from './children.schema';
 import { idParamSchema } from '../../utils/validators';
+import { rejectClosedYear, yearOf } from '../../middleware/closed-year.middleware';
 
 const router = Router();
 
 // POST /api/children — Register a child (admin only)
-router.post('/', requireAdmin, validate(createChildSchema), childrenController.create);
+router.post('/', requireAdmin, validate(createChildSchema), rejectClosedYear(yearOf.body()), childrenController.create);
 
 // POST /api/children/register — Register a child and everything around it in one transaction (admin only)
-router.post('/register', requireAdmin, validate(registerChildSchema), childrenController.register);
+router.post(
+  '/register',
+  requireAdmin,
+  validate(registerChildSchema),
+  rejectClosedYear(async (req) => {
+    const body = req.body as { child: { academicYearId: string }; classroomId?: string };
+    return [body.child.academicYearId, await yearOf.classroom(body.classroomId)];
+  }),
+  childrenController.register,
+);
 
 // GET /api/children — List children in school (admin or teacher)
 router.get('/', requireTeacherOrAdmin, childrenController.list);
@@ -26,7 +36,7 @@ router.put('/:id', requireAdmin, validateParams(idParamSchema), validate(updateC
 router.delete('/:id', requireAdmin, validateParams(idParamSchema), childrenController.delete);
 
 // POST /api/children/:id/enroll — Enroll child in classroom (admin only)
-router.post('/:id/enroll', requireAdmin, validateParams(idParamSchema), validate(enrollChildSchema), childrenController.enroll);
+router.post('/:id/enroll', requireAdmin, validateParams(idParamSchema), validate(enrollChildSchema), rejectClosedYear((req) => yearOf.classroom((req.body as { classroomId: string }).classroomId)), childrenController.enroll);
 
 // POST /api/children/:id/photo — Upload child photo (admin only)
 router.post('/:id/photo', requireAdmin, validateParams(idParamSchema), childrenController.uploadPhoto);

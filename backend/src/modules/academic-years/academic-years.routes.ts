@@ -5,6 +5,7 @@ import { validate, validateParams } from '../../middleware/validation.middleware
 import { createAcademicYearSchema, updateAcademicYearSchema } from './academic-years.schema';
 import { yearRolloverSchema } from './year-rollover.schema';
 import { idParamSchema } from '../../utils/validators';
+import { rejectClosedYear } from '../../middleware/closed-year.middleware';
 
 const router = Router();
 
@@ -33,6 +34,6 @@ router.patch('/:id/deactivate', requireAdmin, validateParams(idParamSchema), aca
 router.get('/:id/rollover', requireAdmin, validateParams(idParamSchema), academicYearsController.rolloverPreview);
 
 // POST /api/academic-years/:id/rollover — Prepare this year from another (admin only)
-router.post('/:id/rollover', requireAdmin, validateParams(idParamSchema), validate(yearRolloverSchema), academicYearsController.rollover);
+router.post('/:id/rollover', requireAdmin, validateParams(idParamSchema), validate(yearRolloverSchema), rejectClosedYear((req) => req.params.id), academicYearsController.rollover);
 
 export default router;

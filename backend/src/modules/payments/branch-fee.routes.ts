@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { branchFeeService, BranchFeeServiceError } from './branch-fee.service';
+import { rejectClosedYear, yearOf } from '../../middleware/closed-year.middleware';
 
 const router = Router();
 
@@ -124,7 +125,7 @@ router.delete('/branches/:branchId/fees/:id', async (req, res) => {
  * POST /api/payments/enrollments/:enrollmentId/apply-fee
  * Apply a fee to an enrollment (creates a billing period).
  */
-router.post('/enrollments/:enrollmentId/apply-fee', async (req, res) => {
+router.post('/enrollments/:enrollmentId/apply-fee', rejectClosedYear((req) => yearOf.enrollment(req.params.enrollmentId)), async (req, res) => {
   try {
     const { enrollmentId } = req.params;
     const { branchFeeId } = req.body;

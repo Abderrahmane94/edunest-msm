@@ -93,6 +93,7 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^School is already deactivated$/, 'schoolAlreadyDeactivated'],
   [/^(Source )?[Aa]cademic year not found/, 'yearNotFound'],
   [/^Choose another year to copy from$/, 'rolloverSameYear'],
+  [/^This school year is closed/, 'yearClosed'],
   [/^The billing start date must be within the new school year$/, 'rolloverStartOutside'],
   [/^A child is sent to a class that is not copied$/, 'rolloverClassNotCopied'],
   [/^The school has no branch to bill from$/, 'rolloverNoBranch'],

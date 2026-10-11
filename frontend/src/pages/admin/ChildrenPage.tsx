@@ -32,6 +32,7 @@ import { useClassrooms } from '@/hooks/useClassrooms';
 import { EmergencyContactsDialog } from './EmergencyContactsDialog';
 import { MedicalNotesDialog } from './MedicalNotesDialog';
 import { CreateChildWizard } from './CreateChildWizard';
+import { useYearClosed } from '@/hooks/useSelectedYear';
 
 /** Minimal shape needed by dialogs that only display/reference a child's identity. */
 type ChildRef = Pick<Child, 'id' | 'first_name' | 'last_name'>;
@@ -165,6 +166,8 @@ function LinkParentDialog({
 
 export function ChildrenPage() {
   const { t } = useTranslation();
+  // A closed year is looked at, not changed.
+  const closed = useYearClosed();
   const navigate = useNavigate();
   const [page, setPage] = React.useState(1);
   const [search, setSearch] = React.useState('');
@@ -329,7 +332,7 @@ export function ChildrenPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title={t('children.title')}
-        actions={<CreateButton label={t('children.register')} onClick={() => setCreateDialogOpen(true)} />}
+        actions={!closed && <CreateButton label={t('children.register')} onClick={() => setCreateDialogOpen(true)} />}
       />
 
       <FilterBar

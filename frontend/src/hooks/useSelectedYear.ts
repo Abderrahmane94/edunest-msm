@@ -47,6 +47,11 @@ export interface SelectedYear {
   years: AcademicYear[];
   /** True when looking at the current year. */
   isActiveYear: boolean;
+  /**
+   * A closed year: one before the current year. It is looked at and its
+   * unpaid charges collected, nothing else (the server refuses the rest).
+   */
+  isClosed: boolean;
   isLoading: boolean;
   /** Only school admins choose a year. */
   enabled: boolean;
@@ -69,6 +74,7 @@ export function useSelectedYear(): SelectedYear {
       activeYear,
       years,
       isActiveYear: !!year && year.id === activeYear?.id,
+      isClosed: !!year && !!activeYear?.is_active && year.start_date < activeYear.start_date,
       isLoading: query.isLoading,
       enabled,
     };
@@ -90,4 +96,11 @@ export function useYearScope(): { yearId: string | undefined; ready: boolean } {
 export function useViewedYear(): { data: AcademicYear | undefined; isLoading: boolean } {
   const { year, isLoading } = useSelectedYear();
   return { data: year, isLoading };
+}
+
+/** Whether a year is closed (before the current one); the year looked at when none is given. */
+export function useYearClosed(yearId?: string): boolean {
+  const { year, years, activeYear } = useSelectedYear();
+  const target = yearId ? years.find((y) => y.id === yearId) : year;
+  return !!target && !!activeYear?.is_active && target.start_date < activeYear.start_date;
 }

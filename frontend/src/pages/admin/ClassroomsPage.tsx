@@ -24,7 +24,7 @@ import {
   useAssignTeacher,
   type Classroom,
 } from '@/hooks/useClassrooms';
-import { useSelectedYear } from '@/hooks/useSelectedYear';
+import { useSelectedYear, useYearClosed } from '@/hooks/useSelectedYear';
 import { useUsers } from '@/hooks/useUsers';
 import { EmptyState, FilterBar, ListSkeleton, PageHeader } from '@/components/ui';
 import { DEFAULT_WORKING_DAYS, RoomField } from './RoomField';
@@ -288,6 +288,8 @@ export function ClassroomsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { year: schoolYear } = useSelectedYear();
+  // A closed year is looked at, not changed.
+  const closed = useYearClosed();
   const { data: classrooms, isLoading } = useClassrooms(schoolYear?.id);
 
   // ─── Filters (a school has few classes, so filter here) ───
@@ -410,11 +412,13 @@ export function ClassroomsPage() {
         title={t('classrooms.title')}
         description={schoolYear?.name}
         actions={
-          <CreateButton
-            label={t('classrooms.create')}
-            onClick={() => setCreateDialogOpen(true)}
-            disabled={!schoolYear}
-          />
+          !closed && (
+            <CreateButton
+              label={t('classrooms.create')}
+              onClick={() => setCreateDialogOpen(true)}
+              disabled={!schoolYear}
+            />
+          )
         }
       />
 
@@ -470,7 +474,7 @@ export function ClassroomsPage() {
           </FilterBar>
 
           <DataTable<Classroom>
-            columns={columns}
+            columns={closed ? columns.filter((c) => c.key !== 'actions') : columns}
             data={data}
             keyExtractor={(c) => c.id}
             onRowClick={(c) => navigate(`/admin/classrooms/${c.id}`)}

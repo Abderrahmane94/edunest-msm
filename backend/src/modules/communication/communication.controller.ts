@@ -267,6 +267,29 @@ export const communicationController = {
   },
 
   /**
+   * GET /api/communication/daily-reports/classroom/:classroomId?date=YYYY-MM-DD
+   * Which children of the classroom have a report that day.
+   */
+  async getClassroomDayReports(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const reports = await communicationService.getClassroomDayReports(
+        req.params.classroomId,
+        req.user!.schoolId!,
+        req.user!.userId,
+        req.user!.role,
+        String(req.query.date),
+      );
+      res.status(200).json(successResponse(reports));
+    } catch (error) {
+      if (error instanceof CommunicationServiceError) {
+        res.status(error.statusCode).json(errorResponse('COMMUNICATION_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
    * GET /api/communication/daily-reports/child/:childId — Get reports for a child
    */
   async getDailyReportsForChild(req: Request, res: Response, next: NextFunction): Promise<void> {

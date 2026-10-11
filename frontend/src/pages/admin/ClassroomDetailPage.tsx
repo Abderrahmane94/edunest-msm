@@ -28,7 +28,7 @@ import {
 import { useUsers } from '@/hooks/useUsers';
 import { ClassroomFeesSection } from './ClassroomFeesSection';
 import { RoomField } from './RoomField';
-import { useYearClosed } from '@/hooks/useSelectedYear';
+import { useSelectedYear, useYearClosed } from '@/hooks/useSelectedYear';
 
 export function ClassroomDetailPage() {
   const { t } = useTranslation();
@@ -38,6 +38,7 @@ export function ClassroomDetailPage() {
   const { data: classroom, isLoading } = useClassroom(classroomId!);
   // A class of a closed year is looked at, not changed.
   const closed = useYearClosed(classroom?.academic_year_id);
+  const { activeYear } = useSelectedYear();
   const updateClassroom = useUpdateClassroom();
   const assignTeacher = useAssignTeacher();
 
@@ -239,7 +240,15 @@ export function ClassroomDetailPage() {
       </Dialog>
 
       {/* Assigned fees */}
-      <ClassroomFeesSection classroomId={classroomId!} />
+      <ClassroomFeesSection
+        classroom={{
+          id: classroom.id,
+          name: classroom.name,
+          childCount: classroom.enrolled_count,
+          isCurrentYear: !!activeYear?.is_active && classroom.academic_year_id === activeYear.id,
+          readOnly: closed,
+        }}
+      />
 
       {/* Danger zone */}
       <div className={`${closed ? 'hidden ' : ''}bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3`}>

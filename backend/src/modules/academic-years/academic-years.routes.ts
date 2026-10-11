@@ -3,6 +3,7 @@ import { academicYearsController } from './academic-years.controller';
 import { requireAdmin } from '../../middleware/rbac.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
 import { createAcademicYearSchema, updateAcademicYearSchema } from './academic-years.schema';
+import { yearRolloverSchema } from './year-rollover.schema';
 import { idParamSchema } from '../../utils/validators';
 
 const router = Router();
@@ -27,5 +28,11 @@ router.patch('/:id/activate', requireAdmin, validateParams(idParamSchema), acade
 
 // PATCH /api/academic-years/:id/deactivate — Deactivate academic year (admin only)
 router.patch('/:id/deactivate', requireAdmin, validateParams(idParamSchema), academicYearsController.deactivate);
+
+// GET /api/academic-years/:id/rollover — Preview of preparing this year from another (admin only)
+router.get('/:id/rollover', requireAdmin, validateParams(idParamSchema), academicYearsController.rolloverPreview);
+
+// POST /api/academic-years/:id/rollover — Prepare this year from another (admin only)
+router.post('/:id/rollover', requireAdmin, validateParams(idParamSchema), validate(yearRolloverSchema), academicYearsController.rollover);
 
 export default router;

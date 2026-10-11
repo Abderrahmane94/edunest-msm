@@ -1,9 +1,11 @@
+import { Prisma } from '@prisma/client';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { childrenService } from './children.service';
 
 // Mock Prisma
 vi.mock('../../lib/prisma', () => ({
   default: {
+    billingPeriod: { findMany: vi.fn() },
     child: {
       create: vi.fn(),
       findMany: vi.fn(),
@@ -13,6 +15,7 @@ vi.mock('../../lib/prisma', () => ({
     },
     academicYear: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
     },
     classroom: {
       findFirst: vi.fn(),
@@ -306,6 +309,7 @@ describe('ChildrenService', () => {
         firstName: 'Ahmed',
         enrollments: [],
         schoolYears: [{ id: 'y25', name: '2025-2026' }],
+        unpaidOtherYears: [],
       });
     });
 
@@ -320,8 +324,15 @@ describe('ChildrenService', () => {
         ],
         paymentEnrollments: [{ academicYear: y26 }],
       });
+      mockPrisma.academicYear.findUnique.mockResolvedValue(y26);
+      // Last year: 5000 due, 3000 paid; a paid charge owes nothing.
+      mockPrisma.billingPeriod.findMany.mockResolvedValue([
+        { amountDue: new Prisma.Decimal(5000), paymentAllocations: [{ amount: new Prisma.Decimal(3000) }], enrollment: { childId: 'child-1', academicYear: y25 } },
+        { amountDue: new Prisma.Decimal(1000), paymentAllocations: [{ amount: new Prisma.Decimal(1000) }], enrollment: { childId: 'child-1', academicYear: y25 } },
+      ]);
 
       const result = await childrenService.getById('child-1', schoolId, undefined, 'y26');
+      expect(result.unpaidOtherYears).toEqual([{ id: 'y25', name: '2025-2026', amount: '2000.00' }]);
       expect(result.schoolYears).toEqual([{ id: 'y26', name: '2026-2027' }, { id: 'y25', name: '2025-2026' }]);
       expect(result.enrollments).toEqual([{ id: 'ce-2', classroom: { id: 'c2', name: 'Moyens', level: null } }]);
     });

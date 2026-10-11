@@ -28,6 +28,13 @@ describe('errorMessage', () => {
     expect(errorMessage(new SyntaxError("Unexpected token '<'"), t)).toBe('errors.serverUnavailable');
   });
 
+  it('keeps who a refusal is about, before its translated message', () => {
+    expect(
+      errorMessage(apiError({ code: 'ACADEMIC_YEAR_ERROR', message: 'Lina Cherif: Classroom "Petits" is at full capacity (12).' }, ''), t),
+    ).toBe('Lina Cherif — errors.server.classroomFull {"classroom":"Petits","capacity":"12"}');
+    expect(errorMessage(apiError({ code: 'X', message: 'Lina: something unknown' }, ''), t)).toBe('errors.generic');
+  });
+
   it("translates the server's known messages, with their details", () => {
     expect(errorMessage(apiError({ code: 'CHILD_ERROR', message: 'Classroom "Petits" is at full capacity (12).' }, ''), t)).toBe(
       'errors.server.classroomFull {"classroom":"Petits","capacity":"12"}',

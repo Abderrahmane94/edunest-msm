@@ -91,7 +91,11 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^School not found$/, 'schoolNotFound'],
   [/^School is already active$/, 'schoolAlreadyActive'],
   [/^School is already deactivated$/, 'schoolAlreadyDeactivated'],
-  [/^Academic year not found/, 'yearNotFound'],
+  [/^(Source )?[Aa]cademic year not found/, 'yearNotFound'],
+  [/^Choose another year to copy from$/, 'rolloverSameYear'],
+  [/^The billing start date must be within the new school year$/, 'rolloverStartOutside'],
+  [/^A child is sent to a class that is not copied$/, 'rolloverClassNotCopied'],
+  [/^The school has no branch to bill from$/, 'rolloverNoBranch'],
   [/^Academic year is already active$/, 'yearAlreadyActive'],
   [/^Academic year is already inactive$/, 'yearAlreadyInactive'],
   [/^Cannot delete an active academic year/, 'yearDeleteActive'],
@@ -193,6 +197,12 @@ function serverMessage(message: string, t: TFunction): string | null {
   for (const [pattern, key] of SERVER_MESSAGES) {
     const match = pattern.exec(text);
     if (match) return t(`errors.server.${key}`, { ...match.groups });
+  }
+  // "<who>: <message>" — a refusal about one child or fee among several.
+  const subject = /^([^:]{1,120}): (.+)$/s.exec(text);
+  if (subject) {
+    const inner = serverMessage(subject[2], t);
+    if (inner) return `${subject[1]} — ${inner}`;
   }
   return null;
 }

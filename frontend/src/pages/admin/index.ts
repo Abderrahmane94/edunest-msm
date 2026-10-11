@@ -9,6 +9,7 @@ export { StaffListPage } from './StaffListPage';
 export { StaffProfilePage } from './StaffProfilePage';
 export { AcademicYearsSection } from './AcademicYearsPage';
 export { AcademicYearDetailPage } from './AcademicYearDetailPage';
+export { YearRolloverPage } from './YearRolloverPage';
 export { ClassroomsPage } from './ClassroomsPage';
 export { ClassroomDetailPage } from './ClassroomDetailPage';
 export { ChildrenPage } from './ChildrenPage';

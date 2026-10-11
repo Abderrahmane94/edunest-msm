@@ -15,6 +15,9 @@
         "waitingParents": "Parents sans réponse depuis plus de 3 h : {{count}}",
         "lowStock_one": "1 fourniture à racheter",
         "lowStock_other": "{{count}} fournitures à racheter",
+        "toRepair_other": "{{count}} objets à réparer",
+        "toRepair_many": "{{count}} objets à réparer",
+        "toRepair_one": "1 objet à réparer",
         "pendingConsents": "Autorisations parentales en attente : {{count}}"
       },
       "sections": {
@@ -473,6 +476,7 @@
       "supplyAside": "Cet article est mis de côté.",
       "supplyNotEnough": "Pas assez en stock : il reste {{left}}.",
       "supplyAdminOnly": "Seul un administrateur peut enregistrer les achats et les inventaires.",
+      "equipmentNotFound": "Matériel introuvable.",
       "rolloverSameYear": "Choisissez une autre année à copier.",
       "rolloverStartOutside": "La date de début de facturation doit être dans la nouvelle année.",
       "rolloverClassNotCopied": "Un enfant est envoyé dans une classe qui n'est pas copiée.",
@@ -833,6 +837,55 @@
     }
   },
   "inventory": {
+    "equipment": {
+      "title": "Matériel",
+      "description": "Ce que l'école possède et garde, salle par salle : mobilier, jouets, appareils, sécurité.",
+      "create": "Nouveau matériel",
+      "createTitle": "Nouveau matériel",
+      "editTitle": "Modifier le matériel",
+      "dialogDescription": "Un objet (ou un lot d'objets identiques) et la salle où il se trouve.",
+      "namePlaceholder": "Ex. Lit à barreaux",
+      "notesPlaceholder": "Ex. n° de série, garantie",
+      "quantity": "Quantité",
+      "quantityInvalid": "La quantité doit être un nombre entier d'au moins 1.",
+      "condition": "État",
+      "room": "Salle",
+      "noRoom": "Sans salle (réserve)",
+      "allRooms": "Toutes les salles",
+      "allConditions": "Tous les états",
+      "purchaseDate": "Date d'achat",
+      "unitValue": "Valeur unitaire (DA)",
+      "searchPlaceholder": "Rechercher du matériel…",
+      "empty": "Aucun matériel pour le moment. Ajoutez le mobilier, les jouets et les appareils de chaque salle.",
+      "summary_one": "{{count}} objet",
+      "summary_many": "{{count}} objets",
+      "summary_other": "{{count}} objets",
+      "totalValue": "valeur {{value}}",
+      "toRepairBanner_one": "1 objet à réparer",
+      "toRepairBanner_many": "{{count}} objets à réparer",
+      "toRepairBanner_other": "{{count}} objets à réparer",
+      "deleteTitle": "Supprimer « {{name}} » ?",
+      "deleteDescription": "À faire quand l'objet a été donné ou jeté. Pour un objet cassé, choisissez plutôt l'état « Hors service ».",
+      "categories": {
+        "furniture": "Mobilier",
+        "toys": "Jouets et jeux",
+        "electronics": "Appareils",
+        "safety": "Sécurité",
+        "kitchen": "Cuisine",
+        "outdoor": "Extérieur",
+        "other": "Autre"
+      },
+      "conditions": {
+        "good": "Bon état",
+        "repair": "À réparer",
+        "broken": "Hors service"
+      }
+    },
+    "tabs": {
+      "supplies": "Fournitures",
+      "equipment": "Matériel"
+    },
+    "suppliesTitle": "Fournitures",
     "title": "Inventaire",
     "description": "Les fournitures de l'école : ce qui reste, et quand racheter.",
     "create": "Nouvel article",

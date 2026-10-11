@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Wallet,
   Package,
+  Wrench,
 } from 'lucide-react';
 import { useAdminDashboard, type AdminDashboard as Dashboard } from '@/hooks/useAdminDashboard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,6 +26,7 @@ import { formatDateIn, formatTime } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
 import { useLowStockCount } from '@/hooks/useInventory';
+import { useEquipmentToRepair } from '@/hooks/useEquipment';
 import { ActionList, BarChart, BigNumber, Progress, Section, Tile, type ActionItem } from './parts';
 import { TONE_FILL, TONE_ICON, useNumbers, type Tone } from './theme';
 
@@ -34,6 +36,7 @@ function TodoList({ data }: { data: Dashboard }) {
   const { t } = useTranslation();
   const n = useNumbers();
   const { data: lowStock = 0 } = useLowStockCount();
+  const { data: toRepair = 0 } = useEquipmentToRepair();
   const items: ActionItem[] = [];
 
   if (data.attendance.missingClassrooms.length > 0) {
@@ -84,6 +87,15 @@ function TodoList({ data }: { data: Dashboard }) {
       icon: <Package className="w-4 h-4" />,
       text: t('dashboard.admin.todo.lowStock', { count: lowStock }),
       to: '/admin/inventory',
+    });
+  }
+  if (toRepair > 0) {
+    items.push({
+      key: 'repair',
+      tone: 'warning',
+      icon: <Wrench className="w-4 h-4" />,
+      text: t('dashboard.admin.todo.toRepair', { count: toRepair }),
+      to: '/admin/inventory?tab=equipment',
     });
   }
   return (

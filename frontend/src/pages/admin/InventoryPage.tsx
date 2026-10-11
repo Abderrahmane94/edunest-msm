@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, ClipboardList, History, Minus, Pencil, ShoppingCart } from 'lucide-react';
+import { AlertTriangle, Armchair, ClipboardList, History, Minus, Package, Pencil, ShoppingCart } from 'lucide-react';
 import {
   Button,
   CreateButton,
@@ -16,6 +16,8 @@ import {
   Input,
   ListSkeleton,
   PageHeader,
+  SectionHeader,
+  Tabs,
   SearchInput,
   StatusBadge,
   type Column,
@@ -25,6 +27,8 @@ import { cn } from '@/lib/utils';
 import { errorMessage } from '@/lib/errorMessage';
 import { formatDate, formatDZD } from '@/lib/formatters';
 import { StockMovementDialog, type MovementType } from '@/components/inventory/StockMovementDialog';
+import { useTabParam } from '@/hooks/useTabParam';
+import { EquipmentTab } from './EquipmentTab';
 import {
   STOCK_CATEGORIES,
   qty,
@@ -209,7 +213,8 @@ function StockHistoryDialog({ item, onOpenChange }: { item: StockItem | null; on
   );
 }
 
-export function InventoryPage() {
+/** Supplies: what is left, purchases, uses, counts. */
+function SuppliesTab() {
   const { t } = useTranslation();
   const { data: items, isLoading, isError, error } = useStockItems();
   const [search, setSearch] = React.useState('');
@@ -299,9 +304,9 @@ export function InventoryPage() {
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <PageHeader
-        title={t('inventory.title')}
+    <div className="space-y-4">
+      <SectionHeader
+        title={t('inventory.suppliesTitle')}
         description={t('inventory.description')}
         actions={<CreateButton label={t('inventory.create')} onClick={() => setEditing(null)} />}
       />
@@ -360,6 +365,29 @@ export function InventoryPage() {
         initialType={moving?.type}
       />
       <StockHistoryDialog item={byId(historyId)} onOpenChange={(o) => !o && setHistoryId(null)} />
+    </div>
+  );
+}
+
+const INVENTORY_TABS = ['supplies', 'equipment'] as const;
+type InventoryTab = (typeof INVENTORY_TABS)[number];
+
+/** The school's inventory: supplies (used up) and equipment (kept, by room). */
+export function InventoryPage() {
+  const { t } = useTranslation();
+  const [tab, setTab] = useTabParam<InventoryTab>(INVENTORY_TABS, 'supplies');
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader title={t('inventory.title')} />
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        items={[
+          { value: 'supplies', label: t('inventory.tabs.supplies'), icon: <Package className="w-4 h-4" /> },
+          { value: 'equipment', label: t('inventory.tabs.equipment'), icon: <Armchair className="w-4 h-4" /> },
+        ]}
+      />
+      {tab === 'supplies' ? <SuppliesTab /> : <EquipmentTab />}
     </div>
   );
 }

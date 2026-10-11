@@ -59,7 +59,9 @@ export function suggestAllocations(
 
 /** Sum of a child's outstanding amount across all non-cancelled, unpaid periods. */
 export function totalOutstanding(periods: BillingPeriod[]): number {
-  return periods
+  const sum = periods
     .filter((p) => !p.cancelledAt && p.status !== 'paid')
-    .reduce((sum, p) => sum + Number(p.outstanding ?? p.amountDue), 0);
+    .reduce((total, p) => total + Number(p.outstanding ?? p.amountDue), 0);
+  // Adding decimals drifts (26032.26 → 26032.260000000002): the server takes 2 decimals at most.
+  return Math.round(sum * 100) / 100;
 }

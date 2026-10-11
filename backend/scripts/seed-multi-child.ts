@@ -46,7 +46,6 @@ async function main() {
       teacherUserId: teacher2.id,
       name: 'Les Étoiles',
       capacity: 20,
-      roomNumber: '102',
       level: '3-4 ans',
     },
   });

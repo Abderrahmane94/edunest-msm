@@ -165,6 +165,13 @@ async function main() {
           },
         });
 
+        const room101 = await tx.room.create({
+          data: { schoolId: school.id, name: 'Salle 101', capacity: 25, location: 'Rez-de-chaussée' },
+        });
+        const room102 = await tx.room.create({
+          data: { schoolId: school.id, name: 'Salle 102', capacity: 20, location: 'Rez-de-chaussée' },
+        });
+
         const papillons = await tx.classroom.create({
           data: {
             schoolId: school.id,
@@ -172,7 +179,7 @@ async function main() {
             teacherUserId: teacherFatima.id,
             name: 'Les Papillons',
             capacity: 25,
-            roomNumber: '101',
+            roomId: room101.id,
             level: '4-5 ans',
           },
         });
@@ -184,7 +191,7 @@ async function main() {
             teacherUserId: teacherKhadidja.id,
             name: 'Les Poussins',
             capacity: 20,
-            roomNumber: '102',
+            roomId: room102.id,
             level: '3-4 ans',
           },
         });

@@ -155,6 +155,7 @@ model School {
   users         User[]
   academicYears AcademicYear[]
   classrooms    Classroom[]
+  rooms         Room[]
   children      Child[]
   expenses      Expense[]
   subscription  SchoolSubscription?
@@ -257,7 +258,7 @@ model Classroom {
   teacherUserId  String?   @map("teacher_user_id")
   name           String
   capacity       Int
-  roomNumber     String?   @map("room_number")
+  roomId         String?   @map("room_id")
   level          String?
   workingDays    Json      @default("[\"sunday\",\"monday\",\"tuesday\",\"wednesday\",\"thursday\"]") @map("working_days")
   deletedAt      DateTime? @map("deleted_at")
@@ -266,6 +267,7 @@ model Classroom {
   school            School                @relation(fields: [schoolId], references: [id])
   academicYear      AcademicYear          @relation(fields: [academicYearId], references: [id])
   teacher           User?                 @relation(fields: [teacherUserId], references: [id])
+  room              Room?                 @relation(fields: [roomId], references: [id], onDelete: SetNull)
   enrollments       ClassroomEnrollment[]
   attendanceRecords AttendanceRecord[]
   eventLinks        EventClassroom[]
@@ -273,7 +275,28 @@ model Classroom {
   feeAssignments    BranchFeeClassroom[]
 
   @@index([deletedAt])
+  @@index([roomId])
   @@map("classrooms")
+}
+
+/// A physical room of the school. Unlike classes, rooms outlast the school
+/// year: each year's classes are placed in them.
+model Room {
+  id        String   @id @default(uuid())
+  schoolId  String   @map("school_id")
+  name      String
+  /// Most children the room can hold; unknown for rooms carried over from the old free-text field.
+  capacity  Int?
+  location  String?
+  notes     String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  school     School      @relation(fields: [schoolId], references: [id])
+  classrooms Classroom[]
+
+  @@index([schoolId])
+  @@map("rooms")
 }
 
 model ClassroomEnrollment {

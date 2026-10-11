@@ -10,10 +10,7 @@ export const createClassroomSchema = z.object({
     .number()
     .int('Capacity must be an integer')
     .positive('Capacity must be a positive integer'),
-  roomNumber: z
-    .string()
-    .max(50, 'Room number must not exceed 50 characters')
-    .optional(),
+  roomId: uuidSchema.nullable().optional(),
   level: z
     .string()
     .max(100, 'Level must not exceed 100 characters')
@@ -33,11 +30,7 @@ export const updateClassroomSchema = z.object({
     .int('Capacity must be an integer')
     .positive('Capacity must be a positive integer')
     .optional(),
-  roomNumber: z
-    .string()
-    .max(50, 'Room number must not exceed 50 characters')
-    .nullable()
-    .optional(),
+  roomId: uuidSchema.nullable().optional(),
   level: z
     .string()
     .max(100, 'Level must not exceed 100 characters')

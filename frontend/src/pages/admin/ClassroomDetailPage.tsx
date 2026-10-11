@@ -27,6 +27,7 @@ import {
 } from '@/hooks/useClassrooms';
 import { useUsers } from '@/hooks/useUsers';
 import { ClassroomFeesSection } from './ClassroomFeesSection';
+import { RoomField } from './RoomField';
 
 export function ClassroomDetailPage() {
   const { t } = useTranslation();
@@ -43,7 +44,7 @@ export function ClassroomDetailPage() {
   const [formData, setFormData] = React.useState({
     name: '',
     capacity: '',
-    room_number: '',
+    room_id: '',
     level: '',
   });
   const [teacherId, setTeacherId] = React.useState('');
@@ -56,7 +57,7 @@ export function ClassroomDetailPage() {
     (c: NonNullable<typeof classroom>) => ({
       name: c.name,
       capacity: String(c.capacity),
-      room_number: c.room_number ?? '',
+      room_id: c.room_id ?? '',
       level: c.level ?? '',
     }),
     [],
@@ -84,7 +85,7 @@ export function ClassroomDetailPage() {
         id: classroomId!,
         name: formData.name,
         capacity: Number(formData.capacity),
-        room_number: formData.room_number || null,
+        room_id: formData.room_id || null,
         level: formData.level || null,
       });
       edit.finishEditing();
@@ -161,9 +162,13 @@ export function ClassroomDetailPage() {
             <FormField label={t('classrooms.form.level')} htmlFor="cr-level">
               <Input id="cr-level" name="level" value={formData.level} onChange={handleChange} placeholder={t('classrooms.form.levelPlaceholder')} />
             </FormField>
-            <FormField label={t('classrooms.form.roomNumber')} htmlFor="cr-room">
-              <Input id="cr-room" name="room_number" value={formData.room_number} onChange={handleChange} placeholder={t('classrooms.form.roomNumberPlaceholder')} />
-            </FormField>
+            <RoomField
+              id="cr-room"
+              value={formData.room_id}
+              onChange={(roomId) => setFormData((prev) => ({ ...prev, room_id: roomId }))}
+              academicYearId={classroom.academic_year_id}
+              placed={{ id: classroom.id, capacity: Number(formData.capacity) || 0, working_days: classroom.working_days }}
+            />
           </div>
           </ReadOnlyFieldset>
         </div>

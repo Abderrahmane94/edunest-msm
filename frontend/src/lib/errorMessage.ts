@@ -100,6 +100,10 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^One or more (selected )?classrooms/, 'classroomNotFound'],
   [/^Cannot delete classroom with enrolled children/, 'classroomHasChildren'],
   [/^Classroom "(?<classroom>.+)" is at full capacity \((?<capacity>\d+)\)\.$/, 'classroomFull'],
+  [/^Room not found$/, 'roomNotFound'],
+  [/^A room named "(?<room>.+)" already exists$/, 'roomNameTaken'],
+  [/^Cannot delete a room used by a class/, 'roomInUse'],
+  [/^Room is inactive$/, 'roomInactive'],
   [/^Teacher not found, does not belong to this school, or is not an active teacher$/, 'teacherNotFound'],
 
   // Children and parents

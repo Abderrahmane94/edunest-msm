@@ -5,23 +5,27 @@ export interface Classroom {
   id: string;
   name: string;
   capacity: number;
-  room_number?: string;
+  room_id: string | null;
+  room_name: string | null;
   level: string;
   academic_year_id: string;
   teacher_id?: string;
   teacher_name?: string;
   enrolled_count: number;
+  working_days: string[];
   created_at: string;
   deletedAt?: string | null;
 }
 
 function mapClassroom(raw: Record<string, unknown>): Classroom {
   const teacher = raw.teacher as Record<string, unknown> | null | undefined;
+  const room = raw.room as Record<string, unknown> | null | undefined;
   return {
     id: raw.id as string,
     name: raw.name as string,
     capacity: raw.capacity as number,
-    room_number: (raw.roomNumber ?? raw.room_number) as string | undefined,
+    room_id: (raw.roomId ?? null) as string | null,
+    room_name: (room?.name ?? null) as string | null,
     level: raw.level as string,
     academic_year_id: (raw.academicYearId ?? raw.academic_year_id) as string,
     teacher_id: (raw.teacherUserId ?? raw.teacher_id) as string | undefined,
@@ -29,6 +33,7 @@ function mapClassroom(raw: Record<string, unknown>): Classroom {
       ? `${teacher.firstName ?? teacher.first_name} ${teacher.lastName ?? teacher.last_name}`
       : undefined,
     enrolled_count: (raw.enrolled_count ?? raw.enrolledCount ?? 0) as number,
+    working_days: (raw.workingDays as string[] | undefined) ?? [],
     created_at: (raw.createdAt ?? raw.created_at) as string,
     deletedAt: (raw.deletedAt ?? raw.deleted_at ?? null) as string | null,
   };
@@ -66,11 +71,11 @@ export function useClassroom(id: string) {
 export function useUpdateClassroom() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name?: string; capacity?: number; room_number?: string | null; level?: string | null }) => {
+    mutationFn: async ({ id, ...data }: { id: string; name?: string; capacity?: number; room_id?: string | null; level?: string | null }) => {
       const body: Record<string, unknown> = {};
       if (data.name !== undefined) body.name = data.name;
       if (data.capacity !== undefined) body.capacity = data.capacity;
-      if (data.room_number !== undefined) body.roomNumber = data.room_number;
+      if (data.room_id !== undefined) body.roomId = data.room_id;
       if (data.level !== undefined) body.level = data.level;
       const res = await apiClient.put(`/classrooms/${id}`, body);
       if (!res.success) throw apiError(res.error, 'Failed to update classroom');
@@ -79,6 +84,7 @@ export function useUpdateClassroom() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['classrooms'] });
       queryClient.invalidateQueries({ queryKey: ['classrooms', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
   });
 }
@@ -100,11 +106,11 @@ export function useDeleteClassroom() {
 export function useCreateClassroom() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { name: string; capacity: number; room_number?: string; level: string; academic_year_id: string; teacher_id?: string }) => {
+    mutationFn: async (data: { name: string; capacity: number; room_id?: string; level: string; academic_year_id: string; teacher_id?: string }) => {
       const res = await apiClient.post('/classrooms', {
         name: data.name,
         capacity: data.capacity,
-        roomNumber: data.room_number,
+        roomId: data.room_id || undefined,
         level: data.level,
         academicYearId: data.academic_year_id,
         teacherUserId: data.teacher_id || undefined,
@@ -114,6 +120,7 @@ export function useCreateClassroom() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['classrooms'] });
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
   });
 }

@@ -27,6 +27,7 @@ import {
 import { useAcademicYears } from '@/hooks/useAcademicYears';
 import { useUsers } from '@/hooks/useUsers';
 import { EmptyState, FilterBar, ListSkeleton, PageHeader } from '@/components/ui';
+import { DEFAULT_WORKING_DAYS, RoomField } from './RoomField';
 
 function CreateClassroomDialog({
   open,
@@ -46,14 +47,14 @@ function CreateClassroomDialog({
   const [formData, setFormData] = React.useState({
     name: '',
     capacity: '',
-    room_number: '',
+    room_id: '',
     level: '',
     teacher_id: '',
   });
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   function resetForm() {
-    setFormData({ name: '', capacity: '', room_number: '', level: '', teacher_id: '' });
+    setFormData({ name: '', capacity: '', room_id: '', level: '', teacher_id: '' });
     setErrors({});
   }
 
@@ -93,7 +94,7 @@ function CreateClassroomDialog({
       await createClassroom.mutateAsync({
         name: formData.name,
         capacity: Number(formData.capacity),
-        room_number: formData.room_number || undefined,
+        room_id: formData.room_id || undefined,
         level: formData.level,
         academic_year_id: academicYearId,
         teacher_id: formData.teacher_id || undefined,
@@ -142,37 +143,30 @@ function CreateClassroomDialog({
             />
           </FormField>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-            <FormField
-              label={t('classrooms.form.capacity')}
-              htmlFor="cr-capacity"
-              error={errors.capacity}
-              required
-            >
-              <Input
-                id="cr-capacity"
-                name="capacity"
-                type="number"
-                min="1"
-                value={formData.capacity}
-                onChange={handleChange}
-                placeholder="25"
-              />
-            </FormField>
+          <FormField
+            label={t('classrooms.form.capacity')}
+            htmlFor="cr-capacity"
+            error={errors.capacity}
+            required
+          >
+            <Input
+              id="cr-capacity"
+              name="capacity"
+              type="number"
+              min="1"
+              value={formData.capacity}
+              onChange={handleChange}
+              placeholder="25"
+            />
+          </FormField>
 
-            <FormField
-              label={t('classrooms.form.roomNumber')}
-              htmlFor="cr-room-number"
-            >
-              <Input
-                id="cr-room-number"
-                name="room_number"
-                value={formData.room_number}
-                onChange={handleChange}
-                placeholder={t('classrooms.form.roomNumberPlaceholder')}
-              />
-            </FormField>
-          </div>
+          <RoomField
+            id="cr-room"
+            value={formData.room_id}
+            onChange={(roomId) => setFormData((prev) => ({ ...prev, room_id: roomId }))}
+            academicYearId={academicYearId}
+            placed={{ capacity: Number(formData.capacity) || 0, working_days: DEFAULT_WORKING_DAYS }}
+          />
 
           <FormField
             label={t('classrooms.form.level')}
@@ -316,7 +310,7 @@ export function ClassroomsPage() {
   const filteredClassrooms = React.useMemo(() => {
     const needle = search.trim().toLowerCase();
     return (classrooms ?? []).filter((c) => {
-      if (needle && !c.name.toLowerCase().includes(needle) && !(c.room_number ?? '').toLowerCase().includes(needle)) {
+      if (needle && !c.name.toLowerCase().includes(needle) && !(c.room_name ?? '').toLowerCase().includes(needle)) {
         return false;
       }
       if (levelFilter && c.level !== levelFilter) return false;
@@ -380,11 +374,11 @@ export function ClassroomsPage() {
         ),
     },
     {
-      key: 'room_number',
+      key: 'room_name',
       header: t('classrooms.columns.roomNumber'),
       render: (classroom) => (
         <span className="text-body text-text-secondary">
-          {classroom.room_number || '—'}
+          {classroom.room_name || '—'}
         </span>
       ),
     },

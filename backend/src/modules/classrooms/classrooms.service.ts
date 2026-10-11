@@ -139,21 +139,27 @@ class ClassroomsService {
   /**
    * Get a single classroom by ID, scoped to the school.
    */
-  async getById(id: string, schoolId: string, requestingTeacherUserId?: string): Promise<ClassroomWithTeacher> {
-    const classroom = await prisma.classroom.findFirst({
+  async getById(
+    id: string,
+    schoolId: string,
+    requestingTeacherUserId?: string,
+  ): Promise<ClassroomWithTeacher & { enrolledCount: number }> {
+    const row = await prisma.classroom.findFirst({
       where: { id, schoolId },
-      include: classroomInclude,
+      include: { ...classroomInclude, _count: { select: { enrollments: true } } },
     });
 
-    if (!classroom) {
+    if (!row) {
       throw new ClassroomServiceError('Classroom not found', 404);
     }
 
-    if (requestingTeacherUserId && classroom.teacherUserId !== requestingTeacherUserId) {
+    if (requestingTeacherUserId && row.teacherUserId !== requestingTeacherUserId) {
       throw new ClassroomServiceError('Classroom not found', 404);
     }
 
-    return classroom;
+    // Children placed in the class, as in the list ("enrolled / capacity").
+    const { _count, ...classroom } = row;
+    return { ...classroom, enrolledCount: _count?.enrollments ?? 0 };
   }
 
   /**

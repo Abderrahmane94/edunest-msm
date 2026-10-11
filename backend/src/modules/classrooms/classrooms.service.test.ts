@@ -238,11 +238,12 @@ describe('ClassroomsService', () => {
         createdAt: new Date(),
       };
 
-      mockPrisma.classroom.findFirst.mockResolvedValue(classroom);
+      mockPrisma.classroom.findFirst.mockResolvedValue({ ...classroom, _count: { enrollments: 12 } });
 
       const result = await classroomsService.getById('cls-1', schoolId);
 
-      expect(result).toEqual(classroom);
+      // With the children placed in it, like in the list.
+      expect(result).toEqual({ ...classroom, enrolledCount: 12 });
     });
 
     it('should throw 404 when classroom not found', async () => {

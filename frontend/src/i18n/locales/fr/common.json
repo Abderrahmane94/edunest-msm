@@ -1187,7 +1187,37 @@
     "fees": {
       "title": "Frais assignés",
       "empty": "Aucun frais n'est assigné à cette classe.",
-      "linked": "Cette classe"
+      "linked": "Cette classe",
+      "add": {
+        "button": "Ajouter un frais",
+        "title": "Ajouter un frais à {{name}}",
+        "description": "Le frais est rattaché à la classe : il est proposé à l'inscription de ses enfants.",
+        "mode": {
+          "existing": "Un frais existant",
+          "new": "Nouveau frais"
+        },
+        "fee": "Frais",
+        "pickPlaceholder": "Choisir un frais",
+        "pickFee": "Choisissez un frais.",
+        "newInvalid": "Indiquez un nom et un montant valide.",
+        "monthly": "Frais mensuel (sinon, facturé une seule fois)",
+        "dueDay": "Jour d'échéance (1-28)",
+        "grace": "Délai de grâce (jours)",
+        "customHint": "Pour un frais facturé par périodes (trimestres…), créez-le dans Paiements → Configuration.",
+        "bill_one": "Facturer aussi l'enfant déjà dans la classe",
+        "bill_many": "Facturer aussi les {{count}} enfants déjà dans la classe",
+        "bill_other": "Facturer aussi les {{count}} enfants déjà dans la classe",
+        "billHint": "Sinon, le frais ne sera facturé qu'aux prochaines inscriptions dans cette classe.",
+        "noChildren": "La classe n'a pas encore d'enfant : le frais sera proposé à leur inscription.",
+        "otherYear": "Cette classe n'est pas de l'année en cours : le frais sera proposé à l'inscription de ses enfants, sans facturer personne maintenant.",
+        "submit": "Ajouter",
+        "resultLinked": "Frais rattaché à {{name}}."
+      },
+      "remove": {
+        "action": "Retirer de la classe",
+        "title": "Retirer « {{fee}} » de {{name}} ?",
+        "description": "Le frais ne sera plus proposé pour cette classe. Les échéances déjà facturées sont conservées ; pour les annuler, passez par Paiements → Configuration."
+      }
     },
     "assignTeacher": {
       "title": "Assigner un enseignant",

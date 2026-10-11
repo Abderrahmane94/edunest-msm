@@ -286,18 +286,44 @@ describe('ChildrenService', () => {
   });
 
   describe('getById', () => {
+    const y25 = { id: 'y25', name: '2025-2026', startDate: new Date('2025-09-01') };
+    const y26 = { id: 'y26', name: '2026-2027', startDate: new Date('2026-09-01') };
+
     it('should return a child when found', async () => {
-      const child = {
+      mockPrisma.child.findFirst.mockResolvedValue({
         id: 'child-1',
         schoolId,
         firstName: 'Ahmed',
         enrollments: [],
-      };
-
-      mockPrisma.child.findFirst.mockResolvedValue(child);
+        academicYear: y25,
+        paymentEnrollments: [],
+      });
 
       const result = await childrenService.getById('child-1', schoolId);
-      expect(result).toEqual(child);
+      expect(result).toEqual({
+        id: 'child-1',
+        schoolId,
+        firstName: 'Ahmed',
+        enrollments: [],
+        schoolYears: [{ id: 'y25', name: '2025-2026' }],
+      });
+    });
+
+    it("lists the child's school years, latest first, and keeps one year's class when asked", async () => {
+      mockPrisma.child.findFirst.mockResolvedValue({
+        id: 'child-1',
+        schoolId,
+        academicYear: y25,
+        enrollments: [
+          { id: 'ce-1', classroom: { id: 'c1', name: 'Petits', level: null, academicYear: y25 } },
+          { id: 'ce-2', classroom: { id: 'c2', name: 'Moyens', level: null, academicYear: y26 } },
+        ],
+        paymentEnrollments: [{ academicYear: y26 }],
+      });
+
+      const result = await childrenService.getById('child-1', schoolId, undefined, 'y26');
+      expect(result.schoolYears).toEqual([{ id: 'y26', name: '2026-2027' }, { id: 'y25', name: '2025-2026' }]);
+      expect(result.enrollments).toEqual([{ id: 'ce-2', classroom: { id: 'c2', name: 'Moyens', level: null } }]);
     });
 
     it('should throw 404 when child not found', async () => {

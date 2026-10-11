@@ -97,7 +97,7 @@ export const childrenController = {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const requestingParentUserId = req.user!.role === 'parent' ? req.user!.userId : undefined;
-      const child = await childrenService.getById(id, schoolId, requestingParentUserId);
+      const child = await childrenService.getById(id, schoolId, requestingParentUserId, academicYearQuery(req.query));
       res.status(200).json(successResponse(child));
     } catch (error) {
       if (error instanceof ChildServiceError) {

@@ -37,7 +37,7 @@ import {
   type BloodType,
 } from '@/hooks/useChildren';
 import { useClassrooms } from '@/hooks/useClassrooms';
-import { useSelectedYear } from '@/hooks/useSelectedYear';
+import { setSelectedYearId, useSelectedYear } from '@/hooks/useSelectedYear';
 import { useUsers } from '@/hooks/useUsers';
 import { EmergencyContactsDialog } from './EmergencyContactsDialog';
 import { MedicalNotesDialog, severityBadgeVariant } from './MedicalNotesDialog';
@@ -60,7 +60,7 @@ export function ChildDetailPage() {
   const { data: medicalNotes } = useMedicalNotes(childId!);
   const linkParent = useLinkParent();
 
-  const { year: schoolYear } = useSelectedYear();
+  const { year: schoolYear, enabled: canPickYear } = useSelectedYear();
   const { data: classrooms } = useClassrooms(schoolYear?.id);
   const { data: usersData } = useUsers({ pageSize: 100 });
   const parents = (usersData?.users ?? []).filter((u) => u.role === 'parent');
@@ -227,7 +227,32 @@ export function ChildDetailPage() {
         back="/admin/children"
         leading={<Avatar name={`${child.first_name} ${child.last_name}`} size="lg" className="ring-4 ring-white shadow-level-2" />}
         title={`${child.first_name} ${child.last_name}`}
-        description={child.classroom_name}
+        description={
+          <>
+            {child.classroom_name}
+            {canPickYear && (child.school_years?.length ?? 0) > 0 && (
+              <span className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                <span className="text-caption text-text-secondary">{t('children.detail.years')}</span>
+                {child.school_years!.map((y) => (
+                  <button
+                    key={y.id}
+                    type="button"
+                    onClick={() => setSelectedYearId(y.id)}
+                    aria-pressed={y.id === schoolYear?.id}
+                    className={
+                      y.id === schoolYear?.id
+                        ? 'px-2 py-0.5 rounded-full text-caption font-semibold bg-primary text-white'
+                        : 'px-2 py-0.5 rounded-full text-caption font-medium bg-subtle text-text-secondary hover:bg-hover'
+                    }
+                    dir="ltr"
+                  >
+                    {y.name}
+                  </button>
+                ))}
+              </span>
+            )}
+          </>
+        }
         badge={
           <StatusBadge variant={child.is_active ? 'success' : 'neutral'}>
             {child.is_active ? t('children.active') : t('children.inactive')}
@@ -293,7 +318,9 @@ export function ChildDetailPage() {
       {classroomOptions.length > 0 && (
         <div className="bg-card border border-border rounded-lg p-6 space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-subsection font-semibold text-text-heading">{t('children.detail.classroom')}</h2>
+            <h2 className="text-subsection font-semibold text-text-heading">
+              {schoolYear ? t('children.detail.classroomInYear', { year: schoolYear.name }) : t('children.detail.classroom')}
+            </h2>
             <Button
               type="button"
               variant="secondary"
@@ -681,7 +708,7 @@ export function ChildDetailPage() {
       />
 
       {/* Assigned fees */}
-      <ChildFeesSection childId={childId!} />
+      <ChildFeesSection childId={childId!} childName={child.first_name} classroomId={child.classroom_id} />
 
       {/* Danger zone */}
       <div className="bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3">

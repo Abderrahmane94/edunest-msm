@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { usersController } from './users.controller';
-import { requireAdmin, requireActiveRole } from '../../middleware/rbac.middleware';
+import { requireAdmin, requireOffice, requireActiveRole } from '../../middleware/rbac.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
 import {
   inviteUserSchema,
@@ -32,7 +32,7 @@ router.get('/invitation/:token', usersController.getInvitationInfo);
 router.post('/register', validate(registerUserSchema), usersController.register);
 
 // GET /api/users — List users in school (admin only)
-router.get('/', requireAdmin, usersController.list);
+router.get('/', requireOffice, usersController.list);
 
 // GET /api/users/:id — Get user by ID (admin only)
 router.get('/:id', requireAdmin, validateParams(idParamSchema), usersController.getById);

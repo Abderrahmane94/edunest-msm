@@ -42,6 +42,7 @@ import { useUsers } from '@/hooks/useUsers';
 import { EmergencyContactsDialog } from './EmergencyContactsDialog';
 import { MedicalNotesDialog, severityBadgeVariant } from './MedicalNotesDialog';
 import { ChildFeesSection } from './ChildFeesSection';
+import { useIsDirector } from '@/lib/roles';
 
 export function ChildDetailPage() {
   const { t } = useTranslation();
@@ -61,6 +62,7 @@ export function ChildDetailPage() {
   const linkParent = useLinkParent();
 
   const { year: schoolYear, enabled: canPickYear } = useSelectedYear();
+  const isDirector = useIsDirector();
   // A closed year is looked at, not changed.
   const closed = useYearClosed();
   const { data: classrooms } = useClassrooms(schoolYear?.id);
@@ -718,8 +720,8 @@ export function ChildDetailPage() {
         unpaidOtherYears={child.unpaid_other_years}
       />
 
-      {/* Danger zone */}
-      <div className="bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3">
+      {/* Danger zone (the director's) */}
+      <div className={`${isDirector ? '' : 'hidden '}bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3`}>
         <h2 className="text-subsection font-semibold text-danger">{t('children.detail.dangerZone')}</h2>
         <p className="text-body text-text-secondary">{t('children.detail.deleteWarning')}</p>
         <EntityDeleteButton

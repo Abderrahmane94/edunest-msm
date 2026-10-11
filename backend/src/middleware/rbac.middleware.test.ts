@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
-import { rbac, requireSuperAdmin, requireAdmin, requireTeacherOrAdmin, ROLE_HIERARCHY } from './rbac.middleware';
+import { rbac, requireSuperAdmin, requireAdmin, requireTeacherOrAdmin, requireOffice, isOfficeRole, ROLE_HIERARCHY } from './rbac.middleware';
 
 function createMockReq(role?: string, schoolId?: string): Partial<Request> {
   if (!role) return {};
@@ -217,6 +217,24 @@ describe('rbac middleware', () => {
     });
   });
 
+  describe('the school office', () => {
+    const run = (mw: ReturnType<typeof rbac>, role: string) => {
+      const req = { user: { role } } as unknown as Request;
+      const status = vi.fn(() => ({ json: vi.fn() }));
+      const next = vi.fn();
+      mw(req, { status } as unknown as Response, next);
+      return next.mock.calls.length === 1;
+    };
+    it('lets the administrative staff into office work, not into management', () => {
+      expect(run(requireOffice, 'administrative')).toBe(true);
+      expect(run(requireOffice, 'admin')).toBe(true);
+      expect(run(requireOffice, 'teacher')).toBe(false);
+      expect(run(requireAdmin, 'administrative')).toBe(false);
+      expect(isOfficeRole('administrative')).toBe(true);
+      expect(isOfficeRole('teacher')).toBe(false);
+    });
+  });
+
   describe('ROLE_HIERARCHY', () => {
     it('should define correct hierarchy order', () => {
       expect(ROLE_HIERARCHY.super_admin).toBeGreaterThan(ROLE_HIERARCHY.admin);
@@ -225,10 +243,11 @@ describe('rbac middleware', () => {
       expect(ROLE_HIERARCHY.parent).toBeGreaterThan(ROLE_HIERARCHY.student);
     });
 
-    it('should include all five roles', () => {
-      expect(Object.keys(ROLE_HIERARCHY)).toHaveLength(5);
+    it('should include all six roles', () => {
+      expect(Object.keys(ROLE_HIERARCHY)).toHaveLength(6);
       expect(ROLE_HIERARCHY).toHaveProperty('super_admin');
       expect(ROLE_HIERARCHY).toHaveProperty('admin');
+      expect(ROLE_HIERARCHY).toHaveProperty('administrative');
       expect(ROLE_HIERARCHY).toHaveProperty('teacher');
       expect(ROLE_HIERARCHY).toHaveProperty('parent');
       expect(ROLE_HIERARCHY).toHaveProperty('student');

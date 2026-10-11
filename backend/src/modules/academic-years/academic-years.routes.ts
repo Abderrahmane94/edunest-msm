@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { academicYearsController } from './academic-years.controller';
-import { requireAdmin } from '../../middleware/rbac.middleware';
+import { requireAdmin, requireOffice } from '../../middleware/rbac.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
 import { createAcademicYearSchema, updateAcademicYearSchema } from './academic-years.schema';
 import { yearRolloverSchema } from './year-rollover.schema';
@@ -13,10 +13,10 @@ const router = Router();
 router.post('/', requireAdmin, validate(createAcademicYearSchema), academicYearsController.create);
 
 // GET /api/academic-years — List academic years for school (admin only)
-router.get('/', requireAdmin, academicYearsController.list);
+router.get('/', requireOffice, academicYearsController.list);
 
 // GET /api/academic-years/:id — Get academic year by ID (admin only)
-router.get('/:id', requireAdmin, validateParams(idParamSchema), academicYearsController.getById);
+router.get('/:id', requireOffice, validateParams(idParamSchema), academicYearsController.getById);
 
 // PUT /api/academic-years/:id — Update academic year (admin only)
 router.put('/:id', requireAdmin, validateParams(idParamSchema), validate(updateAcademicYearSchema), academicYearsController.update);

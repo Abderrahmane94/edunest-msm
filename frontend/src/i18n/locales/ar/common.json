@@ -136,6 +136,7 @@
         "activeOf": "من أصل {{total}} حسابًا",
         "roles": {
           "admin": "المديرون",
+          "administrative": "الإداريون",
           "teacher": "المعلمون",
           "parent": "الأولياء"
         },
@@ -483,6 +484,7 @@
       "supplyAside": "هذه المادة موضوعة جانبًا.",
       "supplyNotEnough": "المخزون غير كافٍ: يتبقى {{left}}.",
       "supplyAdminOnly": "يمكن للمدير فقط تسجيل المشتريات والجرد.",
+      "expenseDirectorOnly": "المدير وحده يسجّل المصاريف.",
       "equipmentNotFound": "العتاد غير موجود.",
       "rolloverSameYear": "اختر سنة أخرى للنسخ منها.",
       "rolloverStartOutside": "يجب أن يكون تاريخ بداية الفوترة ضمن السنة الجديدة.",
@@ -759,6 +761,7 @@
     "roles": {
       "super_admin": "مدير عام",
       "admin": "مدير",
+      "administrative": "إداري",
       "teacher": "معلم",
       "parent": "ولي أمر"
     },
@@ -2144,7 +2147,8 @@
       "start": "بدء",
       "selectPrompt": "اختر محادثة",
       "roleTeacher": "معلم",
-      "roleAdmin": "مدير"
+      "roleAdmin": "مدير",
+      "roleAdministrative": "إداري"
     }
   },
   "teacherCommunication": {
@@ -2231,6 +2235,7 @@
     "noColleagues": "لا يوجد زملاء في هذه المدرسة",
     "roleTeacher": "معلم",
     "roleAdmin": "مدير",
+    "roleAdministrative": "إداري",
     "waiting": "في انتظار الإرسال",
     "sending": "جارٍ الإرسال…",
     "notSent": "لم يُرسل",

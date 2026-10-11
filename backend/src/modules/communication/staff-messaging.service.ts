@@ -54,7 +54,7 @@ class StaffMessagingService {
         isActive: true,
         deletedAt: null,
         id: { not: userId },
-        role: { in: ['teacher', 'admin'] },
+        role: { in: ['teacher', 'admin', 'administrative'] },
       },
       select: { id: true, firstName: true, lastName: true, role: true },
       orderBy: [{ role: 'asc' }, { firstName: 'asc' }],
@@ -81,7 +81,7 @@ class StaffMessagingService {
         schoolId,
         isActive: true,
         deletedAt: null,
-        role: { in: ['teacher', 'admin'] },
+        role: { in: ['teacher', 'admin', 'administrative'] },
       },
       select: participantSelect,
     });
@@ -98,8 +98,8 @@ class StaffMessagingService {
       throw new CommunicationServiceError('You cannot start a conversation with yourself', 400);
     }
 
-    // Only teachers and admins can use staff messaging
-    if (!['teacher', 'admin'].includes(userRole)) {
+    // Only staff (teachers, director, administrative) can use staff messaging
+    if (!['teacher', 'admin', 'administrative'].includes(userRole)) {
       throw new CommunicationServiceError('Only staff members can use staff messaging', 403);
     }
 

@@ -309,17 +309,20 @@ function FinanceSection({ data }: { data: Dashboard }) {
           )}
         </Tile>
 
-        <Tile
-          icon={<Landmark className="w-[18px] h-[18px]" />}
-          tone={f.net >= 0 ? 'success' : 'danger'}
-          title={t('dashboard.admin.finance.net')}
-          to="/admin/payments?tab=reconciliation"
-        >
-          <BigNumber value={n.money(f.net)} tone={f.net >= 0 ? 'success' : 'danger'} />
-          <p className="mt-2 text-caption text-text-secondary">
-            {t('dashboard.admin.finance.netDetail', { expenses: n.money(f.expenses), salaries: n.money(f.salaries) })}
-          </p>
-        </Tile>
+        {/* Not for the administrative staff: expenses and payroll are the director's. */}
+        {f.net !== null && (
+          <Tile
+            icon={<Landmark className="w-[18px] h-[18px]" />}
+            tone={f.net >= 0 ? 'success' : 'danger'}
+            title={t('dashboard.admin.finance.net')}
+            to="/admin/payments?tab=reconciliation"
+          >
+            <BigNumber value={n.money(f.net)} tone={f.net >= 0 ? 'success' : 'danger'} />
+            <p className="mt-2 text-caption text-text-secondary">
+              {t('dashboard.admin.finance.netDetail', { expenses: n.money(f.expenses ?? 0), salaries: n.money(f.salaries ?? 0) })}
+            </p>
+          </Tile>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

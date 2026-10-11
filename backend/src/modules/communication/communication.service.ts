@@ -1,4 +1,5 @@
 import { Prisma, type DailyReportPhoto } from '@prisma/client';
+import { isOfficeRole } from '../../middleware/rbac.middleware';
 import prisma from '../../lib/prisma';
 import { academicYearsService } from '../academic-years/academic-years.service';
 import { socketService } from '../../services/socket.service';
@@ -117,8 +118,8 @@ class CommunicationService {
           403,
         );
       }
-    } else if (userRole === 'admin' || userRole === 'super_admin') {
-      // Admins can create conversations — find the teacher assigned to the child's classroom
+    } else if (isOfficeRole(userRole)) {
+      // The office can create conversations — find the teacher assigned to the child's classroom
       const enrollment = await prisma.classroomEnrollment.findFirst({
         where: { childId, classroom: { schoolId } },
         include: { classroom: true },
@@ -479,8 +480,7 @@ class CommunicationService {
     // Verify user is a participant in the conversation
     const conversation = message.conversation;
     if (
-      userRole !== 'admin' &&
-      userRole !== 'super_admin' &&
+      !isOfficeRole(userRole) &&
       userId !== conversation.teacherUserId &&
       userId !== conversation.parentUserId
     ) {
@@ -1190,7 +1190,7 @@ class CommunicationService {
     userId: string,
     role: string,
   ): Promise<'all' | string[]> {
-    if (role === 'admin' || role === 'super_admin') {
+    if (isOfficeRole(role)) {
       return 'all';
     }
 
@@ -1395,8 +1395,8 @@ class CommunicationService {
       throw new CommunicationServiceError('Conversation not found', 404);
     }
 
-    // Admins can access any conversation in their school
-    if (userRole === 'admin' || userRole === 'super_admin') {
+    // The office can access any conversation in their school
+    if (isOfficeRole(userRole)) {
       return conversation;
     }
 

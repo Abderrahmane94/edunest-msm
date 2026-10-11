@@ -20,6 +20,9 @@ enum SchoolType {
 enum UserRole {
   super_admin
   admin
+  /// إداري: office staff (registration, attendance, communication, inventory,
+  /// collecting payments) without the director's management rights.
+  administrative
   teacher
   parent
   student

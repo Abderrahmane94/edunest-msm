@@ -356,6 +356,7 @@ function CreateUserDialog({
 
   const roleOptions = [
     { value: 'admin', label: t('users.roles.admin') },
+    { value: 'administrative', label: t('users.roles.administrative') },
     { value: 'teacher', label: t('users.roles.teacher') },
     { value: 'parent', label: t('users.roles.parent') },
   ];

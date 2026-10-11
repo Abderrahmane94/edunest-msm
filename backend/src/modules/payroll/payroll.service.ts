@@ -33,7 +33,7 @@ export const payrollService = {
     const users = await prisma.user.findMany({
       where: {
         schoolId,
-        role: { in: ['admin', 'teacher'] },
+        role: { in: ['admin', 'administrative', 'teacher'] },
         deletedAt: null,
         isActive: true,
       },
@@ -81,7 +81,7 @@ export const payrollService = {
       where: { id: userId, schoolId, deletedAt: null },
     });
     if (!user) throw new PayrollError('Employee not found', 404);
-    if (!['admin', 'teacher'].includes(user.role)) {
+    if (!['admin', 'administrative', 'teacher'].includes(user.role)) {
       throw new PayrollError('User is not a staff member');
     }
 
@@ -121,7 +121,7 @@ export const payrollService = {
       month?: number;
       /** Salaries of the months of this school year. */
       academicYearId?: string;
-      role?: 'admin' | 'teacher';
+      role?: 'admin' | 'administrative' | 'teacher';
       /** Paid on or after this date (YYYY-MM-DD). */
       paidFrom?: string;
       /** Paid on or before this date (YYYY-MM-DD). */

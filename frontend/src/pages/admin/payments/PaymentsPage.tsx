@@ -49,6 +49,7 @@ import { ProvisionalReceiptDialog } from './ProvisionalReceiptDialog';
 import { OfflinePaymentsPanel } from './OfflinePaymentsPanel';
 import { suggestAllocations as suggestAllocationsUtil } from '@/lib/paymentAllocation';
 import { FilterBar, SectionHeader, StatusBadge } from '@/components/ui';
+import { useIsDirector } from '@/lib/roles';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -1054,6 +1055,8 @@ export function PaymentsPage() {
   const { t, i18n } = useTranslation();
   const { branchId: selectedBranchId } = useDefaultBranch();
   const [recordDialogOpen, setRecordDialogOpen] = React.useState(false);
+  // Corrections are the director's.
+  const isDirector = useIsDirector();
   const [correctionDialogOpen, setCorrectionDialogOpen] = React.useState(false);
   const [receiptDialogOpen, setReceiptDialogOpen] = React.useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = React.useState<string | null>(null);
@@ -1175,10 +1178,12 @@ export function PaymentsPage() {
         description={t('payments.records.description')}
         actions={
           <>
-            <Button variant="secondary" onClick={() => setCorrectionDialogOpen(true)}>
-              <Minus className="w-4 h-4" />
-              {t('payments.correction.openButton')}
-            </Button>
+            {isDirector && (
+              <Button variant="secondary" onClick={() => setCorrectionDialogOpen(true)}>
+                <Minus className="w-4 h-4" />
+                {t('payments.correction.openButton')}
+              </Button>
+            )}
             <CreateButton label={t('payments.recording.record')} onClick={() => setRecordDialogOpen(true)} />
           </>
         }

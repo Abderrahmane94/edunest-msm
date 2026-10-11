@@ -322,9 +322,9 @@ class PaymentService {
         );
       }
 
-      if (recorder.role !== 'admin' && recorder.role !== 'super_admin') {
+      if (!['admin', 'administrative', 'super_admin'].includes(recorder.role)) {
         throw new PaymentServiceError(
-          'recorded_by must reference a Staff user (admin or super_admin)',
+          'recorded_by must reference a Staff user (admin, administrative or super_admin)',
           400,
           'VALIDATION_ERROR',
         );

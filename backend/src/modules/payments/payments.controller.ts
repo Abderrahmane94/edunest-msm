@@ -13,7 +13,8 @@ import { Prisma, PaymentChannel } from '@prisma/client';
 import { z, ZodError } from 'zod';
 
 /** Roles considered "Staff" for payment access. */
-const STAFF_ROLES = ['admin', 'super_admin'] as const;
+// Route guards decide which of them may use each endpoint.
+const STAFF_ROLES = ['admin', 'administrative', 'super_admin'] as const;
 
 export const paymentsController = {
   /**

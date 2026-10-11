@@ -10,13 +10,16 @@ import { ReconciliationPage } from './ReconciliationPage';
 import { ExpensesTab } from './ExpensesTab';
 import { PageHeader, Tabs } from '@/components/ui';
 import { useTabParam } from '@/hooks/useTabParam';
+import { useIsDirector } from '@/lib/roles';
 
 type PaymentTab = 'records' | 'late' | 'reconciliation' | 'expenses' | 'config';
 
 export function PaymentManagementPage() {
   const { t } = useTranslation();
   // A child's billing enrollment is managed from their page (Assigned fees → Manage billing).
-  const [activeTab, setActiveTab] = useTabParam<PaymentTab>(PAYMENT_TABS, 'records');
+  // The administrative staff collect payments and follow late ones; the rest is the director's.
+  const isDirector = useIsDirector();
+  const [activeTab, setActiveTab] = useTabParam<PaymentTab>(isDirector ? PAYMENT_TABS : OFFICE_TABS, 'records');
 
   const tabs: { value: PaymentTab; label: string; icon: React.ReactNode }[] = [
     { value: 'records', label: t('nav.paymentsRecords'), icon: <Receipt className="w-4 h-4" /> },
@@ -30,7 +33,7 @@ export function PaymentManagementPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader title={t('nav.payments')} />
 
-      <Tabs value={activeTab} onChange={setActiveTab} items={tabs} />
+      <Tabs value={activeTab} onChange={setActiveTab} items={tabs.filter((tab) => (isDirector ? PAYMENT_TABS : OFFICE_TABS).includes(tab.value))} />
 
       {/* Tab content */}
       {activeTab === 'records' && <PaymentsPage />}
@@ -61,3 +64,4 @@ function ConfigTab() {
 }
 
 const PAYMENT_TABS: PaymentTab[] = ['records', 'late', 'reconciliation', 'expenses', 'config'];
+const OFFICE_TABS: PaymentTab[] = ['records', 'late'];

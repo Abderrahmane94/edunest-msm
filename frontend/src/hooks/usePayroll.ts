@@ -133,7 +133,7 @@ export function usePayrollPayments(filters: {
   userId?: string;
   year?: number;
   month?: number;
-  role?: 'admin' | 'teacher';
+  role?: 'admin' | 'administrative' | 'teacher';
   /** YYYY-MM-DD, inclusive. */
   paidFrom?: string;
   /** YYYY-MM-DD, inclusive. */

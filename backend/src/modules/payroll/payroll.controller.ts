@@ -42,7 +42,10 @@ export const payrollController = {
       const userId = req.query.userId as string | undefined;
       const year = req.query.year ? parseInt(req.query.year as string) : undefined;
       const month = req.query.month ? parseInt(req.query.month as string) : undefined;
-      const role = req.query.role === 'admin' || req.query.role === 'teacher' ? req.query.role : undefined;
+      const role =
+        req.query.role === 'admin' || req.query.role === 'administrative' || req.query.role === 'teacher'
+          ? req.query.role
+          : undefined;
       const isoDate = (v: unknown): string | undefined => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined);
       const paidFrom = isoDate(req.query.paidFrom);
       const paidTo = isoDate(req.query.paidTo);

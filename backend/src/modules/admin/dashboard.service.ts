@@ -41,9 +41,10 @@ export interface AdminDashboard {
     month: string;
     collected: number;
     collectedPreviousMonth: number;
-    expenses: number;
-    salaries: number;
-    net: number;
+    /** null for the administrative staff, who don't see expenses and payroll. */
+    expenses: number | null;
+    salaries: number | null;
+    net: number | null;
     late: { amount: number; children: number };
     /** Paid over owed, for what has fallen due this school year; null if nothing is due yet. */
     recoveryRate: number | null;

@@ -23,7 +23,7 @@ interface UsersParams {
   search?: string;
   sortColumn?: string;
   sortDirection?: 'asc' | 'desc';
-  role?: 'admin' | 'teacher' | 'parent';
+  role?: 'admin' | 'administrative' | 'teacher' | 'parent';
   status?: 'active' | 'inactive';
 }
 

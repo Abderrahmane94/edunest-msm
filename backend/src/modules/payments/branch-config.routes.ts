@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { branchConfigController } from './branch-config.controller';
-import { requireAdmin } from '../../middleware/rbac.middleware';
+import { requireAdmin, requireOffice } from '../../middleware/rbac.middleware';
 
 const router = Router();
 
 // GET /branches — List branches for the user's school (admin/super_admin only)
-router.get('/branches', requireAdmin, branchConfigController.listBranches);
+router.get('/branches', requireOffice, branchConfigController.listBranches);
 
 // POST /branches — Create a new branch (admin/super_admin only)
 router.post('/branches', requireAdmin, branchConfigController.createBranch);

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { communicationController } from './communication.controller';
 import { staffMessagingController, staffMessagingUpload } from './staff-messaging.controller';
-import { requireTeacherOrAdmin, requireActiveRole, requireAdmin, rbac } from '../../middleware/rbac.middleware';
+import { requireOffice, requireTeacherOrOffice, requireActiveRole, rbac } from '../../middleware/rbac.middleware';
 import { validate, validateParams, validateQuery } from '../../middleware/validation.middleware';
 import {
   createConversationSchema,
@@ -45,7 +45,7 @@ const router = Router();
 // POST /api/communication/conversations — Create a conversation (teacher or admin)
 router.post(
   '/conversations',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   validate(createConversationSchema),
   communicationController.createConversation,
 );
@@ -53,7 +53,7 @@ router.post(
 // GET /api/communication/conversations/pending — List pending conversations (admin only)
 router.get(
   '/conversations/pending',
-  requireAdmin,
+  requireOffice,
   communicationController.listPendingConversations,
 );
 
@@ -105,7 +105,7 @@ router.patch(
 // POST /api/communication/daily-reports — Create daily report (teacher, admin)
 router.post(
   '/daily-reports',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   validate(createDailyReportSchema),
   communicationController.createDailyReport,
 );
@@ -114,7 +114,7 @@ router.post(
 // creating or updating it (safe to send again; used for offline reports)
 router.put(
   '/daily-reports/day',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   validate(saveDailyReportSchema),
   communicationController.saveDailyReport,
 );
@@ -146,7 +146,7 @@ router.get(
 // PATCH /api/communication/daily-reports/:id — Update daily report (teacher, admin)
 router.patch(
   '/daily-reports/:id',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   validateParams(dailyReportIdParamSchema),
   validate(updateDailyReportSchema),
   communicationController.updateDailyReport,
@@ -155,7 +155,7 @@ router.patch(
 // POST /api/communication/daily-reports/:id/photos — Upload photos to report (teacher, admin)
 router.post(
   '/daily-reports/:id/photos',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   validateParams(dailyReportIdParamSchema),
   uploadPhotos.array('photos', 6),
   communicationController.uploadDailyReportPhoto,
@@ -166,7 +166,7 @@ router.post(
 // POST /api/communication/announcements — Create and publish announcement (admin only)
 router.post(
   '/announcements',
-  requireAdmin,
+  requireOffice,
   validate(createAnnouncementSchema),
   communicationController.createAnnouncement,
 );
@@ -190,7 +190,7 @@ router.get(
 // DELETE /api/communication/announcements/:id — Delete announcement (admin only)
 router.delete(
   '/announcements/:id',
-  requireAdmin,
+  requireOffice,
   validateParams(announcementIdParamSchema),
   communicationController.deleteAnnouncement,
 );
@@ -200,7 +200,7 @@ router.delete(
 // POST /api/communication/events — Create event (admin only)
 router.post(
   '/events',
-  requireAdmin,
+  requireOffice,
   validate(createEventSchema),
   communicationController.createEvent,
 );
@@ -224,7 +224,7 @@ router.get(
 // DELETE /api/communication/events/:id — Delete event (admin only)
 router.delete(
   '/events/:id',
-  requireAdmin,
+  requireOffice,
   validateParams(eventIdParamSchema),
   communicationController.deleteEvent,
 );
@@ -244,42 +244,42 @@ router.patch(
 // GET /api/communication/staff/colleagues — List staff colleagues in the same school
 router.get(
   '/staff/colleagues',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   staffMessagingController.listColleagues,
 );
 
 // POST /api/communication/staff/conversations — Get or create a conversation with a staff member
 router.post(
   '/staff/conversations',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   staffMessagingController.getOrCreateConversation,
 );
 
 // GET /api/communication/staff/conversations — List all staff conversations
 router.get(
   '/staff/conversations',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   staffMessagingController.listConversations,
 );
 
 // GET /api/communication/staff/conversations/:id/messages — Get messages
 router.get(
   '/staff/conversations/:id/messages',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   staffMessagingController.getMessages,
 );
 
 // POST /api/communication/staff/conversations/:id/messages — Send text message
 router.post(
   '/staff/conversations/:id/messages',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   staffMessagingController.sendMessage,
 );
 
 // POST /api/communication/staff/conversations/:id/messages/file — Send file message
 router.post(
   '/staff/conversations/:id/messages/file',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   staffMessagingUpload,
   staffMessagingController.sendFileMessage,
 );
@@ -287,7 +287,7 @@ router.post(
 // PATCH /api/communication/staff/messages/:id/read — Mark as read
 router.patch(
   '/staff/messages/:id/read',
-  requireTeacherOrAdmin,
+  requireTeacherOrOffice,
   staffMessagingController.markAsRead,
 );
 

@@ -51,7 +51,7 @@ export function UsersPage() {
   const { t } = useTranslation();
   const [page, setPage] = React.useState(1);
   const [search, setSearch] = React.useState('');
-  const [roleFilter, setRoleFilter] = React.useState<'' | 'admin' | 'teacher' | 'parent'>('');
+  const [roleFilter, setRoleFilter] = React.useState<'' | 'admin' | 'administrative' | 'teacher' | 'parent'>('');
   const [statusFilter, setStatusFilter] = React.useState<'' | 'active' | 'inactive'>('');
   const [sortColumn, setSortColumn] = React.useState<string>('created_at');
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('desc');
@@ -221,12 +221,13 @@ export function UsersPage() {
           name="users-filter-role"
           value={roleFilter}
           onChange={(e) => {
-            setRoleFilter(e.target.value as '' | 'admin' | 'teacher' | 'parent');
+            setRoleFilter(e.target.value as '' | 'admin' | 'administrative' | 'teacher' | 'parent');
             setPage(1);
           }}
           options={[
             { value: '', label: t('users.filters.allRoles') },
             { value: 'admin', label: t('users.roles.admin') },
+            { value: 'administrative', label: t('users.roles.administrative') },
             { value: 'teacher', label: t('users.roles.teacher') },
             { value: 'parent', label: t('users.roles.parent') },
           ]}

@@ -15,6 +15,8 @@ export interface User {
   phone?: string | null;
   address?: string | null;
   national_id?: string | null;
+  /** Office staff: their rights profile (null: the school's default). */
+  access_profile?: { id: string; name: string } | null;
 }
 
 interface UsersParams {
@@ -49,6 +51,7 @@ function mapUser(raw: Record<string, unknown>): User {
     phone: (raw.phone ?? null) as string | null,
     address: (raw.address ?? null) as string | null,
     national_id: (raw.nationalId ?? raw.national_id ?? null) as string | null,
+    access_profile: (raw.accessProfile ?? null) as { id: string; name: string } | null,
   };
 }
 

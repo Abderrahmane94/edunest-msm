@@ -7,7 +7,7 @@ import { FormField } from '@/components/forms';
 import { cn } from '@/lib/utils';
 import { errorMessage } from '@/lib/errorMessage';
 import { qty, useRecordStockMovement, type StockItem, type StockMovementInput } from '@/hooks/useInventory';
-import { useIsDirector } from '@/lib/roles';
+import { usePermissions } from '@/lib/roles';
 
 export type MovementType = StockMovementInput['type'];
 
@@ -41,7 +41,7 @@ export function StockMovementDialog({
   const { t } = useTranslation();
   const record = useRecordStockMovement();
   // Expenses are the director's: the administrative staff record the purchase only.
-  const canRecordExpense = useIsDirector();
+  const canRecordExpense = usePermissions().can('expenses', 'edit');
   const [type, setType] = React.useState<MovementType>(initialType);
   const [quantity, setQuantity] = React.useState('');
   const [date, setDate] = React.useState(localToday());

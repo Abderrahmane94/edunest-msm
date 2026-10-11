@@ -28,6 +28,7 @@ import { useSelectedYear, useYearClosed } from '@/hooks/useSelectedYear';
 import { useUsers } from '@/hooks/useUsers';
 import { EmptyState, FilterBar, ListSkeleton, PageHeader } from '@/components/ui';
 import { DEFAULT_WORKING_DAYS, RoomField } from './RoomField';
+import { usePermissions } from '@/lib/roles';
 
 function CreateClassroomDialog({
   open,
@@ -289,7 +290,9 @@ export function ClassroomsPage() {
   const navigate = useNavigate();
   const { year: schoolYear } = useSelectedYear();
   // A closed year is looked at, not changed.
-  const closed = useYearClosed();
+  // Read-only: a closed year, or a profile that only views classes.
+  const { can } = usePermissions();
+  const closed = useYearClosed() || !can('classes', 'edit');
   const { data: classrooms, isLoading } = useClassrooms(schoolYear?.id);
 
   // ─── Filters (a school has few classes, so filter here) ───

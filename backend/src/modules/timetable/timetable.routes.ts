@@ -1,15 +1,15 @@
 import { Router } from 'express';
 import { timetableController } from './timetable.controller';
-import { requireAdmin, requireTeacherOrOffice } from '../../middleware/rbac.middleware';
+import { requirePermission, requireAnyOffice } from '../../middleware/permission.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
 import { updateWorkingDaysSchema, classroomIdParamSchema } from './timetable.schema';
 
 const router = Router();
 
 // GET /api/timetable/:classroomId — Get working days (admin or teacher)
-router.get('/:classroomId', requireTeacherOrOffice, validateParams(classroomIdParamSchema), timetableController.getWorkingDays);
+router.get('/:classroomId', requireAnyOffice({ alsoRoles: ['teacher'] }), validateParams(classroomIdParamSchema), timetableController.getWorkingDays);
 
 // PUT /api/timetable — Update working days (admin only)
-router.put('/', requireAdmin, validate(updateWorkingDaysSchema), timetableController.updateWorkingDays);
+router.put('/', requirePermission('settings', 'edit'), validate(updateWorkingDaysSchema), timetableController.updateWorkingDays);
 
 export default router;

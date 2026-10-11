@@ -34,6 +34,7 @@ import {
 import { FilterBar, PageHeader, RoleBadge, Tabs } from '@/components/ui';
 import { useTabParam } from '@/hooks/useTabParam';
 import { useYearClosed } from '@/hooks/useSelectedYear';
+import { usePermissions } from '@/lib/roles';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -994,7 +995,9 @@ function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName:
 function PaymentsTab({ employees }: { employees: EmployeeRecord[] }) {
   const { t } = useTranslation();
   // A closed year is looked at, not changed.
-  const closed = useYearClosed();
+  // Read-only: a closed year, or a profile that only views payroll.
+  const { can } = usePermissions();
+  const closed = useYearClosed() || !can('payroll', 'edit');
   const [recordOpen, setRecordOpen] = React.useState(false);
   const [filterUserId, setFilterUserId] = React.useState('');
   const [filterYear, setFilterYear] = React.useState<number | undefined>();

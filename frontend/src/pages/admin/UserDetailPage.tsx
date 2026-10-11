@@ -18,6 +18,8 @@ import {
 } from '@/components/ui';
 import { userToggleConfirm } from './UsersPage';
 import { ResetPasswordDialog } from './ResetPasswordDialog';
+import { UserAccessProfileCard } from './AccessProfilesSection';
+import { useIsDirector } from '@/lib/roles';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import { useUser, useUpdateUser, useToggleUserActive, type User } from '@/hooks/useUsers';
@@ -111,8 +113,10 @@ export function UserDetailPage() {
     }
   }
 
+  const isDirector = useIsDirector();
+  // Only the director gives the director's role.
   const roleOptions = [
-    { value: 'admin', label: t('users.roles.admin') },
+    ...(isDirector ? [{ value: 'admin', label: t('users.roles.admin') }] : []),
     { value: 'administrative', label: t('users.roles.administrative') },
     { value: 'teacher', label: t('users.roles.teacher') },
     { value: 'parent', label: t('users.roles.parent') },
@@ -233,6 +237,9 @@ export function UserDetailPage() {
             {t('users.detail.joined')}: <span dir="ltr" className="inline">{formatDate(user.created_at)}</span>
           </p>
         </div>
+
+        {/* Office staff: their rights profile */}
+        {user.role === 'administrative' && <UserAccessProfileCard user={user} />}
 
         {/* School — visible to super_admin only */}
         {currentUser?.role === 'super_admin' && (

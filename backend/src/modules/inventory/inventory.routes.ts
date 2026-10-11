@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { inventoryController } from './inventory.controller';
-import { requireOffice, requireTeacherOrOffice } from '../../middleware/rbac.middleware';
+import { requirePermission } from '../../middleware/permission.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
 import { rejectClosedYear, yearOf } from '../../middleware/closed-year.middleware';
 import { createStockItemSchema, createStockMovementSchema, updateStockItemSchema } from './inventory.schema';
@@ -9,27 +9,27 @@ import { idParamSchema } from '../../utils/validators';
 const router = Router();
 
 // GET /api/inventory/items — The school's supplies (teachers record what they use)
-router.get('/items', requireTeacherOrOffice, inventoryController.list);
+router.get('/items', requirePermission('inventory', 'view', { alsoRoles: ['teacher'] }), inventoryController.list);
 
 // GET /api/inventory/summary — Supplies to buy again (admin only)
-router.get('/summary', requireOffice, inventoryController.summary);
+router.get('/summary', requirePermission('inventory', 'view'), inventoryController.summary);
 
 // POST /api/inventory/items — Add a supply (admin only)
-router.post('/items', requireOffice, validate(createStockItemSchema), inventoryController.create);
+router.post('/items', requirePermission('inventory', 'edit'), validate(createStockItemSchema), inventoryController.create);
 
 // PUT /api/inventory/items/:id — Update or put aside a supply (admin only)
-router.put('/items/:id', requireOffice, validateParams(idParamSchema), validate(updateStockItemSchema), inventoryController.update);
+router.put('/items/:id', requirePermission('inventory', 'edit'), validateParams(idParamSchema), validate(updateStockItemSchema), inventoryController.update);
 
 // DELETE /api/inventory/items/:id — Delete a supply never moved (admin only)
-router.delete('/items/:id', requireOffice, validateParams(idParamSchema), inventoryController.delete);
+router.delete('/items/:id', requirePermission('inventory', 'edit'), validateParams(idParamSchema), inventoryController.delete);
 
 // GET /api/inventory/items/:id/movements — A supply's history (admin only)
-router.get('/items/:id/movements', requireOffice, validateParams(idParamSchema), inventoryController.movements);
+router.get('/items/:id/movements', requirePermission('inventory', 'view'), validateParams(idParamSchema), inventoryController.movements);
 
 // POST /api/inventory/items/:id/movements — Purchase or count (admin), use (admin or teacher)
 router.post(
   '/items/:id/movements',
-  requireTeacherOrOffice,
+  requirePermission('inventory', 'edit', { alsoRoles: ['teacher'] }),
   validateParams(idParamSchema),
   validate(createStockMovementSchema),
   // A movement counts in its date's school year: not in a closed one.

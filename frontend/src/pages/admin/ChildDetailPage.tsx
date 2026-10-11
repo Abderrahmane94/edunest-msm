@@ -42,7 +42,7 @@ import { useUsers } from '@/hooks/useUsers';
 import { EmergencyContactsDialog } from './EmergencyContactsDialog';
 import { MedicalNotesDialog, severityBadgeVariant } from './MedicalNotesDialog';
 import { ChildFeesSection } from './ChildFeesSection';
-import { useIsDirector } from '@/lib/roles';
+import { usePermissions } from '@/lib/roles';
 
 export function ChildDetailPage() {
   const { t } = useTranslation();
@@ -62,9 +62,10 @@ export function ChildDetailPage() {
   const linkParent = useLinkParent();
 
   const { year: schoolYear, enabled: canPickYear } = useSelectedYear();
-  const isDirector = useIsDirector();
+  const { can, canDelete } = usePermissions();
   // A closed year is looked at, not changed.
-  const closed = useYearClosed();
+  // Read-only: a closed year, or a profile that only views children.
+  const closed = useYearClosed() || !can('children', 'edit');
   const { data: classrooms } = useClassrooms(schoolYear?.id);
   const { data: usersData } = useUsers({ pageSize: 100 });
   const parents = (usersData?.users ?? []).filter((u) => u.role === 'parent');
@@ -269,7 +270,7 @@ export function ChildDetailPage() {
         <div className="bg-card border border-border rounded-lg p-6 space-y-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-subsection font-semibold text-text-heading">{t('children.detail.info')}</h2>
-            <EditButton onClick={edit.startEditing} hidden={edit.editing} />
+            <EditButton onClick={edit.startEditing} hidden={edit.editing || !can('children', 'edit')} />
           </div>
           <ReadOnlyFieldset readOnly={!edit.editing}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
@@ -721,7 +722,7 @@ export function ChildDetailPage() {
       />
 
       {/* Danger zone (the director's) */}
-      <div className={`${isDirector ? '' : 'hidden '}bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3`}>
+      <div className={`${can('children', 'edit') && canDelete ? '' : 'hidden '}bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3`}>
         <h2 className="text-subsection font-semibold text-danger">{t('children.detail.dangerZone')}</h2>
         <p className="text-body text-text-secondary">{t('children.detail.deleteWarning')}</p>
         <EntityDeleteButton

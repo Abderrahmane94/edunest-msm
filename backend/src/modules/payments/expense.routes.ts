@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { expenseController } from './expense.controller';
-import { requireAdmin } from '../../middleware/rbac.middleware';
+import { requirePermission } from '../../middleware/permission.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
 import { createExpenseSchema, updateExpenseSchema } from './expense.schema';
 import { idParamSchema } from '../../utils/validators';
@@ -18,7 +18,7 @@ const upload = multer({
 // POST /expenses — Create expense (admin only)
 router.post(
   '/expenses',
-  requireAdmin,
+  requirePermission('expenses', 'edit'),
   validate(createExpenseSchema),
   rejectClosedYear(async (req) => {
     const body = req.body as { academicYearId?: string; date: string };
@@ -28,15 +28,15 @@ router.post(
 );
 
 // GET /expenses — List expenses (admin only)
-router.get('/expenses', requireAdmin, expenseController.list);
+router.get('/expenses', requirePermission('expenses', 'view'), expenseController.list);
 
 // GET /expenses/:id — Get expense by ID (admin only)
-router.get('/expenses/:id', requireAdmin, validateParams(idParamSchema), expenseController.getById);
+router.get('/expenses/:id', requirePermission('expenses', 'view'), validateParams(idParamSchema), expenseController.getById);
 
 // PUT /expenses/:id — Update expense (admin only)
 router.put(
   '/expenses/:id',
-  requireAdmin,
+  requirePermission('expenses', 'edit'),
   validateParams(idParamSchema),
   validate(updateExpenseSchema),
   // Neither the year it is in nor the one it is moved to may be closed.
@@ -48,12 +48,12 @@ router.put(
 );
 
 // DELETE /expenses/:id — Delete expense (admin only)
-router.delete('/expenses/:id', requireAdmin, validateParams(idParamSchema), rejectClosedYear((req) => yearOf.expense(req.params.id)), expenseController.remove);
+router.delete('/expenses/:id', requirePermission('expenses', 'edit'), validateParams(idParamSchema), rejectClosedYear((req) => yearOf.expense(req.params.id)), expenseController.remove);
 
 // POST /expenses/:id/receipt — Upload receipt (admin only)
 router.post(
   '/expenses/:id/receipt',
-  requireAdmin,
+  requirePermission('expenses', 'edit'),
   validateParams(idParamSchema),
   rejectClosedYear((req) => yearOf.expense(req.params.id)),
   upload.single('receipt'),
@@ -63,7 +63,7 @@ router.post(
 // GET /expenses/:id/receipt — Download the receipt file (admin only)
 router.get(
   '/expenses/:id/receipt',
-  requireAdmin,
+  requirePermission('expenses', 'view'),
   validateParams(idParamSchema),
   expenseController.getReceipt,
 );

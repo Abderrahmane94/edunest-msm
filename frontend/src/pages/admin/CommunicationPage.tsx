@@ -54,12 +54,14 @@ import {
 } from '@/hooks/useStaffMessaging';
 import { messagePreview } from '@/components/messaging/messagePreview';
 import { useTabParam } from '@/hooks/useTabParam';
+import { usePermissions } from '@/lib/roles';
 
 type TabMode = 'announcements' | 'events' | 'messages' | 'staff';
 
 const VALID_TABS: TabMode[] = ['announcements', 'events', 'messages', 'staff'];
 
 export function CommunicationPage() {
+  const { can } = usePermissions();
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useTabParam<TabMode>(VALID_TABS, 'announcements');
@@ -73,7 +75,7 @@ export function CommunicationPage() {
       <PageHeader
         title={t('communication.title')}
         actions={
-          activeTab === 'announcements' ? (
+          !can('communication', 'edit') ? undefined : activeTab === 'announcements' ? (
             <CreateButton label={t('communication.announcements.create')} onClick={() => setShowAnnouncementDialog(true)} />
           ) : activeTab === 'events' ? (
             <CreateButton label={t('communication.events.create')} onClick={() => setShowEventDialog(true)} />

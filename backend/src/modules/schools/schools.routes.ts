@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { schoolsController } from './schools.controller';
-import { requireSuperAdmin, requireAdmin } from '../../middleware/rbac.middleware';
+import { requireSuperAdmin } from '../../middleware/rbac.middleware';
+import { requirePermission, requireAnyOffice } from '../../middleware/permission.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
 import { createSchoolSchema, updateSchoolSchema } from './schools.schema';
 import { idParamSchema } from '../../utils/validators';
@@ -27,10 +28,10 @@ router.post('/', requireSuperAdmin, validate(createSchoolSchema), schoolsControl
 router.get('/', requireSuperAdmin, schoolsController.list);
 
 // GET /api/schools/:id — Get school by ID (admin, super_admin)
-router.get('/:id', requireAdmin, validateParams(idParamSchema), schoolsController.getById);
+router.get('/:id', requireAnyOffice(), validateParams(idParamSchema), schoolsController.getById);
 
 // PUT /api/schools/:id — Update school (admin, super_admin)
-router.put('/:id', requireAdmin, validateParams(idParamSchema), validate(updateSchoolSchema), schoolsController.update);
+router.put('/:id', requirePermission('settings', 'edit'), validateParams(idParamSchema), validate(updateSchoolSchema), schoolsController.update);
 
 // PATCH /api/schools/:id/activate — Activate school (super_admin only)
 router.patch('/:id/activate', requireSuperAdmin, validateParams(idParamSchema), schoolsController.activate);
@@ -45,7 +46,7 @@ router.get('/:id/users', requireSuperAdmin, validateParams(idParamSchema), schoo
 router.post('/:id/users', requireSuperAdmin, validateParams(idParamSchema), schoolsController.createUserInSchool);
 
 // POST /api/schools/:id/logo — Upload school logo (admin, super_admin)
-router.post('/:id/logo', requireAdmin, validateParams(idParamSchema), upload.single('logo'), schoolsController.uploadLogo);
+router.post('/:id/logo', requirePermission('settings', 'edit'), validateParams(idParamSchema), upload.single('logo'), schoolsController.uploadLogo);
 
 // DELETE /api/schools/:id — Soft delete school (super_admin only)
 router.delete('/:id', requireSuperAdmin, validateParams(idParamSchema), schoolsController.delete);

@@ -49,7 +49,7 @@ import { ProvisionalReceiptDialog } from './ProvisionalReceiptDialog';
 import { OfflinePaymentsPanel } from './OfflinePaymentsPanel';
 import { suggestAllocations as suggestAllocationsUtil } from '@/lib/paymentAllocation';
 import { FilterBar, SectionHeader, StatusBadge } from '@/components/ui';
-import { useIsDirector } from '@/lib/roles';
+import { usePermissions } from '@/lib/roles';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -1056,7 +1056,8 @@ export function PaymentsPage() {
   const { branchId: selectedBranchId } = useDefaultBranch();
   const [recordDialogOpen, setRecordDialogOpen] = React.useState(false);
   // Corrections are the director's.
-  const isDirector = useIsDirector();
+  const { can, canCorrectPayments } = usePermissions();
+  const isDirector = canCorrectPayments && can('collections', 'edit');
   const [correctionDialogOpen, setCorrectionDialogOpen] = React.useState(false);
   const [receiptDialogOpen, setReceiptDialogOpen] = React.useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = React.useState<string | null>(null);
@@ -1184,7 +1185,9 @@ export function PaymentsPage() {
                 {t('payments.correction.openButton')}
               </Button>
             )}
-            <CreateButton label={t('payments.recording.record')} onClick={() => setRecordDialogOpen(true)} />
+            {can('collections', 'edit') && (
+              <CreateButton label={t('payments.recording.record')} onClick={() => setRecordDialogOpen(true)} />
+            )}
           </>
         }
       />

@@ -1,7 +1,7 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Building2, Upload, Camera, GraduationCap, Clock, DoorOpen, Trash2 } from 'lucide-react';
+import { Building2, Upload, Camera, GraduationCap, Clock, DoorOpen, ShieldCheck, Trash2 } from 'lucide-react';
 import {
   Button,
   EditButton,
@@ -19,19 +19,29 @@ import { AcademicYearsSection } from './AcademicYearsPage';
 import { TimetableSection } from './TimetablePage';
 import { RoomsSection } from './RoomsPage';
 import { TrashPage } from './TrashPage';
+import { AccessProfilesSection } from './AccessProfilesSection';
+import { useIsDirector } from '@/lib/roles';
 
-type SettingsTab = 'school' | 'years' | 'rooms' | 'days' | 'trash';
-const SETTINGS_TABS: SettingsTab[] = ['school', 'years', 'rooms', 'days', 'trash'];
+type SettingsTab = 'school' | 'years' | 'rooms' | 'days' | 'profiles' | 'trash';
+const SETTINGS_TABS: SettingsTab[] = ['school', 'years', 'rooms', 'days', 'profiles', 'trash'];
 
 export function SchoolSettingsPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useTabParam<SettingsTab>(SETTINGS_TABS, 'school');
+  // The profiles are the director's: nobody else can give rights.
+  const isDirector = useIsDirector();
+  const [activeTab, setActiveTab] = useTabParam<SettingsTab>(
+    isDirector ? SETTINGS_TABS : SETTINGS_TABS.filter((tab) => tab !== 'profiles'),
+    'school',
+  );
 
   const tabs: { value: SettingsTab; label: string; icon: React.ReactNode }[] = [
     { value: 'school', label: t('schoolSettings.tabs.school'), icon: <Building2 className="w-4 h-4" /> },
     { value: 'years', label: t('academicYears.title'), icon: <GraduationCap className="w-4 h-4" /> },
     { value: 'rooms', label: t('rooms.title'), icon: <DoorOpen className="w-4 h-4" /> },
     { value: 'days', label: t('timetable.title'), icon: <Clock className="w-4 h-4" /> },
+    ...(isDirector
+      ? [{ value: 'profiles' as const, label: t('accessProfiles.title'), icon: <ShieldCheck className="w-4 h-4" /> }]
+      : []),
     { value: 'trash', label: t('trash.title'), icon: <Trash2 className="w-4 h-4" /> },
   ];
 
@@ -43,6 +53,7 @@ export function SchoolSettingsPage() {
       {activeTab === 'years' && <AcademicYearsSection />}
       {activeTab === 'rooms' && <RoomsSection />}
       {activeTab === 'days' && <TimetableSection />}
+      {activeTab === 'profiles' && isDirector && <AccessProfilesSection />}
       {activeTab === 'trash' && <TrashPage embedded />}
     </div>
   );

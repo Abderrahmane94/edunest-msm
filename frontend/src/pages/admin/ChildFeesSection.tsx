@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { PlusCircle, Settings2 } from 'lucide-react';
+import { AlertTriangle, PlusCircle, Settings2 } from 'lucide-react';
 import {
   Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, ErrorAlert, Input,
 } from '@/components/ui';
@@ -11,7 +11,7 @@ import { FormField } from '@/components/forms';
 import { formatDZD } from '@/lib/formatters';
 import { useChildBillingPeriods, type BillingPeriod } from '@/hooks/usePayments';
 import { useCreateEnrollment } from '@/hooks/useEnrollments';
-import { useSelectedYear } from '@/hooks/useSelectedYear';
+import { setSelectedYearId, useSelectedYear } from '@/hooks/useSelectedYear';
 import type { AcademicYear } from '@/hooks/useAcademicYears';
 import { FeeChecklist, clampToAcademicYear, useOfferedFees } from './FeeChecklist';
 
@@ -170,12 +170,15 @@ export function ChildFeesSection({
   childId,
   childName = '',
   classroomId = '',
+  unpaidOtherYears = [],
   showManageBilling = true,
 }: {
   childId: string;
   childName?: string;
   /** The child's class this year: its fees are the ones offered. */
   classroomId?: string;
+  /** Still owed from earlier years: it stays in its year, collected from there. */
+  unpaidOtherYears?: { id: string; name: string; amount: string }[];
   /** Hidden on the billing page itself. */
   showManageBilling?: boolean;
 }) {
@@ -231,6 +234,29 @@ export function ChildFeesSection({
           </Button>
         )}
       </div>
+
+      {unpaidOtherYears.length > 0 && (
+        <div className="rounded-md bg-warning-muted p-3 space-y-1">
+          <p className="text-body font-medium text-foreground flex items-center gap-1.5">
+            <AlertTriangle className="w-4 h-4 text-warning" />
+            {t('children.fees.unpaidOtherYears')}
+          </p>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1">
+            {unpaidOtherYears.map((u) => (
+              <li key={u.id} className="text-caption text-foreground flex items-center gap-2">
+                {t('children.fees.unpaidYear', { year: `⁦${u.name}⁩`, amount: money(Number(u.amount)) })}
+                <button
+                  type="button"
+                  onClick={() => setSelectedYearId(u.id)}
+                  className="text-primary hover:underline"
+                >
+                  {t('children.fees.seeYear', { year: `⁦${u.name}⁩` })}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="animate-pulse h-16 bg-subtle rounded-md" />

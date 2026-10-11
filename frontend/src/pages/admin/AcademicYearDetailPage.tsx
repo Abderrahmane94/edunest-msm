@@ -1,8 +1,8 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Trash2, CheckCircle, Circle } from 'lucide-react';
+import { Trash2, CheckCircle, Circle, CopyPlus } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import {
   Button,
@@ -19,6 +19,7 @@ import { FormField } from '@/components/forms';
 import { Input } from '@/components/ui';
 import {
   useAcademicYear,
+  useAcademicYears,
   useUpdateAcademicYear,
   useDeleteAcademicYear,
   useActivateAcademicYear,
@@ -30,6 +31,13 @@ export function AcademicYearDetailPage() {
   const navigate = useNavigate();
 
   const { data: year, isLoading } = useAcademicYear(yearId!);
+  const { data: years } = useAcademicYears();
+  // The year this one can be prepared from: the one just before it.
+  const previousYear = year
+    ? [...(years ?? [])]
+        .filter((y) => y.start_date < year.start_date)
+        .sort((a, b) => b.start_date.localeCompare(a.start_date))[0]
+    : undefined;
   const updateYear = useUpdateAcademicYear();
   const deleteYear = useDeleteAcademicYear();
   const activateYear = useActivateAcademicYear();
@@ -214,6 +222,21 @@ export function AcademicYearDetailPage() {
           )}
         </div>
       </form>
+
+      {previousYear && (
+        <div className="bg-card border border-border rounded-lg p-6 space-y-3">
+          <h2 className="text-subsection font-semibold text-text-heading">{t('yearRollover.entry.title')}</h2>
+          <p className="text-body text-text-secondary">
+            {t('yearRollover.entry.description', { source: `⁦${previousYear.name}⁩`, year: `⁦${year.name}⁩` })}
+          </p>
+          <Link to={`/admin/settings/academic-years/${year.id}/prepare`}>
+            <Button type="button" variant="secondary">
+              <CopyPlus className="w-4 h-4" />
+              {t('yearRollover.entry.action', { year: `⁦${year.name}⁩` })}
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* Delete section */}
       {!year.is_active && (

@@ -1,4 +1,5 @@
 import prisma, { type DbClient } from '../../lib/prisma';
+import { unpaidByYear, type YearUnpaid } from '../payments/unpaid-by-year';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { softDeleteService } from '../../services/soft-delete.service';
 import { usersService } from '../users/users.service';
@@ -219,7 +220,9 @@ class ChildrenService {
     requestingParentUserId?: string,
     /** Only that school year's class in `enrollments`. */
     academicYearId?: string,
-  ): Promise<ChildWithEnrollments & { schoolYears: { id: string; name: string }[] }> {
+  ): Promise<
+    ChildWithEnrollments & { schoolYears: { id: string; name: string }[]; unpaidOtherYears: YearUnpaid[] }
+  > {
     const yearSelect = { select: { id: true, name: true, startDate: true } };
     const child = await prisma.child.findFirst({
       where: { id, schoolId },
@@ -255,6 +258,12 @@ class ChildrenService {
       .sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
       .map(({ id: yearId, name }) => ({ id: yearId, name }));
 
+    // What is still owed from the years before, shown on the year's file (staff only).
+    const unpaidOtherYears =
+      academicYearId && !requestingParentUserId
+        ? ((await unpaidByYear([id], academicYearId)).get(id) ?? [])
+        : [];
+
     const { academicYear: _registrationYear, paymentEnrollments: _billing, enrollments, ...rest } = child;
     return {
       ...rest,
@@ -262,6 +271,7 @@ class ChildrenService {
         .filter((e) => !academicYearId || e.classroom.academicYear.id === academicYearId)
         .map(({ classroom: { academicYear, ...classroom }, ...e }) => ({ ...e, classroom })),
       schoolYears,
+      unpaidOtherYears,
     };
   }
 

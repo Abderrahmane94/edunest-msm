@@ -3,6 +3,8 @@ import { academicYearsService, AcademicYearServiceError } from './academic-years
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
 import type { CreateAcademicYearInput, UpdateAcademicYearInput } from './academic-years.schema';
 import { paginationSchema } from '../../utils/validators';
+import { yearRolloverService } from './year-rollover.service';
+import type { YearRolloverInput } from './year-rollover.schema';
 
 export const academicYearsController = {
   /**
@@ -123,6 +125,41 @@ export const academicYearsController = {
       const { id } = req.params;
       const academicYear = await academicYearsService.deactivate(id, schoolId);
       res.status(200).json(successResponse(academicYear));
+    } catch (error) {
+      if (error instanceof AcademicYearServiceError) {
+        res.status(error.statusCode).json(errorResponse('ACADEMIC_YEAR_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * GET /api/academic-years/:id/rollover — What the "prepare the year" assistant shows
+   */
+  async rolloverPreview(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const from = typeof req.query.from === 'string' && req.query.from ? req.query.from : undefined;
+      const preview = await yearRolloverService.preview(schoolId, req.params.id, from);
+      res.status(200).json(successResponse(preview));
+    } catch (error) {
+      if (error instanceof AcademicYearServiceError) {
+        res.status(error.statusCode).json(errorResponse('ACADEMIC_YEAR_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/academic-years/:id/rollover — Prepare the year from another one
+   */
+  async rollover(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const result = await yearRolloverService.run(schoolId, req.params.id, req.body as YearRolloverInput);
+      res.status(200).json(successResponse(result));
     } catch (error) {
       if (error instanceof AcademicYearServiceError) {
         res.status(error.statusCode).json(errorResponse('ACADEMIC_YEAR_ERROR', error.message));

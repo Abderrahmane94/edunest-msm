@@ -708,7 +708,12 @@ export function ChildDetailPage() {
       />
 
       {/* Assigned fees */}
-      <ChildFeesSection childId={childId!} childName={child.first_name} classroomId={child.classroom_id} />
+      <ChildFeesSection
+        childId={childId!}
+        childName={child.first_name}
+        classroomId={child.classroom_id}
+        unpaidOtherYears={child.unpaid_other_years}
+      />
 
       {/* Danger zone */}
       <div className="bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3">

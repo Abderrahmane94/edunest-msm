@@ -24,6 +24,8 @@ export interface Child {
   has_authorized_pickup?: boolean;
   /** The years the child was registered, placed or billed, latest first (child file only). */
   school_years?: { id: string; name: string }[];
+  /** What is still owed from the years before the one looked at (child file only). */
+  unpaid_other_years?: { id: string; name: string; amount: string }[];
   created_at: string;
   deleted_at?: string | null;
 }
@@ -123,6 +125,7 @@ function mapChild(raw: Record<string, unknown>): Child {
     blood_type: (raw.bloodType ?? raw.blood_type ?? null) as BloodType | null,
     has_authorized_pickup: (raw.hasAuthorizedPickup ?? raw.has_authorized_pickup) as boolean | undefined,
     school_years: raw.schoolYears as { id: string; name: string }[] | undefined,
+    unpaid_other_years: raw.unpaidOtherYears as { id: string; name: string; amount: string }[] | undefined,
     created_at: (raw.createdAt ?? raw.created_at) as string,
     deleted_at: (raw.deletedAt ?? raw.deleted_at ?? null) as string | null,
   };

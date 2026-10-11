@@ -23,6 +23,7 @@ import {
   StaffProfilePage,
   AcademicYearDetailPage,
   YearRolloverPage,
+  InventoryPage,
   ClassroomsPage,
   ClassroomDetailPage,
   ChildrenPage,
@@ -38,7 +39,7 @@ import {
   PaymentManagementPage,
   EnrollmentDetailPage,
 } from '@/pages/admin/payments';
-import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage, TeacherAnnouncementsPage, TeacherChildrenPage } from '@/pages/teacher';
+import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage, TeacherAnnouncementsPage, TeacherChildrenPage, TeacherSuppliesPage } from '@/pages/teacher';
 import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentAnnouncementsPage, ParentPaymentsPage } from '@/pages/parent';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { AdminLayout, ParentLayout } from '@/components/layout';
@@ -67,6 +68,7 @@ import {
   Banknote,
   Megaphone,
   CreditCard,
+  Package,
 } from 'lucide-react';
 
 /**
@@ -152,6 +154,7 @@ function getAdminNavItems(role: string): NavItem[] {
     { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle },
     { label: 'nav.payments',      href: '/admin/payments', icon: CreditCard },
     { label: 'nav.payroll',       href: '/admin/payroll', icon: Banknote },
+    { label: 'nav.inventory',     href: '/admin/inventory', icon: Package },
     { label: 'nav.settings',      href: '/admin/settings', icon: Settings },
   ];
 }
@@ -160,6 +163,7 @@ const teacherNavItems: NavItem[] = [
   { label: 'nav.attendance', href: '/teacher/attendance', icon: ClipboardCheck },
   { label: 'nav.reports', href: '/teacher/reports', icon: FileText },
   { label: 'nav.children', href: '/teacher/children', icon: Baby },
+  { label: 'nav.supplies', href: '/teacher/supplies', icon: Package },
   { label: 'nav.messages', href: '/teacher/messages', icon: MessageCircle },
   { label: 'nav.announcements', href: '/teacher/announcements', icon: Megaphone },
 ];
@@ -371,6 +375,7 @@ export const routes: RouteObject[] = [
               { path: 'communication/events/:eventId', element: <EventDetailPage /> },
               { path: 'billing', element: <BillingPage /> },
               { path: 'payroll', element: <PayrollPage /> },
+              { path: 'inventory', element: <InventoryPage /> },
               { path: 'payments', element: <PaymentManagementPage /> },
               { path: 'payments/enrollments/:enrollmentId', element: <EnrollmentDetailPage /> },
               { path: 'trash', element: <TrashRoute /> },
@@ -394,6 +399,7 @@ export const routes: RouteObject[] = [
               { path: 'attendance', element: <TeacherAttendancePage /> },
               { path: 'reports', element: <TeacherDailyReportPage /> },
               { path: 'children', element: <TeacherChildrenPage /> },
+              { path: 'supplies', element: <TeacherSuppliesPage /> },
               { path: 'messages', element: <TeacherMessagesPage /> },
               { path: 'announcements', element: <TeacherAnnouncementsPage /> },
             ],

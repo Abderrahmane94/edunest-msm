@@ -12,7 +12,7 @@ import { formatDate, formatDZD } from '@/lib/formatters';
 import {
   useRegisterChild, type BloodType, type EmergencyContact, type MedicalNote, type RegisterChildInput,
 } from '@/hooks/useChildren';
-import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
+import { useViewedYear } from '@/hooks/useSelectedYear';
 import { useUsers } from '@/hooks/useUsers';
 import { useClassrooms } from '@/hooks/useClassrooms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
@@ -173,7 +173,7 @@ function BasicsStep({
   onNext: () => void;
 }) {
   const { t } = useTranslation();
-  const { data: activeYear } = useActiveAcademicYear();
+  const { data: activeYear } = useViewedYear();
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -471,7 +471,7 @@ function ClassroomStep({
   onNext: () => void;
 }) {
   const { t } = useTranslation();
-  const { data: activeYear } = useActiveAcademicYear();
+  const { data: activeYear } = useViewedYear();
   const { data: classrooms } = useClassrooms(activeYear?.id);
 
   const classroomOptions = (classrooms ?? []).map((c) => ({ value: c.id, label: c.name }));
@@ -633,7 +633,7 @@ function SummaryStep({
   const { t } = useTranslation();
   const parents = useParents();
   const relationshipOptions = useRelationshipOptions();
-  const { data: activeYear } = useActiveAcademicYear();
+  const { data: activeYear } = useViewedYear();
   const { data: classrooms } = useClassrooms(activeYear?.id);
   const feeLabel = useFeeLabel();
   const { schoolFees, optionalFees } = useWizardFees(classroomId);
@@ -849,7 +849,7 @@ export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChil
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { confirm, dialog: confirmDialog } = useConfirm();
-  const { data: activeYear } = useActiveAcademicYear();
+  const { data: activeYear } = useViewedYear();
   const registerChild = useRegisterChild();
 
   const [stepIndex, setStepIndex] = React.useState(0);

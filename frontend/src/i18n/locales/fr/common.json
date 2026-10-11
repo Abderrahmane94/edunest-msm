@@ -515,6 +515,7 @@
       "periodAlreadyCancelled": "Cette échéance est déjà annulée.",
       "periodCancelled": "Une des échéances choisies est annulée et ne peut plus recevoir de paiement.",
       "exceedsOutstanding": "Le montant dépasse le reste à payer d'une échéance (elle a peut-être été payée entre-temps). Rechargez la page, puis réessayez.",
+      "mixedYears": "Un paiement ne règle que les échéances d'une seule année scolaire : enregistrez un paiement par année.",
       "allocationMismatch": "La somme des montants par échéance doit être égale au montant total.",
       "allocationDuplicate": "Une même échéance est choisie deux fois.",
       "childNotEnrolled": "Cet enfant n'est inscrit à aucune facturation.",
@@ -815,6 +816,12 @@
       "endDateRequired": "La date de fin est requise",
       "endDateAfterStart": "La date de fin doit être après la date de début"
     }
+  },
+  "yearSwitcher": {
+    "label": "Année scolaire affichée",
+    "current": "en cours",
+    "banner": "Vous consultez l'année {{name}} : les listes ne montrent que ses données.",
+    "back": "Revenir à l'année en cours ({{name}})"
   },
   "rooms": {
     "title": "Salles",
@@ -2183,6 +2190,7 @@
       "needsAllocation": "Échéances pas encore choisies : choisissez-les pour envoyer ce paiement.",
       "reasons": {
         "exceeds_outstanding": "Le montant dépasse le reste à payer d'une échéance : elle a peut-être été payée entre-temps sur un autre appareil.",
+        "mixed_years": "Le paiement règle des échéances de deux années scolaires : il faut un paiement par année.",
         "period_cancelled": "Une des échéances a été annulée entre-temps.",
         "period_not_found": "Une des échéances n'existe plus.",
         "child_not_enrolled": "L'élève n'existe plus ou n'est plus inscrit.",

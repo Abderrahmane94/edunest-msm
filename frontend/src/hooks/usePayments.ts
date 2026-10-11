@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, apiError } from '@/lib/api-client';
+import { useYearScope } from './useSelectedYear';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -83,11 +84,12 @@ export interface RecordPaymentResult {
  * Fetch billing periods for a specific child (with derived status).
  */
 export function useChildBillingPeriods(childId: string) {
+  const { yearId, ready } = useYearScope();
   return useQuery({
-    queryKey: ['child-billing-periods', childId],
+    queryKey: ['child-billing-periods', childId, yearId],
     queryFn: async () => {
       const res = await apiClient.get<unknown>(
-        `/payments/children/${childId}/periods`
+        `/payments/children/${childId}/periods${yearId ? `?academic_year_id=${yearId}` : ''}`
       );
       if (!res.success) {
         throw apiError(res.error, 'Failed to fetch billing periods');
@@ -98,7 +100,7 @@ export function useChildBillingPeriods(childId: string) {
       }
       return [];
     },
-    enabled: !!childId,
+    enabled: !!childId && ready,
   });
 }
 
@@ -156,7 +158,9 @@ export interface PaymentRecordFilters {
  * List payment records for a branch.
  */
 export function usePaymentRecords(branchId: string, filters?: PaymentRecordFilters) {
+  const { yearId, ready } = useYearScope();
   const queryParams = new URLSearchParams();
+  if (yearId) queryParams.set('academic_year_id', yearId);
   if (branchId) queryParams.set('branchId', branchId);
   if (filters?.startDate) queryParams.set('startDate', filters.startDate);
   if (filters?.endDate) queryParams.set('endDate', filters.endDate);
@@ -167,7 +171,7 @@ export function usePaymentRecords(branchId: string, filters?: PaymentRecordFilte
   if (filters?.receipt) queryParams.set('receipt', filters.receipt);
 
   return useQuery({
-    queryKey: ['payment-records', branchId, filters],
+    queryKey: ['payment-records', branchId, filters, yearId],
     queryFn: async () => {
       const res = await apiClient.get<unknown>(
         `/payments/records?${queryParams.toString()}`
@@ -181,7 +185,7 @@ export function usePaymentRecords(branchId: string, filters?: PaymentRecordFilte
       }
       return [];
     },
-    enabled: !!branchId,
+    enabled: !!branchId && ready,
   });
 }
 

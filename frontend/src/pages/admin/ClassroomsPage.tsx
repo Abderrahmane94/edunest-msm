@@ -24,7 +24,7 @@ import {
   useAssignTeacher,
   type Classroom,
 } from '@/hooks/useClassrooms';
-import { useAcademicYears } from '@/hooks/useAcademicYears';
+import { useSelectedYear } from '@/hooks/useSelectedYear';
 import { useUsers } from '@/hooks/useUsers';
 import { EmptyState, FilterBar, ListSkeleton, PageHeader } from '@/components/ui';
 import { DEFAULT_WORKING_DAYS, RoomField } from './RoomField';
@@ -287,9 +287,8 @@ function AssignTeacherDialog({
 export function ClassroomsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: academicYears } = useAcademicYears();
-  const activeYear = (academicYears ?? []).find((y) => y.is_active);
-  const { data: classrooms, isLoading } = useClassrooms(activeYear?.id);
+  const { year: schoolYear } = useSelectedYear();
+  const { data: classrooms, isLoading } = useClassrooms(schoolYear?.id);
 
   // ─── Filters (a school has few classes, so filter here) ───
   const [search, setSearch] = React.useState('');
@@ -409,19 +408,19 @@ export function ClassroomsPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title={t('classrooms.title')}
-        description={activeYear?.name}
+        description={schoolYear?.name}
         actions={
           <CreateButton
             label={t('classrooms.create')}
             onClick={() => setCreateDialogOpen(true)}
-            disabled={!activeYear}
+            disabled={!schoolYear}
           />
         }
       />
 
       {isLoading ? (
         <ListSkeleton rows={4} />
-      ) : !activeYear ? (
+      ) : !schoolYear ? (
         <EmptyState message={t('classrooms.noActiveYear')} />
       ) : (
         <>
@@ -480,11 +479,11 @@ export function ClassroomsPage() {
         </>
       )}
 
-      {activeYear && (
+      {schoolYear && (
         <CreateClassroomDialog
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
-          academicYearId={activeYear.id}
+          academicYearId={schoolYear.id}
         />
       )}
 

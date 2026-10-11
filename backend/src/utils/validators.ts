@@ -11,6 +11,12 @@ export const uuidSchema = z
     'Invalid UUID format',
   );
 
+/** The `academic_year_id` query parameter: the school year a list is limited to, if any. */
+export function academicYearQuery(query: Record<string, unknown>): string | undefined {
+  const value = query.academic_year_id;
+  return typeof value === 'string' && uuidSchema.safeParse(value).success ? value : undefined;
+}
+
 /**
  * Zod schema for validating pagination query parameters.
  * Provides sensible defaults: page=1, pageSize=20.

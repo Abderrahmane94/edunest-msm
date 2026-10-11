@@ -30,6 +30,16 @@ import {
   type Expense,
 } from '@/hooks/useExpenses';
 import { FilterBar, SectionHeader } from '@/components/ui';
+import { useViewedYear } from '@/hooks/useSelectedYear';
+
+/** Today, or the nearest day of the school year being looked at (an expense counts in that year). */
+function defaultExpenseDate(year: { start_date: string; end_date: string } | undefined): string {
+  const today = new Date().toISOString().slice(0, 10);
+  if (!year) return today;
+  const start = year.start_date.slice(0, 10);
+  const end = year.end_date.slice(0, 10);
+  return today < start ? start : today > end ? end : today;
+}
 
 // ─── Shared receipt file picker ─────────────────────────────────────────────
 
@@ -366,8 +376,14 @@ function CreateExpenseDialog({
   const [category, setCategory] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [amount, setAmount] = React.useState('');
-  const [date, setDate] = React.useState(new Date().toISOString().slice(0, 10));
+  const { data: viewedYear } = useViewedYear();
+  const [date, setDate] = React.useState(() => defaultExpenseDate(viewedYear));
   const [receiptFile, setReceiptFile] = React.useState<File | null>(null);
+
+  // The year may load, or change, after the dialog was first rendered.
+  React.useEffect(() => {
+    if (!open) setDate(defaultExpenseDate(viewedYear));
+  }, [viewedYear, open]);
   const [error, setError] = React.useState<string | null>(null);
 
   const createExpense = useCreateExpense();
@@ -382,7 +398,7 @@ function CreateExpenseDialog({
     setCategory('');
     setDescription('');
     setAmount('');
-    setDate(new Date().toISOString().slice(0, 10));
+    setDate(defaultExpenseDate(viewedYear));
     setReceiptFile(null);
     setError(null);
   }

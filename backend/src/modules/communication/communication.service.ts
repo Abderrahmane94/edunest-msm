@@ -1,5 +1,6 @@
 import { Prisma, type DailyReportPhoto } from '@prisma/client';
 import prisma from '../../lib/prisma';
+import { academicYearsService } from '../academic-years/academic-years.service';
 import { socketService } from '../../services/socket.service';
 import { notificationService } from '../../services/notification.service';
 import { newMessageNotificationText } from './message-notification';
@@ -1240,6 +1241,8 @@ class CommunicationService {
     page: number,
     pageSize: number,
     classroomId?: string,
+    /** Announcements published during this school year. */
+    academicYearId?: string,
   ): Promise<{ announcements: AnnouncementResponse[]; total: number }> {
     // Build the set of classroom IDs this user is allowed to see announcements for.
     const allowedClassroomIds = await this.getVisibleClassroomIds(schoolId, userId, role);
@@ -1258,9 +1261,10 @@ class CommunicationService {
       classroomFilter = { OR: [{ classroomId: null }, { classroomId: { in: scopedIds } }] };
     }
 
+    const window = academicYearId ? await academicYearsService.yearWindow(schoolId, academicYearId) : null;
     const where: Prisma.AnnouncementWhereInput = {
       schoolId,
-      publishedAt: { not: null },
+      publishedAt: { not: null, ...(window?.from && { gte: window.from }), ...(window?.to && { lt: window.to }) },
       ...classroomFilter,
     };
 
@@ -1526,8 +1530,16 @@ class CommunicationService {
     schoolId: string,
     page: number,
     pageSize: number,
+    /** Events taking place during this school year. */
+    academicYearId?: string,
   ): Promise<{ events: EventResponse[]; total: number }> {
-    const where = { schoolId };
+    const window = academicYearId ? await academicYearsService.yearWindow(schoolId, academicYearId) : null;
+    const where: Prisma.EventWhereInput = {
+      schoolId,
+      ...(window && (window.from || window.to) && {
+        startDatetime: { ...(window.from && { gte: window.from }), ...(window.to && { lt: window.to }) },
+      }),
+    };
 
     const [events, total] = await Promise.all([
       prisma.event.findMany({

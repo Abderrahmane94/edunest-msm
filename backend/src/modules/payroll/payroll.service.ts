@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
+import { academicYearsService } from '../academic-years/academic-years.service';
 import type { SetSalaryInput, RecordPaymentInput } from './payroll.schema';
 
 export class PayrollError extends Error {
@@ -118,6 +119,8 @@ export const payrollService = {
       userId?: string;
       year?: number;
       month?: number;
+      /** Salaries of the months of this school year. */
+      academicYearId?: string;
       role?: 'admin' | 'teacher';
       /** Paid on or after this date (YYYY-MM-DD). */
       paidFrom?: string;
@@ -133,6 +136,7 @@ export const payrollService = {
       ...(filters.userId ? { userId: filters.userId } : {}),
       ...(filters.year ? { year: filters.year } : {}),
       ...(filters.month ? { month: filters.month } : {}),
+      ...(filters.academicYearId ? { academicYearId: filters.academicYearId } : {}),
       ...(filters.role ? { user: { role: filters.role } } : {}),
       ...(filters.paidFrom || filters.paidTo
         ? {
@@ -315,12 +319,20 @@ export const payrollService = {
           );
         }
 
+        // The school year the paid month falls in.
+        const academicYearId = await academicYearsService.yearForDate(
+          schoolId,
+          new Date(Date.UTC(data.year, data.month - 1, 1)),
+          tx,
+        );
+
         return tx.salaryPayment.create({
           data: {
             userId: data.userId,
             schoolId,
             month: data.month,
             year: data.year,
+            academicYearId,
             baseSalary: new Prisma.Decimal(data.baseSalary),
             bonuses: new Prisma.Decimal(data.bonuses),
             deductions: new Prisma.Decimal(data.deductions),

@@ -37,7 +37,7 @@ import {
   type BloodType,
 } from '@/hooks/useChildren';
 import { useClassrooms } from '@/hooks/useClassrooms';
-import { useAcademicYears } from '@/hooks/useAcademicYears';
+import { useSelectedYear } from '@/hooks/useSelectedYear';
 import { useUsers } from '@/hooks/useUsers';
 import { EmergencyContactsDialog } from './EmergencyContactsDialog';
 import { MedicalNotesDialog, severityBadgeVariant } from './MedicalNotesDialog';
@@ -60,9 +60,8 @@ export function ChildDetailPage() {
   const { data: medicalNotes } = useMedicalNotes(childId!);
   const linkParent = useLinkParent();
 
-  const { data: academicYears } = useAcademicYears();
-  const activeYear = (academicYears ?? []).find((y) => y.is_active);
-  const { data: classrooms } = useClassrooms(activeYear?.id);
+  const { year: schoolYear } = useSelectedYear();
+  const { data: classrooms } = useClassrooms(schoolYear?.id);
   const { data: usersData } = useUsers({ pageSize: 100 });
   const parents = (usersData?.users ?? []).filter((u) => u.role === 'parent');
 

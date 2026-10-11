@@ -6,7 +6,7 @@ import { DataTable, Input, KPICard, PageHeader, StatusBadge, Tabs } from '@/comp
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useClassrooms, type Classroom } from '@/hooks/useClassrooms';
-import { useAcademicYears } from '@/hooks/useAcademicYears';
+import { useSelectedYear } from '@/hooks/useSelectedYear';
 import {
   useClassroomAttendance,
   useClassroomMonthlyReport,
@@ -60,9 +60,8 @@ export function AttendancePage() {
   const [trackingEndDate, setTrackingEndDate] = React.useState<string>(getTodayString());
 
   // Fetch classrooms for the active academic year
-  const { data: academicYears } = useAcademicYears();
-  const activeYear = (academicYears ?? []).find((y) => y.is_active);
-  const { data: classrooms } = useClassrooms(activeYear?.id);
+  const { year: schoolYear } = useSelectedYear();
+  const { data: classrooms } = useClassrooms(schoolYear?.id);
 
   // Auto-select first classroom when data loads
   React.useEffect(() => {
@@ -239,7 +238,7 @@ export function AttendancePage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title={t('attendance.title')} description={activeYear?.name} />
+      <PageHeader title={t('attendance.title')} description={schoolYear?.name} />
 
       <Tabs
         value={viewMode}

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { apiClient, ApiRequestError, apiError } from '@/lib/api-client';
+import { useYearScope } from './useSelectedYear';
 import { queryClient } from '@/lib/query-client';
 import { errorMessage } from '@/lib/errorMessage';
 import {
@@ -162,13 +163,14 @@ export interface OfflineSnapshot {
  * opens or the connection returns, and kept on the device for offline use.
  */
 export function useOfflinePaymentsSnapshot(branchId: string, enabled = true) {
+  const { yearId, ready } = useYearScope();
   return useQuery({
-    queryKey: [OFFLINE_SNAPSHOT_KEY, branchId],
+    queryKey: [OFFLINE_SNAPSHOT_KEY, branchId, yearId],
     queryFn: async (): Promise<OfflineSnapshot> => {
       const res = await apiClient.get<{
         generatedAt: string;
         children: Array<Omit<OfflineSnapshotChild, 'periods'> & { periods: Array<Record<string, unknown>> }>;
-      }>(`/payments/branches/${branchId}/offline-snapshot`);
+      }>(`/payments/branches/${branchId}/offline-snapshot${yearId ? `?academic_year_id=${yearId}` : ''}`);
       if (!res.success || !res.data) throw apiError(res.error, 'Failed to load payments data');
       return {
         generatedAt: res.data.generatedAt,
@@ -193,7 +195,7 @@ export function useOfflinePaymentsSnapshot(branchId: string, enabled = true) {
         })),
       };
     },
-    enabled: enabled && !!branchId,
+    enabled: enabled && !!branchId && ready,
     // Refreshed when the app opens, when the connection returns and after
     // each payment; not on every return to the app (it can be a few hundred
     // KB for a large school).

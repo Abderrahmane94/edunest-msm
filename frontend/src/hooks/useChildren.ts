@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, apiError } from '@/lib/api-client';
+import { useYearScope } from './useSelectedYear';
 
 export type BloodType = 'a_positive' | 'a_negative' | 'b_positive' | 'b_negative' | 'ab_positive' | 'ab_negative' | 'o_positive' | 'o_negative';
 
@@ -59,7 +60,9 @@ interface ChildrenParams {
 
 export function useChildren(params: ChildrenParams = {}) {
   const { page = 1, pageSize = 10, search, classroomId, gender, hasParent, status } = params;
+  const { yearId, ready } = useYearScope();
   const queryParams = new URLSearchParams();
+  if (yearId) queryParams.set('academic_year_id', yearId);
   queryParams.set('page', String(page));
   queryParams.set('pageSize', String(pageSize));
   if (search) queryParams.set('search', search);
@@ -69,7 +72,8 @@ export function useChildren(params: ChildrenParams = {}) {
   if (status) queryParams.set('status', status);
 
   return useQuery({
-    queryKey: ['children', params],
+    queryKey: ['children', params, yearId],
+    enabled: ready,
     queryFn: async () => {
       const res = await apiClient.get<unknown>(`/children?${queryParams.toString()}`);
       const raw = res.data;

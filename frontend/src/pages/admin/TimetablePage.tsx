@@ -5,7 +5,7 @@ import { Check } from 'lucide-react';
 import { Button, SectionHeader } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useClassrooms } from '@/hooks/useClassrooms';
-import { useAcademicYears } from '@/hooks/useAcademicYears';
+import { useSelectedYear } from '@/hooks/useSelectedYear';
 import { useWorkingDays, useUpdateWorkingDays, type DayOfWeek } from '@/hooks/useTimetable';
 
 const ALL_DAYS: DayOfWeek[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -13,9 +13,8 @@ const ALL_DAYS: DayOfWeek[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thur
 /** The "Jours de présence" tab of Settings. */
 export function TimetableSection() {
   const { t } = useTranslation();
-  const { data: academicYears } = useAcademicYears();
-  const activeYear = (academicYears ?? []).find((y) => y.is_active);
-  const { data: classrooms } = useClassrooms(activeYear?.id);
+  const { year: schoolYear } = useSelectedYear();
+  const { data: classrooms } = useClassrooms(schoolYear?.id);
 
   const [selectedClassroomId, setSelectedClassroomId] = React.useState<string>('');
   const { data: workingDaysData, isLoading } = useWorkingDays(selectedClassroomId || undefined);

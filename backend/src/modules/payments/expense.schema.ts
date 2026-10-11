@@ -20,6 +20,8 @@ export const createExpenseSchema = z.object({
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  /** The school year it counts in; by default the one its date falls in. */
+  academicYearId: z.string().uuid('Invalid academic year ID').optional(),
 });
 
 export const updateExpenseSchema = z.object({
@@ -46,6 +48,7 @@ export const updateExpenseSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
     .optional(),
+  academicYearId: z.string().uuid('Invalid academic year ID').optional(),
 });
 
 const isoDate = z
@@ -60,6 +63,7 @@ export const expenseListFiltersSchema = z.object({
   to: isoDate,
   search: z.string().trim().max(100).optional(),
   hasReceipt: z.enum(['true', 'false']).optional(),
+  academic_year_id: z.string().uuid().optional(),
 });
 
 export type ExpenseListFilters = z.infer<typeof expenseListFiltersSchema>;

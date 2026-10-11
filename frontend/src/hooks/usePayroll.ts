@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, apiError } from '@/lib/api-client';
+import { useYearScope } from './useSelectedYear';
 
 export type PerStudentBasis = 'working_day' | 'present_day';
 
@@ -140,10 +141,13 @@ export function usePayrollPayments(filters: {
   page?: number;
   pageSize?: number;
 }) {
+  const { yearId, ready } = useYearScope();
   return useQuery<{ items: SalaryPayment[]; total: number; totalNet: string }>({
-    queryKey: ['payroll', 'payments', filters],
+    queryKey: ['payroll', 'payments', filters, yearId],
+    enabled: ready,
     queryFn: async () => {
       const params = new URLSearchParams();
+      if (yearId) params.set('academic_year_id', yearId);
       if (filters.userId) params.set('userId', filters.userId);
       if (filters.year) params.set('year', String(filters.year));
       if (filters.month) params.set('month', String(filters.month));

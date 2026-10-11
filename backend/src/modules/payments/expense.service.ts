@@ -1,4 +1,5 @@
 import prisma from '../../lib/prisma';
+import { academicYearsService } from '../academic-years/academic-years.service';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { extensionForUpload, extensionOf, mimeTypeForExtension, sniffExtension } from '../../utils/file-type';
 import type { CreateExpenseInput, ExpenseListFilters, UpdateExpenseInput } from './expense.schema';
@@ -19,6 +20,9 @@ class ExpenseService {
    * Create a new expense for a school.
    */
   async create(schoolId: string, input: CreateExpenseInput, createdByUserId: string) {
+    const academicYearId = input.academicYearId
+      ? await this.checkedYear(schoolId, input.academicYearId)
+      : await academicYearsService.yearForDate(schoolId, new Date(input.date));
     return prisma.expense.create({
       data: {
         schoolId,
@@ -27,9 +31,17 @@ class ExpenseService {
         amount: input.amount,
         currency: input.currency ?? 'DZD',
         date: new Date(input.date),
+        academicYearId,
         createdByUserId,
       },
     });
+  }
+
+  private async checkedYear(schoolId: string, academicYearId: string): Promise<string> {
+    if (!(await academicYearsService.isSchoolYear(schoolId, academicYearId))) {
+      throw new ExpenseServiceError('Academic year not found', 404);
+    }
+    return academicYearId;
   }
 
   /**
@@ -37,6 +49,7 @@ class ExpenseService {
    */
   async list(schoolId: string, page: number, pageSize: number, filters: ExpenseListFilters = {}) {
     const where: Prisma.ExpenseWhereInput = { schoolId };
+    if (filters.academic_year_id) where.academicYearId = filters.academic_year_id;
     if (filters.category) where.category = filters.category;
     if (filters.from || filters.to) {
       where.date = {
@@ -89,10 +102,12 @@ class ExpenseService {
     if (!expense) {
       throw new ExpenseServiceError('Expense not found', 404);
     }
+    if (input.academicYearId) await this.checkedYear(schoolId, input.academicYearId);
 
     return prisma.expense.update({
       where: { id },
       data: {
+        ...(input.academicYearId !== undefined && { academicYearId: input.academicYearId }),
         ...(input.category !== undefined && { category: input.category }),
         ...(input.description !== undefined && { description: input.description }),
         ...(input.amount !== undefined && { amount: input.amount }),

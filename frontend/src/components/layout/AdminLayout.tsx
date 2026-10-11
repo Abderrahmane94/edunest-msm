@@ -14,9 +14,12 @@ interface AdminLayoutProps {
   navItems: NavItem[];
   sidebarHeader?: React.ReactNode;
   sidebarFooter?: React.ReactNode;
+  /** School admins: the school-year picker in the top bar, and the notice above pages of another year. */
+  yearSwitcher?: React.ReactNode;
+  yearBanner?: React.ReactNode;
 }
 
-export function AdminLayout({ navItems, sidebarHeader, sidebarFooter }: AdminLayoutProps) {
+export function AdminLayout({ navItems, sidebarHeader, sidebarFooter, yearSwitcher, yearBanner }: AdminLayoutProps) {
   return (
     <div className="flex min-h-screen bg-page">
       <Sidebar items={navItems} header={sidebarHeader} footer={sidebarFooter} />
@@ -29,6 +32,7 @@ export function AdminLayout({ navItems, sidebarHeader, sidebarFooter }: AdminLay
             name and the account menu (language, logout). */}
         <header className="h-14 bg-white/85 backdrop-blur-md border-b border-border px-4 lg:px-6 flex items-center justify-end gap-2 sticky top-0 z-30">
           {sidebarHeader && <div className="lg:hidden min-w-0 flex-1">{sidebarHeader}</div>}
+          {yearSwitcher && <div className="lg:me-auto shrink-0">{yearSwitcher}</div>}
           <OfflineStatus />
           <NotificationBell />
           {sidebarFooter && <MobileAccountMenu>{sidebarFooter}</MobileAccountMenu>}
@@ -36,6 +40,7 @@ export function AdminLayout({ navItems, sidebarHeader, sidebarFooter }: AdminLay
 
         <PageContainer>
           <LoadErrorBanner />
+          {yearBanner}
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

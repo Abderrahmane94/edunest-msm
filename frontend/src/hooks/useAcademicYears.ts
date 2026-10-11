@@ -22,9 +22,10 @@ function mapAcademicYear(raw: Record<string, unknown>): AcademicYear {
   };
 }
 
-export function useAcademicYears() {
+export function useAcademicYears(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['academic-years'],
+    enabled: options.enabled ?? true,
     queryFn: async () => {
       const res = await apiClient.get<unknown>('/academic-years');
       const raw = res.data;

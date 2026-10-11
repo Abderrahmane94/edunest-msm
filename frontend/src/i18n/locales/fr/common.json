@@ -1418,7 +1418,7 @@
         "medical": "Notes médicales",
         "none": "Aucun",
         "classroom": "Classe",
-        "noClassroom": "Pas encore de classe",
+        "noClassroom": "Aucune (à assigner plus tard)",
         "fees": "Frais",
         "noBilling": "Pas de facturation pour le moment",
         "edit": "Modifier",
@@ -1442,7 +1442,10 @@
       },
       "classroom": {
         "description": "Choisissez la classe dans laquelle inscrire cet enfant, ou passez cette étape pour l'assigner plus tard.",
-        "selectPlaceholder": "Sélectionner une classe"
+        "selectPlaceholder": "Sélectionner une classe",
+        "none": "Sans classe (à assigner plus tard)",
+        "option": "{{name}} ({{count}}/{{capacity}})",
+        "optionFull": "{{name}} ({{count}}/{{capacity}}) — complète"
       },
       "fees": {
         "description": "Cochez les frais de cet enfant. Les frais récurrents sont facturés à partir de sa date d'inscription (premier mois au prorata) ; les frais de toute l'école sont inclus d'office.",

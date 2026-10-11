@@ -428,7 +428,21 @@ function ClassroomStep({
   const { data: activeYear } = useViewedYear();
   const { data: classrooms } = useClassrooms(activeYear?.id);
 
-  const classroomOptions = (classrooms ?? []).map((c) => ({ value: c.id, label: c.name }));
+  // "No class" is a real choice (the class can be given later); each class
+  // shows its places, and a full one can't be picked.
+  const classroomOptions = [
+    { value: '', label: t('children.wizard.classroom.none') },
+    ...(classrooms ?? []).map((c) => {
+      const full = c.enrolled_count >= c.capacity;
+      return {
+        value: c.id,
+        label: full
+          ? t('children.wizard.classroom.optionFull', { name: c.name, count: c.enrolled_count, capacity: c.capacity })
+          : t('children.wizard.classroom.option', { name: c.name, count: c.enrolled_count, capacity: c.capacity }),
+        disabled: full && c.id !== classroomId,
+      };
+    }),
+  ];
 
   return (
     <div className="space-y-4">
@@ -440,7 +454,6 @@ function ClassroomStep({
         value={classroomId}
         onChange={(e) => onClassroomChange(e.target.value)}
         options={classroomOptions}
-        placeholder={t('children.wizard.classroom.selectPlaceholder')}
       />
 
       <DialogFooter>

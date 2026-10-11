@@ -691,6 +691,39 @@ class CommunicationService {
   }
 
   /**
+   * Which children of a classroom have a report for a day (and its mood), so
+   * the teacher sees at a glance who is done and who is left. Teachers only
+   * see their own classroom.
+   */
+  async getClassroomDayReports(
+    classroomId: string,
+    schoolId: string,
+    userId: string,
+    userRole: string,
+    date: string,
+  ): Promise<{ childId: string; reportId: string; mood: string }[]> {
+    const classroom = await prisma.classroom.findFirst({
+      where: { id: classroomId, schoolId, deletedAt: null },
+      select: { teacherUserId: true },
+    });
+    if (!classroom) {
+      throw new CommunicationServiceError('Classroom not found', 404);
+    }
+    if (userRole === 'teacher' && classroom.teacherUserId !== userId) {
+      throw new CommunicationServiceError('You can only view reports for your own classroom', 403);
+    }
+
+    const reports = await prisma.dailyReport.findMany({
+      where: {
+        date: new Date(date),
+        child: { schoolId, enrollments: { some: { classroomId } } },
+      },
+      select: { id: true, childId: true, mood: true },
+    });
+    return reports.map((r) => ({ childId: r.childId, reportId: r.id, mood: r.mood }));
+  }
+
+  /**
    * Get daily reports for a child with pagination and optional date filter.
    * Teachers can only view reports for children in their classroom.
    * Parents can only view reports for their linked children.

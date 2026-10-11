@@ -86,6 +86,7 @@ registerQueueHandler<DailyReportDayPayload>(DAILY_REPORT, {
   }),
   onSent: (payload) => {
     void queryClient.invalidateQueries({ queryKey: ['daily-reports-for-child', payload.childId] });
+    void queryClient.invalidateQueries({ queryKey: ['classroom-day-reports'] });
     void queryClient.invalidateQueries({ queryKey: ['parent-daily-reports'] });
   },
 });

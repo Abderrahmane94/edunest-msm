@@ -15,15 +15,23 @@ import {
   RefreshCw,
   Trash2,
   AlertTriangle,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  ArrowRight,
+  PartyPopper,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, useConfirm } from '@/components/ui';
 import { useTeacherClassroom, useClassroomChildren } from '@/hooks/useTeacherClassroom';
 import {
   useDailyReportsForChild,
+  useClassroomDayReports,
   type Mood,
   type DailyReportSummary,
 } from '@/hooks/useCommunication';
+import { DailyReportChildList, type ReportFilter, type ReportStatus } from './DailyReportChildList';
 import {
   DAILY_REPORT,
   dailyReportKey,
@@ -91,6 +99,11 @@ function getBlankForm(): Omit<DailyReportForm, 'child_id'> {
     activities: '',
     general_note: '',
   };
+}
+
+/** Lower-case, accents removed: "Hélène" matches "helene". */
+function normalize(text: string): string {
+  return text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 }
 
 function formatReportDate(dateStr: string, locale: string): string {
@@ -258,6 +271,8 @@ export function TeacherDailyReportPage() {
   // Select a child: reset the form to blank/today, the auto-load effect above
   // will then populate it if a report already exists for today.
   const selectChild = React.useCallback((childId: string) => {
+    // On a phone the list and the form are separate screens: start at the top.
+    window.scrollTo({ top: 0 });
     autoLoadedChildRef.current = null;
     setForm({ child_id: childId, ...getBlankForm() });
     setEditingReportId(null);
@@ -334,6 +349,67 @@ export function TeacherDailyReportPage() {
     [children, form.child_id]
   );
 
+  // ─── The children list: today's report status, search, filter ───
+  const today = getTodayString();
+  const dayReportsQuery = useClassroomDayReports(classroom?.id, today);
+  const todayMood = React.useMemo(
+    () => new Map((dayReportsQuery.data ?? []).map((r) => [r.childId, r.mood])),
+    [dayReportsQuery.data],
+  );
+  /** Today's report: sent, saved on the device (waiting), or still to write. */
+  const reportStatus = React.useCallback(
+    (id: string): ReportStatus => {
+      if (pendingFor(id, today)) return 'pending';
+      return todayMood.has(id) ? 'done' : 'todo';
+    },
+    [pendingFor, todayMood, today],
+  );
+  const [listQuery, setListQuery] = React.useState('');
+  const [listFilter, setListFilter] = React.useState<ReportFilter>('all');
+  const sortedChildren = React.useMemo(() => {
+    const collator = new Intl.Collator(i18n.language === 'ar' ? 'ar' : 'fr', { sensitivity: 'base' });
+    return [...(children ?? [])].sort(
+      (a, b) => collator.compare(a.first_name, b.first_name) || collator.compare(a.last_name, b.last_name),
+    );
+  }, [children, i18n.language]);
+  const listCounts = React.useMemo(() => {
+    const done = sortedChildren.filter((c) => reportStatus(c.id) !== 'todo').length;
+    return { all: sortedChildren.length, done, todo: sortedChildren.length - done };
+  }, [sortedChildren, reportStatus]);
+  const visibleChildren = React.useMemo(() => {
+    const needle = normalize(listQuery.trim());
+    return sortedChildren.filter((c) => {
+      if (needle && !normalize(`${c.first_name} ${c.last_name}`).includes(needle)) return false;
+      // The open child stays listed after its report is sent under "to do".
+      if (c.id === form.child_id) return true;
+      const status = reportStatus(c.id);
+      if (listFilter === 'todo') return status === 'todo';
+      if (listFilter === 'done') return status !== 'todo';
+      return true;
+    });
+  }, [sortedChildren, listQuery, listFilter, reportStatus, form.child_id]);
+
+  // Previous / next in the list as shown, and the next child still to do.
+  const position = visibleChildren.findIndex((c) => c.id === form.child_id);
+  const previousChild = position > 0 ? visibleChildren[position - 1] : undefined;
+  const nextChild = position >= 0 ? visibleChildren[position + 1] : undefined;
+  const nextTodo = React.useMemo(() => {
+    const i = sortedChildren.findIndex((c) => c.id === form.child_id);
+    const after = [...sortedChildren.slice(i + 1), ...sortedChildren.slice(0, Math.max(i, 0))];
+    return after.find((c) => reportStatus(c.id) === 'todo');
+  }, [sortedChildren, form.child_id, reportStatus]);
+
+  // The page header's height (it wraps on a narrow phone), so the child card
+  // and the list can stick right below it.
+  const [headerEl, setHeaderEl] = React.useState<HTMLElement | null>(null);
+  const [headerHeight, setHeaderHeight] = React.useState(0);
+  React.useEffect(() => {
+    if (!headerEl) return;
+    const observer = new ResizeObserver(() => setHeaderHeight(headerEl.offsetHeight));
+    observer.observe(headerEl);
+    return () => observer.disconnect();
+  }, [headerEl]);
+
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-4">
@@ -370,59 +446,129 @@ export function TeacherDailyReportPage() {
   }
 
   return (
-    <div className="flex flex-col">
+    <div
+      className="flex flex-col"
+      style={{ '--report-header-h': `${headerHeight}px` } as React.CSSProperties}
+    >
       {/* Header */}
-      <header className="sticky top-14 z-10 bg-card border-b border-border px-4 py-3">
-        <div className="max-w-2xl mx-auto">
+      <header ref={setHeaderEl} className="sticky top-14 z-10 bg-card border-b border-border px-4 py-3">
+        <div className="max-w-6xl mx-auto">
           <h1 className="text-subsection font-semibold text-text-heading">
             {t('dailyReport.title')}
           </h1>
           <p className="text-caption text-text-secondary">
-            {classroom.name} — <span className="capitalize">{formatReportDate(form.date, i18n.language)}</span>
+            {classroom.name} — <span className="capitalize">{formatReportDate(today, i18n.language)}</span>
           </p>
+          {/* Today's progress across the class */}
+          {listCounts.all > 0 && (
+            <div className="mt-2 flex items-center gap-3">
+              <div
+                className="flex-1 h-1.5 rounded-full bg-subtle overflow-hidden"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={listCounts.all}
+                aria-valuenow={listCounts.done}
+              >
+                <div
+                  className="h-full rounded-full bg-[var(--color-success)] transition-[width] duration-500"
+                  style={{ width: `${(listCounts.done / listCounts.all) * 100}%` }}
+                />
+              </div>
+              <span className="text-micro font-medium text-text-secondary shrink-0">
+                {t('dailyReport.list.progress', { done: listCounts.done, total: listCounts.all })}
+              </span>
+            </div>
+          )}
         </div>
       </header>
 
-      {/* Form content */}
-      <div className="flex-1 px-4 py-5 pb-4 max-w-2xl mx-auto w-full space-y-6">
-        {/* Child Selector */}
-        <section>
-          <label className="block text-label font-medium text-text-primary mb-2">
-            {t('dailyReport.selectChild')}
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {children && children.length > 0 ? (
-              children.map((child) => (
-                <button
-                  key={child.id}
-                  type="button"
-                  onClick={() => selectChild(child.id)}
-                  className={cn(
-                    'flex flex-col items-center gap-2 min-h-[80px] p-3 rounded-lg border-2 transition-all duration-150 active:scale-[0.98]',
-                    form.child_id === child.id
-                      ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)]'
-                      : 'border-border bg-card hover:border-[var(--color-border-strong)] hover:bg-hover'
-                  )}
-                  aria-pressed={form.child_id === child.id}
-                  aria-label={`${child.first_name} ${child.last_name}`}
-                >
-                  <Avatar
-                    src={child.photo_url}
-                    name={`${child.first_name} ${child.last_name}`}
-                    size="sm"
-                  />
-                  <span className="text-caption font-medium text-text-primary text-center leading-tight [overflow-wrap:anywhere]">
-                    {child.first_name} {child.last_name ? `${child.last_name.charAt(0)}.` : ''}
-                  </span>
-                </button>
-              ))
-            ) : (
-              <p className="col-span-full text-body text-text-secondary text-center py-4">
-                {t('dailyReport.noChildren')}
-              </p>
-            )}
+      {/* The list of children beside the form (on a phone: one, then the other) */}
+      <div className="flex-1 w-full max-w-6xl mx-auto px-4 py-5 lg:grid lg:grid-cols-[minmax(260px,320px)_1fr] lg:gap-6 lg:items-start">
+        <aside
+          className={cn(
+            'lg:sticky lg:top-[calc(3.5rem+var(--report-header-h)+1.25rem)]',
+            form.child_id && 'hidden lg:block',
+          )}
+        >
+          {sortedChildren.length > 0 ? (
+            <DailyReportChildList
+              children={visibleChildren}
+              statusOf={reportStatus}
+              moodOf={(id) => todayMood.get(id)}
+              selectedId={form.child_id}
+              onSelect={selectChild}
+              query={listQuery}
+              onQueryChange={setListQuery}
+              filter={listFilter}
+              onFilterChange={setListFilter}
+              counts={listCounts}
+            />
+          ) : (
+            <p className="text-body text-text-secondary text-center py-8">{t('dailyReport.noChildren')}</p>
+          )}
+        </aside>
+
+        {!form.child_id || !selectedChild ? (
+          // Computer: nothing chosen yet. (On a phone the list fills the screen.)
+          <div className="hidden lg:flex flex-col items-center justify-center gap-3 min-h-[320px] rounded-lg border border-dashed border-border bg-card text-center p-6">
+            <Users className="w-10 h-10 text-text-disabled" />
+            <p className="text-body text-text-secondary max-w-xs">{t('dailyReport.list.pickChild')}</p>
           </div>
-        </section>
+        ) : (
+        <div className="min-w-0 space-y-6">
+        {/* The child whose report this is: stays in view while the form scrolls */}
+        <div className="sticky top-[calc(3.5rem+var(--report-header-h)+0.5rem)] z-[9] flex items-center gap-3 rounded-lg border border-border bg-card p-3 shadow-md">
+          <button
+            type="button"
+            onClick={() => selectChild('')}
+            className="lg:hidden shrink-0 grid place-items-center w-10 h-10 rounded-lg text-text-secondary hover:bg-hover"
+            aria-label={t('dailyReport.list.backToList')}
+          >
+            <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
+          </button>
+          <Avatar
+            src={selectedChild.photo_url}
+            name={`${selectedChild.first_name} ${selectedChild.last_name}`}
+            size="md"
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-body font-semibold text-text-heading truncate">
+              {selectedChild.first_name} {selectedChild.last_name}
+            </p>
+            <p
+              className={cn(
+                'text-micro font-medium',
+                reportStatus(selectedChild.id) === 'done' && 'text-[var(--color-success)]',
+                reportStatus(selectedChild.id) === 'pending' && 'text-[var(--color-warning)]',
+                reportStatus(selectedChild.id) === 'todo' && 'text-text-secondary',
+              )}
+            >
+              {t(`dailyReport.list.status.${reportStatus(selectedChild.id)}`)}
+            </p>
+          </div>
+          <div className="flex shrink-0 gap-1">
+            <button
+              type="button"
+              onClick={() => previousChild && selectChild(previousChild.id)}
+              disabled={!previousChild}
+              className="grid place-items-center w-10 h-10 rounded-lg border border-border text-text-secondary hover:bg-hover disabled:opacity-40"
+              aria-label={t('dailyReport.list.previousChild')}
+              title={t('dailyReport.list.previousChild')}
+            >
+              <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
+            </button>
+            <button
+              type="button"
+              onClick={() => nextChild && selectChild(nextChild.id)}
+              disabled={!nextChild}
+              className="grid place-items-center w-10 h-10 rounded-lg border border-border text-text-secondary hover:bg-hover disabled:opacity-40"
+              aria-label={t('dailyReport.list.nextChild')}
+              title={t('dailyReport.list.nextChild')}
+            >
+              <ChevronRight className="w-5 h-5 rtl:rotate-180" />
+            </button>
+          </div>
+        </div>
 
         {/* Report History for the selected child */}
         {form.child_id && (
@@ -736,9 +882,12 @@ export function TeacherDailyReportPage() {
             aria-hidden="true"
           />
         </section>
+        </div>
+        )}
       </div>
 
       {/* Fixed bottom submit button */}
+      {form.child_id && selectedChild && (
       <div className="sticky bottom-[var(--tabbar-h)] lg:bottom-0 bg-card border-t border-border p-4 z-10">
         <div className="max-w-2xl mx-auto">
           {saved && pending?.error ? (
@@ -793,6 +942,22 @@ export function TeacherDailyReportPage() {
                   — {selectedChild.first_name} {selectedChild.last_name}
                 </span>
               )}
+              {/* Straight on to the next child still to do */}
+              {nextTodo ? (
+                <button
+                  type="button"
+                  onClick={() => selectChild(nextTodo.id)}
+                  className="w-full mt-1 inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-lg bg-primary text-primary-foreground text-body font-medium hover:bg-primary-hover active:scale-[0.98]"
+                >
+                  {t('dailyReport.list.nextTodo', { name: nextTodo.first_name })}
+                  <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+                </button>
+              ) : (
+                <span className="w-full inline-flex items-center justify-center gap-2 text-caption">
+                  <PartyPopper className="w-4 h-4" />
+                  {t('dailyReport.list.allDone')}
+                </span>
+              )}
             </div>
           ) : (
             <button
@@ -818,6 +983,7 @@ export function TeacherDailyReportPage() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

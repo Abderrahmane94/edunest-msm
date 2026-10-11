@@ -2157,6 +2157,29 @@
   },
   "dailyReport": {
     "title": "Rapport quotidien",
+    "list": {
+      "title": "Enfants",
+      "progress": "{{done}}/{{total}} rapports faits aujourd'hui",
+      "search": "Rechercher un enfant…",
+      "filterLabel": "Filtrer par état du rapport",
+      "filters": {
+        "all": "Tous",
+        "todo": "À faire",
+        "done": "Faits"
+      },
+      "status": {
+        "todo": "À faire",
+        "done": "Envoyé",
+        "pending": "En attente d'envoi"
+      },
+      "noMatch": "Aucun enfant ne correspond.",
+      "pickChild": "Choisissez un enfant dans la liste pour écrire son rapport.",
+      "backToList": "Retour à la liste",
+      "previousChild": "Enfant précédent",
+      "nextChild": "Enfant suivant",
+      "nextTodo": "Suivant : {{name}}",
+      "allDone": "Tous les rapports du jour sont faits"
+    },
     "noClassroom": "Aucune classe assignée",
     "selectChild": "Sélectionner un enfant",
     "noChildren": "Aucun enfant dans la classe",

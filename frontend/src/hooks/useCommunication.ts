@@ -309,6 +309,30 @@ function mapDailyReport(raw: Record<string, unknown>): DailyReportSummary {
   };
 }
 
+export interface ClassroomDayReport {
+  childId: string;
+  reportId: string;
+  mood: Mood;
+}
+
+/**
+ * Which children of a classroom already have a report for a day, so the
+ * teacher's list can show who is done and who is left.
+ */
+export function useClassroomDayReports(classroomId: string | undefined, date: string) {
+  return useQuery({
+    queryKey: ['classroom-day-reports', classroomId, date],
+    queryFn: async () => {
+      const res = await apiClient.get<ClassroomDayReport[]>(
+        `/communication/daily-reports/classroom/${classroomId}?date=${date}`,
+      );
+      if (!res.success) throw apiError(res.error, 'Failed to load reports');
+      return Array.isArray(res.data) ? res.data : [];
+    },
+    enabled: !!classroomId,
+  });
+}
+
 /**
  * Fetches the daily report history for a single child (most recent first).
  * Used by the teacher's report form to show past reports and let it detect

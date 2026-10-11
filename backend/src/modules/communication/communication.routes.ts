@@ -16,6 +16,8 @@ import {
   childIdParamSchema,
   dailyReportIdParamSchema,
   dailyReportsQuerySchema,
+  classroomDayParamSchema,
+  classroomDayQuerySchema,
   createAnnouncementSchema,
   announcementIdParamSchema,
   announcementsQuerySchema,
@@ -124,6 +126,15 @@ router.get(
   '/daily-reports/my-children',
   requireActiveRole,
   communicationController.getReportsForMyChildren,
+);
+
+// GET /api/communication/daily-reports/classroom/:classroomId?date= — Who has a report that day (teacher, office)
+router.get(
+  '/daily-reports/classroom/:classroomId',
+  requireTeacherOrOffice,
+  validateParams(classroomDayParamSchema),
+  validateQuery(classroomDayQuerySchema),
+  communicationController.getClassroomDayReports,
 );
 
 // GET /api/communication/daily-reports/child/:childId — Get reports for a child (teacher, admin, parent)

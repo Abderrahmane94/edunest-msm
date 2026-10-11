@@ -2549,6 +2549,21 @@
       "allMonths": "Tous les mois"
     },
     "recordDialog": {
+      "substitutions": {
+        "title": "Remplacements ce mois-ci",
+        "replacing_one": "A remplacé : 1 jour de classe",
+        "replacing_many": "A remplacé : {{count}} jours de classe",
+        "replacing_other": "A remplacé : {{count}} jours de classe",
+        "away_one": "Absent(e) : 1 jour de classe",
+        "away_many": "Absent(e) : {{count}} jours de classe",
+        "away_other": "Absent(e) : {{count}} jours de classe",
+        "days_one": "1 j",
+        "days_many": "{{count}} j",
+        "days_other": "{{count}} j",
+        "replacedBy": "remplacé(e) par {{name}}",
+        "notReplaced": "sans remplaçant",
+        "hint": "Pour information : le salaire n'est pas calculé à partir de ces jours. Ajustez le salaire de base, les primes ou les retenues si besoin."
+      },
       "title": "Enregistrer un paiement",
       "description": "Saisissez les détails du paiement de salaire.",
       "employee": "Employé",

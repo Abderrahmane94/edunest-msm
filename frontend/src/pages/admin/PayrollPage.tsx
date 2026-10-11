@@ -26,7 +26,7 @@ import {
   usePayrollPayments,
   useRecordPayment,
   useDeletePayment,
-  useStudentDays,
+  useStudentDays, useSubstitutionDays,
   type PerStudentBasis,
   type EmployeeRecord,
   type SalaryPayment,
@@ -293,6 +293,7 @@ function RecordPaymentDialog({
     form.month,
     open && isPerStudent,
   );
+  const { data: subDays } = useSubstitutionDays(form.userId, form.year, form.month, open);
   const basis: PerStudentBasis =
     days?.basis ?? selectedEmployee?.salary?.perStudentBasis ?? 'working_day';
 
@@ -406,6 +407,36 @@ function RecordPaymentDialog({
               </select>
             </FormField>
           </div>
+
+          {/* The month's replacements, to account for in the pay (not computed from them). */}
+          {subDays && (subDays.replacing.length > 0 || subDays.away.length > 0) && (
+            <div className="mb-4 rounded-md bg-[var(--color-accent-muted)] p-3 space-y-1">
+              <p className="text-caption font-semibold text-foreground">{t('payroll.recordDialog.substitutions.title')}</p>
+              {subDays.replacing.length > 0 && (
+                <p className="text-caption text-foreground">
+                  {t('payroll.recordDialog.substitutions.replacing', { count: subDays.replacingDays })}
+                  <span className="text-text-secondary">
+                    {' — '}
+                    {subDays.replacing
+                      .map((e) => `${e.classroom}${e.otherName ? ` (${e.otherName})` : ''} : ${t('payroll.recordDialog.substitutions.days', { count: e.days })}`)
+                      .join(' ; ')}
+                  </span>
+                </p>
+              )}
+              {subDays.away.length > 0 && (
+                <p className="text-caption text-foreground">
+                  {t('payroll.recordDialog.substitutions.away', { count: subDays.awayDays })}
+                  <span className="text-text-secondary">
+                    {' — '}
+                    {subDays.away
+                      .map((e) => `${t(`substitutions.reasons.${e.reason}`)}, ${e.otherName ? t('payroll.recordDialog.substitutions.replacedBy', { name: e.otherName }) : t('payroll.recordDialog.substitutions.notReplaced')} : ${t('payroll.recordDialog.substitutions.days', { count: e.days })}`)
+                      .join(' ; ')}
+                  </span>
+                </p>
+              )}
+              <p className="text-micro text-text-secondary">{t('payroll.recordDialog.substitutions.hint')}</p>
+            </div>
+          )}
 
           {isPerStudent ? (
             <>

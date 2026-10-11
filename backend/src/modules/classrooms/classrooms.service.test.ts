@@ -21,6 +21,9 @@ vi.mock('../../lib/prisma', () => ({
     classroomEnrollment: {
       count: vi.fn(),
     },
+    room: {
+      findFirst: vi.fn(),
+    },
   },
 }));
 
@@ -44,6 +47,14 @@ const mockPrisma = prisma as unknown as {
   classroomEnrollment: {
     count: ReturnType<typeof vi.fn>;
   };
+  room: {
+    findFirst: ReturnType<typeof vi.fn>;
+  };
+};
+
+const include = {
+  teacher: { select: { id: true, firstName: true, lastName: true, email: true } },
+  room: { select: { id: true, name: true, capacity: true } },
 };
 
 describe('ClassroomsService', () => {
@@ -58,7 +69,7 @@ describe('ClassroomsService', () => {
       const input = {
         name: 'Class A',
         capacity: 25,
-        roomNumber: 'R101',
+        roomId: 'room-1',
         level: 'KG1',
         academicYearId: 'ay-1',
       };
@@ -71,13 +82,15 @@ describe('ClassroomsService', () => {
         teacherUserId: null,
         name: 'Class A',
         capacity: 25,
-        roomNumber: 'R101',
+        roomId: 'room-1',
         level: 'KG1',
         createdAt: new Date(),
         teacher: null,
+        room: { id: 'room-1', name: 'R101', capacity: 25 },
       };
 
       mockPrisma.academicYear.findFirst.mockResolvedValue(academicYear);
+      mockPrisma.room.findFirst.mockResolvedValue({ id: 'room-1', schoolId, isActive: true });
       mockPrisma.classroom.create.mockResolvedValue(expected);
 
       const result = await classroomsService.create(schoolId, input);
@@ -91,13 +104,34 @@ describe('ClassroomsService', () => {
           academicYearId: 'ay-1',
           name: 'Class A',
           capacity: 25,
-          roomNumber: 'R101',
+          roomId: 'room-1',
           level: 'KG1',
           teacherUserId: null,
         },
-        include: { teacher: { select: { id: true, firstName: true, lastName: true, email: true } } },
+        include,
       });
       expect(result).toEqual(expected);
+    });
+
+    it('should refuse a room of another school', async () => {
+      mockPrisma.academicYear.findFirst.mockResolvedValue({ id: 'ay-1', schoolId });
+      mockPrisma.room.findFirst.mockResolvedValue(null);
+
+      await expect(
+        classroomsService.create(schoolId, { name: 'Class A', capacity: 25, academicYearId: 'ay-1', roomId: 'room-x' }),
+      ).rejects.toMatchObject({ message: 'Room not found', statusCode: 404 });
+      expect(mockPrisma.room.findFirst).toHaveBeenCalledWith({ where: { id: 'room-x', schoolId } });
+      expect(mockPrisma.classroom.create).not.toHaveBeenCalled();
+    });
+
+    it('should refuse an inactive room', async () => {
+      mockPrisma.academicYear.findFirst.mockResolvedValue({ id: 'ay-1', schoolId });
+      mockPrisma.room.findFirst.mockResolvedValue({ id: 'room-1', schoolId, isActive: false });
+
+      await expect(
+        classroomsService.create(schoolId, { name: 'Class A', capacity: 25, academicYearId: 'ay-1', roomId: 'room-1' }),
+      ).rejects.toMatchObject({ message: 'Room is inactive', statusCode: 400 });
+      expect(mockPrisma.classroom.create).not.toHaveBeenCalled();
     });
 
     it('should throw 404 when academic year does not belong to the school', async () => {
@@ -177,7 +211,7 @@ describe('ClassroomsService', () => {
         take: 20,
         orderBy: { createdAt: 'desc' },
         include: {
-          teacher: { select: { id: true, firstName: true, lastName: true, email: true } },
+          ...include,
           _count: { select: { enrollments: true } },
         },
       });

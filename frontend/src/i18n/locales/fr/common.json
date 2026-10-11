@@ -469,6 +469,10 @@
       "classroomNotFound": "Classe introuvable.",
       "classroomHasChildren": "Impossible de supprimer une classe qui contient des enfants : retirez-les d'abord.",
       "classroomFull": "La classe « {{classroom}} » est complète ({{capacity}} places).",
+      "roomNotFound": "Salle introuvable.",
+      "roomNameTaken": "Une salle nommée « {{room}} » existe déjà.",
+      "roomInUse": "Cette salle est utilisée par une classe : désactivez-la plutôt que de la supprimer.",
+      "roomInactive": "Cette salle est désactivée : choisissez une salle active.",
       "teacherNotFound": "Enseignant introuvable ou inactif.",
       "childNotFound": "Enfant introuvable : il a peut-être été supprimé.",
       "childAlreadyInClassroom": "Cet enfant est déjà inscrit dans la classe « {{classroom}} ».",
@@ -788,6 +792,45 @@
       "endDateAfterStart": "La date de fin doit être après la date de début"
     }
   },
+  "rooms": {
+    "title": "Salles",
+    "description": "Les salles de l'école, gardées d'une année sur l'autre. Chaque classe est placée dans une salle.",
+    "create": "Nouvelle salle",
+    "empty": "Aucune salle pour le moment. Ajoutez les salles de l'école pour y placer les classes.",
+    "free": "Libre cette année",
+    "inactive": "Inactive",
+    "places": "{{count}} places",
+    "noCapacity": "Capacité non renseignée",
+    "noRoom": "Aucune salle",
+    "selectHint": "Ajoutez les salles de l'école dans Paramètres → Salles.",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "deactivate": "Désactiver",
+    "activate": "Réactiver",
+    "deleteConfirm": {
+      "title": "Supprimer la salle « {{name}} » ?",
+      "description": "Seule une salle qu'aucune classe n'a utilisée peut être supprimée. Sinon, désactivez-la."
+    },
+    "form": {
+      "createTitle": "Nouvelle salle",
+      "editTitle": "Modifier la salle",
+      "description": "Une salle reste d'une année scolaire à l'autre.",
+      "name": "Nom",
+      "namePlaceholder": "Ex: Salle des Papillons",
+      "capacity": "Capacité",
+      "capacityHint": "Le nombre maximum d'enfants que la salle peut accueillir.",
+      "location": "Emplacement",
+      "locationPlaceholder": "Ex: Rez-de-chaussée",
+      "notes": "Note",
+      "notesPlaceholder": "Ex: Salle de sieste, équipée pour les bébés"
+    },
+    "warnings": {
+      "overCapacity": "La classe prévoit {{classCapacity}} enfants, mais la salle « {{room}} » en accueille au plus {{roomCapacity}}.",
+      "shared": "La salle « {{room}} » est aussi utilisée par « {{classroom}} » les mêmes jours ({{days}}).",
+      "classTooBig": "« {{classroom}} » prévoit {{classCapacity}} enfants pour {{roomCapacity}} places.",
+      "sharedPair": "« {{first}} » et « {{second}} » sont ici les mêmes jours ({{days}})."
+    }
+  },
   "classrooms": {
     "filters": {
       "search": "Recherche",
@@ -834,7 +877,7 @@
       "nameRequired": "Le nom est requis",
       "capacity": "Capacité",
       "capacityRequired": "La capacité doit être un nombre positif",
-      "roomNumber": "Numéro de salle",
+      "roomNumber": "Salle",
       "roomNumberPlaceholder": "Ex: 101",
       "level": "Niveau (groupe d'âge)",
       "levelPlaceholder": "Ex: 3-4 ans",

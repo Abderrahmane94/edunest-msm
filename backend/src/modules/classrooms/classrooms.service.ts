@@ -1,4 +1,5 @@
 import prisma from '../../lib/prisma';
+import { roomsService, RoomServiceError } from '../rooms/rooms.service';
 import type { CreateClassroomInput, UpdateClassroomInput, AssignTeacherInput } from './classrooms.schema';
 import type { ClassroomWithTeacher } from './classrooms.types';
 
@@ -19,6 +20,11 @@ const teacherSelect = {
   email: true,
 };
 
+const classroomInclude = {
+  teacher: { select: teacherSelect },
+  room: { select: { id: true, name: true, capacity: true } },
+};
+
 class ClassroomsService {
   /**
    * Create a new classroom for a school.
@@ -37,6 +43,9 @@ class ClassroomsService {
     if (input.teacherUserId) {
       await this.assertValidTeacher(input.teacherUserId, schoolId);
     }
+    if (input.roomId) {
+      await this.assertValidRoom(input.roomId, schoolId);
+    }
 
     const classroom = await prisma.classroom.create({
       data: {
@@ -44,13 +53,11 @@ class ClassroomsService {
         academicYearId: input.academicYearId,
         name: input.name,
         capacity: input.capacity,
-        roomNumber: input.roomNumber || null,
+        roomId: input.roomId || null,
         level: input.level || null,
         teacherUserId: input.teacherUserId || null,
       },
-      include: {
-        teacher: { select: teacherSelect },
-      },
+      include: classroomInclude,
     });
 
     return classroom;
@@ -74,6 +81,16 @@ class ClassroomsService {
         'Teacher not found, does not belong to this school, or is not an active teacher',
         400,
       );
+    }
+  }
+
+  /** A class goes in an active room of its school (or stays in its current one). */
+  private async assertValidRoom(roomId: string, schoolId: string, currentRoomId?: string | null): Promise<void> {
+    try {
+      await roomsService.assertAssignable(roomId, schoolId, currentRoomId);
+    } catch (err) {
+      if (err instanceof RoomServiceError) throw new ClassroomServiceError(err.message, err.statusCode);
+      throw err;
     }
   }
 
@@ -103,7 +120,7 @@ class ClassroomsService {
         take: pageSize,
         orderBy: { createdAt: 'desc' },
         include: {
-          teacher: { select: teacherSelect },
+          ...classroomInclude,
           _count: { select: { enrollments: true } },
         },
       }),
@@ -125,9 +142,7 @@ class ClassroomsService {
   async getById(id: string, schoolId: string, requestingTeacherUserId?: string): Promise<ClassroomWithTeacher> {
     const classroom = await prisma.classroom.findFirst({
       where: { id, schoolId },
-      include: {
-        teacher: { select: teacherSelect },
-      },
+      include: classroomInclude,
     });
 
     if (!classroom) {
@@ -152,18 +167,19 @@ class ClassroomsService {
     if (!classroom) {
       throw new ClassroomServiceError('Classroom not found', 404);
     }
+    if (input.roomId) {
+      await this.assertValidRoom(input.roomId, schoolId, classroom.roomId);
+    }
 
     const updated = await prisma.classroom.update({
       where: { id },
       data: {
         ...(input.name !== undefined && { name: input.name }),
         ...(input.capacity !== undefined && { capacity: input.capacity }),
-        ...(input.roomNumber !== undefined && { roomNumber: input.roomNumber }),
+        ...(input.roomId !== undefined && { roomId: input.roomId }),
         ...(input.level !== undefined && { level: input.level }),
       },
-      include: {
-        teacher: { select: teacherSelect },
-      },
+      include: classroomInclude,
     });
 
     return updated;
@@ -191,9 +207,7 @@ class ClassroomsService {
     const updated = await prisma.classroom.update({
       where: { id },
       data: { teacherUserId: input.teacherUserId },
-      include: {
-        teacher: { select: teacherSelect },
-      },
+      include: classroomInclude,
     });
 
     return updated;

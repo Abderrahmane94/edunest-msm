@@ -469,6 +469,10 @@
       "classroomNotFound": "القسم غير موجود.",
       "classroomHasChildren": "لا يمكن حذف قسم يضم أطفالًا: أخرجهم منه أولًا.",
       "classroomFull": "القسم «{{classroom}}» ممتلئ ({{capacity}} مقاعد).",
+      "roomNotFound": "القاعة غير موجودة.",
+      "roomNameTaken": "توجد قاعة باسم «{{room}}» مسبقًا.",
+      "roomInUse": "هذه القاعة مستعملة من طرف قسم: عطّلها بدل حذفها.",
+      "roomInactive": "هذه القاعة معطّلة: اختر قاعة مفعّلة.",
       "teacherNotFound": "المعلّم غير موجود أو غير نشط.",
       "childNotFound": "الطفل غير موجود: ربما حُذف.",
       "childAlreadyInClassroom": "هذا الطفل مسجّل من قبل في القسم «{{classroom}}».",
@@ -789,6 +793,45 @@
       "endDateAfterStart": "تاريخ النهاية يجب أن يكون بعد تاريخ البداية"
     }
   },
+  "rooms": {
+    "title": "القاعات",
+    "description": "قاعات المدرسة، تبقى من سنة إلى أخرى. يوضع كل قسم في قاعة.",
+    "create": "قاعة جديدة",
+    "empty": "لا توجد قاعات حاليًا. أضف قاعات المدرسة لوضع الأقسام فيها.",
+    "free": "شاغرة هذه السنة",
+    "inactive": "معطّلة",
+    "places": "{{count}} مقعدًا",
+    "noCapacity": "السعة غير محددة",
+    "noRoom": "بدون قاعة",
+    "selectHint": "أضف قاعات المدرسة في الإعدادات ← القاعات.",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "deactivate": "تعطيل",
+    "activate": "إعادة التفعيل",
+    "deleteConfirm": {
+      "title": "حذف القاعة «{{name}}»؟",
+      "description": "لا يمكن حذف إلا قاعة لم يستعملها أي قسم. وإلا فعطّلها."
+    },
+    "form": {
+      "createTitle": "قاعة جديدة",
+      "editTitle": "تعديل القاعة",
+      "description": "تبقى القاعة من سنة دراسية إلى أخرى.",
+      "name": "الاسم",
+      "namePlaceholder": "مثال: قاعة الفراشات",
+      "capacity": "السعة",
+      "capacityHint": "أقصى عدد من الأطفال يمكن للقاعة استقباله.",
+      "location": "الموقع",
+      "locationPlaceholder": "مثال: الطابق الأرضي",
+      "notes": "ملاحظة",
+      "notesPlaceholder": "مثال: قاعة القيلولة، مجهزة للرضع"
+    },
+    "warnings": {
+      "overCapacity": "يتوقع القسم {{classCapacity}} طفلًا، لكن القاعة «{{room}}» تستقبل {{roomCapacity}} على الأكثر.",
+      "shared": "القاعة «{{room}}» مستعملة أيضًا من طرف «{{classroom}}» في نفس الأيام ({{days}}).",
+      "classTooBig": "«{{classroom}}» يتوقع {{classCapacity}} طفلًا مقابل {{roomCapacity}} مقعدًا.",
+      "sharedPair": "«{{first}}» و«{{second}}» هنا في نفس الأيام ({{days}})."
+    }
+  },
   "classrooms": {
     "filters": {
       "search": "بحث",
@@ -825,7 +868,7 @@
       "level": "المستوى",
       "capacity": "السعة",
       "teacher": "المعلم",
-      "roomNumber": "الغرفة"
+      "roomNumber": "القاعة"
     },
     "form": {
       "title": "إنشاء قسم",
@@ -835,7 +878,7 @@
       "nameRequired": "الاسم مطلوب",
       "capacity": "السعة",
       "capacityRequired": "السعة يجب أن تكون رقماً موجباً",
-      "roomNumber": "رقم الغرفة",
+      "roomNumber": "القاعة",
       "roomNumberPlaceholder": "مثال: 101",
       "level": "المستوى (الفئة العمرية)",
       "levelPlaceholder": "مثال: 3-4 سنوات",

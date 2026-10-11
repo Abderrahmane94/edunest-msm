@@ -5,7 +5,7 @@ export interface ClassroomResponse {
   teacherUserId: string | null;
   name: string;
   capacity: number;
-  roomNumber: string | null;
+  roomId: string | null;
   level: string | null;
   createdAt: Date;
 }
@@ -17,12 +17,17 @@ export interface ClassroomWithTeacher extends ClassroomResponse {
     lastName: string;
     email: string;
   } | null;
+  room: {
+    id: string;
+    name: string;
+    capacity: number | null;
+  } | null;
 }
 
 export interface CreateClassroomInput {
   name: string;
   capacity: number;
-  roomNumber?: string;
+  roomId?: string | null;
   level?: string;
   academicYearId: string;
 }
@@ -30,7 +35,7 @@ export interface CreateClassroomInput {
 export interface UpdateClassroomInput {
   name?: string;
   capacity?: number;
-  roomNumber?: string | null;
+  roomId?: string | null;
   level?: string | null;
 }
 

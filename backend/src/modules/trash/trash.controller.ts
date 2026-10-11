@@ -20,7 +20,7 @@ const DISPLAY_FIELDS: Record<string, string[]> = {
   school: ['name', 'contactEmail', 'wilaya'],
   user: ['firstName', 'lastName', 'email', 'role'],
   child: ['firstName', 'lastName', 'dateOfBirth', 'learnerType'],
-  classroom: ['name', 'level', 'roomNumber'],
+  classroom: ['name', 'level'],
 };
 
 /**

@@ -157,6 +157,7 @@ model School {
   classrooms     Classroom[]
   rooms          Room[]
   stockItems     StockItem[]
+  equipment      Equipment[]
   stockMovements StockMovement[]
   children       Child[]
   expenses       Expense[]
@@ -301,6 +302,7 @@ model Room {
 
   school     School      @relation(fields: [schoolId], references: [id])
   classrooms Classroom[]
+  equipment  Equipment[]
 
   @@index([schoolId])
   @@map("rooms")
@@ -1128,4 +1130,36 @@ model StockMovement {
   @@index([itemId, date])
   @@index([schoolId, academicYearId])
   @@map("stock_movements")
+}
+
+enum EquipmentCondition {
+  good
+  repair
+  broken
+}
+
+/// Something the school owns and keeps (beds, tables, toys, computers,
+/// extinguishers…), counted where it is: in a room, or in no room (storage).
+model Equipment {
+  id           String             @id @default(uuid())
+  schoolId     String             @map("school_id")
+  name         String
+  /// furniture, toys, electronics, safety, kitchen, outdoor, other
+  category     String
+  quantity     Int                @default(1)
+  condition    EquipmentCondition @default(good)
+  roomId       String?            @map("room_id")
+  purchaseDate DateTime?          @map("purchase_date") @db.Date
+  /// Value of one, in DZD.
+  unitValue    Decimal?           @map("unit_value") @db.Decimal(10, 2)
+  notes        String?
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  school School @relation(fields: [schoolId], references: [id])
+  room   Room?  @relation(fields: [roomId], references: [id], onDelete: SetNull)
+
+  @@index([schoolId])
+  @@index([roomId])
+  @@map("equipment")
 }

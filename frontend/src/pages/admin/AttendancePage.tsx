@@ -2,11 +2,13 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDateIn } from '@/lib/formatters';
 import { ClipboardCheck, Calendar, BarChart2, Users, Eye } from 'lucide-react';
-import { DataTable, Input, KPICard, PageHeader, StatusBadge, Tabs } from '@/components/ui';
+import { Button, DataTable, Input, KPICard, PageHeader, StatusBadge, Tabs } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useClassrooms, type Classroom } from '@/hooks/useClassrooms';
-import { useSelectedYear } from '@/hooks/useSelectedYear';
+import { useSelectedYear, useYearClosed } from '@/hooks/useSelectedYear';
+import { personName, today, useSubstitutions } from '@/hooks/useSubstitutions';
+import { SubstitutionDialog } from './SubstitutionDialog';
 import {
   useClassroomAttendance,
   useClassroomMonthlyReport,
@@ -62,6 +64,10 @@ export function AttendancePage() {
   // Fetch classrooms for the active academic year
   const { year: schoolYear } = useSelectedYear();
   const { data: classrooms } = useClassrooms(schoolYear?.id);
+  // Today's replacements, and the class being replaced from the tracking list.
+  const closed = useYearClosed();
+  const { data: todaysReplacements } = useSubstitutions({ on: today() });
+  const [replacing, setReplacing] = React.useState<Classroom | null>(null);
 
   // Auto-select first classroom when data loads
   React.useEffect(() => {
@@ -480,6 +486,18 @@ export function AttendancePage() {
                             <p className="text-caption text-text-secondary">
                               {cr.teacherName || t('classrooms.noTeacher')}
                             </p>
+                            {day.date === today() &&
+                              (() => {
+                                const r = (todaysReplacements ?? []).find((x) => x.classroomId === cr.id);
+                                if (!r) return null;
+                                return (
+                                  <p className={`text-caption ${r.substitute ? 'text-primary' : 'text-warning'}`}>
+                                    {r.substitute
+                                      ? t('substitutions.tracking.replacedBy', { name: personName(r.substitute) })
+                                      : t('substitutions.tracking.nobody')}
+                                  </p>
+                                );
+                              })()}
                           </div>
                         </div>
                         <div className="text-end">
@@ -488,9 +506,25 @@ export function AttendancePage() {
                               {t('attendance.tracking.done')} ({cr.markedCount}/{cr.childrenCount})
                             </span>
                           ) : (
-                            <span className="text-caption text-danger font-medium">
-                              {t('attendance.tracking.notDone')}
-                            </span>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="text-caption text-danger font-medium">
+                                {t('attendance.tracking.notDone')}
+                              </span>
+                              {/* Teacher away today: replace from here. */}
+                              {day.date === today() &&
+                                !closed &&
+                                !(todaysReplacements ?? []).some((x) => x.classroomId === cr.id && x.substitute) &&
+                                (classrooms ?? []).some((c) => c.id === cr.id) && (
+                                  <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => setReplacing((classrooms ?? []).find((c) => c.id === cr.id) ?? null)}
+                                  >
+                                    {t('substitutions.section.today')}
+                                  </Button>
+                                )}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -501,6 +535,14 @@ export function AttendancePage() {
             </div>
           )}
         </>
+      )}
+
+      {replacing && (
+        <SubstitutionDialog
+          open
+          onOpenChange={(o) => !o && setReplacing(null)}
+          classroom={{ id: replacing.id, name: replacing.name, teacherId: replacing.teacher_id ?? null, academicYearId: replacing.academic_year_id }}
+        />
       )}
     </div>
   );

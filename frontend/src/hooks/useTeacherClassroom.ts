@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useMemo } from 'react';
+import { useCurrentTeacherClass } from '@/hooks/useSubstitutions';
 
 export interface TeacherClassroom {
   id: string;
@@ -18,40 +19,24 @@ export interface ClassroomChild {
 }
 
 /**
- * Fetches the classroom assigned to the current teacher.
- * Uses the classrooms endpoint filtered by the teacher's user ID.
+ * The class the teacher works with now: their own class of the current
+ * year, or one they replace today (chosen with the class switcher when they
+ * have several).
  */
 export function useTeacherClassroom() {
-  const { user } = useAuth();
-
-  return useQuery({
-    queryKey: ['teacher-classroom', user?.id],
-    queryFn: async () => {
-      const res = await apiClient.get<unknown>(
-        `/classrooms?teacher_id=${user?.id}`
-      );
-      const raw = res.data;
-      let classrooms: Record<string, unknown>[] = [];
-
-      if (Array.isArray(raw)) {
-        classrooms = raw;
-      } else if (raw && typeof raw === 'object' && 'classrooms' in (raw as object)) {
-        classrooms = (raw as { classrooms: Record<string, unknown>[] }).classrooms;
-      }
-
-      if (classrooms.length === 0) return null;
-
-      const c = classrooms[0];
-      return {
-        id: c.id as string,
-        name: c.name as string,
-        level: (c.level ?? '') as string,
-        capacity: c.capacity as number,
-        academic_year_id: (c.academicYearId ?? c.academic_year_id) as string,
-      } as TeacherClassroom;
-    },
-    enabled: !!user?.id && user?.role === 'teacher',
-  });
+  const query = useCurrentTeacherClass();
+  const c = query.current;
+  const data = useMemo<TeacherClassroom | null | undefined>(
+    () =>
+      c
+        ? { id: c.id, name: c.name, level: c.level ?? '', capacity: c.capacity, academic_year_id: c.academicYearId }
+        : query.isLoading
+          ? undefined
+          : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [c?.id, c?.name, query.isLoading],
+  );
+  return { ...query, data };
 }
 
 /**

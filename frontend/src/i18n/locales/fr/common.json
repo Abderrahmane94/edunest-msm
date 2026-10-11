@@ -15,6 +15,9 @@
         "waitingParents": "Parents sans réponse depuis plus de 3 h : {{count}}",
         "lowStock_one": "1 fourniture à racheter",
         "lowStock_other": "{{count}} fournitures à racheter",
+        "noTeacher_one": "{{classes}} : sans enseignant aujourd'hui",
+        "noTeacher_many": "{{count}} classes sans enseignant aujourd'hui : {{classes}}",
+        "noTeacher_other": "{{count}} classes sans enseignant aujourd'hui : {{classes}}",
         "toRepair_other": "{{count}} objets à réparer",
         "toRepair_many": "{{count}} objets à réparer",
         "toRepair_one": "1 objet à réparer",
@@ -478,6 +481,15 @@
       "supplyNotEnough": "Pas assez en stock : il reste {{left}}.",
       "supplyAdminOnly": "Seuls la direction et les agents administratifs peuvent enregistrer les achats et les inventaires.",
       "expenseDirectorOnly": "Seul le directeur peut enregistrer les dépenses.",
+      "classAlreadyReplaced": "Cette classe a déjà un remplacement sur ces dates : modifiez-le plutôt.",
+      "substituteIsTitular": "Le remplaçant est l'enseignant de la classe.",
+      "substituteNotTeacher": "Le remplaçant doit être un enseignant actif de l'école.",
+      "substituteBusy": "Le remplaçant remplace déjà en {{classroom}} sur ces dates.",
+      "substitutionOutsideYear": "Les dates doivent être dans l'année scolaire de la classe.",
+      "substitutionEndBeforeStart": "La date de fin doit être après la date de début.",
+      "substitutionCancelled": "Ce remplacement a été annulé.",
+      "substitutionEnded": "Ce remplacement est déjà terminé.",
+      "substitutionNotFound": "Remplacement introuvable.",
       "equipmentNotFound": "Matériel introuvable.",
       "rolloverSameYear": "Choisissez une autre année à copier.",
       "rolloverStartOutside": "La date de début de facturation doit être dans la nouvelle année.",
@@ -837,6 +849,84 @@
       "startDateRequired": "La date de début est requise",
       "endDateRequired": "La date de fin est requise",
       "endDateAfterStart": "La date de fin doit être après la date de début"
+    }
+  },
+  "substitutions": {
+    "reasons": {
+      "illness": "Maladie",
+      "leave": "Congé",
+      "training": "Formation",
+      "other": "Autre"
+    },
+    "status": {
+      "current": "En cours",
+      "upcoming": "Prévu",
+      "past": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "section": {
+      "title": "Remplacements",
+      "today": "Remplacer aujourd'hui",
+      "plan": "Planifier un remplacement",
+      "empty": "Aucun remplacement pour cette classe.",
+      "emptyTeacher": "Aucun remplacement pour cet enseignant."
+    },
+    "dialog": {
+      "title": "Remplacer l'enseignant de {{name}}",
+      "editTitle": "Modifier le remplacement — {{name}}",
+      "description": "Le remplaçant travaille avec la classe (présences, rapports du jour, enfants) pendant ces jours seulement.",
+      "mode": {
+        "today": "Aujourd'hui seulement",
+        "period": "Une période"
+      },
+      "from": "Du",
+      "to": "Au",
+      "day": "Jour",
+      "substitute": "Remplaçant",
+      "pickPlaceholder": "Choisir un remplaçant",
+      "free": "disponible",
+      "hasClass": "a sa classe ({{name}})",
+      "alreadyReplacing": "remplace déjà en {{name}} aujourd'hui",
+      "newSubstitute": "Nouveau remplaçant (extérieur)…",
+      "newSubstituteHint": "Un compte enseignant lui est créé avec le mot de passe provisoire edunest26, à changer à la première connexion. Désactivez-le à la fin du remplacement.",
+      "nobody": "Personne (classe sans enseignant)",
+      "nobodyHint": "La classe apparaîtra « sans enseignant » dans le tableau de bord ces jours-là.",
+      "reason": "Motif",
+      "note": "Remarque",
+      "notifyParents": "Prévenir les parents de la classe",
+      "submit": "Enregistrer le remplacement",
+      "pickSubstitute": "Choisissez un remplaçant, ou « Personne ».",
+      "endBeforeStart": "La date de fin doit être après la date de début.",
+      "busyTitle": "Remplaçant déjà occupé",
+      "busyDescription": "Il ou elle remplace déjà en {{classroom}} sur ces jours. Lui confier aussi cette classe ?",
+      "busyConfirm": "Confier les deux classes",
+      "accountCreated": "Remplacement enregistré. Le compte de {{email}} est créé avec le mot de passe provisoire edunest26."
+    },
+    "list": {
+      "replacedBy": "Remplacé(e) par {{name}}",
+      "nobody": "Sans remplaçant",
+      "replaces": "Remplace {{name}} en {{classroom}}",
+      "awayReplacedBy": "Absent(e) de {{classroom}}, remplacé(e) par {{name}}",
+      "awayNobody": "Absent(e) de {{classroom}}, sans remplaçant",
+      "parentsNotified": "parents prévenus",
+      "end": "Terminer aujourd'hui",
+      "endConfirmTitle": "Terminer le remplacement aujourd'hui ?",
+      "endConfirmDescription": "L'enseignant est de retour : le remplaçant garde la classe jusqu'à ce soir seulement.",
+      "cancel": "Annuler",
+      "cancelConfirmTitle": "Annuler ce remplacement ?",
+      "cancelConfirmDescription": "Il n'a pas encore commencé : le remplaçant n'aura pas accès à la classe."
+    },
+    "tracking": {
+      "replacedBy": "Remplacé(e) aujourd'hui par {{name}}",
+      "nobody": "Aujourd'hui sans enseignant"
+    },
+    "teacher": {
+      "switchLabel": "Classe",
+      "replacing": "{{name}} (remplacement)",
+      "bannerToday": "Vous remplacez {{teacher}} en {{name}} aujourd'hui.",
+      "bannerTodayNoTeacher": "Vous prenez la classe {{name}} aujourd'hui.",
+      "bannerPeriod": "Vous remplacez {{teacher}} en {{name}} jusqu'au {{until}}.",
+      "bannerPeriodNoTeacher": "Vous prenez la classe {{name}} jusqu'au {{until}}."
     }
   },
   "inventory": {

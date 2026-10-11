@@ -4,8 +4,11 @@ import { attendanceService, AttendanceServiceError } from './attendance.service'
 // Mock Prisma
 vi.mock('../../lib/prisma', () => ({
   default: {
+    // No teacher replacement unless a test sets one.
+    substitution: { findFirst: vi.fn(async () => null), findMany: vi.fn(async () => []) },
     classroom: {
       findFirst: vi.fn(),
+      findMany: vi.fn(async () => []),
     },
     attendanceRecord: {
       findMany: vi.fn(),

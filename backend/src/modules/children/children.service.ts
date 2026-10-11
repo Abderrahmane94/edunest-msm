@@ -1,4 +1,5 @@
 import prisma, { type DbClient } from '../../lib/prisma';
+import { teacherClassroomIds } from '../substitutions/teaching-access';
 import { unpaidByYear, type YearUnpaid } from '../payments/unpaid-by-year';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { softDeleteService } from '../../services/soft-delete.service';
@@ -913,7 +914,7 @@ class ChildrenService {
 
     if (requestingTeacherUserId) {
       const enrollment = await prisma.classroomEnrollment.findFirst({
-        where: { childId, classroom: { teacherUserId: requestingTeacherUserId, schoolId } },
+        where: { childId, classroomId: { in: await teacherClassroomIds(requestingTeacherUserId, schoolId) } },
       });
       if (!enrollment) {
         throw new ChildServiceError('This child is not in your assigned classroom', 403);

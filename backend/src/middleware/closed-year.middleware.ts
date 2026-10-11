@@ -67,6 +67,11 @@ export const yearOf = {
       ? (await prisma.attendanceRecord.findFirst({ where: { id: str(id) }, select: { classroom: { select: { academicYearId: true } } } }))
           ?.classroom.academicYearId
       : undefined,
+  substitution: async (id: unknown) =>
+    str(id)
+      ? (await prisma.substitution.findFirst({ where: { id: str(id) }, select: { classroom: { select: { academicYearId: true } } } }))
+          ?.classroom.academicYearId
+      : undefined,
   /** The year a day counts in (same rule as everywhere: yearForDate). */
   date: async (req: Request, day: unknown) => {
     const d = str(day) ? new Date(str(day)!) : null;

@@ -70,6 +70,7 @@ import {
   CreditCard,
   Package,
 } from 'lucide-react';
+import { SubstitutionBanner, TeacherClassSwitcher } from '@/components/layout/TeacherClassSwitcher';
 
 /**
  * Protects routes that require authentication.
@@ -330,6 +331,8 @@ function TeacherLayoutWrapper() {
         </div>
       }
       sidebarFooter={<SidebarFooterContent />}
+      yearSwitcher={<TeacherClassSwitcher />}
+      yearBanner={<SubstitutionBanner />}
     />
   );
 }

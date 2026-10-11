@@ -103,6 +103,17 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^Not enough in stock \((?<left>.+) left\)$/, 'supplyNotEnough'],
   [/^Only an administrator can record purchases and counts$/, 'supplyAdminOnly'],
   [/^Only the director can record expenses$/, 'expenseDirectorOnly'],
+
+  // Teacher replacements
+  [/^This class already has a replacement on these dates$/, 'classAlreadyReplaced'],
+  [/^The substitute is the class's own teacher$/, 'substituteIsTitular'],
+  [/^The substitute must be an active teacher of the school$/, 'substituteNotTeacher'],
+  [/^The substitute already replaces in (?<classroom>.+) on these dates$/, 'substituteBusy'],
+  [/^The dates must be within the class's school year$/, 'substitutionOutsideYear'],
+  [/^The end date must be on or after the start date$/, 'substitutionEndBeforeStart'],
+  [/^This replacement was cancelled$/, 'substitutionCancelled'],
+  [/^This replacement has already ended$/, 'substitutionEnded'],
+  [/^Replacement not found$/, 'substitutionNotFound'],
   [/^Equipment not found$/, 'equipmentNotFound'],
   [/^The billing start date must be within the new school year$/, 'rolloverStartOutside'],
   [/^A child is sent to a class that is not copied$/, 'rolloverClassNotCopied'],

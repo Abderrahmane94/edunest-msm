@@ -1,4 +1,5 @@
 import prisma from '../../lib/prisma';
+import { teacherClassroomIds, teachesClassroom } from '../substitutions/teaching-access';
 import { notificationService } from '../../services/notification.service';
 import { Prisma } from '@prisma/client';
 import type { BulkMarkAttendanceInput, SaveAttendanceDayInput, UpdateAttendanceInput } from './attendance.schema';
@@ -58,8 +59,9 @@ class AttendanceService {
     }
 
     // If user is a teacher, verify they are assigned to this classroom
+    // Their class, or one they replace on that day.
     if (userRole === 'teacher') {
-      if (classroom.teacherUserId !== userId) {
+      if (!(await teachesClassroom(userId, classroom, date))) {
         throw new AttendanceServiceError(
           'You are not assigned to this classroom. Only the assigned teacher or an admin can mark attendance.',
           403,
@@ -145,7 +147,7 @@ class AttendanceService {
 
     // If user is a teacher, verify they are assigned to the classroom
     if (userRole === 'teacher') {
-      if (record.classroom.teacherUserId !== userId) {
+      if (!(await teachesClassroom(userId, record.classroom, record.date))) {
         throw new AttendanceServiceError(
           'You are not assigned to this classroom. Only the assigned teacher or an admin can update attendance.',
           403,
@@ -203,7 +205,7 @@ class AttendanceService {
     if (!classroom) {
       throw new AttendanceServiceError('Classroom not found or does not belong to this school', 404);
     }
-    if (userRole === 'teacher' && classroom.teacherUserId !== userId) {
+    if (userRole === 'teacher' && !(await teachesClassroom(userId, classroom, date))) {
       throw new AttendanceServiceError(
         'You are not assigned to this classroom. Only the assigned teacher or an admin can mark attendance.',
         403,
@@ -313,7 +315,7 @@ class AttendanceService {
 
     // If user is a teacher, verify they are assigned to this classroom
     if (userRole === 'teacher') {
-      if (classroom.teacherUserId !== userId) {
+      if (!(await teachesClassroom(userId, classroom, date))) {
         throw new AttendanceServiceError(
           'You are not assigned to this classroom.',
           403,
@@ -373,7 +375,7 @@ class AttendanceService {
       const enrollment = await prisma.classroomEnrollment.findFirst({
         where: {
           childId,
-          classroom: { teacherUserId: userId, schoolId },
+          classroomId: { in: await teacherClassroomIds(userId, schoolId) },
         },
       });
       if (!enrollment) {
@@ -573,7 +575,7 @@ class AttendanceService {
       const enrollment = await prisma.classroomEnrollment.findFirst({
         where: {
           childId,
-          classroom: { teacherUserId: userId, schoolId },
+          classroomId: { in: await teacherClassroomIds(userId, schoolId) },
         },
       });
       if (!enrollment) {

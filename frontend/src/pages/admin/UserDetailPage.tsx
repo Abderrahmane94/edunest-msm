@@ -2,7 +2,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Shield, ShieldOff } from 'lucide-react';
+import { KeyRound, Shield, ShieldOff } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import {
   Button,
@@ -17,6 +17,7 @@ import {
   Avatar,
 } from '@/components/ui';
 import { userToggleConfirm } from './UsersPage';
+import { ResetPasswordDialog } from './ResetPasswordDialog';
 import { FormField, FormSelect } from '@/components/forms';
 import { Input } from '@/components/ui';
 import { useUser, useUpdateUser, useToggleUserActive, type User } from '@/hooks/useUsers';
@@ -57,6 +58,7 @@ export function UserDetailPage() {
   });
   const [saveSuccess, setSaveSuccess] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
+  const [resetOpen, setResetOpen] = React.useState(false);
   const loadedUserId = React.useRef<string | null>(null);
 
   React.useEffect(() => {
@@ -280,6 +282,13 @@ export function UserDetailPage() {
             )}
           </Button>
 
+          {/* One's own password is changed from the account menu, not reset here. */}
+          {user.id !== currentUser?.id && (
+            <Button type="button" variant="secondary" onClick={() => setResetOpen(true)}>
+              <KeyRound className="w-4 h-4 text-primary" /> {t('users.resetPassword.button')}
+            </Button>
+          )}
+
           <EntityDeleteButton
             entityType="users"
             entityId={user.id}
@@ -298,6 +307,8 @@ export function UserDetailPage() {
           )}
         </div>
       </form>
+
+      <ResetPasswordDialog open={resetOpen} onOpenChange={setResetOpen} user={user} />
     </div>
   );
 }

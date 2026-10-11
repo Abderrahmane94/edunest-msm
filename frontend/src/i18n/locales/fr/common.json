@@ -470,6 +470,8 @@
       "classroomHasChildren": "Impossible de supprimer une classe qui contient des enfants : retirez-les d'abord.",
       "classroomFull": "La classe « {{classroom}} » est complète ({{capacity}} places).",
       "roomNotFound": "Salle introuvable.",
+      "resetOwnPassword": "Pour votre propre compte, utilisez « Changer le mot de passe ».",
+      "resetEmailFailed": "L'e-mail n'a pas pu être envoyé. Réessayez, ou donnez plutôt un mot de passe temporaire.",
       "roomNameTaken": "Une salle nommée « {{room}} » existe déjà.",
       "roomInUse": "Cette salle est utilisée par une classe : désactivez-la plutôt que de la supprimer.",
       "roomInactive": "Cette salle est désactivée : choisissez une salle active.",
@@ -696,6 +698,28 @@
     "inactive": "Inactif",
     "activate": "Activer",
     "deactivate": "Désactiver",
+    "resetPassword": {
+      "button": "Réinitialiser le mot de passe",
+      "title": "Réinitialiser le mot de passe",
+      "copy": "Copier",
+      "copied": "Copié",
+      "temporary": {
+        "title": "Donner un mot de passe temporaire",
+        "description": "Le mot de passe actuel de {{name}} ne fonctionnera plus. Vous lui transmettez le nouveau par téléphone ou de vive voix.",
+        "action": "Générer un mot de passe",
+        "done": "Nouveau mot de passe temporaire de {{name}} :",
+        "shownOnce": "Notez-le maintenant : il ne sera plus affiché.",
+        "mustChange": "À sa prochaine connexion, {{name}} devra choisir son propre mot de passe.",
+        "sessionsClosed": "Ses sessions ouvertes sur d'autres appareils ont été fermées."
+      },
+      "email": {
+        "title": "Envoyer un lien par e-mail",
+        "description": "Un lien pour choisir un nouveau mot de passe est envoyé à",
+        "action": "Envoyer le lien",
+        "done": "Le lien a été envoyé à",
+        "validity": "Il est valable une heure ; d'ici là, le mot de passe actuel reste valable."
+      }
+    },
     "columns": {
       "name": "Nom",
       "role": "Rôle",

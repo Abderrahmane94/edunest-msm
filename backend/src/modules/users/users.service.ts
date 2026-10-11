@@ -5,9 +5,26 @@ import prisma, { type DbClient } from '../../lib/prisma';
 import { emailService } from '../../services/email.service';
 import type { UserRole, Language } from '@prisma/client';
 import type { CreateUserDirectlyInput } from './users.schema';
+import { authService } from '../auth/auth.service';
 
 const INVITATION_EXPIRY_HOURS = 48;
 const BCRYPT_SALT_ROUNDS = 10;
+
+// Easy to read out or type: no 0/O, 1/l/I.
+const TEMPORARY_PASSWORD_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+
+/** Eight random characters in two groups, e.g. "K7mQ-4tzP". */
+export function temporaryPassword(): string {
+  const pick = () => TEMPORARY_PASSWORD_ALPHABET[crypto.randomInt(TEMPORARY_PASSWORD_ALPHABET.length)];
+  const group = () => Array.from({ length: 4 }, pick).join('');
+  return `${group()}-${group()}`;
+}
+
+/** Who is resetting someone's password: schoolId null for super_admin. */
+interface ResetActor {
+  userId: string;
+  schoolId: string | null;
+}
 
 function getFrontendUrl(): string {
   return process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -404,6 +421,44 @@ export const usersService = {
     });
 
     return updated;
+  },
+
+  /**
+   * An admin gives a user a new temporary password, shown once to the admin:
+   * the user must choose their own at next login, their sessions and earlier
+   * reset links stop working. Not for one's own account (use change-password).
+   */
+  async resetPassword(id: string, actor: ResetActor): Promise<{ temporaryPassword: string }> {
+    await this.findResettable(id, actor);
+    const password = temporaryPassword();
+    const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+
+    await prisma.$transaction([
+      prisma.user.update({ where: { id }, data: { passwordHash, mustChangePassword: true } }),
+      prisma.refreshToken.deleteMany({ where: { userId: id } }),
+      prisma.passwordResetToken.updateMany({ where: { userId: id, usedAt: null }, data: { usedAt: new Date() } }),
+    ]);
+
+    return { temporaryPassword: password };
+  },
+
+  /** An admin emails a user a reset link instead: the admin never sees the password. */
+  async sendResetLink(id: string, actor: ResetActor): Promise<{ email: string }> {
+    const user = await this.findResettable(id, actor);
+    const sent = await authService.sendPasswordResetLink(user);
+    if (!sent) throw new UserServiceError('The reset email could not be sent', 502);
+    return { email: user.email };
+  },
+
+  async findResettable(id: string, actor: ResetActor) {
+    if (id === actor.userId) {
+      throw new UserServiceError('Use "change password" for your own account', 400);
+    }
+    const user = await prisma.user.findFirst({
+      where: actor.schoolId ? { id, schoolId: actor.schoolId } : { id },
+    });
+    if (!user) throw new UserServiceError('User not found', 404);
+    return user;
   },
 
   /**

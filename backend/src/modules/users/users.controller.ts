@@ -190,6 +190,42 @@ export const usersController = {
   },
 
   /**
+   * POST /api/users/:id/reset-password — New temporary password, shown once (admin only)
+   */
+  async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const actor = { userId: req.user!.userId, schoolId: req.user!.role === 'super_admin' ? null : req.user!.schoolId! };
+      const result = await usersService.resetPassword(req.params.id, actor);
+      // Never cached: the password is shown once.
+      res.set('Cache-Control', 'no-store');
+      res.status(200).json(successResponse(result));
+    } catch (error) {
+      if (error instanceof UserServiceError) {
+        res.status(error.statusCode).json(errorResponse('USER_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/users/:id/send-reset-link — Email the user a reset link (admin only)
+   */
+  async sendResetLink(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const actor = { userId: req.user!.userId, schoolId: req.user!.role === 'super_admin' ? null : req.user!.schoolId! };
+      const result = await usersService.sendResetLink(req.params.id, actor);
+      res.status(200).json(successResponse(result));
+    } catch (error) {
+      if (error instanceof UserServiceError) {
+        res.status(error.statusCode).json(errorResponse('USER_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
    * PATCH /api/users/:id/fcm-token — Update FCM token (authenticated user)
    */
   async updateFcmToken(req: Request, res: Response, next: NextFunction): Promise<void> {

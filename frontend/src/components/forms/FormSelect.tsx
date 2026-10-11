@@ -5,6 +5,8 @@ import { ChevronDown } from 'lucide-react';
 export interface SelectOption {
   value: string;
   label: string;
+  /** Shown but not choosable (e.g. a full class). */
+  disabled?: boolean;
 }
 
 export interface FormSelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'children'> {
@@ -49,7 +51,7 @@ const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
               </option>
             )}
             {options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
+              <option key={opt.value} value={opt.value} disabled={opt.disabled}>
                 {opt.label}
               </option>
             ))}

@@ -483,7 +483,7 @@
       "supplyHasHistory": "لهذه المادة سجل: ضعها جانبًا بدل حذفها.",
       "supplyAside": "هذه المادة موضوعة جانبًا.",
       "supplyNotEnough": "المخزون غير كافٍ: يتبقى {{left}}.",
-      "supplyAdminOnly": "يمكن للمدير فقط تسجيل المشتريات والجرد.",
+      "supplyAdminOnly": "يمكن للمدير والإداريين فقط تسجيل المشتريات والجرد.",
       "expenseDirectorOnly": "المدير وحده يسجّل المصاريف.",
       "equipmentNotFound": "العتاد غير موجود.",
       "rolloverSameYear": "اختر سنة أخرى للنسخ منها.",

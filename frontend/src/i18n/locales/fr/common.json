@@ -181,7 +181,7 @@
     "hidePassword": "Masquer le mot de passe",
     "loginError": "Identifiants incorrects. Veuillez réessayer.",
     "userDeactivated": "Votre compte a été désactivé.",
-    "userDeactivatedHint": "Contactez l'administrateur de votre établissement pour le réactiver.",
+    "userDeactivatedHint": "Contactez la direction de votre établissement pour le réactiver.",
     "schoolInactive": "Ce compte école est désactivé.",
     "schoolInactiveHint": "Veuillez contacter l'équipe EduNest pour plus d'informations.",
     "tooManyAttempts": "Trop de tentatives de connexion.",
@@ -374,7 +374,7 @@
       "emailRequired": "L'email est requis",
       "phoneRequired": "Le téléphone est requis",
       "director": {
-        "title": "Directeur / Administrateur",
+        "title": "Directeur",
         "firstNameRequired": "Le prénom du directeur est requis",
         "lastNameRequired": "Le nom du directeur est requis",
         "emailRequired": "L'email du directeur est requis",
@@ -476,7 +476,7 @@
       "supplyHasHistory": "Cet article a un historique : mettez-le de côté au lieu de le supprimer.",
       "supplyAside": "Cet article est mis de côté.",
       "supplyNotEnough": "Pas assez en stock : il reste {{left}}.",
-      "supplyAdminOnly": "Seul un administrateur peut enregistrer les achats et les inventaires.",
+      "supplyAdminOnly": "Seuls la direction et les agents administratifs peuvent enregistrer les achats et les inventaires.",
       "expenseDirectorOnly": "Seul le directeur peut enregistrer les dépenses.",
       "equipmentNotFound": "Matériel introuvable.",
       "rolloverSameYear": "Choisissez une autre année à copier.",
@@ -752,7 +752,7 @@
     },
     "roles": {
       "super_admin": "Super Admin",
-      "admin": "Administrateur",
+      "admin": "Directeur",
       "administrative": "Agent administratif",
       "teacher": "Enseignant",
       "parent": "Parent"
@@ -1724,7 +1724,7 @@
     "total": "Total",
     "editTitle": "Modifier le paiement",
     "deleteTitle": "Supprimer le paiement",
-    "deleteConfirm": "Ce paiement sera supprimé (suppression logique). Cette action est réversible par un administrateur.",
+    "deleteConfirm": "Ce paiement sera supprimé (suppression logique). Cette action est réversible par le directeur.",
     "downloadPdf": "Télécharger PDF",
     "downloadReceipt": "Télécharger le reçu",
     "pdfTitle": "Rapport de paiements",
@@ -2069,7 +2069,7 @@
   },
   "teacherAttendance": {
     "title": "Appel de présence",
-    "noClassroom": "Aucune classe ne vous est assignée. Contactez votre administrateur.",
+    "noClassroom": "Aucune classe ne vous est assignée. Contactez la direction.",
     "noChildren": "Aucun enfant inscrit dans cette classe.",
     "selectDate": "Sélectionner la date",
     "marked": "marqués",

@@ -2138,6 +2138,9 @@
       "hoursAgo": "il y a {{count}} h",
       "daysAgo": "il y a {{count}} j"
     },
+    "parentMessages": {
+      "tab": "Messages des parents"
+    },
     "staffMessages": {
       "tab": "Messagerie staff",
       "title": "Messagerie enseignants",
@@ -2209,6 +2212,7 @@
     "searchParents": "Parent ou enfant…",
     "title": "Messages",
     "noConversations": "Aucune conversation pour le moment",
+    "noOfficeConversations": "Aucun message de parent pour l'administration pour le moment",
     "selectConversation": "Sélectionnez une conversation pour commencer",
     "back": "Retour",
     "noMessages": "Aucun message. Commencez la conversation !",
@@ -2346,8 +2350,14 @@
   },
   "parentMessages": {
     "title": "Messages",
-    "subtitle": "Discutez avec l'enseignant de votre enfant",
-    "noConversations": "Aucune conversation pour le moment. Votre enseignant vous contactera bientôt !",
+    "subtitle": "Échangez avec l'enseignant de votre enfant ou l'administration",
+    "noConversations": "Aucune conversation pour le moment. Écrivez à l'enseignant de votre enfant ou à l'administration.",
+    "newMessage": "Nouveau message",
+    "newMessageHint": "Choisissez l'enfant concerné et à qui écrire.",
+    "office": "Administration",
+    "officeHint": "Direction de l'école",
+    "noTeacherYet": "Pas encore d'enseignant",
+    "noChildren": "Aucun enfant lié à votre compte.",
     "back": "Retour",
     "teacher": "Enseignant",
     "noMessages": "Aucun message. Dites bonjour !",

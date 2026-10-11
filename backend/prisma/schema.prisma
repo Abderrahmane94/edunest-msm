@@ -476,6 +476,9 @@ model Conversation {
   parentUserId  String   @map("parent_user_id")
   createdAt     DateTime @default(now()) @map("created_at")
   lastMessageAt DateTime @map("last_message_at")
+  // A parent ↔ school office thread: teacherUserId then holds an office
+  // member, and every office member can read and answer it.
+  withOffice    Boolean  @default(false) @map("with_office")
 
   teacher  User      @relation("TeacherConversations", fields: [teacherUserId], references: [id])
   parent   User      @relation("ParentConversations", fields: [parentUserId], references: [id])

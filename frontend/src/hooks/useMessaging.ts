@@ -8,6 +8,8 @@ export interface Conversation {
   teacher_user_id: string;
   parent_user_id: string;
   parent_name: string;
+  /** With the school office rather than the teacher. */
+  with_office: boolean;
   last_message?: string;
   last_message_at: string;
   unread_count: number;
@@ -25,11 +27,12 @@ export interface Message {
   created_at: string;
 }
 
-export function useConversations() {
+/** `office`: the school office's inbox (parents' threads with the office). */
+export function useConversations({ office = false }: { office?: boolean } = {}) {
   return useQuery({
-    queryKey: ['conversations'],
+    queryKey: ['conversations', office ? 'office' : 'mine'],
     queryFn: async () => {
-      const res = await apiClient.get<unknown>('/communication/conversations');
+      const res = await apiClient.get<unknown>(`/communication/conversations${office ? '?office=true' : ''}`);
       const raw = Array.isArray(res.data) ? res.data : [];
       return raw.map((c: Record<string, unknown>) => {
         const parent = c.parent as Record<string, unknown> | undefined;
@@ -44,6 +47,7 @@ export function useConversations() {
           teacher_user_id: (c.teacherUserId ?? c.teacher_user_id) as string,
           parent_user_id: (c.parentUserId ?? c.parent_user_id) as string,
           parent_name: parentName,
+          with_office: Boolean(c.withOffice ?? c.with_office),
           last_message: (c.lastMessage ?? c.last_message) as string | undefined,
           last_message_at: (c.lastMessageAt ?? c.last_message_at ?? '') as string,
           unread_count: (c.unreadCount ?? c.unread_count ?? 0) as number,
@@ -122,7 +126,7 @@ export function useMarkMessageRead() {
 export function useCreateConversation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { childId: string; parentUserId?: string }) => {
+    mutationFn: async (data: { childId: string; parentUserId?: string; withOffice?: boolean }) => {
       const res = await apiClient.post<{ conversation: Conversation }>('/communication/conversations', data);
       if (!res.success) throw apiError(res.error, 'Failed to create conversation');
       return res.data;
@@ -150,5 +154,26 @@ export function useSendFileMessage(conversationId?: string) {
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
+  });
+}
+
+export interface MessageContact {
+  childId: string;
+  firstName: string;
+  lastName: string;
+  /** The class teacher, or null when the child has none yet. */
+  teacherName: string | null;
+}
+
+/** A parent's children and their teachers, to start a conversation. */
+export function useMessageContacts(enabled: boolean) {
+  return useQuery({
+    queryKey: ['message-contacts'],
+    queryFn: async () => {
+      const res = await apiClient.get<MessageContact[]>('/communication/conversations/contacts');
+      if (!res.success) throw apiError(res.error, 'Failed to load contacts');
+      return Array.isArray(res.data) ? res.data : [];
+    },
+    enabled,
   });
 }

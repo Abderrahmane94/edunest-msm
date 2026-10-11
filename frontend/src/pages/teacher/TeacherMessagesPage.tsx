@@ -117,7 +117,17 @@ export function TeacherMessagesPage() {
 
 // ─── Parent messaging panel (existing logic, extracted) ──────────────────────
 
-function ParentMessagingPanel({ initialConversationId }: { initialConversationId?: string }) {
+/**
+ * Conversations with parents. `office`: the school office's inbox — parents'
+ * threads with the office, which any office member answers (opened by parents).
+ */
+export function ParentMessagingPanel({
+  initialConversationId,
+  office = false,
+}: {
+  initialConversationId?: string;
+  office?: boolean;
+}) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { on, joinRoom, leaveRoom } = useSocket();
@@ -135,7 +145,7 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const attachMenuRef = React.useRef<HTMLDivElement>(null);
 
-  const { data: conversations = [], isLoading: conversationsLoading } = useConversations();
+  const { data: conversations = [], isLoading: conversationsLoading } = useConversations({ office });
   const [search, setSearch] = React.useState('');
   const shownConversations = React.useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -240,6 +250,7 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
           <span className="text-caption text-text-secondary font-medium">
             {t('messages.parentConversations')}
           </span>
+          {!office && (
           <button
             type="button"
             onClick={() => setShowNewConversationDialog(true)}
@@ -248,6 +259,7 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
           >
             <Plus className="w-4 h-4" />
           </button>
+          )}
         </div>
 
         {conversationsLoading ? (
@@ -265,7 +277,7 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
         ) : conversations.length === 0 ? (
           <div className="flex items-center justify-center h-32 p-4">
             <p className="text-body text-text-secondary text-center">
-              {t('messages.noConversations')}
+              {office ? t('messages.noOfficeConversations') : t('messages.noConversations')}
             </p>
           </div>
         ) : (
@@ -360,15 +372,17 @@ function ParentMessagingPanel({ initialConversationId }: { initialConversationId
         )}
       </main>
 
-      {/* New conversation dialog */}
-      <NewParentConversationDialog
-        open={showNewConversationDialog}
-        onOpenChange={setShowNewConversationDialog}
-        onConversationCreated={(id) => {
-          setActiveConversationId(id);
-          setShowNewConversationDialog(false);
-        }}
-      />
+      {/* New conversation dialog (a teacher's: it lists their class) */}
+      {!office && (
+        <NewParentConversationDialog
+          open={showNewConversationDialog}
+          onOpenChange={setShowNewConversationDialog}
+          onConversationCreated={(id) => {
+            setActiveConversationId(id);
+            setShowNewConversationDialog(false);
+          }}
+        />
+      )}
     </div>
   );
 }

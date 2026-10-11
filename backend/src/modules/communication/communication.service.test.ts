@@ -4,6 +4,8 @@ import { communicationService, CommunicationServiceError } from './communication
 // Mock Prisma
 vi.mock('../../lib/prisma', () => ({
   default: {
+    // No teacher replacement unless a test sets one.
+    substitution: { findFirst: vi.fn(async () => null), findMany: vi.fn(async () => []) },
     child: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
@@ -51,7 +53,7 @@ vi.mock('../../lib/prisma', () => ({
     classroom: {
       findFirst: vi.fn(),
       findUnique: vi.fn(),
-      findMany: vi.fn(),
+      findMany: vi.fn(async () => []),
     },
     announcement: {
       findFirst: vi.fn(),

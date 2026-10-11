@@ -1,4 +1,5 @@
 import prisma from '../../lib/prisma';
+import { teachesClassroom } from '../substitutions/teaching-access';
 import { roomsService, RoomServiceError } from '../rooms/rooms.service';
 import type { CreateClassroomInput, UpdateClassroomInput, AssignTeacherInput } from './classrooms.schema';
 import type { ClassroomWithTeacher } from './classrooms.types';
@@ -153,7 +154,7 @@ class ClassroomsService {
       throw new ClassroomServiceError('Classroom not found', 404);
     }
 
-    if (requestingTeacherUserId && row.teacherUserId !== requestingTeacherUserId) {
+    if (requestingTeacherUserId && !(await teachesClassroom(requestingTeacherUserId, row))) {
       throw new ClassroomServiceError('Classroom not found', 404);
     }
 

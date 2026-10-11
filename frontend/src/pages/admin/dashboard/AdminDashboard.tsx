@@ -19,6 +19,7 @@ import {
   Wallet,
   Package,
   Wrench,
+  UserRoundCog,
 } from 'lucide-react';
 import { useAdminDashboard, type AdminDashboard as Dashboard } from '@/hooks/useAdminDashboard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,6 +28,7 @@ import { cn } from '@/lib/utils';
 
 import { useLowStockCount } from '@/hooks/useInventory';
 import { useEquipmentToRepair } from '@/hooks/useEquipment';
+import { today, useSubstitutions } from '@/hooks/useSubstitutions';
 import { ActionList, BarChart, BigNumber, Progress, Section, Tile, type ActionItem } from './parts';
 import { TONE_FILL, TONE_ICON, useNumbers, type Tone } from './theme';
 
@@ -37,8 +39,23 @@ function TodoList({ data }: { data: Dashboard }) {
   const n = useNumbers();
   const { data: lowStock = 0 } = useLowStockCount();
   const { data: toRepair = 0 } = useEquipmentToRepair();
+  // Teachers away today with nobody taking their class.
+  const { data: todaysReplacements = [] } = useSubstitutions({ on: today() });
+  const uncovered = todaysReplacements.filter((r) => !r.substituteUserId);
   const items: ActionItem[] = [];
 
+  if (uncovered.length > 0) {
+    items.push({
+      key: 'uncovered',
+      tone: 'danger',
+      icon: <UserRoundCog className="w-4 h-4" />,
+      text: t('dashboard.admin.todo.noTeacher', {
+        count: uncovered.length,
+        classes: uncovered.map((r) => r.classroom.name).join(', '),
+      }),
+      to: uncovered.length === 1 ? `/admin/classrooms/${uncovered[0].classroomId}` : '/admin/attendance?tab=tracking',
+    });
+  }
   if (data.attendance.missingClassrooms.length > 0) {
     items.push({
       key: 'attendance',

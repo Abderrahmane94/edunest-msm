@@ -5,6 +5,8 @@ import { childrenService } from './children.service';
 // Mock Prisma
 vi.mock('../../lib/prisma', () => ({
   default: {
+    // No teacher replacement unless a test sets one.
+    substitution: { findFirst: vi.fn(async () => null), findMany: vi.fn(async () => []) },
     billingPeriod: { findMany: vi.fn() },
     child: {
       create: vi.fn(),
@@ -19,6 +21,7 @@ vi.mock('../../lib/prisma', () => ({
     },
     classroom: {
       findFirst: vi.fn(),
+      findMany: vi.fn(async () => []),
     },
     classroomEnrollment: {
       findFirst: vi.fn(),

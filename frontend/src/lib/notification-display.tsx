@@ -8,6 +8,7 @@ import {
   Megaphone,
   Calendar,
   AlertCircle,
+  UserRoundCog,
 } from 'lucide-react';
 import type { NotificationType } from '@/hooks/useNotificationCenter';
 
@@ -20,6 +21,7 @@ const ICONS: Record<NotificationType, ElementType> = {
   message_new: MessageCircle,
   announcement: Megaphone,
   event_consent: Calendar,
+  substitution: UserRoundCog,
 };
 
 const ICON_COLORS: Record<NotificationType, string> = {
@@ -31,6 +33,7 @@ const ICON_COLORS: Record<NotificationType, string> = {
   message_new: 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]',
   announcement: 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]',
   event_consent: 'bg-[var(--color-warning-muted)] text-[var(--color-warning)]',
+  substitution: 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]',
 };
 
 export function notificationIcon(type: NotificationType): ElementType {
@@ -120,6 +123,10 @@ export function notificationLink(
       // Teachers have no dedicated events route either — fall back to
       // announcements, same as parents.
       return `${base}/announcements`;
+    case 'substitution':
+      // The substitute opens the class (attendance); parents their child's day.
+      if (isAdmin) return n.reference_id ? `${base}/classrooms/${n.reference_id}` : null;
+      return role === 'teacher' ? `${base}/attendance` : `${base}`;
     default:
       return null;
   }

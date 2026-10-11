@@ -138,6 +138,7 @@ enum NotificationType {
   message_new
   announcement
   event_consent
+  substitution
 }
 
 // ─── Models ──────────────────────────────────────────────────────────────────
@@ -161,6 +162,7 @@ model School {
   rooms          Room[]
   stockItems     StockItem[]
   equipment      Equipment[]
+  substitutions  Substitution[]
   stockMovements StockMovement[]
   children       Child[]
   expenses       Expense[]
@@ -216,6 +218,9 @@ model User {
   paymentRecords              PaymentRecord[]      @relation("PaymentRecorder")
   discountsCreated            Discount[]
   stockMovements              StockMovement[]
+  substitutionsAbsent         Substitution[]       @relation("SubstitutionAbsent")
+  substitutionsTaken          Substitution[]       @relation("SubstitutionSubstitute")
+  substitutionsCreated        Substitution[]       @relation("SubstitutionCreatedBy")
 
   @@index([deletedAt])
   @@index([email])
@@ -284,6 +289,7 @@ model Classroom {
   eventLinks        EventClassroom[]
   // Fees explicitly linked to this classroom (see BranchFeeClassroom).
   feeAssignments    BranchFeeClassroom[]
+  substitutions     Substitution[]
 
   @@index([deletedAt])
   @@index([roomId])
@@ -1165,4 +1171,38 @@ model Equipment {
   @@index([schoolId])
   @@index([roomId])
   @@map("equipment")
+}
+
+/// A teacher away from their class for one day or a planned period, and who
+/// takes the class meanwhile (or nobody). The substitute works with the class
+/// — attendance, daily reports, children — on those days only.
+model Substitution {
+  id               String    @id @default(uuid())
+  schoolId         String    @map("school_id")
+  classroomId      String    @map("classroom_id")
+  /// The class's teacher when it was recorded.
+  absentTeacherId  String?   @map("absent_teacher_id")
+  /// null: nobody takes the class (it has no teacher those days).
+  substituteUserId String?   @map("substitute_user_id")
+  startDate        DateTime  @map("start_date") @db.Date
+  endDate          DateTime  @map("end_date") @db.Date
+  /// illness, leave, training, other
+  reason           String
+  note             String?
+  parentsNotified  Boolean   @default(false) @map("parents_notified")
+  cancelledAt      DateTime? @map("cancelled_at")
+  createdByUserId  String    @map("created_by_user_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  school        School    @relation(fields: [schoolId], references: [id])
+  classroom     Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  absentTeacher User?     @relation("SubstitutionAbsent", fields: [absentTeacherId], references: [id])
+  substitute    User?     @relation("SubstitutionSubstitute", fields: [substituteUserId], references: [id])
+  createdBy     User      @relation("SubstitutionCreatedBy", fields: [createdByUserId], references: [id])
+
+  @@index([classroomId, startDate])
+  @@index([substituteUserId, startDate])
+  @@index([schoolId, startDate])
+  @@map("substitutions")
 }

@@ -1,4 +1,5 @@
 import { Prisma, type DailyReportPhoto } from '@prisma/client';
+import { teacherClassroomIds } from '../substitutions/teaching-access';
 import { isOfficeRole } from '../../middleware/rbac.middleware';
 import prisma from '../../lib/prisma';
 import { academicYearsService } from '../academic-years/academic-years.service';
@@ -558,7 +559,7 @@ class CommunicationService {
       const enrollment = await prisma.classroomEnrollment.findFirst({
         where: {
           childId,
-          classroom: { teacherUserId: userId, schoolId },
+          classroomId: { in: await teacherClassroomIds(userId, schoolId) },
         },
       });
 
@@ -752,7 +753,7 @@ class CommunicationService {
       const enrollment = await prisma.classroomEnrollment.findFirst({
         where: {
           childId,
-          classroom: { teacherUserId: userId, schoolId },
+          classroomId: { in: await teacherClassroomIds(userId, schoolId) },
         },
       });
 
@@ -857,7 +858,7 @@ class CommunicationService {
       const enrollment = await prisma.classroomEnrollment.findFirst({
         where: {
           childId: report.childId,
-          classroom: { teacherUserId: userId, schoolId },
+          classroomId: { in: await teacherClassroomIds(userId, schoolId) },
         },
       });
 
@@ -934,7 +935,7 @@ class CommunicationService {
       const enrollment = await prisma.classroomEnrollment.findFirst({
         where: {
           childId: report.childId,
-          classroom: { teacherUserId: userId, schoolId },
+          classroomId: { in: await teacherClassroomIds(userId, schoolId) },
         },
       });
 
@@ -1027,7 +1028,7 @@ class CommunicationService {
       const enrollment = await prisma.classroomEnrollment.findFirst({
         where: {
           childId: report.childId,
-          classroom: { teacherUserId: userId, schoolId },
+          classroomId: { in: await teacherClassroomIds(userId, schoolId) },
         },
       });
 
@@ -1228,11 +1229,8 @@ class CommunicationService {
     }
 
     if (role === 'teacher') {
-      const classrooms = await prisma.classroom.findMany({
-        where: { schoolId, teacherUserId: userId },
-        select: { id: true },
-      });
-      return classrooms.map((c) => c.id);
+      // Their classes, and those they replace today.
+      return teacherClassroomIds(userId, schoolId);
     }
 
     if (role === 'parent') {

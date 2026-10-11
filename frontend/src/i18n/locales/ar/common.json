@@ -19,6 +19,12 @@
         "lowStock_few": "{{count}} مواد يجب شراؤها",
         "lowStock_many": "{{count}} مادة يجب شراؤها",
         "lowStock_other": "{{count}} مادة يجب شراؤها",
+        "noTeacher_zero": "لا يوجد قسم بدون معلم اليوم",
+        "noTeacher_one": "{{classes}}: بدون معلم اليوم",
+        "noTeacher_two": "قسمان بدون معلم اليوم: {{classes}}",
+        "noTeacher_few": "{{count}} أقسام بدون معلم اليوم: {{classes}}",
+        "noTeacher_many": "{{count}} قسمًا بدون معلم اليوم: {{classes}}",
+        "noTeacher_other": "{{count}} قسم بدون معلم اليوم: {{classes}}",
         "toRepair_other": "{{count}} قطعة للإصلاح",
         "toRepair_many": "{{count}} قطعة للإصلاح",
         "toRepair_few": "{{count}} قطع للإصلاح",
@@ -485,6 +491,15 @@
       "supplyNotEnough": "المخزون غير كافٍ: يتبقى {{left}}.",
       "supplyAdminOnly": "يمكن للمدير والإداريين فقط تسجيل المشتريات والجرد.",
       "expenseDirectorOnly": "المدير وحده يسجّل المصاريف.",
+      "classAlreadyReplaced": "لهذا القسم تعويض في هذه التواريخ: عدّله بدلًا من ذلك.",
+      "substituteIsTitular": "المعوِّض هو معلم القسم نفسه.",
+      "substituteNotTeacher": "يجب أن يكون المعوِّض معلمًا نشطًا في المدرسة.",
+      "substituteBusy": "المعوِّض يعوّض بالفعل في {{classroom}} خلال هذه التواريخ.",
+      "substitutionOutsideYear": "يجب أن تكون التواريخ ضمن السنة الدراسية للقسم.",
+      "substitutionEndBeforeStart": "يجب أن يكون تاريخ النهاية بعد تاريخ البداية.",
+      "substitutionCancelled": "تم إلغاء هذا التعويض.",
+      "substitutionEnded": "انتهى هذا التعويض بالفعل.",
+      "substitutionNotFound": "التعويض غير موجود.",
       "equipmentNotFound": "العتاد غير موجود.",
       "rolloverSameYear": "اختر سنة أخرى للنسخ منها.",
       "rolloverStartOutside": "يجب أن يكون تاريخ بداية الفوترة ضمن السنة الجديدة.",
@@ -845,6 +860,84 @@
       "startDateRequired": "تاريخ البداية مطلوب",
       "endDateRequired": "تاريخ النهاية مطلوب",
       "endDateAfterStart": "تاريخ النهاية يجب أن يكون بعد تاريخ البداية"
+    }
+  },
+  "substitutions": {
+    "reasons": {
+      "illness": "مرض",
+      "leave": "عطلة",
+      "training": "تكوين",
+      "other": "أخرى"
+    },
+    "status": {
+      "current": "جارٍ",
+      "upcoming": "مبرمج",
+      "past": "منتهٍ",
+      "cancelled": "ملغى"
+    },
+    "section": {
+      "title": "التعويضات",
+      "today": "تعويض اليوم",
+      "plan": "برمجة تعويض",
+      "empty": "لا يوجد تعويض لهذا القسم.",
+      "emptyTeacher": "لا يوجد تعويض لهذا المعلم."
+    },
+    "dialog": {
+      "title": "تعويض معلم {{name}}",
+      "editTitle": "تعديل التعويض — {{name}}",
+      "description": "يعمل المعوِّض مع القسم (الحضور، التقارير اليومية، الأطفال) خلال هذه الأيام فقط.",
+      "mode": {
+        "today": "اليوم فقط",
+        "period": "فترة"
+      },
+      "from": "من",
+      "to": "إلى",
+      "day": "اليوم",
+      "substitute": "المعوِّض",
+      "pickPlaceholder": "اختر معوِّضًا",
+      "free": "متاح",
+      "hasClass": "لديه قسمه ({{name}})",
+      "alreadyReplacing": "يعوّض اليوم في {{name}}",
+      "newSubstitute": "معوِّض جديد (من الخارج)…",
+      "newSubstituteHint": "يُنشأ له حساب معلم بكلمة المرور المؤقتة edunest26، تُغيَّر عند أول دخول. عطّله عند نهاية التعويض.",
+      "nobody": "لا أحد (قسم بدون معلم)",
+      "nobodyHint": "سيظهر القسم «بدون معلم» في لوحة القيادة خلال هذه الأيام.",
+      "reason": "السبب",
+      "note": "ملاحظة",
+      "notifyParents": "إعلام أولياء القسم",
+      "submit": "تسجيل التعويض",
+      "pickSubstitute": "اختر معوِّضًا، أو «لا أحد».",
+      "endBeforeStart": "يجب أن يكون تاريخ النهاية بعد تاريخ البداية.",
+      "busyTitle": "المعوِّض مشغول",
+      "busyDescription": "يعوّض بالفعل في {{classroom}} خلال هذه الأيام. هل تُسند إليه هذا القسم أيضًا؟",
+      "busyConfirm": "إسناد القسمين",
+      "accountCreated": "تم تسجيل التعويض. أُنشئ حساب {{email}} بكلمة المرور المؤقتة edunest26."
+    },
+    "list": {
+      "replacedBy": "عوّضه/عوّضتها {{name}}",
+      "nobody": "بدون معوِّض",
+      "replaces": "يعوّض {{name}} في {{classroom}}",
+      "awayReplacedBy": "غائب عن {{classroom}}، عوّضه {{name}}",
+      "awayNobody": "غائب عن {{classroom}}، بدون معوِّض",
+      "parentsNotified": "تم إعلام الأولياء",
+      "end": "إنهاء اليوم",
+      "endConfirmTitle": "إنهاء التعويض اليوم؟",
+      "endConfirmDescription": "عاد المعلم: يحتفظ المعوِّض بالقسم حتى هذا المساء فقط.",
+      "cancel": "إلغاء",
+      "cancelConfirmTitle": "إلغاء هذا التعويض؟",
+      "cancelConfirmDescription": "لم يبدأ بعد: لن يصل المعوِّض إلى القسم."
+    },
+    "tracking": {
+      "replacedBy": "عوّضه اليوم {{name}}",
+      "nobody": "بدون معلم اليوم"
+    },
+    "teacher": {
+      "switchLabel": "القسم",
+      "replacing": "{{name}} (تعويض)",
+      "bannerToday": "تعوّض {{teacher}} في {{name}} اليوم.",
+      "bannerTodayNoTeacher": "تتكفّل بقسم {{name}} اليوم.",
+      "bannerPeriod": "تعوّض {{teacher}} في {{name}} حتى {{until}}.",
+      "bannerPeriodNoTeacher": "تتكفّل بقسم {{name}} حتى {{until}}."
     }
   },
   "inventory": {

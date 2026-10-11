@@ -25,6 +25,7 @@ import {
   openStaffDocument,
   type ContractType,
 } from '@/hooks/useStaff';
+import { TeacherSubstitutionsSection } from './SubstitutionsSection';
 
 export function StaffProfilePage() {
   const { t } = useTranslation();
@@ -345,6 +346,9 @@ export function StaffProfilePage() {
           )}
         </div>
       )}
+
+      {/* When they were away, and the classes they took */}
+      {user.role === 'teacher' && <TeacherSubstitutionsSection userId={user.id} />}
     </div>
   );
 }

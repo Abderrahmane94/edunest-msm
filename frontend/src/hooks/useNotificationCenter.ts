@@ -10,7 +10,8 @@ export type NotificationType =
   | 'daily_report'
   | 'message_new'
   | 'announcement'
-  | 'event_consent';
+  | 'event_consent'
+  | 'substitution';
 
 export interface AppNotification {
   id: string;

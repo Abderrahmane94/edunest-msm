@@ -30,6 +30,7 @@ import { ClassroomFeesSection } from './ClassroomFeesSection';
 import { RoomField } from './RoomField';
 import { useSelectedYear, useYearClosed } from '@/hooks/useSelectedYear';
 import { useIsDirector } from '@/lib/roles';
+import { ClassSubstitutionsSection } from './SubstitutionsSection';
 
 export function ClassroomDetailPage() {
   const { t } = useTranslation();
@@ -241,6 +242,12 @@ export function ClassroomDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Replacements of the class's teacher */}
+      <ClassSubstitutionsSection
+        classroom={{ id: classroom.id, name: classroom.name, teacherId: classroom.teacher_id ?? null, academicYearId: classroom.academic_year_id }}
+        readOnly={closed}
+      />
 
       {/* Assigned fees */}
       <ClassroomFeesSection

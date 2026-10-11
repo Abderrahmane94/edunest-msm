@@ -1,4 +1,5 @@
 import prisma from '../../lib/prisma';
+import { teachesClassroom } from '../substitutions/teaching-access';
 import type { UpdateWorkingDaysInput } from './timetable.schema';
 
 export class TimetableServiceError extends Error {
@@ -21,7 +22,7 @@ class TimetableService {
       select: { id: true, name: true, workingDays: true, teacherUserId: true },
     });
 
-    if (!classroom || (requestingTeacherUserId && classroom.teacherUserId !== requestingTeacherUserId)) {
+    if (!classroom || (requestingTeacherUserId && !(await teachesClassroom(requestingTeacherUserId, classroom)))) {
       throw new TimetableServiceError('Classroom not found', 404);
     }
 

@@ -2,10 +2,18 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Settings2 } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { useQueryClient } from '@tanstack/react-query';
+import { PlusCircle, Settings2 } from 'lucide-react';
+import {
+  Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, ErrorAlert, Input,
+} from '@/components/ui';
+import { FormField } from '@/components/forms';
 import { formatDZD } from '@/lib/formatters';
 import { useChildBillingPeriods, type BillingPeriod } from '@/hooks/usePayments';
+import { useCreateEnrollment } from '@/hooks/useEnrollments';
+import { useSelectedYear } from '@/hooks/useSelectedYear';
+import type { AcademicYear } from '@/hooks/useAcademicYears';
+import { FeeChecklist, clampToAcademicYear, useOfferedFees } from './FeeChecklist';
 
 interface AssignedFee {
   key: string;
@@ -70,16 +78,113 @@ function localToday(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+/** Enrolls a child in a school year's billing: the fees picked, billed from a start date. */
+function BillingEnrollDialog({
+  open,
+  onOpenChange,
+  childId,
+  childName,
+  classroomId,
+  year,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  childId: string;
+  childName: string;
+  classroomId: string;
+  year: AcademicYear;
+}) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const createEnrollment = useCreateEnrollment();
+  const { branchId, schoolFees, optionalFees } = useOfferedFees(classroomId);
+  const [feeIds, setFeeIds] = React.useState<string[]>([]);
+  const [startDate, setStartDate] = React.useState('');
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    setFeeIds([]);
+    setError(null);
+    setStartDate(clampToAcademicYear(localToday(), year.start_date, year.end_date));
+  }, [open, year]);
+
+  const picked = feeIds.filter((id) => optionalFees.some((f) => f.id === id));
+  const canEnroll = !!branchId && !!startDate && (schoolFees.length > 0 || picked.length > 0);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canEnroll) return;
+    setError(null);
+    try {
+      await createEnrollment.mutateAsync({
+        childId,
+        branchId,
+        academicYearId: year.id,
+        startDate: clampToAcademicYear(startDate, year.start_date, year.end_date),
+        feeIds: picked,
+      });
+      await qc.invalidateQueries({ queryKey: ['child-billing-periods', childId] });
+      await qc.invalidateQueries({ queryKey: ['children'] });
+      onOpenChange(false);
+    } catch (err) {
+      setError(errorMessage(err, t));
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[520px]">
+        <DialogHeader>
+          <DialogTitle>{t('children.fees.enrollTitle', { year: year.name })}</DialogTitle>
+          <DialogDescription>{t('children.fees.enrollDescription', { name: childName })}</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <FeeChecklist classroomId={classroomId} selectedFeeIds={feeIds} onChange={setFeeIds} />
+          <FormField label={t('children.fees.startDate')} htmlFor="billing-start" required>
+            <Input
+              id="billing-start"
+              type="date"
+              value={startDate}
+              min={year.start_date.slice(0, 10)}
+              max={year.end_date.slice(0, 10)}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </FormField>
+          <ErrorAlert message={error} />
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button type="submit" disabled={!canEnroll || createEnrollment.isPending}>
+              {createEnrollment.isPending ? t('common.loading') : t('children.fees.enrollAction')}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function ChildFeesSection({
   childId,
+  childName = '',
+  classroomId = '',
   showManageBilling = true,
 }: {
   childId: string;
+  childName?: string;
+  /** The child's class this year: its fees are the ones offered. */
+  classroomId?: string;
   /** Hidden on the billing page itself. */
   showManageBilling?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const { data: periods, isLoading, isError, error } = useChildBillingPeriods(childId);
+  // The fees shown are those of the year being looked at (admins).
+  const { year, enabled: byYear } = useSelectedYear();
+  const [enrollOpen, setEnrollOpen] = React.useState(false);
+  const notBilled = byYear && !!year && !isLoading && !isError && (periods ?? []).length === 0;
   const fees = React.useMemo(() => groupByFee(periods ?? [], localToday()), [periods]);
   const navigate = useNavigate();
 
@@ -105,7 +210,15 @@ export function ChildFeesSection({
   return (
     <div className="bg-card border border-border rounded-lg p-6 space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-subsection font-semibold text-text-heading">{t('children.fees.title')}</h2>
+        <h2 className="text-subsection font-semibold text-text-heading">
+          {byYear && year ? t('children.fees.titleInYear', { year: year.name }) : t('children.fees.title')}
+        </h2>
+        {showManageBilling && notBilled && (
+          <Button type="button" size="sm" onClick={() => setEnrollOpen(true)}>
+            <PlusCircle className="w-4 h-4" />
+            {t('children.fees.enroll')}
+          </Button>
+        )}
         {showManageBilling && currentEnrollmentId && (
           <Button
             type="button"
@@ -123,6 +236,8 @@ export function ChildFeesSection({
         <div className="animate-pulse h-16 bg-subtle rounded-md" />
       ) : isError ? (
         <p className="text-body text-danger">{errorMessage(error, t)}</p>
+      ) : notBilled ? (
+        <p className="text-body text-text-secondary">{t('children.fees.notBilled', { name: childName, year: year!.name })}</p>
       ) : fees.length === 0 ? (
         <p className="text-body text-text-secondary">{t('children.fees.empty')}</p>
       ) : (
@@ -163,6 +278,17 @@ export function ChildFeesSection({
             </div>
           ))}
         </div>
+      )}
+
+      {year && (
+        <BillingEnrollDialog
+          open={enrollOpen}
+          onOpenChange={setEnrollOpen}
+          childId={childId}
+          childName={childName}
+          classroomId={classroomId}
+          year={year}
+        />
       )}
     </div>
   );

@@ -213,10 +213,25 @@ class ChildrenService {
    * Get a single child by ID, scoped to the school.
    * When requestingParentUserId is provided, the child must also be linked to that parent.
    */
-  async getById(id: string, schoolId: string, requestingParentUserId?: string): Promise<ChildWithEnrollments> {
+  async getById(
+    id: string,
+    schoolId: string,
+    requestingParentUserId?: string,
+    /** Only that school year's class in `enrollments`. */
+    academicYearId?: string,
+  ): Promise<ChildWithEnrollments & { schoolYears: { id: string; name: string }[] }> {
+    const yearSelect = { select: { id: true, name: true, startDate: true } };
     const child = await prisma.child.findFirst({
       where: { id, schoolId },
-      include: enrollmentInclude,
+      include: {
+        enrollments: {
+          include: {
+            classroom: { select: { id: true, name: true, level: true, academicYear: yearSelect } },
+          },
+        },
+        academicYear: yearSelect,
+        paymentEnrollments: { select: { academicYear: yearSelect } },
+      },
     });
 
     if (!child) {
@@ -227,7 +242,27 @@ class ChildrenService {
       await this.assertParentLinked(id, requestingParentUserId);
     }
 
-    return child;
+    // The years the child was registered, placed in a class or billed, latest first.
+    const years = new Map<string, { id: string; name: string; startDate: Date }>();
+    for (const y of [
+      child.academicYear,
+      ...child.enrollments.map((e) => e.classroom.academicYear),
+      ...child.paymentEnrollments.map((e) => e.academicYear),
+    ]) {
+      years.set(y.id, y);
+    }
+    const schoolYears = [...years.values()]
+      .sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
+      .map(({ id: yearId, name }) => ({ id: yearId, name }));
+
+    const { academicYear: _registrationYear, paymentEnrollments: _billing, enrollments, ...rest } = child;
+    return {
+      ...rest,
+      enrollments: enrollments
+        .filter((e) => !academicYearId || e.classroom.academicYear.id === academicYearId)
+        .map(({ classroom: { academicYear, ...classroom }, ...e }) => ({ ...e, classroom })),
+      schoolYears,
+    };
   }
 
   /**

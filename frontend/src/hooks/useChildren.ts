@@ -14,12 +14,16 @@ export interface Child {
   photo_url?: string;
   is_active: boolean;
   classroom_name?: string;
+  /** The class of the year being looked at (child file), or the first one. */
+  classroom_id?: string;
   parent_names?: string[];
   national_id?: string | null;
   address?: string | null;
   place_of_birth?: string | null;
   blood_type?: BloodType | null;
   has_authorized_pickup?: boolean;
+  /** The years the child was registered, placed or billed, latest first (child file only). */
+  school_years?: { id: string; name: string }[];
   created_at: string;
   deleted_at?: string | null;
 }
@@ -97,8 +101,9 @@ export function useChildren(params: ChildrenParams = {}) {
 }
 
 function mapChild(raw: Record<string, unknown>): Child {
-  const enrollments = raw.enrollments as { classroom?: { name?: string } }[] | undefined;
+  const enrollments = raw.enrollments as { classroom?: { id?: string; name?: string } }[] | undefined;
   const classroomName = enrollments?.[0]?.classroom?.name;
+  const classroomId = enrollments?.[0]?.classroom?.id;
 
   return {
     id: raw.id as string,
@@ -110,26 +115,32 @@ function mapChild(raw: Record<string, unknown>): Child {
     photo_url: (raw.photoPublicId ?? raw.photo_url) as string | undefined,
     is_active: (raw.isActive ?? raw.is_active) as boolean,
     classroom_name: classroomName,
+    classroom_id: classroomId,
     parent_names: (raw.parentNames ?? raw.parent_names ?? []) as string[],
     national_id: (raw.nationalId ?? raw.national_id ?? null) as string | null,
     address: (raw.address ?? null) as string | null,
     place_of_birth: (raw.placeOfBirth ?? raw.place_of_birth ?? null) as string | null,
     blood_type: (raw.bloodType ?? raw.blood_type ?? null) as BloodType | null,
     has_authorized_pickup: (raw.hasAuthorizedPickup ?? raw.has_authorized_pickup) as boolean | undefined,
+    school_years: raw.schoolYears as { id: string; name: string }[] | undefined,
     created_at: (raw.createdAt ?? raw.created_at) as string,
     deleted_at: (raw.deletedAt ?? raw.deleted_at ?? null) as string | null,
   };
 }
 
 export function useChild(id: string) {
+  // The class shown is the one of the year being looked at.
+  const { yearId, ready } = useYearScope();
   return useQuery({
-    queryKey: ['children', id],
+    queryKey: ['children', id, yearId],
     queryFn: async () => {
-      const res = await apiClient.get<Record<string, unknown>>(`/children/${id}`);
+      const res = await apiClient.get<Record<string, unknown>>(
+        `/children/${id}${yearId ? `?academic_year_id=${yearId}` : ''}`,
+      );
       if (!res.success) throw apiError(res.error, 'Child not found');
       return mapChild(res.data as Record<string, unknown>);
     },
-    enabled: !!id,
+    enabled: !!id && ready,
   });
 }
 

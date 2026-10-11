@@ -16,13 +16,12 @@ import { useViewedYear } from '@/hooks/useSelectedYear';
 import { useUsers } from '@/hooks/useUsers';
 import { useClassrooms } from '@/hooks/useClassrooms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
-import { useBranchFees, type BranchFee } from '@/hooks/useBranchFees';
-import { useClassroomFees } from '@/hooks/useBranchFeeClassrooms';
 import { useChildBillingPeriods, useRecordPayment } from '@/hooks/usePayments';
 import { suggestAllocations, totalOutstanding } from '@/lib/paymentAllocation';
 import { EmergencyContactsManager, type EmergencyContactInput } from './EmergencyContactsDialog';
 import { MedicalNotesManager, type MedicalNoteInput } from './MedicalNotesDialog';
 import { localListStore } from './listStore';
+import { FeeChecklist, clampToAcademicYear, useFeeLabel, useOfferedFees } from './FeeChecklist';
 
 /**
  * Steps up to the summary only collect: nothing is saved until "Créer
@@ -36,20 +35,6 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function todayString(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-/**
- * Clamps a date (YYYY-MM-DD) into an academic year's range. The child's
- * registration date (step 1) may fall before the school year technically
- * starts (or, rarely, after it ends) — the payments enrollment's start_date
- * must be within that range, so it's clamped rather than sent as-is.
- */
-function clampToAcademicYear(date: string, startDate: string, endDate: string): string {
-  const start = startDate.slice(0, 10);
-  const end = endDate.slice(0, 10);
-  if (date < start) return start;
-  if (date > end) return end;
-  return date;
 }
 
 interface BasicsForm {
@@ -126,37 +111,6 @@ function useRelationshipOptions() {
 function useParents() {
   const { data: usersData } = useUsers({ pageSize: 100 });
   return (usersData?.users ?? []).filter((u) => u.role === 'parent');
-}
-
-/** Fees offered for the chosen classroom (or the whole branch when none), split as on the fees step. */
-function useWizardFees(classroomId: string) {
-  const { branchId } = useDefaultBranch();
-  const { data: classroomFees } = useClassroomFees(classroomId || undefined);
-  const { data: branchFees } = useBranchFees(branchId);
-  const fees: BranchFee[] = (classroomId ? (classroomFees ?? []) : (branchFees ?? [])).filter(
-    (f) => f.showInWizard,
-  );
-  // Whole-school fees are applied automatically (shown ticked, locked); the
-  // others are picked here.
-  return {
-    branchId,
-    fees,
-    schoolFees: fees.filter((f) => f.appliesToSchool),
-    optionalFees: fees.filter((f) => !f.appliesToSchool),
-  };
-}
-
-function useFeeLabel() {
-  const { t, i18n } = useTranslation();
-  return (fee: BranchFee): string => {
-    const cycle =
-      fee.billingCycle === 'monthly'
-        ? t('children.wizard.fees.perMonth')
-        : fee.billingCycle === 'custom'
-          ? t('children.wizard.fees.perPeriod')
-          : t('children.wizard.fees.oneTime');
-    return `${fee.name} — ${formatDZD(Number(fee.amount), i18n.language)} ${cycle}`;
-  };
 }
 
 // ─── Step 1: Basic info ──────────────────────────────────────────────────────
@@ -518,13 +472,8 @@ function FeesStep({
   onNext: (bill: boolean) => void;
 }) {
   const { t } = useTranslation();
-  const feeLabel = useFeeLabel();
-  const { fees, schoolFees, optionalFees } = useWizardFees(classroomId);
+  const { schoolFees, optionalFees } = useOfferedFees(classroomId);
   const selected = selectedFeeIds.filter((id) => optionalFees.some((f) => f.id === id));
-
-  function toggleFee(id: string) {
-    onSelectedFeeIdsChange(selected.includes(id) ? selected.filter((f) => f !== id) : [...selected, id]);
-  }
 
   // Enrolled for billing as soon as there's something to bill.
   const canEnroll = schoolFees.length > 0 || selected.length > 0;
@@ -533,35 +482,7 @@ function FeesStep({
     <div className="space-y-4">
       <p className="text-body text-text-secondary">{t('children.wizard.fees.description')}</p>
 
-      {fees.length === 0 ? (
-        <p className="text-caption text-text-secondary">{t('children.wizard.fees.noFees')}</p>
-      ) : (
-        <div className="border border-border rounded-md divide-y divide-border max-h-64 overflow-y-auto">
-          {schoolFees.map((fee) => (
-            <label key={fee.id} className="flex items-center gap-2 p-2 opacity-90">
-              <input
-                type="checkbox"
-                checked
-                disabled
-                className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-              />
-              <span className="text-caption text-foreground flex-1">{feeLabel(fee)}</span>
-              <span className="text-micro text-primary font-medium">{t('children.wizard.fees.schoolWide')}</span>
-            </label>
-          ))}
-          {optionalFees.map((fee) => (
-            <label key={fee.id} className="flex items-center gap-2 p-2 cursor-pointer hover:bg-hover">
-              <input
-                type="checkbox"
-                checked={selected.includes(fee.id)}
-                onChange={() => toggleFee(fee.id)}
-                className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-              />
-              <span className="text-caption text-foreground">{feeLabel(fee)}</span>
-            </label>
-          ))}
-        </div>
-      )}
+      <FeeChecklist classroomId={classroomId} selectedFeeIds={selectedFeeIds} onChange={onSelectedFeeIdsChange} />
 
       <DialogFooter>
         <Button type="button" variant="secondary" onClick={onBack}>
@@ -636,7 +557,7 @@ function SummaryStep({
   const { data: activeYear } = useViewedYear();
   const { data: classrooms } = useClassrooms(activeYear?.id);
   const feeLabel = useFeeLabel();
-  const { schoolFees, optionalFees } = useWizardFees(classroomId);
+  const { schoolFees, optionalFees } = useOfferedFees(classroomId);
 
   const chosenParent = parentPayload(parent);
   const relationshipLabel = relationshipOptions.find((o) => o.value === parent.relationship)?.label;
@@ -862,7 +783,7 @@ export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChil
   const [bill, setBill] = React.useState(false);
   const [createdChildId, setCreatedChildId] = React.useState<string | null>(null);
   const [createError, setCreateError] = React.useState<string | null>(null);
-  const { branchId, schoolFees, optionalFees } = useWizardFees(classroomId);
+  const { branchId, schoolFees, optionalFees } = useOfferedFees(classroomId);
 
   const contactStore = localListStore(contacts, setContacts, toContact);
   const noteStore = localListStore(notes, setNotes, toNote);

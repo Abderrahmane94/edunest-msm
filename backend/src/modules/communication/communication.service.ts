@@ -1,5 +1,5 @@
 import { Prisma, type DailyReportPhoto } from '@prisma/client';
-import { teacherClassroomIds } from '../substitutions/teaching-access';
+import { teacherClassroomIds, teachesClassroom } from '../substitutions/teaching-access';
 import { isOfficeRole } from '../../middleware/rbac.middleware';
 import prisma from '../../lib/prisma';
 import { academicYearsService } from '../academic-years/academic-years.service';
@@ -705,12 +705,13 @@ class CommunicationService {
   ): Promise<{ childId: string; reportId: string; mood: string }[]> {
     const classroom = await prisma.classroom.findFirst({
       where: { id: classroomId, schoolId, deletedAt: null },
-      select: { teacherUserId: true },
+      select: { id: true, teacherUserId: true },
     });
     if (!classroom) {
       throw new CommunicationServiceError('Classroom not found', 404);
     }
-    if (userRole === 'teacher' && classroom.teacherUserId !== userId) {
+    // Their class, or the one they replace that day.
+    if (userRole === 'teacher' && !(await teachesClassroom(userId, classroom, date))) {
       throw new CommunicationServiceError('You can only view reports for your own classroom', 403);
     }
 

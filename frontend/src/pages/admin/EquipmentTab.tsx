@@ -34,6 +34,7 @@ import {
   type EquipmentCategory,
   type EquipmentCondition,
 } from '@/hooks/useEquipment';
+import { usePermissions } from '@/lib/roles';
 
 const selectClass = 'h-10 rounded-md border border-border bg-card px-2 text-body text-foreground';
 const NO_ROOM = 'none';
@@ -202,6 +203,7 @@ export function EquipmentTab() {
   const [condition, setCondition] = React.useState('');
   const [roomFilter, setRoomFilter] = React.useState('');
   const [editing, setEditing] = React.useState<Equipment | null | undefined>(undefined);
+  const canEdit = usePermissions().can('inventory', 'edit');
 
   const all = items ?? [];
   const q = search.trim().toLowerCase();
@@ -229,7 +231,7 @@ export function EquipmentTab() {
       <SectionHeader
         title={t('inventory.equipment.title')}
         description={t('inventory.equipment.description')}
-        actions={<CreateButton label={t('inventory.equipment.create')} onClick={() => setEditing(null)} />}
+        actions={canEdit && <CreateButton label={t('inventory.equipment.create')} onClick={() => setEditing(null)} />}
       />
 
       {toRepair > 0 && (
@@ -297,9 +299,11 @@ export function EquipmentTab() {
                     </p>
                   </div>
                   <StatusBadge variant={CONDITION_BADGE[e.condition]}>{t(`inventory.equipment.conditions.${e.condition}`)}</StatusBadge>
-                  <Button variant="ghost" size="sm" aria-label={t('common.edit')} title={t('common.edit')} onClick={() => setEditing(e)}>
-                    <Pencil className="w-4 h-4 text-primary" />
-                  </Button>
+                  {canEdit && (
+                    <Button variant="ghost" size="sm" aria-label={t('common.edit')} title={t('common.edit')} onClick={() => setEditing(e)}>
+                      <Pencil className="w-4 h-4 text-primary" />
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>

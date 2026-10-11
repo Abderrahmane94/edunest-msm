@@ -71,6 +71,7 @@ import {
   Package,
 } from 'lucide-react';
 import { SubstitutionBanner, TeacherClassSwitcher } from '@/components/layout/TeacherClassSwitcher';
+import { usePermissions, type Area } from '@/lib/roles';
 
 /**
  * Protects routes that require authentication.
@@ -133,7 +134,7 @@ function getDefaultPath(role?: string): string {
 
 // ─── Navigation Items ────────────────────────────────────────────────────────
 
-function getAdminNavItems(role: string): NavItem[] {
+function getAdminNavItems(role: string, can: (area: Area) => boolean): NavItem[] {
   // super_admin: platform-level only
   if (role === 'super_admin') {
     return [
@@ -145,33 +146,34 @@ function getAdminNavItems(role: string): NavItem[] {
     ];
   }
 
-  // administrative (إداري): the office's day-to-day work, no management
-  if (role === 'administrative') {
-    return [
-      { label: 'nav.dashboard',     href: '/admin', icon: LayoutDashboard },
-      { label: 'nav.classrooms',    href: '/admin/classrooms', icon: School },
-      { label: 'nav.children',      href: '/admin/children', icon: Baby },
-      { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck },
-      { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle },
-      { label: 'nav.payments',      href: '/admin/payments', icon: CreditCard },
-      { label: 'nav.inventory',     href: '/admin/inventory', icon: Package },
-    ];
-  }
-
-  // admin (school director): full school management
-  return [
+  // The director sees everything; the office staff, the areas their profile opens.
+  const items: (NavItem & { area?: Area | Area[] })[] = [
     { label: 'nav.dashboard',     href: '/admin', icon: LayoutDashboard },
-    { label: 'nav.users',         href: '/admin/users', icon: Users },
-    { label: 'nav.staff',         href: '/admin/staff', icon: UserCog },
-    { label: 'nav.classrooms',    href: '/admin/classrooms', icon: School },
-    { label: 'nav.children',      href: '/admin/children', icon: Baby },
-    { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck },
-    { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle },
-    { label: 'nav.payments',      href: '/admin/payments', icon: CreditCard },
-    { label: 'nav.payroll',       href: '/admin/payroll', icon: Banknote },
-    { label: 'nav.inventory',     href: '/admin/inventory', icon: Package },
-    { label: 'nav.settings',      href: '/admin/settings', icon: Settings },
+    { label: 'nav.users',         href: '/admin/users', icon: Users, area: 'staff' },
+    { label: 'nav.staff',         href: '/admin/staff', icon: UserCog, area: 'staff' },
+    { label: 'nav.classrooms',    href: '/admin/classrooms', icon: School, area: 'classes' },
+    { label: 'nav.children',      href: '/admin/children', icon: Baby, area: 'children' },
+    { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck, area: 'classes' },
+    { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle, area: 'communication' },
+    { label: 'nav.payments',      href: '/admin/payments', icon: CreditCard, area: PAYMENT_AREAS },
+    { label: 'nav.payroll',       href: '/admin/payroll', icon: Banknote, area: 'payroll' },
+    { label: 'nav.inventory',     href: '/admin/inventory', icon: Package, area: 'inventory' },
+    { label: 'nav.settings',      href: '/admin/settings', icon: Settings, area: 'settings' },
   ];
+  return items
+    .filter((item) => !item.area || (Array.isArray(item.area) ? item.area : [item.area]).some((a) => can(a)))
+    .map(({ area: _area, ...item }) => item);
+}
+
+/** The payments page opens with any of its tabs' rights. */
+const PAYMENT_AREAS: Area[] = ['collections', 'expenses', 'fees'];
+
+/** A page of an area: the office staff without the right land on the dashboard. */
+function PermissionRoute({ area, level = 'view' }: { area: Area | Area[]; level?: 'view' | 'edit' }) {
+  const { can, ready } = usePermissions();
+  if (!ready) return null;
+  const areas = Array.isArray(area) ? area : [area];
+  return areas.some((a) => can(a, level)) ? <Outlet /> : <Navigate to="/admin" replace />;
 }
 
 const teacherNavItems: NavItem[] = [
@@ -293,7 +295,8 @@ function TrashRoute() {
 
 function AdminLayoutWrapper() {
   const { user } = useAuth();
-  const navItems = getAdminNavItems(user?.role || 'admin');
+  const { can } = usePermissions();
+  const navItems = getAdminNavItems(user?.role || 'admin', can);
   // The school's office: the director and the administrative staff (not super_admin).
   const isAdmin = user?.role === 'admin' || user?.role === 'administrative';
 
@@ -373,39 +376,69 @@ export const routes: RouteObject[] = [
             element: <AdminLayoutWrapper />,
             children: [
               { index: true, element: <DashboardPage /> },
-              // Management: the director only (the administrative staff land on the dashboard).
+              // The platform's pages (super_admin) and the director's.
               {
                 element: <RoleRoute allowedRoles={['super_admin', 'admin']} />,
                 children: [
                   { path: 'schools', element: <SchoolsPage /> },
                   { path: 'schools/:schoolId', element: <SchoolDetailPage /> },
+                  { path: 'billing', element: <BillingPage /> },
+                ],
+              },
+              // Each area's pages, open to the office staff whose profile allows it.
+              {
+                element: <PermissionRoute area="staff" />,
+                children: [
                   { path: 'users', element: <UsersPage /> },
                   { path: 'users/:userId', element: <UserDetailPage /> },
                   { path: 'staff', element: <StaffListPage /> },
                   { path: 'staff/:userId', element: <StaffProfilePage /> },
+                ],
+              },
+              { element: <PermissionRoute area="payroll" />, children: [{ path: 'payroll', element: <PayrollPage /> }] },
+              {
+                // Billing management (discounts, withdrawal): to manage the fees.
+                element: <PermissionRoute area="fees" level="edit" />,
+                children: [{ path: 'payments/enrollments/:enrollmentId', element: <EnrollmentDetailPage /> }],
+              },
+              {
+                element: <PermissionRoute area="settings" />,
+                children: [
                   // Academic years moved into Settings; old links still land there.
                   { path: 'academic-years', element: <Navigate to="/admin/settings?tab=years" replace /> },
                   { path: 'academic-years/:yearId', element: <OldAcademicYearRedirect /> },
                   { path: 'timetable', element: <Navigate to="/admin/settings?tab=days" replace /> },
-                  { path: 'billing', element: <BillingPage /> },
-                  { path: 'payroll', element: <PayrollPage /> },
-                  { path: 'payments/enrollments/:enrollmentId', element: <EnrollmentDetailPage /> },
                   { path: 'trash', element: <TrashRoute /> },
                   { path: 'settings', element: <SchoolSettingsPage /> },
                   { path: 'settings/academic-years/:yearId', element: <AcademicYearDetailPage /> },
                   { path: 'settings/academic-years/:yearId/prepare', element: <YearRolloverPage /> },
                 ],
               },
-              { path: 'classrooms', element: <ClassroomsPage /> },
-              { path: 'classrooms/:classroomId', element: <ClassroomDetailPage /> },
-              { path: 'children', element: <ChildrenPage /> },
-              { path: 'children/:childId', element: <ChildDetailPage /> },
-              { path: 'attendance', element: <AttendancePage /> },
-              { path: 'communication', element: <CommunicationPage /> },
-              { path: 'communication/announcements/:announcementId', element: <AnnouncementDetailPage /> },
-              { path: 'communication/events/:eventId', element: <EventDetailPage /> },
-              { path: 'inventory', element: <InventoryPage /> },
-              { path: 'payments', element: <PaymentManagementPage /> },
+              {
+                element: <PermissionRoute area="classes" />,
+                children: [
+                  { path: 'classrooms', element: <ClassroomsPage /> },
+                  { path: 'classrooms/:classroomId', element: <ClassroomDetailPage /> },
+                  { path: 'attendance', element: <AttendancePage /> },
+                ],
+              },
+              {
+                element: <PermissionRoute area="children" />,
+                children: [
+                  { path: 'children', element: <ChildrenPage /> },
+                  { path: 'children/:childId', element: <ChildDetailPage /> },
+                ],
+              },
+              {
+                element: <PermissionRoute area="communication" />,
+                children: [
+                  { path: 'communication', element: <CommunicationPage /> },
+                  { path: 'communication/announcements/:announcementId', element: <AnnouncementDetailPage /> },
+                  { path: 'communication/events/:eventId', element: <EventDetailPage /> },
+                ],
+              },
+              { element: <PermissionRoute area="inventory" />, children: [{ path: 'inventory', element: <InventoryPage /> }] },
+              { element: <PermissionRoute area={PAYMENT_AREAS} />, children: [{ path: 'payments', element: <PaymentManagementPage /> }] },
             ],
           },
         ],

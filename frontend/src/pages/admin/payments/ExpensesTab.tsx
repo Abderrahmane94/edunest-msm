@@ -31,6 +31,7 @@ import {
 } from '@/hooks/useExpenses';
 import { FilterBar, SectionHeader } from '@/components/ui';
 import { useViewedYear, useYearClosed } from '@/hooks/useSelectedYear';
+import { usePermissions } from '@/lib/roles';
 
 /** Today, or the nearest day of the school year being looked at (an expense counts in that year). */
 function defaultExpenseDate(year: { start_date: string; end_date: string } | undefined): string {
@@ -147,7 +148,9 @@ function useExpenseReceiptActions() {
 export function ExpensesTab() {
   const { t } = useTranslation();
   // A closed year is looked at, not changed.
-  const closed = useYearClosed();
+  // Read-only: a closed year, or a profile that only views expenses.
+  const { can } = usePermissions();
+  const closed = useYearClosed() || !can('expenses', 'edit');
   // ─── Filters ───
   const [filters, setFilters] = React.useState<ExpenseFilters>({});
   const [searchInput, setSearchInput] = React.useState('');

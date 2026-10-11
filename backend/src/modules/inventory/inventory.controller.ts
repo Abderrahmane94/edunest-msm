@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { can } from '../../middleware/permission.middleware';
 import { inventoryService, InventoryServiceError } from './inventory.service';
 import { successResponse, errorResponse } from '../../utils/response';
 import type { CreateStockItemInput, CreateStockMovementInput, UpdateStockItemInput } from './inventory.schema';
@@ -78,6 +79,7 @@ export const inventoryController = {
         req.user!.userId,
         req.user!.role,
         req.body as CreateStockMovementInput,
+        await can(req, 'expenses', 'edit'),
       );
       res.status(201).json(successResponse(result));
     } catch (error) {

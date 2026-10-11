@@ -40,6 +40,7 @@ import {
   type StockCategory,
   type StockItem,
 } from '@/hooks/useInventory';
+import { usePermissions } from '@/lib/roles';
 
 const UNIT_SUGGESTIONS = ['paquet', 'boîte', 'flacon', 'bidon', 'rouleau', 'pièce', 'litre', 'kg', 'ramette'];
 
@@ -223,6 +224,7 @@ function SuppliesTab() {
   const [showAside, setShowAside] = React.useState(false);
   const [editing, setEditing] = React.useState<StockItem | null | undefined>(undefined);
   // Ids, so dialogs always show the supply as it is now (another user may have moved it).
+  const canEdit = usePermissions().can('inventory', 'edit');
   const [moving, setMoving] = React.useState<{ id: string; type: MovementType } | null>(null);
   const [historyId, setHistoryId] = React.useState<string | null>(null);
 
@@ -277,7 +279,7 @@ function SuppliesTab() {
       header: '',
       render: (i) => (
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-          {i.isActive && (
+          {i.isActive && canEdit && (
             <>
               <Button variant="secondary" size="sm" onClick={() => setMoving({ id: i.id, type: 'purchase' })}>
                 <ShoppingCart className="w-4 h-4" />
@@ -295,9 +297,11 @@ function SuppliesTab() {
           <Button variant="ghost" size="sm" aria-label={t('inventory.history.open')} title={t('inventory.history.open')} onClick={() => setHistoryId(i.id)}>
             <History className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" aria-label={t('common.edit')} title={t('common.edit')} onClick={() => setEditing(i)}>
-            <Pencil className="w-4 h-4 text-primary" />
-          </Button>
+          {canEdit && (
+            <Button variant="ghost" size="sm" aria-label={t('common.edit')} title={t('common.edit')} onClick={() => setEditing(i)}>
+              <Pencil className="w-4 h-4 text-primary" />
+            </Button>
+          )}
         </div>
       ),
     },
@@ -308,7 +312,7 @@ function SuppliesTab() {
       <SectionHeader
         title={t('inventory.suppliesTitle')}
         description={t('inventory.description')}
-        actions={<CreateButton label={t('inventory.create')} onClick={() => setEditing(null)} />}
+        actions={canEdit && <CreateButton label={t('inventory.create')} onClick={() => setEditing(null)} />}
       />
 
       {low.length > 0 && (

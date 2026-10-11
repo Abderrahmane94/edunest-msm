@@ -104,6 +104,15 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^Only an administrator can record purchases and counts$/, 'supplyAdminOnly'],
   [/^Only the director can record expenses$/, 'expenseDirectorOnly'],
 
+  // Rights
+  [/^Your profile does not allow this$/, 'notAllowed'],
+  [/^Only the director can manage director accounts$/, 'directorAccountsOnly'],
+  [/^A profile with this name already exists$/, 'profileNameTaken'],
+  [/^The default profile cannot be deleted$/, 'defaultProfileUndeletable'],
+  [/^Choose another default profile instead$/, 'chooseOtherDefault'],
+  [/^Profile not found$/, 'profileNotFound'],
+  [/^Only office staff \(administrative\) have a profile$/, 'profileOnlyOffice'],
+
   // Teacher replacements
   [/^This class already has a replacement on these dates$/, 'classAlreadyReplaced'],
   [/^The substitute is the class's own teacher$/, 'substituteIsTitular'],

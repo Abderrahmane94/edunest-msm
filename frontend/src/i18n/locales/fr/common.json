@@ -481,6 +481,13 @@
       "supplyNotEnough": "Pas assez en stock : il reste {{left}}.",
       "supplyAdminOnly": "Seuls la direction et les agents administratifs peuvent enregistrer les achats et les inventaires.",
       "expenseDirectorOnly": "Seul le directeur peut enregistrer les dépenses.",
+      "notAllowed": "Votre profil ne permet pas cette action. Demandez au directeur.",
+      "directorAccountsOnly": "Seul le directeur peut gérer les comptes de directeur.",
+      "profileNameTaken": "Un profil porte déjà ce nom.",
+      "defaultProfileUndeletable": "Le profil par défaut ne peut pas être supprimé.",
+      "chooseOtherDefault": "Choisissez plutôt un autre profil par défaut.",
+      "profileNotFound": "Profil introuvable.",
+      "profileOnlyOffice": "Seul le personnel de bureau (agent administratif) a un profil.",
       "classAlreadyReplaced": "Cette classe a déjà un remplacement sur ces dates : modifiez-le plutôt.",
       "substituteIsTitular": "Le remplaçant est l'enseignant de la classe.",
       "substituteNotTeacher": "Le remplaçant doit être un enseignant actif de l'école.",
@@ -850,6 +857,65 @@
       "endDateRequired": "La date de fin est requise",
       "endDateAfterStart": "La date de fin doit être après la date de début"
     }
+  },
+  "accessProfiles": {
+    "title": "Profils et droits",
+    "description": "Description",
+    "create": "Nouveau profil",
+    "createTitle": "Nouveau profil",
+    "editTitle": "Modifier le profil",
+    "dialogDescription": "Pour chaque zone : Aucun, Voir (consulter seulement) ou Gérer (consulter et modifier).",
+    "name": "Nom du profil",
+    "namePlaceholder": "Ex. Comptable",
+    "levels": {
+      "none": "Aucun",
+      "view": "Voir",
+      "edit": "Gérer"
+    },
+    "areas": {
+      "children": "Enfants",
+      "classes": "Classes et présence",
+      "communication": "Communication",
+      "inventory": "Inventaire",
+      "collections": "Encaissements",
+      "expenses": "Dépenses",
+      "fees": "Configuration des frais",
+      "payroll": "Paie",
+      "staff": "Personnel et utilisateurs",
+      "settings": "Paramètres"
+    },
+    "areaHints": {
+      "children": "Inscriptions, fiches, parents, contacts, notes médicales",
+      "classes": "Classes, placements, présence, remplacements",
+      "communication": "Annonces, événements, messages, rapports du jour",
+      "inventory": "Fournitures et matériel",
+      "collections": "Encaisser, retards, reçus, rapprochement",
+      "expenses": "Dépenses de l'école",
+      "fees": "Frais, calendrier de facturation, remises, retraits",
+      "payroll": "Salaires et paiements du personnel",
+      "staff": "Comptes, mots de passe, fiches du personnel",
+      "settings": "École, années scolaires, salles, jours, corbeille"
+    },
+    "extra": {
+      "delete": "Supprimer",
+      "deleteHint": "Supprimer des enfants, des classes, des comptes, vider la corbeille (avec « Gérer » sur la zone).",
+      "correctPayments": "Corriger les paiements",
+      "correctPaymentsHint": "Enregistrer une correction d'un paiement déjà encaissé."
+    },
+    "nothing": "Aucun accès.",
+    "default": "par défaut",
+    "defaultProfile": "Profil par défaut",
+    "makeDefault": "Profil par défaut des nouveaux comptes",
+    "directorTitle": "Directeur — tous les droits",
+    "directorHint": "Non modifiable. Seul le directeur gère les profils et les comptes de directeur.",
+    "staff_one": "1 personne : {{names}}",
+    "staff_many": "{{count}} personnes : {{names}}",
+    "staff_other": "{{count}} personnes : {{names}}",
+    "noStaff": "Personne n'a ce profil.",
+    "deleteTitle": "Supprimer le profil « {{name}} » ?",
+    "deleteDescription": "Les personnes qui l'ont reçoivent le profil par défaut.",
+    "userCardTitle": "Profil de droits",
+    "userCardHint": "Le changement s'applique immédiatement."
   },
   "substitutions": {
     "reasons": {

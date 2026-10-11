@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import { accessService } from '../access/access.service';
 import prisma from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import type { CreateSchoolInput, UpdateSchoolInput, SchoolResponse } from './schools.types';
@@ -61,6 +62,8 @@ class SchoolsService {
         select: { id: true, email: true, firstName: true, lastName: true },
       });
 
+      // Its office staff's default rights.
+      await accessService.ensureDefault(newSchool.id, tx);
       return { school: newSchool, director: newDirector };
     });
 

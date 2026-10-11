@@ -1,6 +1,8 @@
 import { Router } from 'express';
+import { protectDirectors } from './users.guards';
 import { usersController } from './users.controller';
-import { requireAdmin, requireOffice, requireActiveRole } from '../../middleware/rbac.middleware';
+import { requireActiveRole } from '../../middleware/rbac.middleware';
+import { requirePermission, requireAnyOffice } from '../../middleware/permission.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
 import {
   inviteUserSchema,
@@ -20,10 +22,10 @@ const router = Router();
 router.post('/change-password', requireActiveRole, validate(changePasswordSchema), authController.changePassword);
 
 // POST /api/users — Create user directly in admin's school (admin only)
-router.post('/', requireAdmin, validate(createUserDirectlySchema), usersController.create);
+router.post('/', requirePermission('staff', 'edit'), protectDirectors, validate(createUserDirectlySchema), usersController.create);
 
 // POST /api/users/invite — Send invitation email (admin only)
-router.post('/invite', requireAdmin, validate(inviteUserSchema), usersController.invite);
+router.post('/invite', requirePermission('staff', 'edit'), protectDirectors, validate(inviteUserSchema), usersController.invite);
 
 // GET /api/users/invitation/:token — Look up invitation info by token (public)
 router.get('/invitation/:token', usersController.getInvitationInfo);
@@ -32,25 +34,25 @@ router.get('/invitation/:token', usersController.getInvitationInfo);
 router.post('/register', validate(registerUserSchema), usersController.register);
 
 // GET /api/users — List users in school (admin only)
-router.get('/', requireOffice, usersController.list);
+router.get('/', requireAnyOffice(), usersController.list);
 
 // GET /api/users/:id — Get user by ID (admin only)
-router.get('/:id', requireAdmin, validateParams(idParamSchema), usersController.getById);
+router.get('/:id', requirePermission('staff', 'view'), validateParams(idParamSchema), usersController.getById);
 
 // PATCH /api/users/:id — Update user profile (admin only)
-router.patch('/:id', requireAdmin, validateParams(idParamSchema), validate(updateUserSchema), usersController.update);
+router.patch('/:id', requirePermission('staff', 'edit'), protectDirectors, validateParams(idParamSchema), validate(updateUserSchema), usersController.update);
 
 // PATCH /api/users/:id/activate — Activate user (admin only)
-router.patch('/:id/activate', requireAdmin, validateParams(idParamSchema), usersController.activate);
+router.patch('/:id/activate', requirePermission('staff', 'edit'), protectDirectors, validateParams(idParamSchema), usersController.activate);
 
 // PATCH /api/users/:id/deactivate — Deactivate user (admin only)
-router.patch('/:id/deactivate', requireAdmin, validateParams(idParamSchema), usersController.deactivate);
+router.patch('/:id/deactivate', requirePermission('staff', 'edit'), protectDirectors, validateParams(idParamSchema), usersController.deactivate);
 
 // POST /api/users/:id/reset-password — Give a user a temporary password (admin only)
-router.post('/:id/reset-password', requireAdmin, validateParams(idParamSchema), usersController.resetPassword);
+router.post('/:id/reset-password', requirePermission('staff', 'edit'), protectDirectors, validateParams(idParamSchema), usersController.resetPassword);
 
 // POST /api/users/:id/send-reset-link — Email a user a password reset link (admin only)
-router.post('/:id/send-reset-link', requireAdmin, validateParams(idParamSchema), usersController.sendResetLink);
+router.post('/:id/send-reset-link', requirePermission('staff', 'edit'), protectDirectors, validateParams(idParamSchema), usersController.sendResetLink);
 
 // PATCH /api/users/:id/fcm-token — Update FCM token (any authenticated user)
 router.patch(
@@ -71,6 +73,6 @@ router.patch(
 );
 
 // DELETE /api/users/:id — Soft delete user (admin only)
-router.delete('/:id', requireAdmin, validateParams(idParamSchema), usersController.delete);
+router.delete('/:id', requirePermission('staff', 'edit', { delete: true }), protectDirectors, validateParams(idParamSchema), usersController.delete);
 
 export default router;

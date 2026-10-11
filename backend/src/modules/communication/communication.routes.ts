@@ -2,7 +2,8 @@ import { Router } from 'express';
 import multer from 'multer';
 import { communicationController } from './communication.controller';
 import { staffMessagingController, staffMessagingUpload } from './staff-messaging.controller';
-import { requireOffice, requireTeacherOrOffice, requireActiveRole, rbac } from '../../middleware/rbac.middleware';
+import { requireActiveRole, rbac } from '../../middleware/rbac.middleware';
+import { requirePermission, requireAnyOffice } from '../../middleware/permission.middleware';
 import { validate, validateParams, validateQuery } from '../../middleware/validation.middleware';
 import {
   createConversationSchema,
@@ -49,7 +50,8 @@ const router = Router();
 // with their child's teacher or the office)
 router.post(
   '/conversations',
-  requireActiveRole,
+  // Teachers and parents on their own rules; the office staff with the right to manage communication.
+  requirePermission('communication', 'edit', { alsoRoles: ['teacher', 'parent'] }),
   validate(createConversationSchema),
   communicationController.createConversation,
 );
@@ -57,7 +59,7 @@ router.post(
 // GET /api/communication/conversations/pending — List pending conversations (admin only)
 router.get(
   '/conversations/pending',
-  requireOffice,
+  requirePermission('communication', 'view'),
   communicationController.listPendingConversations,
 );
 
@@ -89,7 +91,8 @@ router.get(
 // any office member in a thread with the office — checked by the service)
 router.post(
   '/conversations/:id/messages',
-  requireActiveRole,
+  // Teachers and parents on their own rules; the office staff with the right to manage communication.
+  requirePermission('communication', 'edit', { alsoRoles: ['teacher', 'parent'] }),
   validateParams(conversationIdParamSchema),
   validate(sendMessageSchema),
   communicationController.sendMessage,
@@ -98,7 +101,8 @@ router.post(
 // POST /api/communication/conversations/:id/messages/file — Send a photo or document (as above)
 router.post(
   '/conversations/:id/messages/file',
-  requireActiveRole,
+  // Teachers and parents on their own rules; the office staff with the right to manage communication.
+  requirePermission('communication', 'edit', { alsoRoles: ['teacher', 'parent'] }),
   validateParams(conversationIdParamSchema),
   staffMessagingUpload,
   communicationController.sendFileMessage,
@@ -117,7 +121,7 @@ router.patch(
 // POST /api/communication/daily-reports — Create daily report (teacher, admin)
 router.post(
   '/daily-reports',
-  requireTeacherOrOffice,
+  requirePermission('communication', 'edit', { alsoRoles: ['teacher'] }),
   validate(createDailyReportSchema),
   communicationController.createDailyReport,
 );
@@ -126,7 +130,7 @@ router.post(
 // creating or updating it (safe to send again; used for offline reports)
 router.put(
   '/daily-reports/day',
-  requireTeacherOrOffice,
+  requirePermission('communication', 'edit', { alsoRoles: ['teacher'] }),
   validate(saveDailyReportSchema),
   communicationController.saveDailyReport,
 );
@@ -141,7 +145,7 @@ router.get(
 // GET /api/communication/daily-reports/classroom/:classroomId?date= — Who has a report that day (teacher, office)
 router.get(
   '/daily-reports/classroom/:classroomId',
-  requireTeacherOrOffice,
+  requirePermission('communication', 'view', { alsoRoles: ['teacher'] }),
   validateParams(classroomDayParamSchema),
   validateQuery(classroomDayQuerySchema),
   communicationController.getClassroomDayReports,
@@ -167,7 +171,7 @@ router.get(
 // PATCH /api/communication/daily-reports/:id — Update daily report (teacher, admin)
 router.patch(
   '/daily-reports/:id',
-  requireTeacherOrOffice,
+  requirePermission('communication', 'edit', { alsoRoles: ['teacher'] }),
   validateParams(dailyReportIdParamSchema),
   validate(updateDailyReportSchema),
   communicationController.updateDailyReport,
@@ -176,7 +180,7 @@ router.patch(
 // POST /api/communication/daily-reports/:id/photos — Upload photos to report (teacher, admin)
 router.post(
   '/daily-reports/:id/photos',
-  requireTeacherOrOffice,
+  requirePermission('communication', 'edit', { alsoRoles: ['teacher'] }),
   validateParams(dailyReportIdParamSchema),
   uploadPhotos.array('photos', 6),
   communicationController.uploadDailyReportPhoto,
@@ -187,7 +191,7 @@ router.post(
 // POST /api/communication/announcements — Create and publish announcement (admin only)
 router.post(
   '/announcements',
-  requireOffice,
+  requirePermission('communication', 'edit'),
   validate(createAnnouncementSchema),
   communicationController.createAnnouncement,
 );
@@ -211,7 +215,7 @@ router.get(
 // DELETE /api/communication/announcements/:id — Delete announcement (admin only)
 router.delete(
   '/announcements/:id',
-  requireOffice,
+  requirePermission('communication', 'edit'),
   validateParams(announcementIdParamSchema),
   communicationController.deleteAnnouncement,
 );
@@ -221,7 +225,7 @@ router.delete(
 // POST /api/communication/events — Create event (admin only)
 router.post(
   '/events',
-  requireOffice,
+  requirePermission('communication', 'edit'),
   validate(createEventSchema),
   communicationController.createEvent,
 );
@@ -245,7 +249,7 @@ router.get(
 // DELETE /api/communication/events/:id — Delete event (admin only)
 router.delete(
   '/events/:id',
-  requireOffice,
+  requirePermission('communication', 'edit'),
   validateParams(eventIdParamSchema),
   communicationController.deleteEvent,
 );
@@ -265,42 +269,42 @@ router.patch(
 // GET /api/communication/staff/colleagues — List staff colleagues in the same school
 router.get(
   '/staff/colleagues',
-  requireTeacherOrOffice,
+  requireAnyOffice({ alsoRoles: ['teacher'] }),
   staffMessagingController.listColleagues,
 );
 
 // POST /api/communication/staff/conversations — Get or create a conversation with a staff member
 router.post(
   '/staff/conversations',
-  requireTeacherOrOffice,
+  requireAnyOffice({ alsoRoles: ['teacher'] }),
   staffMessagingController.getOrCreateConversation,
 );
 
 // GET /api/communication/staff/conversations — List all staff conversations
 router.get(
   '/staff/conversations',
-  requireTeacherOrOffice,
+  requireAnyOffice({ alsoRoles: ['teacher'] }),
   staffMessagingController.listConversations,
 );
 
 // GET /api/communication/staff/conversations/:id/messages — Get messages
 router.get(
   '/staff/conversations/:id/messages',
-  requireTeacherOrOffice,
+  requireAnyOffice({ alsoRoles: ['teacher'] }),
   staffMessagingController.getMessages,
 );
 
 // POST /api/communication/staff/conversations/:id/messages — Send text message
 router.post(
   '/staff/conversations/:id/messages',
-  requireTeacherOrOffice,
+  requireAnyOffice({ alsoRoles: ['teacher'] }),
   staffMessagingController.sendMessage,
 );
 
 // POST /api/communication/staff/conversations/:id/messages/file — Send file message
 router.post(
   '/staff/conversations/:id/messages/file',
-  requireTeacherOrOffice,
+  requireAnyOffice({ alsoRoles: ['teacher'] }),
   staffMessagingUpload,
   staffMessagingController.sendFileMessage,
 );
@@ -308,7 +312,7 @@ router.post(
 // PATCH /api/communication/staff/messages/:id/read — Mark as read
 router.patch(
   '/staff/messages/:id/read',
-  requireTeacherOrOffice,
+  requireAnyOffice({ alsoRoles: ['teacher'] }),
   staffMessagingController.markAsRead,
 );
 

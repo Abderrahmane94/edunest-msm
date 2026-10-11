@@ -29,8 +29,8 @@ import { useUsers } from '@/hooks/useUsers';
 import { ClassroomFeesSection } from './ClassroomFeesSection';
 import { RoomField } from './RoomField';
 import { useSelectedYear, useYearClosed } from '@/hooks/useSelectedYear';
-import { useIsDirector } from '@/lib/roles';
 import { ClassSubstitutionsSection } from './SubstitutionsSection';
+import { usePermissions } from '@/lib/roles';
 
 export function ClassroomDetailPage() {
   const { t } = useTranslation();
@@ -39,10 +39,10 @@ export function ClassroomDetailPage() {
 
   const { data: classroom, isLoading } = useClassroom(classroomId!);
   // A class of a closed year is looked at, not changed.
-  const closed = useYearClosed(classroom?.academic_year_id);
+  const { can, canDelete } = usePermissions();
+  // Read-only: a closed year, or a profile that only views classes.
+  const closed = useYearClosed(classroom?.academic_year_id) || !can('classes', 'edit');
   const { activeYear } = useSelectedYear();
-  // Deleting a class and its fees are the director's.
-  const isDirector = useIsDirector();
   const updateClassroom = useUpdateClassroom();
   const assignTeacher = useAssignTeacher();
 
@@ -256,12 +256,12 @@ export function ClassroomDetailPage() {
           name: classroom.name,
           childCount: classroom.enrolled_count,
           isCurrentYear: !!activeYear?.is_active && classroom.academic_year_id === activeYear.id,
-          readOnly: closed || !isDirector,
+          readOnly: closed || !can('fees', 'edit'),
         }}
       />
 
       {/* Danger zone */}
-      <div className={`${closed || !isDirector ? 'hidden ' : ''}bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3`}>
+      <div className={`${closed || !can('classes', 'edit') || !canDelete ? 'hidden ' : ''}bg-card border border-border border-danger/30 rounded-lg p-6 space-y-3`}>
         <h2 className="text-subsection font-semibold text-danger">{t('classrooms.detail.dangerZone')}</h2>
         <p className="text-body text-text-secondary">{t('classrooms.detail.deleteWarning')}</p>
         <EntityDeleteButton

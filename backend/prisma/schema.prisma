@@ -163,6 +163,7 @@ model School {
   stockItems     StockItem[]
   equipment      Equipment[]
   substitutions  Substitution[]
+  accessProfiles AccessProfile[]
   stockMovements StockMovement[]
   children       Child[]
   expenses       Expense[]
@@ -186,6 +187,8 @@ model User {
   email              String
   passwordHash       String    @map("password_hash")
   role               UserRole
+  /// Office staff (administrative): what they may do. The director needs none.
+  accessProfileId String?  @map("access_profile_id")
   isActive           Boolean   @default(true) @map("is_active")
   mustChangePassword Boolean   @default(false) @map("must_change_password")
   fcmToken           String?   @map("fcm_token")
@@ -221,6 +224,7 @@ model User {
   substitutionsAbsent         Substitution[]       @relation("SubstitutionAbsent")
   substitutionsTaken          Substitution[]       @relation("SubstitutionSubstitute")
   substitutionsCreated        Substitution[]       @relation("SubstitutionCreatedBy")
+  accessProfile               AccessProfile?       @relation(fields: [accessProfileId], references: [id], onDelete: SetNull)
 
   @@index([deletedAt])
   @@index([email])
@@ -1208,4 +1212,26 @@ model Substitution {
   @@index([substituteUserId, startDate])
   @@index([schoolId, startDate])
   @@map("substitutions")
+}
+
+/// What an office staff member may do, area by area (none / view / edit),
+/// plus deleting and correcting payments. Made by the director; the default
+/// one ("Agent administratif") is created with the school.
+model AccessProfile {
+  id          String   @id @default(uuid())
+  schoolId    String   @map("school_id")
+  name        String
+  description String?
+  /// { areas: { children: "edit", … }, delete: bool, correctPayments: bool }
+  permissions Json
+  /// The school's default profile, given to new office staff.
+  isDefault   Boolean  @default(false) @map("is_default")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  school School @relation(fields: [schoolId], references: [id])
+  users  User[]
+
+  @@unique([schoolId, name])
+  @@map("access_profiles")
 }

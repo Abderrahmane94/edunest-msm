@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAdmin, requireOffice } from '../../middleware/rbac.middleware';
+import { requirePermission, requireAnyPermission } from '../../middleware/permission.middleware';
 import { branchFeeService, BranchFeeServiceError } from './branch-fee.service';
 import { rejectClosedYear, yearOf } from '../../middleware/closed-year.middleware';
 
@@ -9,7 +9,7 @@ const router = Router();
  * GET /api/payments/branches/:branchId/fees
  * List all fees for a branch.
  */
-router.get('/branches/:branchId/fees', requireOffice, async (req, res) => {
+router.get('/branches/:branchId/fees', requireAnyPermission([['fees', 'view'], ['children', 'view'], ['collections', 'view'], ['classes', 'view']]), async (req, res) => {
   try {
     const { branchId } = req.params;
     const onlyActive = req.query.all !== 'true';
@@ -34,7 +34,7 @@ router.get('/branches/:branchId/fees', requireOffice, async (req, res) => {
  * POST /api/payments/branches/:branchId/fees
  * Create a new fee for a branch.
  */
-router.post('/branches/:branchId/fees', requireAdmin, async (req, res) => {
+router.post('/branches/:branchId/fees', requirePermission('fees', 'edit'), async (req, res) => {
   try {
     const { branchId } = req.params;
     const { name, amount, showInWizard, billingCycle, billingDueDay, gracePeriodDays } = req.body;
@@ -66,7 +66,7 @@ router.post('/branches/:branchId/fees', requireAdmin, async (req, res) => {
  * PUT /api/payments/branches/:branchId/fees/:id
  * Update a fee.
  */
-router.put('/branches/:branchId/fees/:id', requireAdmin, async (req, res) => {
+router.put('/branches/:branchId/fees/:id', requirePermission('fees', 'edit'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, amount, isActive, appliesToSchool, showInWizard, billingCycle, billingDueDay, gracePeriodDays } =
@@ -102,7 +102,7 @@ router.put('/branches/:branchId/fees/:id', requireAdmin, async (req, res) => {
  * DELETE /api/payments/branches/:branchId/fees/:id
  * Deactivate a fee (soft delete).
  */
-router.delete('/branches/:branchId/fees/:id', requireAdmin, async (req, res) => {
+router.delete('/branches/:branchId/fees/:id', requirePermission('fees', 'edit'), async (req, res) => {
   try {
     const { id } = req.params;
     await branchFeeService.deactivate(id);
@@ -126,7 +126,7 @@ router.delete('/branches/:branchId/fees/:id', requireAdmin, async (req, res) => 
  * POST /api/payments/enrollments/:enrollmentId/apply-fee
  * Apply a fee to an enrollment (creates a billing period).
  */
-router.post('/enrollments/:enrollmentId/apply-fee', requireAdmin, rejectClosedYear((req) => yearOf.enrollment(req.params.enrollmentId)), async (req, res) => {
+router.post('/enrollments/:enrollmentId/apply-fee', requirePermission('fees', 'edit'), rejectClosedYear((req) => yearOf.enrollment(req.params.enrollmentId)), async (req, res) => {
   try {
     const { enrollmentId } = req.params;
     const { branchFeeId } = req.body;
@@ -161,7 +161,7 @@ router.post('/enrollments/:enrollmentId/apply-fee', requireAdmin, rejectClosedYe
  * Batch-assign a fee to children/classrooms/school.
  * Body: { target: 'children' | 'classrooms' | 'school', childIds?: string[], classroomIds?: string[] }
  */
-router.post('/branches/:branchId/fees/:id/assign', requireAdmin, async (req, res) => {
+router.post('/branches/:branchId/fees/:id/assign', requirePermission('fees', 'edit'), async (req, res) => {
   try {
     const { branchId, id } = req.params;
     const { target, childIds, classroomIds } = req.body;

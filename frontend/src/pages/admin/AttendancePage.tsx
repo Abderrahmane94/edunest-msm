@@ -17,6 +17,7 @@ import {
   type ChildAttendanceReportItem,
 } from '@/hooks/useAttendance';
 import { useTabParam } from '@/hooks/useTabParam';
+import { usePermissions } from '@/lib/roles';
 
 type ViewMode = 'daily' | 'monthly' | 'tracking';
 const VIEW_MODES: ViewMode[] = ['daily', 'monthly', 'tracking'];
@@ -65,7 +66,9 @@ export function AttendancePage() {
   const { year: schoolYear } = useSelectedYear();
   const { data: classrooms } = useClassrooms(schoolYear?.id);
   // Today's replacements, and the class being replaced from the tracking list.
-  const closed = useYearClosed();
+  // Read-only: a closed year, or a profile that only views classes.
+  const { can } = usePermissions();
+  const closed = useYearClosed() || !can('classes', 'edit');
   const { data: todaysReplacements } = useSubstitutions({ on: today() });
   const [replacing, setReplacing] = React.useState<Classroom | null>(null);
 

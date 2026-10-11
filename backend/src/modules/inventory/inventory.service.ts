@@ -105,12 +105,19 @@ class InventoryService {
   }
 
   /** Records a purchase (with its expense), a use, or a count. Teachers record uses only. */
-  async recordMovement(id: string, schoolId: string, userId: string, role: string, input: CreateStockMovementInput) {
+  async recordMovement(
+    id: string,
+    schoolId: string,
+    userId: string,
+    role: string,
+    input: CreateStockMovementInput,
+    canRecordExpense = role === 'admin' || role === 'super_admin',
+  ) {
     if (role === 'teacher' && input.type !== 'use') {
       throw new InventoryServiceError('Only an administrator can record purchases and counts', 403);
     }
-    // Expenses are the director's: the administrative staff record the purchase only.
-    if (role === 'administrative' && input.type === 'purchase' && input.expense) {
+    // Recording the expense too needs the right to manage expenses.
+    if (input.type === 'purchase' && input.expense && !canRecordExpense) {
       throw new InventoryServiceError('Only the director can record expenses', 403);
     }
     const item = await this.find(id, schoolId);

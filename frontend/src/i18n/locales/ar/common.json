@@ -491,6 +491,13 @@
       "supplyNotEnough": "المخزون غير كافٍ: يتبقى {{left}}.",
       "supplyAdminOnly": "يمكن للمدير والإداريين فقط تسجيل المشتريات والجرد.",
       "expenseDirectorOnly": "المدير وحده يسجّل المصاريف.",
+      "notAllowed": "ملفك لا يسمح بهذا الإجراء. اطلب ذلك من المدير.",
+      "directorAccountsOnly": "المدير وحده يسيّر حسابات المديرين.",
+      "profileNameTaken": "يوجد ملف بهذا الاسم.",
+      "defaultProfileUndeletable": "لا يمكن حذف الملف الافتراضي.",
+      "chooseOtherDefault": "اختر بالأحرى ملفًا افتراضيًا آخر.",
+      "profileNotFound": "الملف غير موجود.",
+      "profileOnlyOffice": "للموظفين الإداريين فقط ملف صلاحيات.",
       "classAlreadyReplaced": "لهذا القسم تعويض في هذه التواريخ: عدّله بدلًا من ذلك.",
       "substituteIsTitular": "المعوِّض هو معلم القسم نفسه.",
       "substituteNotTeacher": "يجب أن يكون المعوِّض معلمًا نشطًا في المدرسة.",
@@ -861,6 +868,68 @@
       "endDateRequired": "تاريخ النهاية مطلوب",
       "endDateAfterStart": "تاريخ النهاية يجب أن يكون بعد تاريخ البداية"
     }
+  },
+  "accessProfiles": {
+    "title": "الملفات والصلاحيات",
+    "description": "الوصف",
+    "create": "ملف جديد",
+    "createTitle": "ملف جديد",
+    "editTitle": "تعديل الملف",
+    "dialogDescription": "لكل مجال: لا شيء، اطّلاع (عرض فقط) أو تسيير (عرض وتعديل).",
+    "name": "اسم الملف",
+    "namePlaceholder": "مثال: محاسب",
+    "levels": {
+      "none": "لا شيء",
+      "view": "اطّلاع",
+      "edit": "تسيير"
+    },
+    "areas": {
+      "children": "الأطفال",
+      "classes": "الأقسام والحضور",
+      "communication": "التواصل",
+      "inventory": "المخزون",
+      "collections": "التحصيل",
+      "expenses": "المصاريف",
+      "fees": "إعداد الرسوم",
+      "payroll": "الأجور",
+      "staff": "الموظفون والمستخدمون",
+      "settings": "الإعدادات"
+    },
+    "areaHints": {
+      "children": "التسجيلات، الملفات، الأولياء، جهات الاتصال، الملاحظات الطبية",
+      "classes": "الأقسام، التوزيع، الحضور، التعويضات",
+      "communication": "الإعلانات، الأحداث، الرسائل، التقارير اليومية",
+      "inventory": "اللوازم والعتاد",
+      "collections": "التحصيل، المتأخرات، الوصولات، المطابقة",
+      "expenses": "مصاريف المدرسة",
+      "fees": "الرسوم، رزنامة الفوترة، التخفيضات، الانسحابات",
+      "payroll": "رواتب الموظفين ودفعها",
+      "staff": "الحسابات، كلمات المرور، ملفات الموظفين",
+      "settings": "المدرسة، السنوات الدراسية، القاعات، الأيام، سلة المحذوفات"
+    },
+    "extra": {
+      "delete": "الحذف",
+      "deleteHint": "حذف أطفال وأقسام وحسابات، وإفراغ سلة المحذوفات (مع «تسيير» على المجال).",
+      "correctPayments": "تصحيح المدفوعات",
+      "correctPaymentsHint": "تسجيل تصحيح لدفعة محصّلة."
+    },
+    "nothing": "لا وصول.",
+    "default": "افتراضي",
+    "defaultProfile": "الملف الافتراضي",
+    "makeDefault": "الملف الافتراضي للحسابات الجديدة",
+    "directorTitle": "المدير — كل الصلاحيات",
+    "directorHint": "غير قابل للتعديل. المدير وحده يسيّر الملفات وحسابات المديرين.",
+    "staff_zero": "لا أحد",
+    "staff_one": "شخص واحد: {{names}}",
+    "staff_two": "شخصان: {{names}}",
+    "staff_few": "{{count}} أشخاص: {{names}}",
+    "staff_many": "{{count}} شخصًا: {{names}}",
+    "staff_other": "{{count}} شخص: {{names}}",
+    "noStaff": "لا أحد لديه هذا الملف.",
+    "deleteTitle": "حذف الملف «{{name}}»؟",
+    "deleteDescription": "يحصل أصحابه على الملف الافتراضي.",
+    "userCardTitle": "ملف الصلاحيات",
+    "userCardHint": "يُطبَّق التغيير فورًا."
   },
   "substitutions": {
     "reasons": {

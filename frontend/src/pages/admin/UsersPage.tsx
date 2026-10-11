@@ -18,13 +18,15 @@ import {
   type ConfirmOptions,
 } from '@/components/ui';
 import type { TFunction } from 'i18next';
-import type { Column } from '@/components/ui';
+import type { Column } from '@/components/ui';
+
 import { avatarColor } from '@/components/ui/Avatar';
 import { FormSelect } from '@/components/forms';
 import { useUsers, useToggleUserActive, type User } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
 import { InviteUserDialog } from './InviteUserDialog';
 import { InviteByEmailDialog } from './InviteByEmailDialog';
+import { usePermissions } from '@/lib/roles';
 
 /** The question asked before an account is deactivated or reactivated. */
 export function userToggleConfirm(
@@ -48,6 +50,7 @@ export function userToggleConfirm(
 }
 
 export function UsersPage() {
+  const { can } = usePermissions();
   const { t } = useTranslation();
   const [page, setPage] = React.useState(1);
   const [search, setSearch] = React.useState('');
@@ -199,7 +202,7 @@ export function UsersPage() {
                 {t('users.invite')}
               </Button>
             )}
-            <CreateButton label={t('users.create')} onClick={() => setInviteDialogOpen(true)} />
+            {can('staff', 'edit') && <CreateButton label={t('users.create')} onClick={() => setInviteDialogOpen(true)} />}
           </>
         }
       />

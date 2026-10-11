@@ -27,6 +27,7 @@ import {
   useDeleteBranchCalendar,
   type BranchCalendarEntry,
 } from '@/hooks/useBranchCalendar';
+import { usePermissions } from '@/lib/roles';
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
@@ -58,7 +59,9 @@ export function BranchCalendarPage() {
   const { branchId: selectedBranchId } = useDefaultBranch();
   const { data: activeAcademicYear, isLoading: yearLoading } = useViewedYear();
   // A closed year is looked at, not changed.
-  const closed = useYearClosed();
+  // Read-only: a closed year, or a profile that only views fees.
+  const { can } = usePermissions();
+  const closed = useYearClosed() || !can('fees', 'edit');
   const selectedAcademicYearId = activeAcademicYear?.id ?? '';
   // Periods must fall within the academic year.
   const yearMin = activeAcademicYear?.start_date?.slice(0, 10);

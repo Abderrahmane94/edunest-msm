@@ -14,7 +14,7 @@ import { useCreateEnrollment } from '@/hooks/useEnrollments';
 import { setSelectedYearId, useSelectedYear, useYearClosed } from '@/hooks/useSelectedYear';
 import type { AcademicYear } from '@/hooks/useAcademicYears';
 import { FeeChecklist, clampToAcademicYear, useOfferedFees } from './FeeChecklist';
-import { useIsDirector } from '@/lib/roles';
+import { usePermissions } from '@/lib/roles';
 
 interface AssignedFee {
   key: string;
@@ -188,8 +188,9 @@ export function ChildFeesSection({
   // The fees shown are those of the year being looked at (admins).
   const { year, enabled: byYear } = useSelectedYear();
   // A closed year is looked at, not changed.
-  const closed = useYearClosed();
-  const isDirector = useIsDirector();
+  const { can } = usePermissions();
+  // Read-only: a closed year, or a profile that only views children.
+  const closed = useYearClosed() || !can('children', 'edit');
   const [enrollOpen, setEnrollOpen] = React.useState(false);
   const notBilled = byYear && !!year && !isLoading && !isError && (periods ?? []).length === 0;
   const fees = React.useMemo(() => groupByFee(periods ?? [], localToday()), [periods]);
@@ -226,8 +227,8 @@ export function ChildFeesSection({
             {t('children.fees.enroll')}
           </Button>
         )}
-        {/* Discounts, withdrawal…: the director's. */}
-        {showManageBilling && isDirector && currentEnrollmentId && (
+        {/* Discounts, withdrawal…: to manage the fees. */}
+        {showManageBilling && can('fees', 'edit') && currentEnrollmentId && (
           <Button
             type="button"
             variant="secondary"

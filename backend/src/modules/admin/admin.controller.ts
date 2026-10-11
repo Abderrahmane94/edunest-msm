@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { can } from '../../middleware/permission.middleware';
 import { dashboardService } from './dashboard.service';
 import { platformDashboardService } from './platform-dashboard.service';
 import { successResponse } from '../../utils/response';
@@ -11,8 +12,9 @@ export const adminController = {
     try {
       const schoolId = req.user!.schoolId!;
       const stats = await dashboardService.getAdminDashboard(schoolId);
-      // The administrative staff see collections, not expenses and payroll.
-      if (req.user!.role === 'administrative') {
+      // Money figures by right: expenses and payroll (and so the net) only to
+      // whoever may see both.
+      if (!((await can(req, 'expenses')) && (await can(req, 'payroll')))) {
         stats.finance = { ...stats.finance, expenses: null, salaries: null, net: null };
       }
       res.status(200).json(successResponse(stats));

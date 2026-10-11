@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Crown, Pencil, ShieldCheck } from 'lucide-react';
+import { Crown, History, Pencil, ShieldCheck } from 'lucide-react';
+import { AccessJournalDialog, AccessJournalList, UserExceptionsPanel } from './AccessJournal';
 import {
   Button,
   CreateButton,
@@ -216,13 +217,22 @@ export function AccessProfilesSection() {
   const { t } = useTranslation();
   const { data: profiles, isLoading, isError, error } = useAccessProfiles();
   const [editing, setEditing] = React.useState<AccessProfile | null | undefined>(undefined);
+  const [journalOpen, setJournalOpen] = React.useState(false);
 
   return (
     <div className="space-y-4">
       <SectionHeader
         title={t('accessProfiles.title')}
         description={t('accessProfiles.description')}
-        actions={<CreateButton label={t('accessProfiles.create')} onClick={() => setEditing(null)} />}
+        actions={
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" onClick={() => setJournalOpen(true)}>
+              <History className="w-4 h-4" />
+              {t('accessProfiles.journal.open')}
+            </Button>
+            <CreateButton label={t('accessProfiles.create')} onClick={() => setEditing(null)} />
+          </div>
+        }
       />
       <div className="bg-card border border-border rounded-lg p-4 flex items-start gap-3">
         <Crown className="w-5 h-5 text-warning shrink-0 mt-0.5" />
@@ -254,12 +264,20 @@ export function AccessProfilesSection() {
             <Summary p={p.permissions} />
             <p className="text-caption text-text-secondary">
               {p.users.length
-                ? t('accessProfiles.staff', { count: p.users.length, names: p.users.map((u) => `${u.firstName} ${u.lastName}`).join(', ') })
+                ? t('accessProfiles.staff', {
+                    count: p.users.length,
+                    // ✱: their rights differ from the profile's (exceptions).
+                    names: p.users.map((u) => `${u.firstName} ${u.lastName}${u.hasExceptions ? ' ✱' : ''}`).join(', '),
+                  })
                 : t('accessProfiles.noStaff')}
             </p>
+            {p.users.some((u) => u.hasExceptions) && (
+              <p className="text-micro text-text-secondary">{t('accessProfiles.exceptions.marker')}</p>
+            )}
           </div>
         ))
       )}
+      <AccessJournalDialog open={journalOpen} onOpenChange={setJournalOpen} />
       <ProfileDialog open={editing !== undefined} onOpenChange={(o) => !o && setEditing(undefined)} profile={editing ?? null} />
     </div>
   );
@@ -319,6 +337,11 @@ export function UserAccessProfileCard({ user }: { user: { id: string; access_pro
           <p className="text-caption text-text-secondary">{t('accessProfiles.userCardHint')}</p>
           {saved && <p className="text-caption text-success">{t('common.saved')}</p>}
           <ErrorAlert message={error} />
+          <UserExceptionsPanel userId={user.id} />
+          <div className="space-y-1 pt-2 border-t border-border">
+            <p className="text-body font-medium text-foreground">{t('accessProfiles.journal.userTitle')}</p>
+            <AccessJournalList userId={user.id} compact />
+          </div>
         </>
       ) : (
         <p className="text-body text-foreground">{user.access_profile?.name ?? t('accessProfiles.defaultProfile')}</p>

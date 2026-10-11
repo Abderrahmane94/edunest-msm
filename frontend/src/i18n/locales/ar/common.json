@@ -2228,6 +2228,9 @@
       "hoursAgo": "منذ {{count}} ساعة",
       "daysAgo": "منذ {{count}} يوم"
     },
+    "parentMessages": {
+      "tab": "رسائل الأولياء"
+    },
     "staffMessages": {
       "tab": "مراسلة الطاقم",
       "title": "مراسلة المعلمين",
@@ -2299,6 +2302,7 @@
     "searchParents": "الولي أو الطفل…",
     "title": "الرسائل",
     "noConversations": "لا توجد محادثات حتى الآن",
+    "noOfficeConversations": "لا توجد رسائل من الأولياء إلى الإدارة حتى الآن",
     "selectConversation": "اختر محادثة للبدء",
     "back": "رجوع",
     "noMessages": "لا توجد رسائل. ابدأ المحادثة!",
@@ -2436,8 +2440,14 @@
   },
   "parentMessages": {
     "title": "الرسائل",
-    "subtitle": "تحدث مع معلم طفلك",
-    "noConversations": "لا توجد محادثات حتى الآن. سيتواصل معك المعلم قريباً!",
+    "subtitle": "تواصل مع معلم طفلك أو مع الإدارة",
+    "noConversations": "لا توجد محادثات حتى الآن. اكتب إلى معلم طفلك أو إلى الإدارة.",
+    "newMessage": "رسالة جديدة",
+    "newMessageHint": "اختر الطفل المعني ولمن تريد الكتابة.",
+    "office": "الإدارة",
+    "officeHint": "إدارة المدرسة",
+    "noTeacherYet": "لا يوجد معلم بعد",
+    "noChildren": "لا يوجد طفل مرتبط بحسابك.",
     "back": "رجوع",
     "teacher": "المعلم",
     "noMessages": "لا توجد رسائل. قل مرحباً!",

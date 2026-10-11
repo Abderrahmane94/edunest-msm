@@ -10,6 +10,7 @@ import {
   conversationIdParamSchema,
   messageIdParamSchema,
   messagesQuerySchema,
+  conversationsQuerySchema,
   createDailyReportSchema,
   saveDailyReportSchema,
   updateDailyReportSchema,
@@ -44,10 +45,11 @@ const router = Router();
 
 // ─── Conversations ───────────────────────────────────────────────────────────
 
-// POST /api/communication/conversations — Create a conversation (teacher or admin)
+// POST /api/communication/conversations — Create a conversation (teacher, office, or a parent
+// with their child's teacher or the office)
 router.post(
   '/conversations',
-  requireTeacherOrOffice,
+  requireActiveRole,
   validate(createConversationSchema),
   communicationController.createConversation,
 );
@@ -63,8 +65,15 @@ router.get(
 router.get(
   '/conversations',
   requireActiveRole,
-  validateQuery(messagesQuerySchema),
+  validateQuery(conversationsQuerySchema),
   communicationController.listConversations,
+);
+
+// GET /api/communication/conversations/contacts — A parent's children and their teachers (parent)
+router.get(
+  '/conversations/contacts',
+  rbac(['parent']),
+  communicationController.getMessageContacts,
 );
 
 // GET /api/communication/conversations/:id/messages — Get messages (teacher, parent, admin)
@@ -76,19 +85,20 @@ router.get(
   communicationController.getMessages,
 );
 
-// POST /api/communication/conversations/:id/messages — Send a message (teacher, parent)
+// POST /api/communication/conversations/:id/messages — Send a message (its teacher or parent;
+// any office member in a thread with the office — checked by the service)
 router.post(
   '/conversations/:id/messages',
-  rbac(['teacher', 'parent']),
+  requireActiveRole,
   validateParams(conversationIdParamSchema),
   validate(sendMessageSchema),
   communicationController.sendMessage,
 );
 
-// POST /api/communication/conversations/:id/messages/file — Send a photo or document (teacher, parent)
+// POST /api/communication/conversations/:id/messages/file — Send a photo or document (as above)
 router.post(
   '/conversations/:id/messages/file',
-  rbac(['teacher', 'parent']),
+  requireActiveRole,
   validateParams(conversationIdParamSchema),
   staffMessagingUpload,
   communicationController.sendFileMessage,

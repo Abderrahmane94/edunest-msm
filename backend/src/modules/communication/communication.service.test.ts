@@ -2052,3 +2052,139 @@ describe('communicationService.getClassroomDayReports', () => {
     ).rejects.toMatchObject({ statusCode: 404 });
   });
 });
+
+describe('conversations started by a parent, and with the school office', () => {
+  const schoolId = 'school-1';
+  const childId = 'child-1';
+  const parentUserId = 'parent-1';
+  const child = { id: childId, firstName: 'Ahmed', lastName: 'Ben Ali' };
+  const created = (data: Record<string, unknown>) => ({ id: 'conv-new', createdAt: new Date(), ...data });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPrisma.child.findFirst.mockResolvedValue(child);
+    mockPrisma.user.findFirst.mockResolvedValue({ id: parentUserId, firstName: 'Fatima', lastName: 'Ben Ali' });
+    mockPrisma.parentChildLink.findFirst.mockResolvedValue({ id: 'link-1', childId, parentUserId });
+    mockPrisma.conversation.findFirst.mockResolvedValue(null);
+    mockPrisma.conversation.create.mockImplementation(({ data }: { data: Record<string, unknown> }) => created(data));
+  });
+
+  it("a parent writes to their child's teacher", async () => {
+    mockPrisma.classroomEnrollment.findFirst.mockResolvedValue({ classroom: { teacherUserId: 'teacher-1' } });
+
+    const result = await communicationService.createConversation(schoolId, parentUserId, 'parent', { childId });
+
+    expect(result).toMatchObject({ teacherUserId: 'teacher-1', parentUserId });
+    expect(mockPrisma.conversation.create.mock.calls[0][0].data).toMatchObject({ teacherUserId: 'teacher-1', parentUserId });
+  });
+
+  it('a parent always writes as themselves, never for another parent', async () => {
+    mockPrisma.classroomEnrollment.findFirst.mockResolvedValue({ classroom: { teacherUserId: 'teacher-1' } });
+
+    await communicationService.createConversation(schoolId, parentUserId, 'parent', { childId, parentUserId: 'parent-2' });
+
+    expect(mockPrisma.parentChildLink.findFirst).toHaveBeenCalledWith({ where: { childId, parentUserId } });
+  });
+
+  it("refuses a child who isn't the parent's", async () => {
+    mockPrisma.parentChildLink.findFirst.mockResolvedValue(null);
+    await expect(
+      communicationService.createConversation(schoolId, parentUserId, 'parent', { childId }),
+    ).rejects.toMatchObject({ statusCode: 400 });
+    expect(mockPrisma.conversation.create).not.toHaveBeenCalled();
+  });
+
+  it('says so when the child has no teacher yet', async () => {
+    mockPrisma.classroomEnrollment.findFirst.mockResolvedValue(null);
+    await expect(
+      communicationService.createConversation(schoolId, parentUserId, 'parent', { childId }),
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('a parent writes to the office: filed under the director', async () => {
+    mockPrisma.user.findMany.mockResolvedValue([
+      { id: 'adm-staff', role: 'administrative' },
+      { id: 'director', role: 'admin' },
+    ]);
+
+    const result = await communicationService.createConversation(schoolId, parentUserId, 'parent', { childId, withOffice: true });
+
+    expect(result).toMatchObject({ teacherUserId: 'director', parentUserId, withOffice: true });
+  });
+
+  it('opens the existing thread with the office instead of a second one', async () => {
+    mockPrisma.conversation.findFirst.mockResolvedValue({ id: 'office-conv', withOffice: true, teacherUserId: 'director', parentUserId });
+
+    const result = await communicationService.createConversation(schoolId, parentUserId, 'parent', { childId, withOffice: true });
+
+    expect(result.id).toBe('office-conv');
+    expect(mockPrisma.conversation.findFirst.mock.calls[0][0].where).toMatchObject({ childId, parentUserId, withOffice: true });
+    expect(mockPrisma.conversation.create).not.toHaveBeenCalled();
+  });
+
+  it('a teacher cannot open a thread with the office', async () => {
+    await expect(
+      communicationService.createConversation(schoolId, 'teacher-1', 'teacher', { childId, parentUserId, withOffice: true }),
+    ).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it('a teacher does not see the threads with the office', async () => {
+    mockPrisma.conversation.findMany.mockResolvedValue([]);
+    mockPrisma.conversation.count.mockResolvedValue(0);
+    mockPrisma.child.findMany.mockResolvedValue([]);
+
+    await communicationService.listConversations(schoolId, 'teacher-1', 'teacher', 1, 20);
+
+    expect(mockPrisma.conversation.findMany.mock.calls[0][0].where).toMatchObject({ teacherUserId: 'teacher-1', withOffice: false });
+  });
+
+  it("the office's inbox lists only the threads with the office", async () => {
+    mockPrisma.conversation.findMany.mockResolvedValue([]);
+    mockPrisma.conversation.count.mockResolvedValue(0);
+    mockPrisma.child.findMany.mockResolvedValue([]);
+
+    await communicationService.listConversations(schoolId, 'adm-staff', 'administrative', 1, 20, true);
+
+    expect(mockPrisma.conversation.findMany.mock.calls[0][0].where).toEqual({ schoolId, withOffice: true });
+  });
+
+  describe('messages in a thread with the office', () => {
+    const office = { id: 'office-conv', schoolId, childId, teacherUserId: 'director', parentUserId, withOffice: true };
+    const sent = (senderUserId: string) => ({
+      id: 'msg-1', conversationId: office.id, senderUserId, content: 'Bonjour', messageType: 'text',
+      cloudinaryPublicId: null, isRead: false, createdAt: new Date(),
+      sender: { id: senderUserId, firstName: 'A', lastName: 'B' },
+    });
+
+    it('any office member can answer, and the parent is notified', async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue(office);
+      mockPrisma.$transaction.mockResolvedValue([sent('adm-staff'), {}]);
+
+      await communicationService.sendMessage(office.id, schoolId, 'adm-staff', 'administrative', { content: 'Bonjour', messageType: 'text' });
+
+      await vi.waitFor(() =>
+        expect(notificationService.notify).toHaveBeenCalledWith(expect.objectContaining({ userId: parentUserId })),
+      );
+      expect(notificationService.notify).toHaveBeenCalledTimes(1);
+    });
+
+    it("a parent's message reaches every office member", async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue(office);
+      mockPrisma.$transaction.mockResolvedValue([sent(parentUserId), {}]);
+      mockPrisma.user.findMany.mockResolvedValue([{ id: 'director' }, { id: 'adm-staff' }]);
+
+      await communicationService.sendMessage(office.id, schoolId, parentUserId, 'parent', { content: 'Bonjour', messageType: 'text' });
+
+      await vi.waitFor(() => expect(notificationService.notify).toHaveBeenCalledTimes(2));
+      const notified = vi.mocked(notificationService.notify).mock.calls.map(([n]) => n.userId);
+      expect(notified.sort()).toEqual(['adm-staff', 'director']);
+    });
+
+    it("the office still cannot write in a teacher's thread", async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue({ ...office, teacherUserId: 'teacher-1', withOffice: false });
+      await expect(
+        communicationService.sendMessage(office.id, schoolId, 'adm-staff', 'administrative', { content: 'x', messageType: 'text' }),
+      ).rejects.toMatchObject({ statusCode: 403 });
+    });
+  });
+});

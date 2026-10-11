@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { communicationService, CommunicationServiceError } from './communication.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
 import { cloudinaryService } from '../../services/cloudinary.service';
-import type { CreateConversationInput, SendMessageInput, CreateDailyReportInput, UpdateDailyReportInput, SaveDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput, MessagesQuery, DailyReportsQuery, AnnouncementsQuery, EventsQuery } from './communication.schema';
+import type { CreateConversationInput, ConversationsQuery, SendMessageInput, CreateDailyReportInput, UpdateDailyReportInput, SaveDailyReportInput, CreateAnnouncementInput, CreateEventInput, RespondConsentInput, MessagesQuery, DailyReportsQuery, AnnouncementsQuery, EventsQuery } from './communication.schema';
 
 export const communicationController = {
   /**
@@ -39,7 +39,7 @@ export const communicationController = {
       const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const userRole = req.user!.role;
-      const { page, pageSize } = req.query as unknown as MessagesQuery;
+      const { page, pageSize, office } = req.query as unknown as ConversationsQuery;
 
       const { conversations, total } = await communicationService.listConversations(
         schoolId,
@@ -47,6 +47,7 @@ export const communicationController = {
         userRole,
         page,
         pageSize,
+        office,
       );
       res.status(200).json(paginatedResponse(conversations, page, pageSize, total));
     } catch (error) {
@@ -54,6 +55,19 @@ export const communicationController = {
         res.status(error.statusCode).json(errorResponse('COMMUNICATION_ERROR', error.message));
         return;
       }
+      next(error);
+    }
+  },
+
+  /**
+   * GET /api/communication/conversations/contacts — A parent's children and
+   * their teachers, to start a conversation
+   */
+  async getMessageContacts(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const contacts = await communicationService.getMessageContacts(req.user!.schoolId!, req.user!.userId);
+      res.status(200).json(successResponse(contacts));
+    } catch (error) {
       next(error);
     }
   },
@@ -277,7 +291,7 @@ export const communicationController = {
         req.user!.schoolId!,
         req.user!.userId,
         req.user!.role,
-        String(req.query.date),
+        req.query.date as string,
       );
       res.status(200).json(successResponse(reports));
     } catch (error) {

@@ -36,9 +36,10 @@ const participantSelect = {
 
 class CommunicationService {
   /**
-   * Create a conversation scoped to a specific child (one teacher + one parent).
-   * Only teachers and admins can create conversations.
-   * Teachers can only create conversations with parents of children in their classroom.
+   * Create a conversation scoped to a specific child: one parent with the
+   * child's teacher, or (withOffice) with the school office. Teachers only for
+   * children of their classroom; a parent only for their own children. Opening
+   * one that already exists returns it.
    */
   async createConversation(
     schoolId: string,
@@ -47,7 +48,13 @@ class CommunicationService {
     input: CreateConversationInput,
   ): Promise<ConversationWithParticipants> {
     const { childId } = input;
-    let { parentUserId } = input;
+    const withOffice = input.withOffice ?? false;
+    // A parent always writes as themselves.
+    let parentUserId = userRole === 'parent' ? userId : input.parentUserId;
+
+    if (withOffice && userRole === 'teacher') {
+      throw new CommunicationServiceError('Teachers cannot open a conversation with the office', 403);
+    }
 
     // Verify the child belongs to this school
     const child = await prisma.child.findFirst({
@@ -101,6 +108,23 @@ class CommunicationService {
       throw new CommunicationServiceError('The specified parent is not linked to this child', 400);
     }
 
+    // A thread with the office: one per parent and child, whoever opened it.
+    if (withOffice) {
+      const existingOffice = await prisma.conversation.findFirst({
+        where: { childId, parentUserId, schoolId, withOffice: true },
+        include: { teacher: { select: participantSelect }, parent: { select: participantSelect } },
+      });
+      if (existingOffice) return { ...existingOffice, child };
+
+      // The office member who opened it, or (for a parent) the director.
+      const officeUserId = isOfficeRole(userRole) ? userId : await this.findOfficeContact(schoolId);
+      const created = await prisma.conversation.create({
+        data: { schoolId, childId, teacherUserId: officeUserId, parentUserId, withOffice: true, lastMessageAt: new Date() },
+        include: { teacher: { select: participantSelect }, parent: { select: participantSelect } },
+      });
+      return { ...created, child };
+    }
+
     // Determine the teacher user ID
     let teacherUserId = userId;
 
@@ -119,8 +143,8 @@ class CommunicationService {
           403,
         );
       }
-    } else if (isOfficeRole(userRole)) {
-      // The office can create conversations — find the teacher assigned to the child's classroom
+    } else {
+      // The office or the parent — find the teacher assigned to the child's classroom
       const enrollment = await prisma.classroomEnrollment.findFirst({
         where: { childId, classroom: { schoolId } },
         include: { classroom: true },
@@ -138,7 +162,7 @@ class CommunicationService {
 
     // Check if a conversation already exists for this teacher + parent + child
     const existingConversation = await prisma.conversation.findFirst({
-      where: { childId, teacherUserId, parentUserId, schoolId },
+      where: { childId, teacherUserId, parentUserId, schoolId, withOffice: false },
       include: {
         teacher: { select: participantSelect },
         parent: { select: participantSelect },
@@ -185,15 +209,20 @@ class CommunicationService {
     userRole: string,
     page: number,
     pageSize: number,
+    officeOnly = false,
   ): Promise<{ conversations: ConversationWithParticipants[]; total: number }> {
     const where: Record<string, unknown> = { schoolId };
 
     if (userRole === 'teacher') {
       where.teacherUserId = userId;
+      where.withOffice = false;
     } else if (userRole === 'parent') {
       where.parentUserId = userId;
+    } else if (officeOnly) {
+      // The office's own inbox: parents' threads with the office.
+      where.withOffice = true;
     }
-    // admin/super_admin see all conversations in the school
+    // Otherwise the office sees all conversations in the school
 
     const [conversations, total] = await Promise.all([
       prisma.conversation.findMany({
@@ -258,8 +287,9 @@ class CommunicationService {
       const lastParentMsg = conv.messages.find((m) => m.senderUserId === conv.parentUserId);
       if (!lastParentMsg) return false;
 
-      // Check if the teacher has replied after the parent's last message
-      const lastTeacherMsg = conv.messages.find((m) => m.senderUserId === conv.teacherUserId);
+      // Check if the school has replied after the parent's last message (in a
+      // thread with the office, any office member may have answered)
+      const lastTeacherMsg = conv.messages.find((m) => m.senderUserId !== conv.parentUserId);
       if (lastTeacherMsg && lastTeacherMsg.createdAt > lastParentMsg.createdAt) {
         return false; // Teacher already replied
       }
@@ -425,26 +455,33 @@ class CommunicationService {
     const room = `conversation:${conversation.id}`;
     socketService.emitToRoom(room, 'message:new', response);
 
-    // Notify the other participant so they're alerted even when the chat isn't
-    // open (push + in-app notification via the notification pipeline).
-    const recipientUserId =
-      userId === conversation.teacherUserId ? conversation.parentUserId : conversation.teacherUserId;
+    // Notify the other side so they're alerted even when the chat isn't open
+    // (push + in-app notification via the notification pipeline). A parent
+    // writing to the office reaches every office member.
+    const fromParent = userId === conversation.parentUserId;
+    const recipientIds = !fromParent
+      ? [conversation.parentUserId]
+      : conversation.withOffice
+        ? await this.officeUserIds(schoolId)
+        : [conversation.teacherUserId];
     const senderName = `${message.sender.firstName} ${message.sender.lastName}`.trim();
-    newMessageNotificationText(recipientUserId, senderName, input.messageType, input.content)
-      .then(({ title, body }) =>
-        notificationService.notify({
-          userId: recipientUserId,
-          title,
-          body,
-          type: 'message_new',
-          referenceId: conversation.id,
-          referenceType: 'conversation',
-          channels: ['push'],
-        }),
-      )
-      .catch((err) => {
-        console.error('[CommunicationService] Failed to notify message recipient:', err);
-      });
+    for (const recipientUserId of recipientIds) {
+      newMessageNotificationText(recipientUserId, senderName, input.messageType, input.content)
+        .then(({ title, body }) =>
+          notificationService.notify({
+            userId: recipientUserId,
+            title,
+            body,
+            type: 'message_new',
+            referenceId: conversation.id,
+            referenceType: 'conversation',
+            channels: ['push'],
+          }),
+        )
+        .catch((err) => {
+          console.error('[CommunicationService] Failed to notify message recipient:', err);
+        });
+    }
 
     return response;
   }
@@ -1407,10 +1444,71 @@ class CommunicationService {
    */
   async assertCanSendMessage(conversationId: string, schoolId: string, userId: string, userRole: string) {
     const conversation = await this.verifyConversationAccess(conversationId, schoolId, userId, userRole);
+    // Any office member answers in a thread with the office.
+    if (conversation.withOffice && isOfficeRole(userRole)) return conversation;
     if (userId !== conversation.teacherUserId && userId !== conversation.parentUserId) {
       throw new CommunicationServiceError('Only conversation participants can send messages', 403);
     }
     return conversation;
+  }
+
+  /** The office member a parent's new thread with the office is filed under: the director first. */
+  private async findOfficeContact(schoolId: string): Promise<string> {
+    const office = await prisma.user.findMany({
+      where: { schoolId, role: { in: ['admin', 'administrative'] }, isActive: true },
+      select: { id: true, role: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    const contact = office.find((u) => u.role === 'admin') ?? office[0];
+    if (!contact) {
+      throw new CommunicationServiceError('The school office has no account yet', 400);
+    }
+    return contact.id;
+  }
+
+  /** Everyone in the school office (director and administrative staff). */
+  private async officeUserIds(schoolId: string): Promise<string[]> {
+    const office = await prisma.user.findMany({
+      where: { schoolId, role: { in: ['admin', 'administrative'] }, isActive: true },
+      select: { id: true },
+    });
+    return office.map((u) => u.id);
+  }
+
+  /**
+   * For a parent's "new message": each of their children with the class
+   * teacher (null when the child has no class or teacher yet).
+   */
+  async getMessageContacts(
+    schoolId: string,
+    parentUserId: string,
+  ): Promise<{ childId: string; firstName: string; lastName: string; teacherName: string | null }[]> {
+    const links = await prisma.parentChildLink.findMany({
+      where: { parentUserId, child: { schoolId, isActive: true, deletedAt: null } },
+      select: {
+        child: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            enrollments: {
+              where: { classroom: { deletedAt: null } },
+              select: { classroom: { select: { teacher: { select: { firstName: true, lastName: true } } } } },
+              take: 1,
+            },
+          },
+        },
+      },
+    });
+    return links.map(({ child }) => {
+      const teacher = child.enrollments[0]?.classroom.teacher;
+      return {
+        childId: child.id,
+        firstName: child.firstName,
+        lastName: child.lastName,
+        teacherName: teacher ? `${teacher.firstName} ${teacher.lastName}`.trim() : null,
+      };
+    });
   }
 
   private async verifyConversationAccess(

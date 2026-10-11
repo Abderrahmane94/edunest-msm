@@ -41,6 +41,7 @@ import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage, Tea
 import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentAnnouncementsPage, ParentPaymentsPage } from '@/pages/parent';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { AdminLayout, ParentLayout } from '@/components/layout';
+import { YearBanner, YearSwitcher } from '@/components/layout/YearSwitcher';
 import { BrandMark } from '@/components/layout/BrandMark';
 import { Avatar } from '@/components/ui';
 import type { NavItem } from '@/components/layout';
@@ -291,6 +292,8 @@ function AdminLayoutWrapper() {
           )
         }
         sidebarFooter={<SidebarFooterContent />}
+        yearSwitcher={isAdmin ? <YearSwitcher /> : undefined}
+        yearBanner={isAdmin ? <YearBanner /> : undefined}
       />
     </>
   );

@@ -146,6 +146,18 @@ class ChildrenService {
       where.enrollments = { some: { classroomId: filters.classroomId } };
     }
 
+    // A year's children: registered that year, or placed in one of its classes,
+    // or enrolled for its billing.
+    if (filters.academicYearId) {
+      and.push({
+        OR: [
+          { academicYearId: filters.academicYearId },
+          { enrollments: { some: { classroom: { academicYearId: filters.academicYearId } } } },
+          { paymentEnrollments: { some: { academicYearId: filters.academicYearId } } },
+        ],
+      });
+    }
+
     // Each word must match the child's first or last name, or a linked
     // parent's — so "yasmine boud" finds Yasmine Boudiaf.
     for (const word of (filters.search ?? '').trim().split(/\s+/).filter(Boolean).slice(0, 5)) {
@@ -172,7 +184,11 @@ class ChildrenService {
         take: pageSize,
         orderBy: { createdAt: 'desc' },
         include: {
-          ...enrollmentInclude,
+          // Only that year's class when the list is limited to a year.
+          enrollments: {
+            ...(filters.academicYearId && { where: { classroom: { academicYearId: filters.academicYearId } } }),
+            include: enrollmentInclude.enrollments.include,
+          },
           parentLinks: {
             include: { parent: { select: { firstName: true, lastName: true } } },
           },
@@ -931,6 +947,8 @@ class ChildrenService {
 
 export interface ChildListFilters {
   classroomId?: string;
+  /** Children of one school year. */
+  academicYearId?: string;
   /** Words matched against the child's and linked parents' names. */
   search?: string;
   gender?: 'male' | 'female';

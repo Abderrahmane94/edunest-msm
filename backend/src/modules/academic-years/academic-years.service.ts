@@ -1,4 +1,4 @@
-import prisma from '../../lib/prisma';
+import prisma, { type DbClient } from '../../lib/prisma';
 import type { CreateAcademicYearInput, UpdateAcademicYearInput } from './academic-years.schema';
 import type { AcademicYearResponse } from './academic-years.types';
 
@@ -13,6 +13,53 @@ export class AcademicYearServiceError extends Error {
 }
 
 class AcademicYearsService {
+  /**
+   * The school year a day counts in: the one containing it; in a gap between
+   * two years (summer), the next one; after the last year, the last one.
+   * Null when the school has no year. Same rule as migration 0040.
+   */
+  async yearForDate(schoolId: string, day: Date, db: DbClient = prisma): Promise<string | null> {
+    const years = await db.academicYear.findMany({
+      where: { schoolId },
+      orderBy: { startDate: 'asc' },
+      select: { id: true, startDate: true, endDate: true },
+    });
+    const t = day.getTime();
+    const containing = years.filter((y) => y.startDate.getTime() <= t && t <= y.endDate.getTime()).at(-1);
+    const next = years.find((y) => y.startDate.getTime() > t);
+    const last = [...years].reverse().find((y) => y.endDate.getTime() < t);
+    return (containing ?? next ?? last)?.id ?? null;
+  }
+
+  /**
+   * The days a school year covers for dated activity (announcements, events):
+   * from the day after the previous year ends — so the summer before it counts
+   * in it — to its end, or without end for the last year. Same rule as
+   * yearForDate. Null when the year isn't one of this school's.
+   */
+  async yearWindow(schoolId: string, academicYearId: string): Promise<{ from?: Date; to?: Date } | null> {
+    const years = await prisma.academicYear.findMany({
+      where: { schoolId },
+      orderBy: { startDate: 'asc' },
+      select: { id: true, endDate: true },
+    });
+    const i = years.findIndex((y) => y.id === academicYearId);
+    if (i < 0) return null;
+    const previous = years[i - 1];
+    const isLast = i === years.length - 1;
+    const dayAfter = (d: Date) => new Date(d.getTime() + 24 * 60 * 60 * 1000);
+    return {
+      from: previous ? dayAfter(previous.endDate) : undefined,
+      // Up to the end of its last day.
+      to: isLast ? undefined : dayAfter(years[i].endDate),
+    };
+  }
+
+  /** A school year id sent by a client, if it is one of this school's. */
+  async isSchoolYear(schoolId: string, id: string, db: DbClient = prisma): Promise<boolean> {
+    return !!(await db.academicYear.findFirst({ where: { id, schoolId }, select: { id: true } }));
+  }
+
   /**
    * Create a new academic year for a school.
    */

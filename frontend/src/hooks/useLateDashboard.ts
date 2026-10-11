@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient, ApiRequestError, apiError } from '@/lib/api-client';
+import { useYearScope } from './useSelectedYear';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -32,13 +33,15 @@ export interface LateDashboardEntry {
  * Optionally filter by status (late / late_partial).
  */
 export function useLateDashboard(branchId: string, statusFilter?: LatePeriodStatus | '') {
+  const { yearId, ready } = useYearScope();
   const queryParams = new URLSearchParams();
   if (statusFilter) {
     queryParams.set('status', statusFilter);
   }
+  if (yearId) queryParams.set('academic_year_id', yearId);
 
   return useQuery({
-    queryKey: ['late-dashboard', branchId, statusFilter],
+    queryKey: ['late-dashboard', branchId, statusFilter, yearId],
     queryFn: async () => {
       const qs = queryParams.toString();
       const url = `/payments/branches/${branchId}/late${qs ? `?${qs}` : ''}`;
@@ -52,7 +55,7 @@ export function useLateDashboard(branchId: string, statusFilter?: LatePeriodStat
       }
       return [];
     },
-    enabled: !!branchId,
+    enabled: !!branchId && ready,
   });
 }
 

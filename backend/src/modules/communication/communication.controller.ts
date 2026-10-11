@@ -422,7 +422,7 @@ export const communicationController = {
       const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const role = req.user!.role;
-      const { page, pageSize, classroomId } = req.query as unknown as AnnouncementsQuery;
+      const { page, pageSize, classroomId, academic_year_id } = req.query as unknown as AnnouncementsQuery;
 
       const { announcements, total } = await communicationService.listAnnouncements(
         schoolId,
@@ -431,6 +431,7 @@ export const communicationController = {
         page,
         pageSize,
         classroomId,
+        academic_year_id,
       );
       res.status(200).json(paginatedResponse(announcements, page, pageSize, total));
     } catch (error) {
@@ -506,9 +507,9 @@ export const communicationController = {
   async listEvents(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const schoolId = req.user!.schoolId!;
-      const { page, pageSize } = req.query as unknown as EventsQuery;
+      const { page, pageSize, academic_year_id } = req.query as unknown as EventsQuery;
 
-      const { events, total } = await communicationService.listEvents(schoolId, page, pageSize);
+      const { events, total } = await communicationService.listEvents(schoolId, page, pageSize, academic_year_id);
       res.status(200).json(paginatedResponse(events, page, pageSize, total));
     } catch (error) {
       if (error instanceof CommunicationServiceError) {

@@ -18,7 +18,7 @@ import {
   DialogFooter,
 } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
-import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
+import { useViewedYear } from '@/hooks/useSelectedYear';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import {
   useBranchCalendar,
@@ -56,7 +56,7 @@ export function BranchCalendarPage() {
 
   // Data fetching
   const { branchId: selectedBranchId } = useDefaultBranch();
-  const { data: activeAcademicYear, isLoading: yearLoading } = useActiveAcademicYear();
+  const { data: activeAcademicYear, isLoading: yearLoading } = useViewedYear();
   const selectedAcademicYearId = activeAcademicYear?.id ?? '';
   // Periods must fall within the academic year.
   const yearMin = activeAcademicYear?.start_date?.slice(0, 10);

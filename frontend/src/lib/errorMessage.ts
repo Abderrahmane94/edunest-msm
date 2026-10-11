@@ -167,6 +167,7 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^Billing period is already cancelled$/, 'periodAlreadyCancelled'],
   [/^Billing period \S+ is cancelled and cannot receive payments$/, 'periodCancelled'],
   [/^Allocation amount .* exceeds outstanding balance/, 'exceedsOutstanding'],
+  [/^A payment can only pay échéances of one school year$/, 'mixedYears'],
   [/^Allocation sum .* does not equal total amount/, 'allocationMismatch'],
   [/^Duplicate billing period IDs in allocations/, 'allocationDuplicate'],
   [/^Target child not found or has no enrollments$/, 'childNotEnrolled'],

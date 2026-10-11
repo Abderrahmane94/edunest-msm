@@ -21,7 +21,7 @@ import { formatDate, formatDZD } from '@/lib/formatters';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import { useChildren } from '@/hooks/useChildren';
 import { useClassrooms } from '@/hooks/useClassrooms';
-import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
+import { useViewedYear } from '@/hooks/useSelectedYear';
 import { useFeePeriods, useSetFeePeriods } from '@/hooks/useBranchFeePeriods';
 import { useFeeClassrooms } from '@/hooks/useBranchFeeClassrooms';
 import { useBranchCalendar, useCreateBranchCalendar } from '@/hooks/useBranchCalendar';
@@ -185,7 +185,7 @@ function FeeDialog({
   const { t, i18n } = useTranslation();
   const createFee = useCreateBranchFee(branchId);
   const updateFee = useUpdateBranchFee(branchId);
-  const { data: activeAcademicYear } = useActiveAcademicYear();
+  const { data: activeAcademicYear } = useViewedYear();
   const periodsYearId = activeAcademicYear?.id ?? '';
 
   const { data: feePeriods, isLoading: feePeriodsLoading, isError: feePeriodsError, error: feePeriodsErrorObj } = useFeePeriods(
@@ -757,7 +757,7 @@ function ViewFeeDialog({
   fee: BranchFee | null;
 }) {
   const { t, i18n } = useTranslation();
-  const { data: activeAcademicYear } = useActiveAcademicYear();
+  const { data: activeAcademicYear } = useViewedYear();
   const periodsYearId = activeAcademicYear?.id ?? '';
 
   const showPeriods = fee?.billingCycle === 'custom';

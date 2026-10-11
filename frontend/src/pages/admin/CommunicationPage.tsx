@@ -27,7 +27,7 @@ import { FormSelect } from '@/components/forms';
 import { FilterBar, Input, PageHeader, Tabs } from '@/components/ui';
 import { MessageBubble } from '@/components/messaging/MessageBubble';
 import { useClassrooms, type Classroom } from '@/hooks/useClassrooms';
-import { useAcademicYears } from '@/hooks/useAcademicYears';
+import { useSelectedYear } from '@/hooks/useSelectedYear';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/hooks/useSocket';
 import {
@@ -650,9 +650,8 @@ function CreateAnnouncementDialog({
   const [classroomId, setClassroomId] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
 
-  const { data: academicYears } = useAcademicYears();
-  const activeYear = (academicYears ?? []).find((y) => y.is_active);
-  const { data: classrooms } = useClassrooms(activeYear?.id);
+  const { year: schoolYear } = useSelectedYear();
+  const { data: classrooms } = useClassrooms(schoolYear?.id);
 
   const createAnnouncement = useCreateAnnouncement();
 
@@ -766,9 +765,8 @@ function CreateEventDialog({
 
   const createEvent = useCreateEvent();
   const [submitError, setSubmitError] = React.useState<string | null>(null);
-  const { data: academicYears } = useAcademicYears();
-  const activeYear = (academicYears ?? []).find((y) => y.is_active);
-  const { data: classrooms } = useClassrooms(activeYear?.id);
+  const { year: schoolYear } = useSelectedYear();
+  const { data: classrooms } = useClassrooms(schoolYear?.id);
 
   function toggleClassroom(id: string) {
     setClassroomIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));

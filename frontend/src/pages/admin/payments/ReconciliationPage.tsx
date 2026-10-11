@@ -5,7 +5,7 @@ import { formatDZD } from '@/lib/formatters';
 import { Button, Input, SectionHeader } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
-import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
+import { useViewedYear } from '@/hooks/useSelectedYear';
 import { useReconciliation, type ReconciliationReport } from '@/hooks/useReconciliation';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -111,11 +111,24 @@ export function ReconciliationPage() {
   const [rangeEnd, setRangeEnd] = React.useState(getTodayString());
   const [dateError, setDateError] = React.useState('');
 
-  // "School year" shortcut: the whole active academic year.
-  const { data: activeYear } = useActiveAcademicYear();
+  // "School year" shortcut: the whole school year being looked at.
+  const { data: activeYear } = useViewedYear();
   const yearStart = activeYear?.start_date?.slice(0, 10);
   const yearEnd = activeYear?.end_date?.slice(0, 10);
   const isWholeYear = !!yearStart && rangeStart === yearStart && rangeEnd === yearEnd;
+
+  // This month while looking at the current year; another year opens on the whole year.
+  React.useEffect(() => {
+    if (!yearStart || !yearEnd) return;
+    const today = getTodayString();
+    if (today >= yearStart && today <= yearEnd) {
+      setRangeStart(getFirstDayOfMonth());
+      setRangeEnd(today);
+    } else {
+      setRangeStart(yearStart);
+      setRangeEnd(yearEnd);
+    }
+  }, [yearStart, yearEnd]);
 
   // Validate date range
   React.useEffect(() => {

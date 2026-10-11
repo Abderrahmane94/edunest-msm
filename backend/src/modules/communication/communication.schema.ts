@@ -164,6 +164,7 @@ export const announcementIdParamSchema = z.object({
  */
 export const announcementsQuerySchema = paginationSchema.extend({
   classroomId: uuidSchema.optional(),
+  academic_year_id: uuidSchema.optional(),
 });
 
 export type CreateAnnouncementInput = z.infer<typeof createAnnouncementSchema>;
@@ -214,7 +215,9 @@ export const respondConsentSchema = z.object({
 /**
  * Schema for events query params (pagination).
  */
-export const eventsQuerySchema = paginationSchema;
+export const eventsQuerySchema = paginationSchema.extend({
+  academic_year_id: uuidSchema.optional(),
+});
 
 export type CreateEventInput = z.infer<typeof createEventSchema>;
 export type RespondConsentInput = z.infer<typeof respondConsentSchema>;

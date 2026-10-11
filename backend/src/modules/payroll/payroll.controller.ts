@@ -46,11 +46,15 @@ export const payrollController = {
       const isoDate = (v: unknown): string | undefined => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined);
       const paidFrom = isoDate(req.query.paidFrom);
       const paidTo = isoDate(req.query.paidTo);
+      const academicYearId = typeof req.query.academic_year_id === 'string' && req.query.academic_year_id
+        ? req.query.academic_year_id
+        : undefined;
 
       const { items, total, totalNet } = await payrollService.listPayments(schoolId, {
         userId,
         year,
         month,
+        academicYearId,
         role,
         paidFrom,
         paidTo,

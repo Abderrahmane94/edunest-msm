@@ -13,7 +13,8 @@ export type PaymentRefusalReason =
   | 'future_date'
   | 'period_not_found'
   | 'period_cancelled'
-  | 'exceeds_outstanding';
+  | 'exceeds_outstanding'
+  | 'mixed_years';
 
 export class PaymentServiceError extends Error {
   constructor(
@@ -230,7 +231,7 @@ class PaymentService {
         },
         include: {
           enrollment: {
-            select: { childId: true },
+            select: { childId: true, academicYearId: true },
           },
         },
       });
@@ -270,6 +271,18 @@ class PaymentService {
           );
         }
       }
+
+      // d.5b A payment pays the échéances of one school year: each year's money is seen on its own.
+      const years = new Set(periods.map((p) => p.enrollment.academicYearId));
+      if (years.size > 1) {
+        throw new PaymentServiceError(
+          'A payment can only pay échéances of one school year',
+          400,
+          'VALIDATION_ERROR',
+          'mixed_years',
+        );
+      }
+      const [academicYearId] = [...years];
 
       // d.6 Each allocation amount must not exceed the period's outstanding balance
       for (const alloc of allocations) {
@@ -354,6 +367,7 @@ class PaymentService {
           isCorrection: false,
           correctsPaymentId: null,
           clientId: clientId ?? null,
+          academicYearId,
         },
       });
 
@@ -642,6 +656,8 @@ class PaymentService {
           referenceNote: trimmedNote,
           isCorrection: true,
           correctsPaymentId,
+          // A correction counts in the year of the payment it corrects.
+          academicYearId: originalPayment.academicYearId,
         },
       });
 
@@ -703,10 +719,10 @@ class PaymentService {
    * billed children and their unpaid échéances (outstanding amount included).
    * Children without unpaid échéances are listed too, with none.
    */
-  async getOfflineSnapshot(branchId: string): Promise<OfflinePaymentsSnapshot> {
+  async getOfflineSnapshot(branchId: string, academicYearId?: string): Promise<OfflinePaymentsSnapshot> {
     const enrollments = await prisma.enrollment.findMany({
       // Deleted children (in the trash) aren't offered.
-      where: { branchId, child: { deletedAt: null } },
+      where: { branchId, child: { deletedAt: null }, ...(academicYearId && { academicYearId }) },
       select: {
         child: { select: { id: true, firstName: true, lastName: true } },
         billingPeriods: {
@@ -849,11 +865,15 @@ class PaymentService {
       feeId?: string;
       /** Part of a receipt number (case-insensitive). */
       receipt?: string;
+      /** Payments of one school year. */
+      academicYearId?: string;
     } = {},
   ) {
     const where: Prisma.PaymentRecordWhereInput = {
       branchId,
     };
+
+    if (filters.academicYearId) where.academicYearId = filters.academicYearId;
 
     if (filters.childId) where.childId = filters.childId;
     if (filters.type) where.isCorrection = filters.type === 'correction';
@@ -908,13 +928,15 @@ class PaymentService {
   async getLateDashboard(
     branchId: string,
     statusFilter?: 'late' | 'late_partial',
+    academicYearId?: string,
   ) {
-    // Query all non-cancelled billing periods for enrollments of this branch,
-    // including payment allocations to compute total_paid.
+    // Query all non-cancelled billing periods for enrollments of this branch
+    // (of one school year when asked), including payment allocations to compute total_paid.
     const billingPeriods = await prisma.billingPeriod.findMany({
       where: {
         enrollment: {
           branchId,
+          ...(academicYearId && { academicYearId }),
         },
         cancelledAt: null, // Exclude cancelled periods (Req 14.2)
       },

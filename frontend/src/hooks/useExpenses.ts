@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, apiError } from '@/lib/api-client';
+import { useYearScope } from './useSelectedYear';
 
 export interface Expense {
   id: string;
@@ -41,10 +42,13 @@ export const EXPENSES_PAGE_SIZE = 20;
  * total amount of all matching expenses (not just this page).
  */
 export function useExpenses(filters: ExpenseFilters, page: number) {
+  const { yearId, ready } = useYearScope();
   return useQuery({
-    queryKey: ['expenses', filters, page],
+    queryKey: ['expenses', filters, page, yearId],
+    enabled: ready,
     queryFn: async () => {
       const params = new URLSearchParams({ page: String(page), pageSize: String(EXPENSES_PAGE_SIZE) });
+      if (yearId) params.set('academic_year_id', yearId);
       for (const [key, value] of Object.entries(filters)) {
         if (value) params.set(key, value);
       }
@@ -65,9 +69,11 @@ export function useExpenses(filters: ExpenseFilters, page: number) {
 
 export function useCreateExpense() {
   const qc = useQueryClient();
+  const { yearId } = useYearScope();
   return useMutation({
     mutationFn: async (input: CreateExpenseInput) => {
-      const res = await apiClient.post<Expense>('/payments/expenses', input);
+      // Counted in the year being looked at.
+      const res = await apiClient.post<Expense>('/payments/expenses', { ...input, academicYearId: yearId });
       if (!res.success) throw apiError(res.error, 'Failed to create expense');
       return res.data;
     },

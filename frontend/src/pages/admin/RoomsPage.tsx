@@ -22,7 +22,7 @@ import {
 } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { cn } from '@/lib/utils';
-import { useActiveAcademicYear } from '@/hooks/useAcademicYears';
+import { useViewedYear } from '@/hooks/useSelectedYear';
 import { useCreateRoom, useDeleteRoom, useRooms, useUpdateRoom, type Room } from '@/hooks/useRooms';
 import { roomCardWarnings } from './RoomField';
 
@@ -233,7 +233,7 @@ function RoomCard({
 /** The "Salles" tab of Settings: the school's rooms and the classes in them this year. */
 export function RoomsSection() {
   const { t } = useTranslation();
-  const { data: activeYear } = useActiveAcademicYear();
+  const { data: activeYear } = useViewedYear();
   const { data: rooms, isLoading } = useRooms(activeYear?.id);
   const updateRoom = useUpdateRoom();
   const deleteRoom = useDeleteRoom();

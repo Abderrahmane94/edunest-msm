@@ -5,6 +5,7 @@ import { receiptService } from './receipt.service';
 import { emailService } from '../../services/email.service';
 import { recordPaymentSchema, recordCorrectionSchema } from './payments.schema';
 import { successResponse, errorResponse } from '../../utils/response';
+import { academicYearQuery } from '../../utils/validators';
 import { validateBranchAccess, resolveBranchFilter } from './tenant-scope.middleware';
 import { derivePeriodStatus } from './billing-period.service';
 import prisma from '../../lib/prisma';
@@ -89,7 +90,7 @@ export const paymentsController = {
       }
       const branchId = await validateBranchAccess(req.params.branchId, req, res);
       if (!branchId) return;
-      res.status(200).json(successResponse(await paymentService.getOfflineSnapshot(branchId)));
+      res.status(200).json(successResponse(await paymentService.getOfflineSnapshot(branchId, academicYearQuery(req.query))));
     } catch (error) {
       next(error);
     }
@@ -218,6 +219,7 @@ export const paymentsController = {
       if (typeof req.query.receipt === 'string' && req.query.receipt.trim()) {
         filters.receipt = req.query.receipt.trim().slice(0, 50);
       }
+      filters.academicYearId = academicYearQuery(req.query);
 
       const records = await paymentService.listRecords(effectiveBranchId, filters);
       res.status(200).json(successResponse(records));
@@ -275,7 +277,7 @@ export const paymentsController = {
         statusFilter = status as 'late' | 'late_partial';
       }
 
-      const entries = await paymentService.getLateDashboard(validatedBranch, statusFilter);
+      const entries = await paymentService.getLateDashboard(validatedBranch, statusFilter, academicYearQuery(req.query));
       res.status(200).json(successResponse(entries));
     } catch (error) {
       if (error instanceof PaymentServiceError) {
@@ -378,11 +380,13 @@ export const paymentsController = {
         return;
       }
 
-      // Get all billing periods for the child with allocations for status derivation
+      // Get the child's billing periods (of one school year when asked) with allocations for status derivation
+      const academicYearId = academicYearQuery(req.query);
       const periods = await prisma.billingPeriod.findMany({
         where: {
           enrollment: {
             childId,
+            ...(academicYearId && { academicYearId }),
           },
         },
         include: {

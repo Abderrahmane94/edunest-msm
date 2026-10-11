@@ -4,7 +4,7 @@ import { UserServiceError } from '../users/users.service';
 import { EnrollmentServiceError } from '../payments/enrollment.service';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
 import type { RegisterChildInput, CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, UpdateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput, CreateMedicalNoteInput, UpdateMedicalNoteInput } from './children.schema';
-import { paginationSchema } from '../../utils/validators';
+import { academicYearQuery, paginationSchema } from '../../utils/validators';
 import { softDeleteService, SoftDeleteError } from '../../services/soft-delete.service';
 
 export const childrenController = {
@@ -72,6 +72,7 @@ export const childrenController = {
       const status = str(q.status);
       const hasParent = str(q.has_parent);
       const { children, total } = await childrenService.list(schoolId, page, pageSize, {
+        academicYearId: academicYearQuery(q),
         classroomId: str(q.classroom_id),
         search: str(q.search)?.slice(0, 100),
         gender: gender === 'male' || gender === 'female' ? gender : undefined,

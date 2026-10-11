@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, apiError } from '@/lib/api-client';
+import { useYearScope } from './useSelectedYear';
 import { queryClient as sharedQueryClient } from '@/lib/query-client';
 import { enqueue, registerQueueHandler, QueueRejectedError } from '@/lib/offlineQueue';
 
@@ -73,10 +74,14 @@ function mapEvent(raw: Record<string, unknown>): SchoolEvent {
 // ─── Hooks ───────────────────────────────────────────────────────────────────
 
 export function useAnnouncements() {
+  const { yearId, ready } = useYearScope();
   return useQuery({
-    queryKey: ['announcements'],
+    queryKey: ['announcements', 'list', yearId],
+    enabled: ready,
     queryFn: async () => {
-      const res = await apiClient.get<Record<string, unknown>[]>('/communication/announcements');
+      const res = await apiClient.get<Record<string, unknown>[]>(
+        `/communication/announcements${yearId ? `?academic_year_id=${yearId}` : ''}`,
+      );
       if (!res.success) throw apiError(res.error, 'Failed to load announcements');
       const raw = res.data;
       const list = Array.isArray(raw) ? raw : [];
@@ -159,10 +164,14 @@ export function useCreateAnnouncement() {
 }
 
 export function useEvents() {
+  const { yearId, ready } = useYearScope();
   return useQuery({
-    queryKey: ['events'],
+    queryKey: ['events', 'list', yearId],
+    enabled: ready,
     queryFn: async () => {
-      const res = await apiClient.get<Record<string, unknown>[]>('/communication/events');
+      const res = await apiClient.get<Record<string, unknown>[]>(
+        `/communication/events${yearId ? `?academic_year_id=${yearId}` : ''}`,
+      );
       if (!res.success) throw apiError(res.error, 'Failed to load events');
       const raw = res.data;
       const list = Array.isArray(raw) ? raw : [];

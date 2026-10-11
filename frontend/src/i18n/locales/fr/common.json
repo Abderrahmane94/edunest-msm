@@ -13,6 +13,8 @@
         "attendance": "Appel non fait : {{classes}}",
         "latePayments": "Impayés en retard : {{amount}} — enfants concernés : {{children}}",
         "waitingParents": "Parents sans réponse depuis plus de 3 h : {{count}}",
+        "lowStock_one": "1 fourniture à racheter",
+        "lowStock_other": "{{count}} fournitures à racheter",
         "pendingConsents": "Autorisations parentales en attente : {{count}}"
       },
       "sections": {
@@ -321,6 +323,8 @@
     "trash": "Corbeille",
     "timetable": "Jours de présence",
     "payroll": "Paie",
+    "inventory": "Inventaire",
+    "supplies": "Fournitures",
     "announcements": "Annonces",
     "payments": "Paiements",
     "paymentsEnrollments": "Inscriptions",
@@ -463,6 +467,12 @@
       "schoolAlreadyDeactivated": "Cet établissement est déjà désactivé.",
       "yearNotFound": "Année scolaire introuvable.",
       "yearClosed": "Cette année scolaire est clôturée : on peut seulement encaisser ses impayés. Pour la modifier, réactivez-la.",
+      "supplyNotFound": "Article introuvable.",
+      "supplyNameTaken": "Un article porte déjà ce nom.",
+      "supplyHasHistory": "Cet article a un historique : mettez-le de côté au lieu de le supprimer.",
+      "supplyAside": "Cet article est mis de côté.",
+      "supplyNotEnough": "Pas assez en stock : il reste {{left}}.",
+      "supplyAdminOnly": "Seul un administrateur peut enregistrer les achats et les inventaires.",
       "rolloverSameYear": "Choisissez une autre année à copier.",
       "rolloverStartOutside": "La date de début de facturation doit être dans la nouvelle année.",
       "rolloverClassNotCopied": "Un enfant est envoyé dans une classe qui n'est pas copiée.",
@@ -820,6 +830,94 @@
       "startDateRequired": "La date de début est requise",
       "endDateRequired": "La date de fin est requise",
       "endDateAfterStart": "La date de fin doit être après la date de début"
+    }
+  },
+  "inventory": {
+    "title": "Inventaire",
+    "description": "Les fournitures de l'école : ce qui reste, et quand racheter.",
+    "create": "Nouvel article",
+    "empty": "Aucune fourniture pour le moment. Ajoutez les articles que l'école garde en stock (couches, savon, papier…).",
+    "noMatch": "Aucun article ne correspond.",
+    "searchPlaceholder": "Rechercher un article…",
+    "allCategories": "Toutes les catégories",
+    "onlyLow": "À racheter seulement",
+    "showAside": "Afficher les articles mis de côté",
+    "summary_one": "{{count}} article",
+    "summary_other": "{{count}} articles",
+    "toBuy": "À racheter",
+    "aside": "mis de côté",
+    "lowBanner_one": "1 article à racheter : {{names}}",
+    "lowBanner_other": "{{count}} articles à racheter : {{names}}",
+    "columns": {
+      "name": "Article",
+      "stock": "En stock",
+      "threshold": "Seuil d'alerte"
+    },
+    "categories": {
+      "hygiene": "Hygiène",
+      "cleaning": "Entretien",
+      "stationery": "Papeterie",
+      "crafts": "Activités manuelles",
+      "food": "Alimentation",
+      "other": "Autre"
+    },
+    "item": {
+      "createTitle": "Nouvel article",
+      "editTitle": "Modifier l'article",
+      "description": "Un produit que l'école garde en stock.",
+      "name": "Nom",
+      "namePlaceholder": "Ex. Couches taille 4",
+      "category": "Catégorie",
+      "unit": "Unité",
+      "unitPlaceholder": "Ex. paquet",
+      "initialQuantity": "Quantité en stock aujourd'hui",
+      "alertThreshold": "Seuil d'alerte",
+      "alertThresholdHelp": "À racheter quand le stock descend à ce niveau (0 : jamais d'alerte).",
+      "notes": "Remarques",
+      "putAside": "Mettre de côté",
+      "reactivate": "Réactiver"
+    },
+    "movement": {
+      "inStock": "En stock : {{quantity}} {{unit}}",
+      "types": {
+        "purchase": "Achat",
+        "use": "Sortie",
+        "adjustment": "Inventaire"
+      },
+      "quantity": "Quantité ({{unit}})",
+      "counted": "Stock compté ({{unit}})",
+      "date": "Date",
+      "after": "Stock après : {{quantity}} {{unit}}",
+      "alsoExpense": "Enregistrer aussi la dépense",
+      "amount": "Montant total (DA)",
+      "expenseCategory": "Catégorie de dépense",
+      "note": "Note",
+      "notePlaceholder": {
+        "purchase": "Ex. fournisseur, n° de facture",
+        "use": "Ex. classe des Petits",
+        "adjustment": "Ex. inventaire de fin de mois"
+      },
+      "save": {
+        "purchase": "Enregistrer l'achat",
+        "use": "Enregistrer la sortie",
+        "adjustment": "Enregistrer le comptage"
+      },
+      "quantityInvalid": "Indiquez une quantité valide.",
+      "amountRequired": "Indiquez le montant de la dépense, ou décochez la case.",
+      "notEnough": "Pas assez en stock : il reste {{quantity}} {{unit}}."
+    },
+    "history": {
+      "open": "Historique",
+      "title": "Historique — {{name}}",
+      "empty": "Aucun mouvement pour le moment.",
+      "after": "stock {{quantity}} {{unit}}",
+      "expense": "dépense {{amount}}"
+    },
+    "teacher": {
+      "title": "Fournitures",
+      "description": "Indiquez ce que vous utilisez : le stock reste juste et l'école sait quand racheter.",
+      "empty": "L'école n'a encore aucune fourniture enregistrée.",
+      "used": "J'ai utilisé"
     }
   },
   "yearRollover": {

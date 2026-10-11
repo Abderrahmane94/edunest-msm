@@ -3,3 +3,4 @@ export { TeacherDailyReportPage } from './TeacherDailyReportPage';
 export { TeacherMessagesPage } from './TeacherMessagesPage';
 export { TeacherAnnouncementsPage } from './TeacherAnnouncementsPage';
 export { TeacherChildrenPage } from './TeacherChildrenPage';
+export { TeacherSuppliesPage } from './TeacherSuppliesPage';

@@ -17,12 +17,14 @@ import {
   School,
   TrendingUp,
   Wallet,
+  Package,
 } from 'lucide-react';
 import { useAdminDashboard, type AdminDashboard as Dashboard } from '@/hooks/useAdminDashboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDateIn, formatTime } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
+import { useLowStockCount } from '@/hooks/useInventory';
 import { ActionList, BarChart, BigNumber, Progress, Section, Tile, type ActionItem } from './parts';
 import { TONE_FILL, TONE_ICON, useNumbers, type Tone } from './theme';
 
@@ -31,6 +33,7 @@ import { TONE_FILL, TONE_ICON, useNumbers, type Tone } from './theme';
 function TodoList({ data }: { data: Dashboard }) {
   const { t } = useTranslation();
   const n = useNumbers();
+  const { data: lowStock = 0 } = useLowStockCount();
   const items: ActionItem[] = [];
 
   if (data.attendance.missingClassrooms.length > 0) {
@@ -72,6 +75,15 @@ function TodoList({ data }: { data: Dashboard }) {
       icon: <FileSignature className="w-4 h-4" />,
       text: t('dashboard.admin.todo.pendingConsents', { count: data.communication.pendingConsents }),
       to: '/admin/communication?tab=events',
+    });
+  }
+  if (lowStock > 0) {
+    items.push({
+      key: 'stock',
+      tone: 'warning',
+      icon: <Package className="w-4 h-4" />,
+      text: t('dashboard.admin.todo.lowStock', { count: lowStock }),
+      to: '/admin/inventory',
     });
   }
   return (

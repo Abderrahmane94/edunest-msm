@@ -275,33 +275,45 @@ export const authService = {
     });
 
     for (const user of users) {
-      // Earlier links for this account stop working.
-      await prisma.passwordResetToken.updateMany({
-        where: { userId: user.id, usedAt: null },
-        data: { usedAt: new Date() },
-      });
-
-      const token = crypto.randomBytes(32).toString('hex');
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + PASSWORD_RESET_EXPIRY_HOURS);
-      await prisma.passwordResetToken.create({
-        data: { userId: user.id, token: hashResetToken(token), expiresAt },
-      });
-
-      // The token is saved either way: a failed email only means asking again.
-      try {
-        await emailService.sendPasswordResetEmail(user.email, {
-          firstName: user.firstName,
-          resetUrl: `${getFrontendUrl()}/reset-password/confirm?token=${token}`,
-          expiresInHours: PASSWORD_RESET_EXPIRY_HOURS,
-          // Tells the accounts apart when the email has several.
-          schoolName: users.length > 1 ? (user.school?.name ?? null) : null,
-        });
-      } catch (err) {
-        console.error('[AuthService] Failed to send password reset email:', err);
-      }
+      // Tells the accounts apart when the email has several.
+      await authService.sendPasswordResetLink(user, users.length > 1 ? (user.school?.name ?? null) : null);
     }
     return users.length;
+  },
+
+  /**
+   * Emails one account a new reset link; its earlier links stop working.
+   * The token is saved either way: a failed email only means asking again.
+   * Returns whether the email went out.
+   */
+  async sendPasswordResetLink(
+    user: { id: string; email: string; firstName: string },
+    schoolName: string | null = null,
+  ): Promise<boolean> {
+    await prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + PASSWORD_RESET_EXPIRY_HOURS);
+    await prisma.passwordResetToken.create({
+      data: { userId: user.id, token: hashResetToken(token), expiresAt },
+    });
+
+    try {
+      await emailService.sendPasswordResetEmail(user.email, {
+        firstName: user.firstName,
+        resetUrl: `${getFrontendUrl()}/reset-password/confirm?token=${token}`,
+        expiresInHours: PASSWORD_RESET_EXPIRY_HOURS,
+        schoolName,
+      });
+      return true;
+    } catch (err) {
+      console.error('[AuthService] Failed to send password reset email:', err);
+      return false;
+    }
   },
 
   async confirmPasswordReset(input: PasswordResetConfirmInput): Promise<void> {

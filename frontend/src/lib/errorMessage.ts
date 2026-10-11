@@ -101,6 +101,8 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^Cannot delete classroom with enrolled children/, 'classroomHasChildren'],
   [/^Classroom "(?<classroom>.+)" is at full capacity \((?<capacity>\d+)\)\.$/, 'classroomFull'],
   [/^Room not found$/, 'roomNotFound'],
+  [/^Use "change password" for your own account$/, 'resetOwnPassword'],
+  [/^The reset email could not be sent$/, 'resetEmailFailed'],
   [/^A room named "(?<room>.+)" already exists$/, 'roomNameTaken'],
   [/^Cannot delete a room used by a class/, 'roomInUse'],
   [/^Room is inactive$/, 'roomInactive'],

@@ -153,6 +153,28 @@ export function useToggleUserActive() {
   });
 }
 
+/** Gives a user a new temporary password; returns it (shown once). */
+export function useResetUserPassword() {
+  return useMutation({
+    mutationFn: async (id: string): Promise<string> => {
+      const res = await apiClient.post<{ temporaryPassword: string }>(`/users/${id}/reset-password`);
+      if (!res.success) throw apiError(res.error, 'Failed to reset password');
+      return res.data!.temporaryPassword;
+    },
+  });
+}
+
+/** Emails a user a password reset link; returns the address it went to. */
+export function useSendResetLink() {
+  return useMutation({
+    mutationFn: async (id: string): Promise<string> => {
+      const res = await apiClient.post<{ email: string }>(`/users/${id}/send-reset-link`);
+      if (!res.success) throw apiError(res.error, 'Failed to send reset link');
+      return res.data!.email;
+    },
+  });
+}
+
 export function useInviteUser() {
   return useMutation({
     mutationFn: async (data: { email: string; role: string }) => {

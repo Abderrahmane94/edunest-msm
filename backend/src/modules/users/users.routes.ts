@@ -46,6 +46,12 @@ router.patch('/:id/activate', requireAdmin, validateParams(idParamSchema), users
 // PATCH /api/users/:id/deactivate — Deactivate user (admin only)
 router.patch('/:id/deactivate', requireAdmin, validateParams(idParamSchema), usersController.deactivate);
 
+// POST /api/users/:id/reset-password — Give a user a temporary password (admin only)
+router.post('/:id/reset-password', requireAdmin, validateParams(idParamSchema), usersController.resetPassword);
+
+// POST /api/users/:id/send-reset-link — Email a user a password reset link (admin only)
+router.post('/:id/send-reset-link', requireAdmin, validateParams(idParamSchema), usersController.sendResetLink);
+
 // PATCH /api/users/:id/fcm-token — Update FCM token (any authenticated user)
 router.patch(
   '/:id/fcm-token',

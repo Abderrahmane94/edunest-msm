@@ -112,6 +112,9 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^Choose another default profile instead$/, 'chooseOtherDefault'],
   [/^Profile not found$/, 'profileNotFound'],
   [/^Only office staff \(administrative\) have a profile$/, 'profileOnlyOffice'],
+  [/^This right is on or off$/, 'rightOnOff'],
+  [/^The end date is already past$/, 'endDatePast'],
+  [/^Exception not found$/, 'exceptionNotFound'],
 
   // Teacher replacements
   [/^This class already has a replacement on these dates$/, 'classAlreadyReplaced'],

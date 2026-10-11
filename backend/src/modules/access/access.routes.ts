@@ -5,7 +5,7 @@ import { validate, validateParams } from '../../middleware/validation.middleware
 import { idParamSchema } from '../../utils/validators';
 import { successResponse, errorResponse } from '../../utils/response';
 import { permissionsOf } from '../../middleware/permission.middleware';
-import { accessService, AccessServiceError } from './access.service';
+import { accessService, AccessServiceError, EXCEPTION_KEYS } from './access.service';
 import { AREAS, type Permissions } from './permissions';
 
 const level = z.enum(['none', 'view', 'edit']);
@@ -21,6 +21,16 @@ const createSchema = z.object({
 });
 const updateSchema = createSchema.partial().extend({ isDefault: z.literal(true).optional() });
 const assignSchema = z.object({ profileId: z.string().uuid() });
+const exceptionSchema = z.object({
+  area: z.enum(EXCEPTION_KEYS),
+  level: level,
+  endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  note: z.string().trim().max(200).nullable().optional(),
+});
+const exceptionParamsSchema = z.object({ id: z.string().uuid(), exceptionId: z.string().uuid() });
+
+/** The director acting: kept in the journal. */
+const actor = (req: Request) => ({ userId: req.user!.userId, schoolId: req.user!.schoolId! });
 
 function handle(fn: (req: Request) => Promise<unknown>, status = 200) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -54,7 +64,7 @@ router.post(
   '/',
   requireAdmin,
   validate(createSchema),
-  handle((req) => accessService.create(req.user!.schoolId!, req.body as z.infer<typeof createSchema> & { permissions: Permissions }), 201),
+  handle((req) => accessService.create(actor(req), req.body as z.infer<typeof createSchema> & { permissions: Permissions }), 201),
 );
 
 // PUT /api/access-profiles/:id — Rename, change its rights, or make it the default
@@ -63,7 +73,7 @@ router.put(
   requireAdmin,
   validateParams(idParamSchema),
   validate(updateSchema),
-  handle((req) => accessService.update(req.params.id, req.user!.schoolId!, req.body as z.infer<typeof updateSchema>)),
+  handle((req) => accessService.update(actor(req), req.params.id, req.body as z.infer<typeof updateSchema>)),
 );
 
 // DELETE /api/access-profiles/:id — Delete it (its staff get the default profile)
@@ -72,7 +82,7 @@ router.delete(
   requireAdmin,
   validateParams(idParamSchema),
   handle(async (req) => {
-    await accessService.delete(req.params.id, req.user!.schoolId!);
+    await accessService.delete(actor(req), req.params.id);
     return { message: 'Profile deleted' };
   }),
 );
@@ -84,8 +94,43 @@ router.put(
   validateParams(idParamSchema),
   validate(assignSchema),
   handle(async (req) => {
-    await accessService.assign(req.params.id, req.user!.schoolId!, (req.body as { profileId: string }).profileId);
+    await accessService.assign(actor(req), req.params.id, (req.body as { profileId: string }).profileId);
     return { message: 'Profile assigned' };
+  }),
+);
+
+// GET /api/access-profiles/journal?user_id=&profile_id= — Who changed which rights, when
+router.get(
+  '/journal',
+  requireAdmin,
+  handle((req) =>
+    accessService.journal(req.user!.schoolId!, {
+      userId: typeof req.query.user_id === 'string' ? req.query.user_id : undefined,
+      profileId: typeof req.query.profile_id === 'string' ? req.query.profile_id : undefined,
+    }),
+  ),
+);
+
+// GET /api/access-profiles/users/:id/exceptions — A person's exceptions
+router.get('/users/:id/exceptions', requireAdmin, validateParams(idParamSchema), handle((req) => accessService.exceptionsOf(req.params.id, req.user!.schoolId!)));
+
+// PUT /api/access-profiles/users/:id/exceptions — Set one (an area differing from the profile)
+router.put(
+  '/users/:id/exceptions',
+  requireAdmin,
+  validateParams(idParamSchema),
+  validate(exceptionSchema),
+  handle((req) => accessService.setException(actor(req), req.params.id, req.body as z.infer<typeof exceptionSchema>)),
+);
+
+// DELETE /api/access-profiles/users/:id/exceptions/:exceptionId — Remove one
+router.delete(
+  '/users/:id/exceptions/:exceptionId',
+  requireAdmin,
+  validateParams(exceptionParamsSchema),
+  handle(async (req) => {
+    await accessService.removeException(actor(req), req.params.id, req.params.exceptionId);
+    return { message: 'Exception removed' };
   }),
 );
 

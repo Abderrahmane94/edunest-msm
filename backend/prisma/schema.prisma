@@ -164,6 +164,8 @@ model School {
   equipment      Equipment[]
   substitutions  Substitution[]
   accessProfiles AccessProfile[]
+  accessLogs       AccessLog[]
+  accessExceptions AccessException[]
   stockMovements StockMovement[]
   children       Child[]
   expenses       Expense[]
@@ -225,6 +227,7 @@ model User {
   substitutionsTaken          Substitution[]       @relation("SubstitutionSubstitute")
   substitutionsCreated        Substitution[]       @relation("SubstitutionCreatedBy")
   accessProfile               AccessProfile?       @relation(fields: [accessProfileId], references: [id], onDelete: SetNull)
+  accessExceptions            AccessException[]    @relation("AccessExceptionUser")
 
   @@index([deletedAt])
   @@index([email])
@@ -1234,4 +1237,54 @@ model AccessProfile {
 
   @@unique([schoolId, name])
   @@map("access_profiles")
+}
+
+/// What changed in the rights, by whom and when: profiles made, changed or
+/// deleted, profiles given, exceptions added or removed. Never edited.
+model AccessLog {
+  id           String   @id @default(uuid())
+  schoolId     String   @map("school_id")
+  /// Who made the change (the director); names kept as they were.
+  actorUserId  String   @map("actor_user_id")
+  actorName    String   @map("actor_name")
+  /// profile_created, profile_updated, profile_deleted, profile_default,
+  /// profile_assigned, exception_added, exception_removed
+  action       String
+  profileId    String?  @map("profile_id")
+  profileName  String?  @map("profile_name")
+  targetUserId String?  @map("target_user_id")
+  targetName   String?  @map("target_name")
+  /// The change itself: { changes: [{ key, from, to }] }, { from, to }, an exception…
+  details      Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  school School @relation(fields: [schoolId], references: [id])
+
+  @@index([schoolId, createdAt])
+  @@index([targetUserId])
+  @@map("access_logs")
+}
+
+/// One person's right differing from their profile's, in one area (or the
+/// delete / correct-payments rights), until a date or for good.
+model AccessException {
+  id              String    @id @default(uuid())
+  schoolId        String    @map("school_id")
+  userId          String    @map("user_id")
+  /// An area (children, payroll…) or "delete" / "correctPayments".
+  area            String
+  /// none / view / edit; for the two rights: none (off) or edit (on).
+  level           String
+  /// Last day it applies; null: until removed.
+  endsOn          DateTime? @map("ends_on") @db.Date
+  note            String?
+  createdByUserId String    @map("created_by_user_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  school School @relation(fields: [schoolId], references: [id])
+  user   User   @relation("AccessExceptionUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, area])
+  @@index([schoolId])
+  @@map("access_exceptions")
 }

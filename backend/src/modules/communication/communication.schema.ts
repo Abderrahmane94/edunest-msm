@@ -87,6 +87,13 @@ export type DailyReportsQuery = z.infer<typeof dailyReportsQuerySchema>;
 export const createConversationSchema = z.object({
   childId: uuidSchema,
   parentUserId: uuidSchema.optional(),
+  /** With the school office rather than the child's teacher. */
+  withOffice: z.boolean().optional(),
+});
+
+/** GET /conversations — `office=true`: only the threads with the school office. */
+export const conversationsQuerySchema = paginationSchema.extend({
+  office: z.enum(['true', 'false']).optional().transform((v) => v === 'true'),
 });
 
 /**
@@ -146,6 +153,7 @@ export const messagesQuerySchema = paginationSchema;
 export type CreateConversationInput = z.infer<typeof createConversationSchema>;
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
 export type MessagesQuery = z.infer<typeof messagesQuerySchema>;
+export type ConversationsQuery = z.infer<typeof conversationsQuerySchema>;
 
 // ─── Announcements Schemas ───────────────────────────────────────────────────
 

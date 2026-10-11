@@ -11,9 +11,13 @@ import {
   FileText,
   ArrowLeft,
   MessageCircle,
+  Plus,
+  Building2,
+  GraduationCap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Avatar } from '@/components/ui';
+import { errorMessage } from '@/lib/errorMessage';
+import { Avatar, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui';
 import { MessageBubble } from '@/components/messaging/MessageBubble';
 import { PendingMessageBubble } from '@/components/messaging/PendingMessageBubble';
 import { sendTextMessage, usePendingMessages } from '@/hooks/useMessageSync';
@@ -24,6 +28,8 @@ import {
   useMessages,
   useSendFileMessage,
   useMarkMessageRead,
+  useCreateConversation,
+  useMessageContacts,
   type Conversation,
 } from '@/hooks/useMessaging';
 import { messagePreview } from '@/components/messaging/messagePreview';
@@ -41,6 +47,7 @@ export function ParentMessagesPage() {
   );
   const [messageInput, setMessageInput] = React.useState('');
   const [showAttachMenu, setShowAttachMenu] = React.useState(false);
+  const [showNewMessage, setShowNewMessage] = React.useState(false);
 
   // Re-select when navigating here again (e.g. from another notification)
   // while this page is already mounted.
@@ -200,13 +207,23 @@ export function ParentMessagesPage() {
     <div className="h-[calc(100dvh-4rem-var(--tabbar-h))] lg:h-[calc(100dvh-3.5rem)] min-h-[360px] bg-page flex flex-col overflow-hidden">
       {/* Page header */}
       <header className="shrink-0 bg-card border-b border-border">
-        <div className="max-w-[600px] mx-auto px-4 py-3">
-          <h1 className="text-page-title font-semibold text-text-heading">
-            {t('parentMessages.title')}
-          </h1>
-          <p className="text-caption text-text-secondary">
-            {t('parentMessages.subtitle')}
-          </p>
+        <div className="max-w-[600px] mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-page-title font-semibold text-text-heading">
+              {t('parentMessages.title')}
+            </h1>
+            <p className="text-caption text-text-secondary">
+              {t('parentMessages.subtitle')}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowNewMessage(true)}
+            className="shrink-0 inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-lg bg-[var(--color-accent)] text-[var(--color-text-inverse)] text-caption font-medium hover:bg-[var(--color-accent-hover)] active:scale-[0.98] transition-all duration-150"
+          >
+            <Plus className="w-4 h-4" />
+            {t('parentMessages.newMessage')}
+          </button>
         </div>
       </header>
 
@@ -251,6 +268,10 @@ export function ParentMessagesPage() {
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-body font-medium text-text-primary truncate">
                             {conversation.child_name}
+                            <span className="text-caption font-normal text-text-secondary">
+                              {' · '}
+                              {conversation.with_office ? t('parentMessages.office') : t('parentMessages.teacher')}
+                            </span>
                           </span>
                           {conversation.unread_count > 0 && (
                             <span className="shrink-0 flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[var(--color-accent)] text-[var(--color-text-inverse)] text-micro font-medium">
@@ -298,6 +319,16 @@ export function ParentMessagesPage() {
                   ? t('parentMessages.noConversations')
                   : t('messages.selectConversation')}
               </p>
+              {conversations.length === 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowNewMessage(true)}
+                  className="mt-4 inline-flex items-center gap-2 min-h-[44px] px-4 rounded-lg bg-[var(--color-accent)] text-[var(--color-text-inverse)] text-body font-medium hover:bg-[var(--color-accent-hover)] active:scale-[0.98]"
+                >
+                  <Plus className="w-4 h-4" />
+                  {t('parentMessages.newMessage')}
+                </button>
+              )}
             </div>
           ) : (
             <>
@@ -319,7 +350,7 @@ export function ParentMessagesPage() {
                     {activeConversation?.child_name}
                   </p>
                   <p className="text-caption text-text-secondary truncate">
-                    {t('parentMessages.teacher')}
+                    {activeConversation?.with_office ? t('parentMessages.office') : t('parentMessages.teacher')}
                   </p>
                 </div>
               </div>
@@ -452,7 +483,111 @@ export function ParentMessagesPage() {
           )}
         </main>
       </div>
+
+      <NewMessageDialog
+        open={showNewMessage}
+        onOpenChange={setShowNewMessage}
+        onOpened={(id) => {
+          setActiveConversationId(id);
+          setShowNewMessage(false);
+        }}
+      />
     </div>
+  );
+}
+
+/**
+ * Start (or reopen) a conversation about one of the parent's children, with
+ * the child's teacher or with the school office.
+ */
+function NewMessageDialog({
+  open,
+  onOpenChange,
+  onOpened,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onOpened: (conversationId: string) => void;
+}) {
+  const { t } = useTranslation();
+  const { data: contacts = [], isLoading } = useMessageContacts(open);
+  const createConversation = useCreateConversation();
+
+  const start = (childId: string, withOffice: boolean) => {
+    createConversation.mutate(
+      { childId, withOffice },
+      {
+        onSuccess: (data) => {
+          const conv = (data as { conversation?: { id: string } })?.conversation ?? data;
+          const id = (conv as { id?: string })?.id;
+          if (id) onOpened(id);
+          else onOpenChange(false);
+        },
+      },
+    );
+  };
+
+  const optionClass =
+    'flex-1 flex items-center gap-2 min-h-[52px] px-3 rounded-lg border border-border text-start hover:bg-hover hover:border-[var(--color-border-strong)] active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed';
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('parentMessages.newMessage')}</DialogTitle>
+          <DialogDescription>{t('parentMessages.newMessageHint')}</DialogDescription>
+        </DialogHeader>
+        <div className="py-2 space-y-4 max-h-[60vh] overflow-y-auto">
+          {isLoading && <div className="animate-pulse h-24 bg-subtle rounded-lg" />}
+          {!isLoading && contacts.length === 0 && (
+            <p className="text-body text-text-secondary text-center py-4">{t('parentMessages.noChildren')}</p>
+          )}
+          {contacts.map((c) => (
+            <div key={c.childId} className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Avatar name={`${c.firstName} ${c.lastName}`} size="sm" />
+                <span className="text-body font-medium text-text-heading">
+                  {c.firstName} {c.lastName}
+                </span>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  onClick={() => start(c.childId, false)}
+                  disabled={!c.teacherName || createConversation.isPending}
+                  className={optionClass}
+                >
+                  <GraduationCap className="w-5 h-5 shrink-0 text-[var(--color-accent)]" />
+                  <span className="min-w-0">
+                    <span className="block text-body font-medium text-text-primary">{t('parentMessages.teacher')}</span>
+                    <span className="block text-caption text-text-secondary truncate">
+                      {c.teacherName ?? t('parentMessages.noTeacherYet')}
+                    </span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => start(c.childId, true)}
+                  disabled={createConversation.isPending}
+                  className={optionClass}
+                >
+                  <Building2 className="w-5 h-5 shrink-0 text-[var(--color-accent)]" />
+                  <span className="min-w-0">
+                    <span className="block text-body font-medium text-text-primary">{t('parentMessages.office')}</span>
+                    <span className="block text-caption text-text-secondary truncate">{t('parentMessages.officeHint')}</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+          ))}
+          {createConversation.isError && (
+            <p className="text-caption text-[var(--color-danger)] text-center">
+              {errorMessage(createConversation.error, t)}
+            </p>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

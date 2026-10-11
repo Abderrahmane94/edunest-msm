@@ -83,11 +83,10 @@ export function notificationLink(
   switch (n.type) {
     case 'message_new':
       if (isAdmin) {
-        // Admins have no standalone /admin/messages route — both parent/teacher
-        // chats and staff chats live as tabs inside the communication page.
-        return n.reference_type === 'staff_conversation'
-          ? `${base}/communication?tab=staff${n.reference_id ? `&conversationId=${n.reference_id}` : ''}`
-          : `${base}/communication?tab=messages`;
+        // Admins have no standalone /admin/messages route — parents' messages to
+        // the office and staff chats live as tabs inside the communication page.
+        const tab = n.reference_type === 'staff_conversation' ? 'staff' : 'parents';
+        return `${base}/communication?tab=${tab}${n.reference_id ? `&conversationId=${n.reference_id}` : ''}`;
       }
       if (role === 'teacher') {
         // Teacher messages page has a parents tab and a staff tab.

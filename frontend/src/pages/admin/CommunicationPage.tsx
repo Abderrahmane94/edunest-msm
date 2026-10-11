@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Megaphone, Calendar, MapPin, Users, CheckCircle, XCircle, Clock, MessageCircle, Send, ArrowLeft, Paperclip, Image, FileText, Plus } from 'lucide-react';
+import { Megaphone, Calendar, MapPin, Users, CheckCircle, XCircle, Clock, MessageCircle, Baby, Send, ArrowLeft, Paperclip, Image, FileText, Plus } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import {
@@ -55,10 +55,11 @@ import {
 import { messagePreview } from '@/components/messaging/messagePreview';
 import { useTabParam } from '@/hooks/useTabParam';
 import { usePermissions } from '@/lib/roles';
+import { ParentMessagingPanel } from '@/pages/teacher/TeacherMessagesPage';
 
-type TabMode = 'announcements' | 'events' | 'messages' | 'staff';
+type TabMode = 'announcements' | 'events' | 'parents' | 'messages' | 'staff';
 
-const VALID_TABS: TabMode[] = ['announcements', 'events', 'messages', 'staff'];
+const VALID_TABS: TabMode[] = ['announcements', 'events', 'parents', 'messages', 'staff'];
 
 export function CommunicationPage() {
   const { can } = usePermissions();
@@ -89,6 +90,7 @@ export function CommunicationPage() {
         items={[
           { value: 'announcements', label: t('communication.announcements.tab'), icon: <Megaphone /> },
           { value: 'events', label: t('communication.events.tab'), icon: <Calendar /> },
+          { value: 'parents', label: t('communication.parentMessages.tab'), icon: <Baby /> },
           { value: 'messages', label: t('communication.messages.tab'), icon: <MessageCircle /> },
           { value: 'staff', label: t('communication.staffMessages.tab'), icon: <Users /> },
         ]}
@@ -101,6 +103,16 @@ export function CommunicationPage() {
           selectedEventId={selectedEventId}
           onSelectEvent={setSelectedEventId}
         />
+      )}
+      {activeTab === 'parents' && (
+        // Messages parents write to the school office.
+        <div className="flex bg-card border border-border rounded-lg overflow-hidden" style={{ height: 'calc(100vh - 260px)', minHeight: '480px' }}>
+          <ParentMessagingPanel
+            key={initialConversationId ?? 'parents-default'}
+            initialConversationId={initialConversationId}
+            office
+          />
+        </div>
       )}
       {activeTab === 'messages' && <PendingMessagesTab />}
       {activeTab === 'staff' && (

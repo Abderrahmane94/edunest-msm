@@ -23,6 +23,7 @@ vi.mock('../../lib/prisma', () => ({
     },
     parentChildLink: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     classroomEnrollment: {
       findFirst: vi.fn(),
@@ -836,5 +837,40 @@ describe('AttendanceService', () => {
         }),
       ).rejects.toBeInstanceOf(AttendanceServiceError);
     });
+  });
+});
+
+describe("a parent's month of attendance", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('gives each marked day, in order, besides the totals', async () => {
+    const db = prisma as unknown as {
+      parentChildLink: { findMany: ReturnType<typeof vi.fn> };
+      attendanceRecord: { findMany: ReturnType<typeof vi.fn> };
+    };
+    db.parentChildLink.findMany.mockResolvedValue([
+      {
+        child: {
+          id: 'k1', firstName: 'Yasmine', lastName: 'B', photoPublicId: null, schoolId: 's1',
+          enrollments: [{ classroomId: 'room-1' }],
+        },
+      },
+    ]);
+    const records = [
+      { date: new Date('2026-10-05T00:00:00.000Z'), status: 'late', note: 'Bus en retard' },
+      { date: new Date('2026-10-04T00:00:00.000Z'), status: 'present', note: null },
+      { date: new Date('2026-10-06T00:00:00.000Z'), status: 'absent', note: null },
+    ];
+    // First the class's marked days, then the child's own records.
+    db.attendanceRecord.findMany.mockResolvedValueOnce(records).mockResolvedValueOnce(records);
+
+    const { children } = await attendanceService.getParentChildrenAttendance('p1', 's1', '2026-10');
+
+    expect(children[0]).toMatchObject({ present_count: 1, absent_count: 1, late_count: 1, total_days: 3 });
+    expect(children[0].days).toEqual([
+      { date: '2026-10-04', status: 'present', note: null },
+      { date: '2026-10-05', status: 'late', note: 'Bus en retard' },
+      { date: '2026-10-06', status: 'absent', note: null },
+    ]);
   });
 });

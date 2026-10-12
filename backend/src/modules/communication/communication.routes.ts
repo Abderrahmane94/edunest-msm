@@ -19,6 +19,7 @@ import {
   dailyReportIdParamSchema,
   dailyReportsQuerySchema,
   classroomDayParamSchema,
+  myChildrenReportsQuerySchema,
   classroomDayQuerySchema,
   createAnnouncementSchema,
   announcementIdParamSchema,
@@ -135,10 +136,12 @@ router.put(
   communicationController.saveDailyReport,
 );
 
-// GET /api/communication/daily-reports/my-children — Get reports for parent's linked children
+// GET /api/communication/daily-reports/my-children[?month=YYYY-MM] — Reports for the parent's
+// children: the given month, or the last 30 days
 router.get(
   '/daily-reports/my-children',
   requireActiveRole,
+  validateQuery(myChildrenReportsQuerySchema),
   communicationController.getReportsForMyChildren,
 );
 

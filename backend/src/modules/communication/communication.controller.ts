@@ -269,7 +269,8 @@ export const communicationController = {
       const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
 
-      const reports = await communicationService.getReportsForParent(schoolId, userId);
+      const month = typeof req.query.month === 'string' ? req.query.month : undefined;
+      const reports = await communicationService.getReportsForParent(schoolId, userId, month);
       res.status(200).json(successResponse(reports));
     } catch (error) {
       if (error instanceof CommunicationServiceError) {

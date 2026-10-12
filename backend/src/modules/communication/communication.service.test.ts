@@ -2228,3 +2228,38 @@ describe('conversation list: last message and unread count', () => {
     expect(mockPrisma.message.groupBy.mock.calls[0][0].where).toMatchObject({ sender: { role: 'parent' } });
   });
 });
+
+describe("a parent's reports for one month", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('reads the whole month, and only that month', async () => {
+    mockPrisma.parentChildLink.findMany.mockResolvedValue([{ childId: 'k1' }]);
+    mockPrisma.dailyReport.findMany.mockResolvedValue([]);
+
+    await communicationService.getReportsForParent('s1', 'p1', '2026-02');
+
+    const query = mockPrisma.dailyReport.findMany.mock.calls[0][0];
+    expect(query.where.date).toEqual({ gte: new Date('2026-02-01T00:00:00.000Z'), lt: new Date('2026-03-01T00:00:00.000Z') });
+    expect(query.take).toBeGreaterThanOrEqual(62); // every day, for more than one child
+  });
+
+  it('a December runs into the next year', async () => {
+    mockPrisma.parentChildLink.findMany.mockResolvedValue([{ childId: 'k1' }]);
+    mockPrisma.dailyReport.findMany.mockResolvedValue([]);
+
+    await communicationService.getReportsForParent('s1', 'p1', '2026-12');
+
+    expect(mockPrisma.dailyReport.findMany.mock.calls[0][0].where.date.lt).toEqual(new Date('2027-01-01T00:00:00.000Z'));
+  });
+
+  it('without a month: the recent reports, as before', async () => {
+    mockPrisma.parentChildLink.findMany.mockResolvedValue([{ childId: 'k1' }]);
+    mockPrisma.dailyReport.findMany.mockResolvedValue([]);
+
+    await communicationService.getReportsForParent('s1', 'p1');
+
+    const query = mockPrisma.dailyReport.findMany.mock.calls[0][0];
+    expect(query.where.date.lt).toBeUndefined();
+    expect(query.take).toBe(50);
+  });
+});

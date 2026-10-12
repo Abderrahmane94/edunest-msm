@@ -37,6 +37,7 @@ vi.mock('../../lib/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
       count: vi.fn(),
+      groupBy: vi.fn(),
     },
     dailyReport: {
       findFirst: vi.fn(),
@@ -2186,5 +2187,44 @@ describe('conversations started by a parent, and with the school office', () => 
         communicationService.sendMessage(office.id, schoolId, 'adm-staff', 'administrative', { content: 'x', messageType: 'text' }),
       ).rejects.toMatchObject({ statusCode: 403 });
     });
+  });
+});
+
+describe('conversation list: last message and unread count', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("shows each thread's last message and what the reader has not read", async () => {
+    mockPrisma.conversation.findMany.mockResolvedValue([
+      { id: 'c1', childId: 'k1', teacherUserId: 't1', parentUserId: 'p1' },
+      { id: 'c2', childId: 'k1', teacherUserId: 'adm', parentUserId: 'p1', withOffice: true },
+    ]);
+    mockPrisma.conversation.count.mockResolvedValue(2);
+    mockPrisma.child.findMany.mockResolvedValue([{ id: 'k1', firstName: 'Yasmine', lastName: 'B' }]);
+    mockPrisma.message.findMany.mockResolvedValue([
+      { conversationId: 'c1', content: 'À demain', messageType: 'text' },
+      { conversationId: 'c2', content: null, messageType: 'photo' },
+    ]);
+    mockPrisma.message.groupBy.mockResolvedValue([{ conversationId: 'c1', _count: { _all: 2 } }]);
+
+    const { conversations } = await communicationService.listConversations('s1', 'p1', 'parent', 1, 20);
+
+    expect(conversations.map((c) => [c.id, c.lastMessage, c.unreadCount])).toEqual([
+      ['c1', 'À demain', 2],
+      ['c2', '[photo]', 0],
+    ]);
+    // A parent's unread: what the other side sent.
+    expect(mockPrisma.message.groupBy.mock.calls[0][0].where).toMatchObject({ senderUserId: { not: 'p1' } });
+  });
+
+  it("the office counts the parents' unread messages, whoever of the office answers", async () => {
+    mockPrisma.conversation.findMany.mockResolvedValue([{ id: 'c2', childId: 'k1' }]);
+    mockPrisma.conversation.count.mockResolvedValue(1);
+    mockPrisma.child.findMany.mockResolvedValue([]);
+    mockPrisma.message.findMany.mockResolvedValue([]);
+    mockPrisma.message.groupBy.mockResolvedValue([]);
+
+    await communicationService.listConversations('s1', 'adm', 'administrative', 1, 20, true);
+
+    expect(mockPrisma.message.groupBy.mock.calls[0][0].where).toMatchObject({ sender: { role: 'parent' } });
   });
 });

@@ -1,9 +1,11 @@
+import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Utensils, Moon, Activity, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui';
 import { apiClient } from '@/lib/api-client';
+import { useSocket } from '@/hooks/useSocket';
 
 type Mood = 'happy' | 'sad' | 'tired' | 'excited' | 'calm';
 
@@ -57,6 +59,11 @@ function useParentDailyReports() {
       }
       return [];
     },
+    // Today's report can arrive at any moment: always reload when the feed is
+    // opened or the app comes back to the foreground (the list kept on the
+    // device shows meanwhile, and offline).
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -191,6 +198,19 @@ function ReportCard({ report, locale }: { report: DailyReport; locale: string })
 export function ParentFeedPage() {
   const { t, i18n } = useTranslation();
   const { data: reports, isLoading, isError } = useParentDailyReports();
+
+  // A report sent or corrected by the teacher shows up straight away.
+  const { on } = useSocket();
+  const queryClient = useQueryClient();
+  React.useEffect(() => {
+    const refresh = () => void queryClient.invalidateQueries({ queryKey: ['parent-daily-reports'] });
+    const offNew = on('report:new', refresh);
+    const offUpdated = on('report:updated', refresh);
+    return () => {
+      offNew();
+      offUpdated();
+    };
+  }, [on, queryClient]);
 
   if (isLoading) {
     return (

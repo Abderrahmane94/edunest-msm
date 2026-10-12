@@ -65,6 +65,11 @@ export const dailyReportsQuerySchema = paginationSchema.extend({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').optional(),
 });
 
+/** A parent's reports for one month: GET /daily-reports/my-children?month=YYYY-MM */
+export const myChildrenReportsQuerySchema = z.object({
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Month must be in YYYY-MM format').optional(),
+});
+
 /** A classroom's reports for one day: GET /daily-reports/classroom/:classroomId?date= */
 export const classroomDayParamSchema = z.object({
   classroomId: uuidSchema,

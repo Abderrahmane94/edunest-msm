@@ -1920,7 +1920,7 @@ class CommunicationService {
   /**
    * Get daily reports for all children linked to a parent.
    */
-  async getReportsForParent(schoolId: string, parentUserId: string) {
+  async getReportsForParent(schoolId: string, parentUserId: string, month?: string) {
     // Find all children linked to this parent
     const links = await prisma.parentChildLink.findMany({
       where: { parentUserId },
@@ -1931,22 +1931,29 @@ class CommunicationService {
 
     const childIds = links.map((l) => l.childId);
 
-    // Get recent reports for these children (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // A given month (YYYY-MM), or the recent reports (last 30 days)
+    let dateFilter: { gte: Date; lt?: Date };
+    if (month) {
+      const [year, monthNum] = month.split('-').map(Number);
+      dateFilter = { gte: new Date(Date.UTC(year, monthNum - 1, 1)), lt: new Date(Date.UTC(year, monthNum, 1)) };
+    } else {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      dateFilter = { gte: thirtyDaysAgo };
+    }
 
     const reports = await prisma.dailyReport.findMany({
       where: {
         childId: { in: childIds },
         schoolId,
-        date: { gte: thirtyDaysAgo },
+        date: dateFilter,
       },
       include: {
         photos: true,
         child: { select: { id: true, firstName: true, lastName: true, photoPublicId: true } },
       },
       orderBy: { date: 'desc' },
-      take: 50,
+      take: month ? 400 : 50, // a whole month for every child
     });
 
     return reports.map((r) => ({

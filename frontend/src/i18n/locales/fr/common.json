@@ -2421,7 +2421,25 @@
     "conflict": "Ce rapport a été modifié entre-temps par quelqu'un d'autre : son texte a été gardé tel quel. Les photos ont bien été ajoutées.",
     "syncError": "Le rapport enregistré sur l'appareil a été refusé : {{error}}"
   },
+  "period": {
+    "view": "Affichage",
+    "day": "Jour",
+    "month": "Mois",
+    "today": "Aujourd'hui",
+    "pickDate": "Choisir une date",
+    "previousDay": "Jour précédent",
+    "nextDay": "Jour suivant",
+    "previousMonth": "Mois précédent",
+    "nextMonth": "Mois suivant"
+  },
   "parentFeed": {
+    "notYetToday": "Le rapport d'aujourd'hui n'est pas encore arrivé.",
+    "noReportThatDay": "Pas de rapport ce jour-là.",
+    "reportsCount": "Rapports ce mois : {{count}}",
+    "mainMood": "Humeur dominante",
+    "avgMeals": "Repas / jour",
+    "avgNap": "Sieste (min)",
+    "allChildren": "Tous",
     "title": "Rapports quotidiens",
     "subtitle": "Découvrez comment s'est passée la journée de votre enfant",
     "empty": "Aucun rapport pour le moment. Revenez plus tard !",
@@ -2439,8 +2457,10 @@
     "activities": "Activités"
   },
   "parentAttendance": {
+    "notYetToday": "Pas encore pointé",
+    "notMarked": "Non pointé",
     "title": "Présence",
-    "subtitle": "Résumé mensuel de la présence",
+    "subtitle": "Jour par jour ou mois par mois",
     "previousMonth": "Mois précédent",
     "nextMonth": "Mois suivant",
     "error": "Impossible de charger les données de présence. Veuillez réessayer.",

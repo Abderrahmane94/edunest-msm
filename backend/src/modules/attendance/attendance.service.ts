@@ -684,6 +684,8 @@ class AttendanceService {
     late_count: number;
     total_days: number;
     attendance_percentage: number;
+    /** Each marked day of the month, for the parent's calendar and day view. */
+    days: Array<{ date: string; status: string; note: string | null }>;
   }> }> {
     // Parse month string (YYYY-MM)
     const [yearStr, monthStr] = month.split('-');
@@ -776,6 +778,9 @@ class AttendanceService {
           late_count: lateCount,
           total_days: totalDays,
           attendance_percentage: attendancePercentage,
+          days: records
+            .map((r) => ({ date: r.date.toISOString().split('T')[0], status: r.status, note: r.note ?? null }))
+            .sort((a, b) => a.date.localeCompare(b.date)),
         };
       }),
     );

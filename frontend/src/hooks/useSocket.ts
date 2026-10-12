@@ -5,8 +5,14 @@ import { queryClient } from '@/lib/query-client';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
 
-/** Chat data that may have missed live updates while the socket was down. */
-const LIVE_QUERY_KEYS = [['messages'], ['conversations'], ['staff-messages'], ['staff-conversations']];
+/** Data that may have missed live updates while the socket was down. */
+const LIVE_QUERY_KEYS = [
+  ['messages'],
+  ['conversations'],
+  ['staff-messages'],
+  ['staff-conversations'],
+  ['parent-daily-reports'],
+];
 
 /**
  * Hook to connect to the Socket.io server and listen for events.

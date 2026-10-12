@@ -8,6 +8,8 @@ export interface Conversation {
   teacher_user_id: string;
   parent_user_id: string;
   parent_name: string;
+  /** The teacher (or, in a thread with the office, the office member it is filed under). */
+  teacher_name: string;
   /** With the school office rather than the teacher. */
   with_office: boolean;
   last_message?: string;
@@ -38,6 +40,8 @@ export function useConversations({ office = false }: { office?: boolean } = {}) 
         const parent = c.parent as Record<string, unknown> | undefined;
         const child = c.child as Record<string, unknown> | undefined;
         const parentName = parent ? `${parent.firstName} ${parent.lastName}` : (c.parentName ?? c.parent_name ?? '') as string;
+        const teacher = c.teacher as Record<string, unknown> | undefined;
+        const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}`.trim() : '';
         const childName = child ? `${child.firstName} ${child.lastName}` : (c.childName ?? c.child_name ?? '') as string;
 
         return {
@@ -47,6 +51,7 @@ export function useConversations({ office = false }: { office?: boolean } = {}) 
           teacher_user_id: (c.teacherUserId ?? c.teacher_user_id) as string,
           parent_user_id: (c.parentUserId ?? c.parent_user_id) as string,
           parent_name: parentName,
+          teacher_name: teacherName,
           with_office: Boolean(c.withOffice ?? c.with_office),
           last_message: (c.lastMessage ?? c.last_message) as string | undefined,
           last_message_at: (c.lastMessageAt ?? c.last_message_at ?? '') as string,
@@ -162,6 +167,7 @@ export interface MessageContact {
   firstName: string;
   lastName: string;
   /** The class teacher, or null when the child has none yet. */
+  teacherUserId: string | null;
   teacherName: string | null;
 }
 

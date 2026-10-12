@@ -247,9 +247,41 @@ class CommunicationService {
 
     const childMap = new Map(children.map((c) => [c.id, c]));
 
+    // The list shows each thread's last message and how many are unread.
+    const conversationIds = conversations.map((c) => c.id);
+    const [lastMessages, unread] = conversationIds.length
+      ? await Promise.all([
+          prisma.message.findMany({
+            where: { conversationId: { in: conversationIds } },
+            orderBy: { createdAt: 'desc' },
+            distinct: ['conversationId'],
+            select: { conversationId: true, content: true, messageType: true },
+          }),
+          prisma.message.groupBy({
+            by: ['conversationId'],
+            where: {
+              conversationId: { in: conversationIds },
+              isRead: false,
+              // The office reads the parents' messages as one team.
+              ...(isOfficeRole(userRole) ? { sender: { role: 'parent' } } : { senderUserId: { not: userId } }),
+            },
+            _count: { _all: true },
+          }),
+        ])
+      : [[], []];
+    const lastMap = new Map(
+      (lastMessages ?? []).map((m) => [
+        m.conversationId,
+        m.messageType === 'text' ? (m.content ?? '') : `[${m.messageType}]`,
+      ]),
+    );
+    const unreadMap = new Map((unread ?? []).map((u) => [u.conversationId, u._count._all]));
+
     const conversationsWithChildren = conversations.map((conv) => ({
       ...conv,
       child: childMap.get(conv.childId) || { id: conv.childId, firstName: '', lastName: '' },
+      lastMessage: lastMap.get(conv.id) ?? null,
+      unreadCount: unreadMap.get(conv.id) ?? 0,
     }));
 
     return { conversations: conversationsWithChildren, total };
@@ -1482,7 +1514,7 @@ class CommunicationService {
   async getMessageContacts(
     schoolId: string,
     parentUserId: string,
-  ): Promise<{ childId: string; firstName: string; lastName: string; teacherName: string | null }[]> {
+  ): Promise<{ childId: string; firstName: string; lastName: string; teacherUserId: string | null; teacherName: string | null }[]> {
     const links = await prisma.parentChildLink.findMany({
       where: { parentUserId, child: { schoolId, isActive: true, deletedAt: null } },
       select: {
@@ -1493,7 +1525,7 @@ class CommunicationService {
             lastName: true,
             enrollments: {
               where: { classroom: { deletedAt: null } },
-              select: { classroom: { select: { teacher: { select: { firstName: true, lastName: true } } } } },
+              select: { classroom: { select: { teacher: { select: { id: true, firstName: true, lastName: true } } } } },
               take: 1,
             },
           },
@@ -1506,6 +1538,7 @@ class CommunicationService {
         childId: child.id,
         firstName: child.firstName,
         lastName: child.lastName,
+        teacherUserId: teacher?.id ?? null,
         teacherName: teacher ? `${teacher.firstName} ${teacher.lastName}`.trim() : null,
       };
     });

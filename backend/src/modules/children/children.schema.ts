@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { uuidSchema } from '../../utils/validators';
+import { uuidSchema, isoDateSchema, birthDateSchema, personNameSchema, phoneSchema } from '../../utils/validators';
 
 const bloodTypeSchema = z.enum(
   ['a_positive', 'a_negative', 'b_positive', 'b_negative', 'ab_positive', 'ab_negative', 'o_positive', 'o_negative'],
@@ -10,6 +10,9 @@ const nationalIdSchema = z.string().min(1).max(50);
 const addressSchema = z.string().min(1).max(500);
 const placeOfBirthSchema = z.string().min(1).max(255);
 
+/** Also checked against the stored dates when only one of the two is changed. */
+export const ENROLLED_BEFORE_BIRTH = 'The enrollment date cannot be before the date of birth';
+
 const medicalNoteTypeSchema = z.enum(['allergy', 'condition', 'medication'], {
   errorMap: () => ({ message: 'Type must be allergy, condition, or medication' }),
 });
@@ -18,59 +21,43 @@ const medicalNoteSeveritySchema = z.enum(['low', 'medium', 'high'], {
 });
 
 export const createChildSchema = z.object({
-  firstName: z
-    .string()
-    .min(1, 'First name is required')
-    .max(255, 'First name must not exceed 255 characters'),
-  lastName: z
-    .string()
-    .min(1, 'Last name is required')
-    .max(255, 'Last name must not exceed 255 characters'),
-  dateOfBirth: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date of birth must be in YYYY-MM-DD format'),
+  firstName: personNameSchema(255),
+  lastName: personNameSchema(255),
+  dateOfBirth: birthDateSchema,
   gender: z.enum(['male', 'female'], {
     errorMap: () => ({ message: 'Gender must be either male or female' }),
   }),
-  enrollmentDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Enrollment date must be in YYYY-MM-DD format'),
+  enrollmentDate: isoDateSchema,
   academicYearId: uuidSchema,
   nationalId: nationalIdSchema.optional(),
   address: addressSchema.optional(),
   placeOfBirth: placeOfBirthSchema.optional(),
   bloodType: bloodTypeSchema.optional(),
+}).refine((c) => c.enrollmentDate >= c.dateOfBirth, {
+  message: ENROLLED_BEFORE_BIRTH,
+  path: ['enrollmentDate'],
 });
 
 export const updateChildSchema = z.object({
-  firstName: z
-    .string()
-    .min(1, 'First name is required')
-    .max(255, 'First name must not exceed 255 characters')
+  firstName: personNameSchema(255)
     .optional(),
-  lastName: z
-    .string()
-    .min(1, 'Last name is required')
-    .max(255, 'Last name must not exceed 255 characters')
+  lastName: personNameSchema(255)
     .optional(),
-  dateOfBirth: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date of birth must be in YYYY-MM-DD format')
-    .optional(),
+  dateOfBirth: birthDateSchema.optional(),
   gender: z
     .enum(['male', 'female'], {
       errorMap: () => ({ message: 'Gender must be either male or female' }),
     })
     .optional(),
-  enrollmentDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Enrollment date must be in YYYY-MM-DD format')
-    .optional(),
+  enrollmentDate: isoDateSchema.optional(),
   academicYearId: uuidSchema.optional(),
   nationalId: nationalIdSchema.optional(),
   address: addressSchema.optional(),
   placeOfBirth: placeOfBirthSchema.optional(),
   bloodType: bloodTypeSchema.optional(),
+}).refine((c) => !c.enrollmentDate || !c.dateOfBirth || c.enrollmentDate >= c.dateOfBirth, {
+  message: ENROLLED_BEFORE_BIRTH,
+  path: ['enrollmentDate'],
 });
 
 export const enrollChildSchema = z.object({
@@ -98,10 +85,7 @@ export const parentLinkParamsSchema = z.object({
 });
 
 export const createEmergencyContactSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Contact name is required')
-    .max(255, 'Contact name must not exceed 255 characters'),
+  name: personNameSchema(255),
   relationship: z
     .string()
     .min(1, 'Relationship is required')
@@ -117,11 +101,7 @@ export const createEmergencyContactSchema = z.object({
 });
 
 export const updateEmergencyContactSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Contact name is required')
-    .max(255, 'Contact name must not exceed 255 characters')
-    .optional(),
+  name: personNameSchema(255).optional(),
   relationship: z
     .string()
     .min(1, 'Relationship is required')
@@ -182,10 +162,10 @@ export const registerChildSchema = z.object({
       parentUserId: uuidSchema.optional(),
       newParent: z
         .object({
-          firstName: z.string().min(1, 'First name is required').max(100),
-          lastName: z.string().min(1, 'Last name is required').max(100),
+          firstName: personNameSchema(100),
+          lastName: personNameSchema(100),
           email: z.string().email('Invalid email address'),
-          phone: z.string().min(1).max(20).optional(),
+          phone: phoneSchema(20).optional(),
         })
         .optional(),
     })
@@ -199,7 +179,7 @@ export const registerChildSchema = z.object({
   billing: z
     .object({
       branchId: uuidSchema,
-      startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format'),
+      startDate: isoDateSchema,
       feeIds: z.array(uuidSchema).max(50).default([]),
     })
     .optional(),

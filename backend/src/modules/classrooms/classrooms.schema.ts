@@ -8,12 +8,14 @@ const color = z.enum(CLASS_COLORS).nullable().optional();
 export const createClassroomSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(1, 'Classroom name is required')
     .max(255, 'Classroom name must not exceed 255 characters'),
   capacity: z
     .number()
     .int('Capacity must be an integer')
-    .positive('Capacity must be a positive integer'),
+    .positive('Capacity must be a positive integer')
+    .max(500, 'Capacity must not exceed 500'),
   roomId: uuidSchema.nullable().optional(),
   level: z
     .string()
@@ -27,6 +29,7 @@ export const createClassroomSchema = z.object({
 export const updateClassroomSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(1, 'Classroom name is required')
     .max(255, 'Classroom name must not exceed 255 characters')
     .optional(),
@@ -34,6 +37,7 @@ export const updateClassroomSchema = z.object({
     .number()
     .int('Capacity must be an integer')
     .positive('Capacity must be a positive integer')
+    .max(500, 'Capacity must not exceed 500')
     .optional(),
   roomId: uuidSchema.nullable().optional(),
   level: z

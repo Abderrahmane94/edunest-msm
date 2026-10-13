@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { uuidSchema, paginationSchema } from '../../utils/validators';
+import { uuidSchema, paginationSchema, isoDateSchema } from '../../utils/validators';
 
 // ─── Daily Reports Schemas ───────────────────────────────────────────────────
 
@@ -9,7 +9,7 @@ import { uuidSchema, paginationSchema } from '../../utils/validators';
  */
 export const createDailyReportSchema = z.object({
   childId: uuidSchema,
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  date: isoDateSchema,
   mood: z.enum(['happy', 'sad', 'tired', 'excited', 'calm'], {
     errorMap: () => ({ message: 'Mood must be one of: happy, sad, tired, excited, calm' }),
   }),
@@ -62,7 +62,7 @@ export const dailyReportIdParamSchema = z.object({
  * Schema for daily reports query params (pagination + optional date filter).
  */
 export const dailyReportsQuerySchema = paginationSchema.extend({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').optional(),
+  date: isoDateSchema.optional(),
 });
 
 /** A parent's reports for one month: GET /daily-reports/my-children?month=YYYY-MM */
@@ -75,7 +75,7 @@ export const classroomDayParamSchema = z.object({
   classroomId: uuidSchema,
 });
 export const classroomDayQuerySchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  date: isoDateSchema,
 });
 
 // ─── Daily Reports Type Exports ──────────────────────────────────────────────

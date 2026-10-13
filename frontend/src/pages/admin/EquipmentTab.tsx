@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { localToday } from '@/lib/period';
 import { DoorOpen, Pencil, Wrench } from 'lucide-react';
 import {
   Button,
@@ -168,7 +169,7 @@ function EquipmentDialog({
           </div>
           <div className="grid grid-cols-2 gap-x-3">
             <FormField label={t('inventory.equipment.purchaseDate')} htmlFor="eq-date">
-              <Input id="eq-date" type="date" value={form.purchaseDate} onChange={(e) => set({ purchaseDate: e.target.value })} />
+              <Input id="eq-date" type="date" value={form.purchaseDate} max={localToday()} onChange={(e) => set({ purchaseDate: e.target.value })} />
             </FormField>
             <FormField label={t('inventory.equipment.unitValue')} htmlFor="eq-value">
               <Input id="eq-value" type="number" min={0} step="0.01" value={form.unitValue} onChange={(e) => set({ unitValue: e.target.value })} />

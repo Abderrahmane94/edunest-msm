@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { uuidSchema } from '../../utils/validators';
+import { uuidSchema, isoDateSchema } from '../../utils/validators';
 
 /**
  * Schema for a single attendance record within a bulk mark request.
@@ -17,9 +17,7 @@ const attendanceRecordItemSchema = z.object({
  */
 export const bulkMarkAttendanceSchema = z.object({
   classroomId: uuidSchema,
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  date: isoDateSchema,
   records: z
     .array(attendanceRecordItemSchema)
     .min(1, 'At least one attendance record is required'),
@@ -32,9 +30,7 @@ export const bulkMarkAttendanceSchema = z.object({
  */
 export const saveAttendanceDaySchema = z.object({
   classroomId: uuidSchema,
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  date: isoDateSchema,
   records: z
     .array(attendanceRecordItemSchema.extend({ markedAt: z.string().datetime().optional() }))
     .min(1, 'At least one attendance record is required'),
@@ -54,22 +50,16 @@ export const updateAttendanceSchema = z.object({
  * Schema for classroom attendance query params (date required).
  */
 export const classroomAttendanceQuerySchema = z.object({
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  date: isoDateSchema,
 });
 
 /**
  * Schema for child attendance history query params.
  */
 export const childAttendanceQuerySchema = z.object({
-  startDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format')
+  startDate: isoDateSchema
     .optional(),
-  endDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'End date must be in YYYY-MM-DD format')
+  endDate: isoDateSchema
     .optional(),
   page: z
     .string()

@@ -2,6 +2,8 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { localToday } from '@/lib/period';
+import { earliestBirthDate, isPersonName } from '@/lib/validation';
 import { UserPlus, X, Star, Pencil, Check } from 'lucide-react';
 import {
   Button,
@@ -132,6 +134,17 @@ export function ChildDetailPage() {
     e.preventDefault();
     setSaveSuccess(false);
     setSaveError(null);
+    const today = localToday();
+    const refused =
+      !isPersonName(formData.first_name) || !isPersonName(formData.last_name) ? 'nameInvalid'
+      : formData.date_of_birth > today ? 'birthFuture'
+      : formData.date_of_birth < earliestBirthDate(today) ? 'birthTooOld'
+      : formData.enrollment_date && formData.enrollment_date < formData.date_of_birth ? 'enrolledBeforeBirth'
+      : null;
+    if (refused) {
+      setSaveError(t(`errors.server.${refused}`));
+      return;
+    }
     try {
       // Optional fields left empty are not sent: the server refuses an empty string.
       await updateChild.mutateAsync({
@@ -281,13 +294,13 @@ export function ChildDetailPage() {
               <Input id="c-last-name" name="last_name" value={formData.last_name} onChange={handleChange} />
             </FormField>
             <FormField label={t('children.form.dateOfBirth')} htmlFor="c-dob" required>
-              <Input id="c-dob" name="date_of_birth" type="date" value={formData.date_of_birth} onChange={handleChange} />
+              <Input id="c-dob" name="date_of_birth" type="date" value={formData.date_of_birth} min={earliestBirthDate(localToday())} max={localToday()} onChange={handleChange} />
             </FormField>
             <FormField label={t('children.form.gender')} htmlFor="c-gender">
               <FormSelect label="" name="gender" value={formData.gender} onChange={handleSelectChange} options={genderOptions} />
             </FormField>
             <FormField label={t('children.form.enrollmentDate')} htmlFor="c-enrollment">
-              <Input id="c-enrollment" name="enrollment_date" type="date" value={formData.enrollment_date} onChange={handleChange} />
+              <Input id="c-enrollment" name="enrollment_date" type="date" value={formData.enrollment_date} min={formData.date_of_birth || undefined} onChange={handleChange} />
             </FormField>
             <FormField label={t('children.form.nationalId')} htmlFor="c-national-id">
               <Input id="c-national-id" name="national_id" value={formData.national_id} onChange={handleChange} />

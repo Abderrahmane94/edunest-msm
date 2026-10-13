@@ -27,8 +27,10 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
   const [moreOpen, setMoreOpen] = React.useState(false);
 
   const hasOverflow = items.length > 5;
-  const visibleItems = hasOverflow ? items.slice(0, MAX_VISIBLE_WITH_OVERFLOW) : items;
-  const overflowItems = hasOverflow ? items.slice(MAX_VISIBLE_WITH_OVERFLOW) : [];
+  // The entries marked for the bar come first; the menu's own order fills what is left.
+  const onBar = [...items.filter((item) => item.tab), ...items.filter((item) => !item.tab)].slice(0, MAX_VISIBLE_WITH_OVERFLOW);
+  const visibleItems = hasOverflow ? items.filter((item) => onBar.includes(item)) : items;
+  const overflowItems = hasOverflow ? items.filter((item) => !onBar.includes(item)) : [];
   const isOverflowActive = overflowItems.some((item) => isItemActive(item, location.pathname));
   const overflowBadge = overflowItems.reduce((n, item) => n + (item.badge ?? 0), 0);
 

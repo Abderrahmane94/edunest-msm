@@ -150,13 +150,13 @@ function getAdminNavItems(role: string, can: (area: Area) => boolean): NavItem[]
   // The director sees everything; the office staff, the areas their profile opens.
   const items: (NavItem & { area?: Area | Area[] })[] = [
     // Every day: the children and their classes.
-    { label: 'nav.dashboard',     href: '/admin', icon: LayoutDashboard, section: 'daily' },
-    { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck, area: 'classes', section: 'daily' },
-    { label: 'nav.children',      href: '/admin/children', icon: Baby, area: 'children', section: 'daily' },
+    { label: 'nav.dashboard',     href: '/admin', icon: LayoutDashboard, section: 'daily', tab: true },
+    { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck, area: 'classes', section: 'daily', tab: true },
+    { label: 'nav.children',      href: '/admin/children', icon: Baby, area: 'children', section: 'daily', tab: true },
     { label: 'nav.classrooms',    href: '/admin/classrooms', icon: School, area: 'classes', section: 'daily' },
     { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle, area: 'communication', section: 'daily' },
     // The money and the supplies.
-    { label: 'nav.payments',      href: '/admin/payments', icon: CreditCard, area: PAYMENT_AREAS, section: 'management' },
+    { label: 'nav.payments',      href: '/admin/payments', icon: CreditCard, area: PAYMENT_AREAS, section: 'management', tab: true },
     { label: 'nav.payroll',       href: '/admin/payroll', icon: Banknote, area: 'payroll', section: 'management' },
     { label: 'nav.inventory',     href: '/admin/inventory', icon: Package, area: 'inventory', section: 'management' },
     // The accounts and the school's settings.

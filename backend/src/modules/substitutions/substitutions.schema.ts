@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import { isoDateSchema, personNameSchema, phoneSchema } from '../../utils/validators';
 
 export const SUBSTITUTION_REASONS = ['illness', 'leave', 'training', 'other'] as const;
 
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format');
+const date = isoDateSchema;
 
 export const createSubstitutionSchema = z
   .object({
@@ -12,10 +13,10 @@ export const createSubstitutionSchema = z
     /** A substitute from outside the school: a teacher account made with the replacement. */
     newSubstitute: z
       .object({
-        firstName: z.string().trim().min(1).max(100),
-        lastName: z.string().trim().min(1).max(100),
+        firstName: personNameSchema(100),
+        lastName: personNameSchema(100),
         email: z.string().trim().email(),
-        phone: z.string().trim().max(30).optional(),
+        phone: phoneSchema(30).optional(),
       })
       .optional(),
     startDate: date,
@@ -37,7 +38,8 @@ export const updateSubstitutionSchema = z
     reason: z.enum(SUBSTITUTION_REASONS).optional(),
     note: z.string().trim().max(500).nullable().optional(),
     allowBusySubstitute: z.boolean().default(false),
-  });
+  })
+  .refine((d) => !d.startDate || !d.endDate || d.startDate <= d.endDate, { message: 'The end date must be on or after the start date', path: ['endDate'] });
 
 export type CreateSubstitutionInput = z.infer<typeof createSubstitutionSchema>;
 export type UpdateSubstitutionInput = z.infer<typeof updateSubstitutionSchema>;

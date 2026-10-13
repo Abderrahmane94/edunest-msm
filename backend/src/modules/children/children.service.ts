@@ -6,6 +6,7 @@ import { softDeleteService } from '../../services/soft-delete.service';
 import { usersService } from '../users/users.service';
 import { enrollmentService } from '../payments/enrollment.service';
 import type { EnrollmentGenerationResult } from '../payments/payments.types';
+import { ENROLLED_BEFORE_BIRTH } from './children.schema';
 import type { RegisterChildInput, CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, UpdateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput, CreateMedicalNoteInput, UpdateMedicalNoteInput } from './children.schema';
 import type { ChildWithEnrollments, ClassroomEnrollmentResponse, PhotoUrlResponse, ParentChildLinkResponse, EmergencyContactResponse, MedicalNoteResponse } from './children.types';
 
@@ -300,6 +301,13 @@ class ChildrenService {
 
     if (!child) {
       throw new ChildServiceError('Child not found', 404);
+    }
+
+    // The two dates together, when only one of them is changed.
+    const birth = input.dateOfBirth ?? child.dateOfBirth.toISOString().slice(0, 10);
+    const enrolled = input.enrollmentDate ?? child.enrollmentDate.toISOString().slice(0, 10);
+    if ((input.dateOfBirth !== undefined || input.enrollmentDate !== undefined) && enrolled < birth) {
+      throw new ChildServiceError(ENROLLED_BEFORE_BIRTH, 400);
     }
 
     // If academicYearId is being changed, validate it belongs to the school

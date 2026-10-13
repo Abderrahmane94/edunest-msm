@@ -247,6 +247,7 @@ export function StaffProfilePage() {
                 name="contract_end"
                 type="date"
                 value={formData.contract_end}
+                min={formData.contract_start || undefined}
                 onChange={handleChange}
               />
             </FormField>

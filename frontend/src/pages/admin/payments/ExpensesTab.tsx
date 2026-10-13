@@ -2,6 +2,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { localToday } from '@/lib/period';
 import { Upload, Download, Trash2, X, Eye, Pencil } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
 import {
@@ -488,6 +489,7 @@ function CreateExpenseDialog({
             <Input
               id="expense-date"
               type="date"
+              max={localToday()}
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
@@ -644,6 +646,7 @@ function EditExpenseDialog({
             <Input
               id="expense-date-edit"
               type="date"
+              max={localToday()}
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />

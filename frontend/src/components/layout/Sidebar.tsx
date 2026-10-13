@@ -13,6 +13,8 @@ export interface NavItem {
   section?: string;
   /** How many things wait behind it (late payments, unread messages…). */
   badge?: number;
+  /** Kept on the phone's bottom bar ahead of the others, when the menu is longer than the bar. */
+  tab?: boolean;
 }
 
 /** "3", "99+": the count on a menu entry. */

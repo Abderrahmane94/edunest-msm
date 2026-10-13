@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { personNameSchema, phoneSchema } from '../../utils/validators';
 
 export const inviteUserSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -9,14 +10,8 @@ export const inviteUserSchema = z.object({
 
 export const registerUserSchema = z.object({
   token: z.string().min(1, 'Invitation token is required'),
-  firstName: z
-    .string()
-    .min(1, 'First name is required')
-    .max(100, 'First name must not exceed 100 characters'),
-  lastName: z
-    .string()
-    .min(1, 'Last name is required')
-    .max(100, 'Last name must not exceed 100 characters'),
+  firstName: personNameSchema(100),
+  lastName: personNameSchema(100),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -34,29 +29,29 @@ export const updateLanguageSchema = z.object({
 });
 
 export const updateUserSchema = z.object({
-  firstName: z.string().min(1, 'First name is required').max(100).optional(),
-  lastName: z.string().min(1, 'Last name is required').max(100).optional(),
+  firstName: personNameSchema(100).optional(),
+  lastName: personNameSchema(100).optional(),
   role: z.enum(['admin', 'administrative', 'teacher', 'parent'], {
     errorMap: () => ({ message: 'Role must be admin, teacher, or parent' }),
   }).optional(),
   preferredLanguage: z.enum(['ar', 'fr']).optional(),
-  phone: z.string().min(1).max(20).optional(),
-  address: z.string().min(1).max(500).optional(),
-  nationalId: z.string().min(1).max(50).optional(),
+  phone: phoneSchema(20).optional(),
+  address: z.string().trim().min(1).max(500).optional(),
+  nationalId: z.string().trim().min(1).max(50).optional(),
 });
 
 export const createUserDirectlySchema = z.object({
-  firstName: z.string().min(1, 'First name is required').max(100),
-  lastName: z.string().min(1, 'Last name is required').max(100),
+  firstName: personNameSchema(100),
+  lastName: personNameSchema(100),
   email: z.string().email('Invalid email address'),
   role: z.enum(['admin', 'administrative', 'teacher', 'parent'], {
     errorMap: () => ({ message: 'Role must be admin, teacher, or parent' }),
   }),
   preferredLanguage: z.enum(['ar', 'fr']).optional().default('fr'),
   schoolId: z.string().uuid('Invalid school ID').optional(), // only used when super_admin provides it
-  phone: z.string().min(1).max(20).optional(),
-  address: z.string().min(1).max(500).optional(),
-  nationalId: z.string().min(1).max(50).optional(),
+  phone: phoneSchema(20).optional(),
+  address: z.string().trim().min(1).max(500).optional(),
+  nationalId: z.string().trim().min(1).max(50).optional(),
 });
 
 export type CreateUserDirectlyInput = z.infer<typeof createUserDirectlySchema>;

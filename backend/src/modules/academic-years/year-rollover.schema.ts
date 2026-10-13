@@ -1,7 +1,8 @@
 import { z } from 'zod';
+import { isoDateSchema } from '../../utils/validators';
 
 const uuid = z.string().uuid();
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format');
+const date = isoDateSchema;
 
 /** Where the children of a class go: a copy made by this run, or a class the year already has. */
 const classTargetSchema = z.union([

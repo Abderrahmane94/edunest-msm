@@ -2,6 +2,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { localToday } from '@/lib/period';
 import { Banknote, Pencil, Trash2, Download, Users } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -540,6 +541,7 @@ function RecordPaymentDialog({
             <Input
               id="rp-paid"
               type="date"
+              max={localToday()}
               value={form.paidAt}
               onChange={(e) => setForm((p) => ({ ...p, paidAt: e.target.value }))}
             />

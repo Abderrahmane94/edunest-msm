@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import { pastDateSchema } from '../../utils/validators';
 
 export const STOCK_CATEGORIES = ['hygiene', 'cleaning', 'stationery', 'crafts', 'food', 'other'] as const;
 
 const quantity = z.number().min(0).max(9_999_999.99);
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format');
+const date = pastDateSchema;
 
 export const createStockItemSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(120),

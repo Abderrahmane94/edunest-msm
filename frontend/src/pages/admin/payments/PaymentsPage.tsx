@@ -1,6 +1,7 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { localToday } from '@/lib/period';
 import { useSearchParams } from 'react-router-dom';
 import { Receipt, Plus, Trash2, CheckCircle, AlertCircle, Minus, Eye, WifiOff, CloudUpload } from 'lucide-react';
 import { bidiIsolate, formatDate, formatDateTime, formatDZD, formatMonthYear } from '@/lib/formatters';
@@ -660,6 +661,7 @@ function RecordPaymentDialog({
               <Input
                 id="payment-value-date"
                 type="date"
+                max={localToday()}
                 value={valueDate}
                 onChange={(e) => {
                   setValueDate(e.target.value);

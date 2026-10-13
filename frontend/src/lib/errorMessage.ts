@@ -24,6 +24,11 @@ export function errorMessage(err: unknown, t: TFunction): string {
   if (err instanceof SyntaxError) return t('errors.serverUnavailable');
 
   if (err instanceof ApiRequestError) {
+    // A refused form: say what is wrong with the first field the server names, when it is known.
+    for (const detail of err.details ?? []) {
+      const known = serverMessage(detail.message, t);
+      if (known && known !== t('errors.server.validation')) return known;
+    }
     return serverMessage(err.message, t) ?? t(CODE_MESSAGES[err.code] ?? 'errors.generic');
   }
   if (err instanceof Error) return serverMessage(err.message, t) ?? (err.message || t('errors.generic'));
@@ -77,6 +82,18 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^A user with this email already exists$/, 'emailTaken'],
   [/^A previously removed user with this email exists in this school$/, 'emailTakenDeleted'],
   [/^Invalid email address$/, 'invalidEmail'],
+
+  // What a form may send
+  [/^This is not a real date$|^Date must be in YYYY-MM-DD format$/, 'dateInvalid'],
+  [/^This date cannot be in the future$/, 'futureDate'],
+  [/^The date of birth cannot be in the future$/, 'birthFuture'],
+  [/^The date of birth is too far in the past$/, 'birthTooOld'],
+  [/^The enrollment date cannot be before the date of birth$/, 'enrolledBeforeBirth'],
+  [/^A name needs at least 2 letters and no digits$|^Name is required$/, 'nameInvalid'],
+  [/^This phone number is not valid$|^Phone number must contain only digits/, 'phoneInvalid'],
+  [/^The end date cannot be before the start date$|^End date must be after start date$/, 'endBeforeStart'],
+  [/^Capacity must not exceed (?<max>\d+)$/, 'capacityTooHigh'],
+  [/^Amount must not exceed/, 'amountTooHigh'],
   [/^User not found( in this school)?$/, 'userNotFound'],
   [/^User is already active$/, 'userAlreadyActive'],
   [/^User is already deactivated$/, 'userAlreadyDeactivated'],

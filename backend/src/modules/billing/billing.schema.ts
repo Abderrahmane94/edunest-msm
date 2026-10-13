@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isoDateSchema } from '../../utils/validators';
 
 export const createPlanSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -18,15 +19,15 @@ export const assignPlanSchema = z.object({
   schoolId: z.string().uuid(),
   planId: z.string().uuid(),
   billingCycle: z.enum(['monthly', 'annual']),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
+  startDate: isoDateSchema,
   trialDays: z.number().int().min(0).optional(),
 });
 
 export const recordPaymentSchema = z.object({
   amount: z.number().positive('Amount must be positive'),
-  periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
-  periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
-  paidAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
+  periodStart: isoDateSchema,
+  periodEnd: isoDateSchema,
+  paidAt: isoDateSchema,
   note: z.string().optional(),
 }).refine(
   (d) => new Date(d.periodEnd) > new Date(d.periodStart),
@@ -39,9 +40,9 @@ export const updateStatusSchema = z.object({
 
 export const updatePaymentSchema = z.object({
   amount: z.number().positive().optional(),
-  periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD').optional(),
-  periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD').optional(),
-  paidAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD').optional(),
+  periodStart: isoDateSchema.optional(),
+  periodEnd: isoDateSchema.optional(),
+  paidAt: isoDateSchema.optional(),
   note: z.string().nullable().optional(),
 }).refine(
   (d) => !d.periodStart || !d.periodEnd || new Date(d.periodEnd) > new Date(d.periodStart),

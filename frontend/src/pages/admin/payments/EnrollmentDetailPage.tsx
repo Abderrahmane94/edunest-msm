@@ -358,6 +358,7 @@ function AddDiscountDialog({
                 id="discount-valid-to"
                 type="date"
                 value={validTo}
+                min={validFrom || undefined}
                 onChange={(e) => setValidTo(e.target.value)}
               />
             </FormField>

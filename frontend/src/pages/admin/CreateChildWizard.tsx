@@ -1,6 +1,8 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { localToday } from '@/lib/period';
+import { earliestBirthDate, isPersonName, isPhone } from '@/lib/validation';
 import { useQueryClient } from '@tanstack/react-query';
 import { UserPlus } from 'lucide-react';
 import {
@@ -143,10 +145,16 @@ function BasicsStep({
 
   function validate(): boolean {
     const newErrors: Record<string, string> = {};
+    const today = localToday();
     if (!formData.first_name.trim()) newErrors.first_name = t('children.form.firstNameRequired');
+    else if (!isPersonName(formData.first_name)) newErrors.first_name = t('errors.server.nameInvalid');
     if (!formData.last_name.trim()) newErrors.last_name = t('children.form.lastNameRequired');
+    else if (!isPersonName(formData.last_name)) newErrors.last_name = t('errors.server.nameInvalid');
     if (!formData.date_of_birth) newErrors.date_of_birth = t('children.form.dobRequired');
+    else if (formData.date_of_birth > today) newErrors.date_of_birth = t('errors.server.birthFuture');
+    else if (formData.date_of_birth < earliestBirthDate(today)) newErrors.date_of_birth = t('errors.server.birthTooOld');
     if (!formData.enrollment_date) newErrors.enrollment_date = t('common.fieldRequired');
+    else if (formData.date_of_birth && formData.enrollment_date < formData.date_of_birth) newErrors.enrollment_date = t('errors.server.enrolledBeforeBirth');
     if (!activeYear) newErrors.form = t('children.form.noActiveYear');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -198,7 +206,7 @@ function BasicsStep({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
         <FormField label={t('children.form.dateOfBirth')} htmlFor="wz-dob" error={errors.date_of_birth} required>
-          <Input id="wz-dob" name="date_of_birth" type="date" value={formData.date_of_birth} onChange={handleChange} />
+          <Input id="wz-dob" name="date_of_birth" type="date" value={formData.date_of_birth} min={earliestBirthDate(localToday())} max={localToday()} onChange={handleChange} />
         </FormField>
         <FormSelect
           label={t('children.form.gender')}
@@ -215,6 +223,7 @@ function BasicsStep({
           name="enrollment_date"
           type="date"
           value={formData.enrollment_date}
+          min={formData.date_of_birth || undefined}
           onChange={handleChange}
         />
       </FormField>
@@ -304,6 +313,14 @@ function ParentStep({
       }
       if (!EMAIL_PATTERN.test(newParent.email.trim())) {
         setError(t('children.wizard.parent.invalidEmail'));
+        return;
+      }
+      if (!isPersonName(newParent.firstName) || !isPersonName(newParent.lastName)) {
+        setError(t('errors.server.nameInvalid'));
+        return;
+      }
+      if (newParent.phone.trim() && !isPhone(newParent.phone)) {
+        setError(t('errors.server.phoneInvalid'));
         return;
       }
     }

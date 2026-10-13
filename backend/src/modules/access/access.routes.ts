@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { requireAdmin, requireActiveRole } from '../../middleware/rbac.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
-import { idParamSchema } from '../../utils/validators';
+import { idParamSchema, isoDateSchema } from '../../utils/validators';
 import { successResponse, errorResponse } from '../../utils/response';
 import { permissionsOf } from '../../middleware/permission.middleware';
 import { accessService, AccessServiceError, EXCEPTION_KEYS } from './access.service';
@@ -25,7 +25,7 @@ const assignSchema = z.object({ profileId: z.string().uuid() });
 const exceptionSchema = z.object({
   area: z.enum(EXCEPTION_KEYS),
   level: level,
-  endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  endsOn: isoDateSchema.nullable().optional(),
   note: z.string().trim().max(200).nullable().optional(),
 });
 const exceptionParamsSchema = z.object({ id: z.string().uuid(), exceptionId: z.string().uuid() });

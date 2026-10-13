@@ -4,7 +4,7 @@ const optionalText = (max: number) => z.string().trim().max(max).nullable().opti
 
 export const createRoomSchema = z.object({
   name: z.string().trim().min(1, 'Room name is required').max(100, 'Room name must not exceed 100 characters'),
-  capacity: z.number().int('Capacity must be an integer').positive('Capacity must be a positive integer').nullable().optional(),
+  capacity: z.number().int('Capacity must be an integer').positive('Capacity must be a positive integer').max(500, 'Capacity must not exceed 500').nullable().optional(),
   location: optionalText(100),
   notes: optionalText(500),
 });

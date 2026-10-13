@@ -14,12 +14,15 @@ interface ApiError {
 export class ApiRequestError extends Error {
   code: string;
   meta?: Record<string, unknown>;
+  /** A refused form: what is wrong, field by field. */
+  details?: { field: string; message: string }[];
 
   constructor(error: ApiError) {
     super(error.message);
     this.name = 'ApiRequestError';
     this.code = error.code;
     this.meta = error.meta;
+    this.details = Array.isArray(error.details) ? error.details : undefined;
   }
 }
 

@@ -1,12 +1,15 @@
 import { z } from 'zod';
+import { isoDateSchema, pastDateSchema } from '../../utils/validators';
 
 export const createExpenseSchema = z.object({
   category: z
     .string()
+    .trim()
     .min(1, 'Category is required')
     .max(255, 'Category must not exceed 255 characters'),
   description: z
     .string()
+    .trim()
     .min(1, 'Description is required')
     .max(1000, 'Description must not exceed 1000 characters'),
   amount: z
@@ -17,9 +20,7 @@ export const createExpenseSchema = z.object({
     .string()
     .default('DZD')
     .refine((val) => val === 'DZD', { message: 'Currency must be DZD' }),
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  date: pastDateSchema,
   /** The school year it counts in; by default the one its date falls in. */
   academicYearId: z.string().uuid('Invalid academic year ID').optional(),
   /** Paid with money from the cash desk of whoever records it. */
@@ -29,11 +30,13 @@ export const createExpenseSchema = z.object({
 export const updateExpenseSchema = z.object({
   category: z
     .string()
+    .trim()
     .min(1, 'Category is required')
     .max(255, 'Category must not exceed 255 characters')
     .optional(),
   description: z
     .string()
+    .trim()
     .min(1, 'Description is required')
     .max(1000, 'Description must not exceed 1000 characters')
     .optional(),
@@ -46,17 +49,12 @@ export const updateExpenseSchema = z.object({
     .string()
     .refine((val) => val === 'DZD', { message: 'Currency must be DZD' })
     .optional(),
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
-    .optional(),
+  date: pastDateSchema.optional(),
   academicYearId: z.string().uuid('Invalid academic year ID').optional(),
   paidFromCash: z.boolean().optional(),
 });
 
-const isoDate = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+const isoDate = isoDateSchema
   .optional();
 
 /** Filters for the expenses list (combined with page/pageSize). */

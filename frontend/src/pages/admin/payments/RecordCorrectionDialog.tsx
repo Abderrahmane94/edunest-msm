@@ -1,6 +1,7 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { localToday } from '@/lib/period';
 import { AlertTriangle, CheckCircle, Minus } from 'lucide-react';
 import { formatDZD, formatDate } from '@/lib/formatters';
 import {
@@ -336,6 +337,7 @@ export function RecordCorrectionDialog({ open, onOpenChange, branchId }: Props) 
               <Input
                 id="correction-value-date"
                 type="date"
+                max={localToday()}
                 value={valueDate}
                 onChange={(e) => {
                   setValueDate(e.target.value);

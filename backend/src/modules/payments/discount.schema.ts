@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isoDateSchema, END_BEFORE_START } from '../../utils/validators';
 
 export const createDiscountSchema = z.object({
   type: z.enum(['scholarship', 'sibling', 'staff', 'custom'], {
@@ -23,12 +24,8 @@ export const createDiscountSchema = z.object({
     .max(1000, 'Description must not exceed 1000 characters')
     .nullable()
     .optional(),
-  validFrom: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'validFrom must be in YYYY-MM-DD format'),
-  validTo: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'validTo must be in YYYY-MM-DD format')
+  validFrom: isoDateSchema,
+  validTo: isoDateSchema
     .nullable()
     .optional(),
   // The fee the discount applies to; null/omitted = every recurring fee.
@@ -36,7 +33,7 @@ export const createDiscountSchema = z.object({
 }).refine((d) => (d.percentage != null) !== (d.fixedAmount != null), {
   message: 'Give either a percentage or a fixed amount',
   path: ['percentage'],
-});
+}).refine((d) => !d.validTo || d.validTo >= d.validFrom, { message: END_BEFORE_START, path: ['validTo'] });
 
 export const updateDiscountSchema = z.object({
   type: z.enum(['scholarship', 'sibling', 'staff', 'custom'], {
@@ -59,13 +56,9 @@ export const updateDiscountSchema = z.object({
     .max(1000, 'Description must not exceed 1000 characters')
     .nullable()
     .optional(),
-  validFrom: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'validFrom must be in YYYY-MM-DD format')
+  validFrom: isoDateSchema
     .optional(),
-  validTo: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'validTo must be in YYYY-MM-DD format')
+  validTo: isoDateSchema
     .nullable()
     .optional(),
   // The fee the discount applies to; null/omitted = every recurring fee.
@@ -73,7 +66,7 @@ export const updateDiscountSchema = z.object({
 }).refine((d) => !(d.percentage != null && d.fixedAmount != null), {
   message: 'Give either a percentage or a fixed amount, not both',
   path: ['percentage'],
-});
+}).refine((d) => !d.validTo || !d.validFrom || d.validTo >= d.validFrom, { message: END_BEFORE_START, path: ['validTo'] });
 
 export type CreateDiscountInput = z.infer<typeof createDiscountSchema>;
 export type UpdateDiscountInput = z.infer<typeof updateDiscountSchema>;

@@ -4,6 +4,7 @@ import { successResponse, paginatedResponse, errorResponse } from '../../utils/r
 import { userListQuerySchema, userSortColumnMap } from '../../utils/validators';
 import type { InviteUserInput, RegisterUserInput, UpdateFcmTokenInput, UpdateLanguageInput, UpdateUserInput, CreateUserDirectlyInput } from './users.schema';
 import { softDeleteService, SoftDeleteError } from '../../services/soft-delete.service';
+import { can } from '../../middleware/permission.middleware';
 
 export const usersController = {
   /**
@@ -77,7 +78,11 @@ export const usersController = {
         role,
         status,
       });
-      const response = paginatedResponse(users, page, pageSize, total);
+      // Everyone in the office picks people from this list (a parent, a teacher);
+      // their address and national id are for those who manage the accounts.
+      const full = req.user!.role === 'super_admin' || (await can(req, 'staff', 'view'));
+      const shown = full ? users : users.map((u) => ({ ...u, address: null, nationalId: null }));
+      const response = paginatedResponse(shown, page, pageSize, total);
       res.status(200).json({ ...response, meta: { ...response.meta, roleCounts } });
     } catch (error) {
       if (error instanceof UserServiceError) {

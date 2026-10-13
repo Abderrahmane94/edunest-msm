@@ -7,7 +7,7 @@ import { requirePermission, requireAnyOffice } from '../../middleware/permission
 import { validate, validateParams, validateQuery } from '../../middleware/validation.middleware';
 import {
   createConversationSchema,
-  sendMessageSchema,
+  sendTextMessageSchema,
   conversationIdParamSchema,
   messageIdParamSchema,
   messagesQuerySchema,
@@ -95,7 +95,7 @@ router.post(
   // Teachers and parents on their own rules; the office staff with the right to manage communication.
   requirePermission('communication', 'edit', { alsoRoles: ['teacher', 'parent'] }),
   validateParams(conversationIdParamSchema),
-  validate(sendMessageSchema),
+  validate(sendTextMessageSchema),
   communicationController.sendMessage,
 );
 

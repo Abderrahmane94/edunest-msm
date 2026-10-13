@@ -1,3 +1,4 @@
+import { everyPage, FULL_PAGE } from '@/lib/everyPage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, ApiRequestError, apiError } from '@/lib/api-client';
 
@@ -22,6 +23,8 @@ export interface User {
 interface UsersParams {
   page?: number;
   pageSize?: number;
+  /** Every matching account, however many (for pickers and client-side tables). */
+  all?: boolean;
   search?: string;
   sortColumn?: string;
   sortDirection?: 'asc' | 'desc';
@@ -58,10 +61,8 @@ function mapUser(raw: Record<string, unknown>): User {
 }
 
 export function useUsers(params: UsersParams = {}) {
-  const { page = 1, pageSize = 10, search, sortColumn, sortDirection, role, status } = params;
+  const { page = 1, pageSize = 10, all = false, search, sortColumn, sortDirection, role, status } = params;
   const queryParams = new URLSearchParams();
-  queryParams.set('page', String(page));
-  queryParams.set('pageSize', String(pageSize));
   if (search) queryParams.set('search', search);
   if (sortColumn) queryParams.set('sortBy', sortColumn);
   if (sortDirection) queryParams.set('sortDir', sortDirection);
@@ -71,6 +72,9 @@ export function useUsers(params: UsersParams = {}) {
   return useQuery({
     queryKey: ['users', params],
     queryFn: async () => {
+      const loadPage = async (pageNumber: number, size: number): Promise<UsersResult> => {
+      queryParams.set('page', String(pageNumber));
+      queryParams.set('pageSize', String(size));
       const res = await apiClient.get<unknown>(`/users?${queryParams.toString()}`);
 
       // Handle both response shapes:
@@ -91,6 +95,15 @@ export function useUsers(params: UsersParams = {}) {
 
       const roleCounts = (res.meta as { roleCounts?: UsersResult['roleCounts'] } | undefined)?.roleCounts;
       return { users, total, roleCounts } as UsersResult;
+      };
+      if (!all) return loadPage(page, pageSize);
+      let roleCounts: UsersResult['roleCounts'];
+      const whole = await everyPage(async (pageNumber) => {
+        const result = await loadPage(pageNumber, FULL_PAGE);
+        roleCounts = roleCounts ?? result.roleCounts;
+        return { items: result.users, total: result.total };
+      });
+      return { users: whole.items, total: whole.total, roleCounts } as UsersResult;
     },
     placeholderData: (prev) => prev,
   });

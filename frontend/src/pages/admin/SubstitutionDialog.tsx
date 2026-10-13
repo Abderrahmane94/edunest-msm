@@ -56,7 +56,7 @@ export function SubstitutionDialog({
   const create = useCreateSubstitution();
   const update = useUpdateSubstitution();
   const { confirm, dialog: confirmDialog } = useConfirm();
-  const { data: usersData } = useUsers({ role: 'teacher', status: 'active', pageSize: 100 });
+  const { data: usersData } = useUsers({ role: 'teacher', status: 'active', all: true });
   const { data: classrooms } = useClassrooms(classroom.academicYearId);
   const { data: todays } = useSubstitutions({ on: today() }, open);
 

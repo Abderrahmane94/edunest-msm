@@ -1,3 +1,4 @@
+import { cutSessions } from '../../lib/session-cutoff';
 import type { Prisma } from '@prisma/client';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
@@ -268,7 +269,8 @@ export const usersService = {
     }
 
     // Per role for the same search and status: the list's role chips show them.
-    const byRole = await prisma.user.groupBy({ by: ['role'], where: { ...where }, _count: { _all: true } });
+    // (groupBy is not covered by the client's soft-delete filter: removed accounts are left out here.)
+    const byRole = await prisma.user.groupBy({ by: ['role'], where: { ...where, deletedAt: null }, _count: { _all: true } });
     const roleCounts = { admin: 0, administrative: 0, teacher: 0, parent: 0 };
     for (const g of byRole) if (g.role in roleCounts) roleCounts[g.role as keyof typeof roleCounts] = g._count._all;
     if (filters.role) where.role = filters.role;
@@ -284,7 +286,6 @@ export const usersService = {
           email: true,
           role: true,
           isActive: true,
-          fcmToken: true,
           phone: true,
           address: true,
           nationalId: true,
@@ -445,6 +446,7 @@ export const usersService = {
       prisma.refreshToken.deleteMany({ where: { userId: id } }),
       prisma.passwordResetToken.updateMany({ where: { userId: id, usedAt: null }, data: { usedAt: new Date() } }),
     ]);
+    cutSessions(id);
 
     return { temporaryPassword: password };
   },

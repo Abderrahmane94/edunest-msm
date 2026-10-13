@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from '../modules/auth/auth.service';
+import { isCut } from '../lib/session-cutoff';
 
 // Route prefixes that don't require authentication.
 // These are relative to the mount point (e.g., if mounted on /api, /auth matches /api/auth).
@@ -33,6 +34,15 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
 
   try {
     const payload = authService.verifyAccessToken(token);
+
+    // Logged out, password changed, account closed since this token was issued.
+    if (isCut(payload.userId, (payload as { iat?: number }).iat, token)) {
+      res.status(401).json({
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: 'Invalid or expired access token' },
+      });
+      return;
+    }
 
     if (payload.mustChangePassword && !PASSWORD_CHANGE_ALLOWED_PREFIXES.some((prefix) => req.path.startsWith(prefix))) {
       res.status(403).json({

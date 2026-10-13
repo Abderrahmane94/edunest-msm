@@ -111,7 +111,7 @@ function useRelationshipOptions() {
 }
 
 function useParents() {
-  const { data: usersData } = useUsers({ pageSize: 100 });
+  const { data: usersData } = useUsers({ all: true, role: 'parent' });
   return (usersData?.users ?? []).filter((u) => u.role === 'parent');
 }
 

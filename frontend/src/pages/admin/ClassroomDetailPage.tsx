@@ -47,7 +47,7 @@ export function ClassroomDetailPage() {
   const updateClassroom = useUpdateClassroom();
   const assignTeacher = useAssignTeacher();
 
-  const { data: usersData } = useUsers({ pageSize: 100 });
+  const { data: usersData } = useUsers({ all: true, role: 'teacher' });
   const teachers = (usersData?.users ?? []).filter((u) => u.role === 'teacher');
 
   const [formData, setFormData] = React.useState({

@@ -1,3 +1,4 @@
+import { everyPage, FULL_PAGE } from '@/lib/everyPage';
 import { announceNewAccount, type NewAccount } from '@/lib/newAccount';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, apiError } from '@/lib/api-client';
@@ -56,6 +57,8 @@ export interface MedicalNote {
 interface ChildrenParams {
   page?: number;
   pageSize?: number;
+  /** Every matching child, however many (for pickers). */
+  all?: boolean;
   /** Matches the child's and linked parents' names. */
   search?: string;
   classroomId?: string;
@@ -66,12 +69,10 @@ interface ChildrenParams {
 }
 
 export function useChildren(params: ChildrenParams = {}) {
-  const { page = 1, pageSize = 10, search, classroomId, gender, hasParent, status } = params;
+  const { page = 1, pageSize = 10, all = false, search, classroomId, gender, hasParent, status } = params;
   const { yearId, ready } = useYearScope();
   const queryParams = new URLSearchParams();
   if (yearId) queryParams.set('academic_year_id', yearId);
-  queryParams.set('page', String(page));
-  queryParams.set('pageSize', String(pageSize));
   if (search) queryParams.set('search', search);
   if (classroomId) queryParams.set('classroom_id', classroomId);
   if (gender) queryParams.set('gender', gender);
@@ -82,6 +83,9 @@ export function useChildren(params: ChildrenParams = {}) {
     queryKey: ['children', params, yearId],
     enabled: ready,
     queryFn: async () => {
+      const loadPage = async (pageNumber: number, size: number): Promise<{ children: Child[]; total: number }> => {
+      queryParams.set('page', String(pageNumber));
+      queryParams.set('pageSize', String(size));
       const res = await apiClient.get<unknown>(`/children?${queryParams.toString()}`);
       const raw = res.data;
       let children: Child[] = [];
@@ -97,6 +101,13 @@ export function useChildren(params: ChildrenParams = {}) {
       }
 
       return { children, total };
+      };
+      if (!all) return loadPage(page, pageSize);
+      const whole = await everyPage(async (pageNumber) => {
+        const result = await loadPage(pageNumber, FULL_PAGE);
+        return { items: result.children, total: result.total };
+      });
+      return { children: whole.items, total: whole.total };
     },
     // Keep the current list while a new page/filter loads (no flash, keeps the search box).
     placeholderData: (prev) => prev,

@@ -869,7 +869,7 @@ function AssignFeeDialog({
 }) {
   const { t } = useTranslation();
   const assignFee = useAssignFee(branchId);
-  const { data: childrenData } = useChildren({ pageSize: 100 });
+  const { data: childrenData } = useChildren({ all: true });
   const { data: classrooms } = useClassrooms();
 
   const [targetType, setTargetType] = React.useState<'children' | 'classrooms' | 'school'>('school');

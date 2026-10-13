@@ -112,7 +112,7 @@ function RecordPaymentDialog({
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const online = useOnline();
-  const { data: childrenData } = useChildren({ pageSize: 100 });
+  const { data: childrenData } = useChildren({ all: true });
   const snapshot = useOfflinePaymentsSnapshot(branchId);
   const { queued } = useQueuedPayments();
   const [clientId, setClientId] = React.useState<string>(() => crypto.randomUUID());
@@ -874,7 +874,7 @@ function PaymentHistoryFilters({
   onReset: () => void;
 }) {
   const { t } = useTranslation();
-  const { data: childrenData } = useChildren({ pageSize: 100 });
+  const { data: childrenData } = useChildren({ all: true });
   const { branchId } = useDefaultBranch();
   const { data: fees } = useBranchFees(branchId);
 

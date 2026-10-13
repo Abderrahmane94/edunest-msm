@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import prisma from '../../lib/prisma';
 import { emailService } from '../../services/email.service';
+import { cutSessions, keepToken } from '../../lib/session-cutoff';
 import type {
   TokenPayload,
   LoginResponse,
@@ -144,6 +145,7 @@ export const authService = {
     };
 
     const accessToken = generateAccessToken(tokenPayload);
+    keepToken(user.id, accessToken);
     const refreshToken = generateRefreshToken(tokenPayload);
 
     // Store refresh token in database
@@ -219,6 +221,7 @@ export const authService = {
       mustChangePassword: user.mustChangePassword,
     };
     const newAccessToken = generateAccessToken(tokenPayload);
+    keepToken(user.id, newAccessToken);
     void recordActivity(user);
 
     // Extend the session: a new refresh token, valid REFRESH_TOKEN_EXPIRY_DAYS
@@ -243,6 +246,12 @@ export const authService = {
   },
 
   async logout(input: LogoutInput): Promise<void> {
+    // The access token of the session being left stops working too.
+    try {
+      cutSessions(verifyRefreshToken(input.refreshToken).userId);
+    } catch {
+      // Not a token of ours (or expired): nothing to cut.
+    }
     // Delete the refresh token from database to invalidate it
     await prisma.refreshToken.deleteMany({
       where: { token: input.refreshToken },
@@ -355,11 +364,21 @@ export const authService = {
         where: { userId: resetToken.userId },
       }),
     ]);
+    cutSessions(resetToken.userId);
   },
 
-  async changePassword(userId: string, newPassword: string): Promise<{ accessToken: string }> {
+  async changePassword(userId: string, newPassword: string, currentPassword?: string): Promise<{ accessToken: string }> {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new AuthError('User not found', 404);
+
+    // An open session is not enough to take the account: the current password
+    // is asked for, except when the account is on a temporary one it has to
+    // replace (the person has just signed in with it).
+    if (!user.mustChangePassword) {
+      if (!currentPassword || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
+        throw new AuthError('Current password is incorrect', 400);
+      }
+    }
 
     const passwordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
     await prisma.user.update({
@@ -378,6 +397,8 @@ export const authService = {
       role: user.role,
       mustChangePassword: false,
     });
+    // Every other session of the account ends here; this one goes on with the new token.
+    cutSessions(userId, accessToken);
 
     return { accessToken };
   },

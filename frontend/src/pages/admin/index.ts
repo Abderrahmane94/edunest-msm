@@ -23,3 +23,4 @@ export { TrashPage } from './TrashPage';
 export { TimetableSection } from './TimetablePage';
 export { PayrollPage } from './PayrollPage';
 export { InventoryPage } from './InventoryPage';
+export { DocumentsPage } from './DocumentsPage';

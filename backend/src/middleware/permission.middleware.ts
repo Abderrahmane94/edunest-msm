@@ -68,7 +68,7 @@ export function requireAnyPermission(needs: Need[], options: Options = {}) {
 /** Lookups every office member needs whatever their profile (years, branches, rooms…). */
 export function requireAnyOffice(options: Options = {}) {
   return guard(
-    [['children', 'view'], ['classes', 'view'], ['communication', 'view'], ['inventory', 'view'], ['collections', 'view'],
+    [['children', 'view'], ['classes', 'view'], ['communication', 'view'], ['inventory', 'view'], ['documents', 'view'], ['collections', 'view'],
      ['expenses', 'view'], ['fees', 'view'], ['payroll', 'view'], ['staff', 'view'], ['settings', 'view']],
     options,
   );

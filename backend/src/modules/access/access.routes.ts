@@ -8,7 +8,8 @@ import { permissionsOf } from '../../middleware/permission.middleware';
 import { accessService, AccessServiceError, EXCEPTION_KEYS } from './access.service';
 import { AREAS, type Permissions } from './permissions';
 
-const level = z.enum(['none', 'view', 'edit']);
+// An area the page does not know yet (a new one, before the page is reloaded) is taken as closed.
+const level = z.enum(['none', 'view', 'edit']).default('none');
 const permissionsSchema = z.object({
   areas: z.object(Object.fromEntries(AREAS.map((a) => [a, level])) as Record<(typeof AREAS)[number], typeof level>),
   delete: z.boolean(),

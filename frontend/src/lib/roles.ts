@@ -12,6 +12,7 @@ export const AREAS = [
   'classes',
   'communication',
   'inventory',
+  'documents',
   'collections',
   'expenses',
   'fees',

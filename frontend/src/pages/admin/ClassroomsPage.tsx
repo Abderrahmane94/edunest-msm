@@ -18,6 +18,7 @@ import {
   Input,
 } from '@/components/ui';
 import type { Column } from '@/components/ui';
+import { CardGrid, ViewToggle, useListView } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import {
   useClassrooms,
@@ -414,6 +415,8 @@ export function ClassroomsPage() {
   ];
 
   const data = filteredClassrooms;
+  const [view, setView] = useListView('classrooms');
+  const actionsOf = columns.find((c) => c.key === 'actions')?.render;
   const enrolledTotal = data.reduce((sum, c) => sum + c.enrolled_count, 0);
   const capacityTotal = data.reduce((sum, c) => sum + c.capacity, 0);
 
@@ -423,13 +426,16 @@ export function ClassroomsPage() {
         title={t('classrooms.title')}
         description={schoolYear?.name}
         actions={
-          !closed && (
-            <CreateButton
-              label={t('classrooms.create')}
-              onClick={() => setCreateDialogOpen(true)}
-              disabled={!schoolYear}
-            />
-          )
+          <>
+            <ViewToggle view={view} onChange={setView} />
+            {!closed && (
+              <CreateButton
+                label={t('classrooms.create')}
+                onClick={() => setCreateDialogOpen(true)}
+                disabled={!schoolYear}
+              />
+            )}
+          </>
         }
       />
 
@@ -484,6 +490,44 @@ export function ClassroomsPage() {
             />
           </FilterBar>
 
+          {view === 'cards' ? (
+            <CardGrid<Classroom>
+              items={data}
+              keyOf={(c) => c.id}
+              onOpen={(c) => navigate(`/admin/classrooms/${c.id}`)}
+              footer={closed ? undefined : actionsOf}
+              emptyMessage={hasFilters ? t('classrooms.filters.noMatch') : t('classrooms.noClassrooms')}
+              render={(c) => {
+                const ratio = c.capacity > 0 ? Math.min(1, c.enrolled_count / c.capacity) : 0;
+                return (
+                  <>
+                    <span className="flex items-center justify-between gap-2">
+                      <ClassTag id={c.id} name={c.name} color={classColor(c.id, c.color)} className="text-body" />
+                      {c.level && <span className="text-caption text-text-secondary shrink-0">{c.level}</span>}
+                    </span>
+                    <span className="block">
+                      <span className="flex items-baseline justify-between gap-2 text-caption text-text-secondary">
+                        <span>{t('classrooms.columns.capacity')}</span>
+                        <span className="text-body font-semibold text-text-heading" dir="ltr">
+                          {c.enrolled_count}/{c.capacity}
+                        </span>
+                      </span>
+                      <span className="mt-1 block h-2 rounded-full bg-subtle overflow-hidden">
+                        <span
+                          className={`block h-full rounded-full ${ratio >= 1 ? 'bg-[var(--color-danger)]' : ratio >= 0.85 ? 'bg-[var(--color-warning)]' : 'bg-[var(--color-accent)]'}`}
+                          style={{ width: `${ratio * 100}%` }}
+                        />
+                      </span>
+                    </span>
+                    <span className="block text-caption text-text-secondary [overflow-wrap:anywhere]">
+                      {c.teacher_name ?? t('classrooms.noTeacher')}
+                      {c.room_name && ` · ${c.room_name}`}
+                    </span>
+                  </>
+                );
+              }}
+            />
+          ) : (
           <DataTable<Classroom>
             columns={closed ? columns.filter((c) => c.key !== 'actions') : columns}
             data={data}
@@ -491,6 +535,7 @@ export function ClassroomsPage() {
             onRowClick={(c) => navigate(`/admin/classrooms/${c.id}`)}
             emptyMessage={hasFilters ? t('classrooms.filters.noMatch') : t('classrooms.noClassrooms')}
           />
+          )}
         </>
       )}
 

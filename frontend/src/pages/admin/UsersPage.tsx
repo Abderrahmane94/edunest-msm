@@ -20,6 +20,7 @@ import {
 } from '@/components/ui';
 import type { TFunction } from 'i18next';
 import type { Column } from '@/components/ui';
+import { CardGrid, ViewToggle, useListView } from '@/components/ui';
 
 import { avatarColor } from '@/components/ui/Avatar';
 import { FormSelect } from '@/components/forms';
@@ -83,6 +84,7 @@ export function UsersPage() {
   const users = data?.users ?? [];
   const total = data?.total ?? 0;
   const roleCounts = data?.roleCounts;
+  const [view, setView] = useListView('users');
 
   function handleSort(column: string, direction: 'asc' | 'desc') {
     setSortColumn(column);
@@ -199,6 +201,7 @@ export function UsersPage() {
         description={t('pageIntro.users')}
         actions={
           <>
+            <ViewToggle view={view} onChange={setView} />
             {!isSuperAdmin && (
               <Button variant="secondary" onClick={() => setInviteByEmailDialogOpen(true)}>
                 <Mail className="w-4 h-4" />
@@ -255,6 +258,37 @@ export function UsersPage() {
 
       {isLoading ? (
         <ListSkeleton />
+      ) : view === 'cards' ? (
+        <CardGrid<User>
+          items={users}
+          keyOf={(user) => user.id}
+          onOpen={(user) => navigate(`/admin/users/${user.id}`)}
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+          emptyMessage={hasFilters || search ? t('users.filters.noMatch') : t('users.noUsers')}
+          render={(user) => (
+            <>
+              <span className="flex items-center gap-3 min-w-0">
+                <span className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-body font-semibold ${avatarColor(`${user.first_name} ${user.last_name}`)}`}>
+                  {user.first_name.charAt(0)}{user.last_name.charAt(0)}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-body-lg font-semibold text-text-heading [overflow-wrap:anywhere]">
+                    {user.first_name} {user.last_name}
+                  </span>
+                  <span className="block text-caption text-text-secondary [overflow-wrap:anywhere]" dir="ltr">{user.email}</span>
+                </span>
+              </span>
+              <span className="flex flex-wrap items-center gap-1.5">
+                <RoleBadge role={user.role} />
+                {!user.is_active && <StatusBadge variant="neutral">{t('users.inactive')}</StatusBadge>}
+                {user.phone && <span className="text-caption text-text-secondary" dir="ltr">{user.phone}</span>}
+              </span>
+            </>
+          )}
+        />
       ) : (
         <DataTable<User>
           columns={columns}

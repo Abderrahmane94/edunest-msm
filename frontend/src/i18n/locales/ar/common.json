@@ -356,6 +356,12 @@
     "timetable": "الأيام",
     "communication": "التواصل"
   },
+  "listView": {
+    "label": "العرض",
+    "cards": "بطاقات",
+    "table": "جدول",
+    "noStaffProfile": "ملف يجب إكماله"
+  },
   "navSection": {
     "daily": "اليومي",
     "management": "التسيير",

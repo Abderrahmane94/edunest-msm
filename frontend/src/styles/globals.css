@@ -199,6 +199,14 @@
 
 /* ─── Utility Classes ─── */
 @layer utilities {
+  /* A row that scrolls under the finger, without the scroll bar drawn under it. */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .font-mono-amount {
     font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
     font-size: 14px;

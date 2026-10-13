@@ -30,6 +30,7 @@ import trashRoutes from './modules/trash/trash.routes';
 import timetableRoutes from './modules/timetable/timetable.routes';
 import payrollRoutes from './modules/payroll/payroll.routes';
 import paymentRoutes from './modules/payments';
+import documentRoutes from './modules/documents/documents.routes';
 
 const app = express();
 
@@ -116,6 +117,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/equipment', equipmentRoutes);
 app.use('/api/substitutions', substitutionRoutes);
 app.use('/api/cash-desks', cashDeskRoutes);
+app.use('/api/documents', documentRoutes);
 app.use('/api/access-profiles', accessRoutes);
 app.use('/api/children', childrenRoutes);
 app.use('/api/attendance', attendanceRoutes);

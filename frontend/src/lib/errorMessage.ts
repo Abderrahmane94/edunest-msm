@@ -144,6 +144,10 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^This replacement has already ended$/, 'substitutionEnded'],
   [/^Replacement not found$/, 'substitutionNotFound'],
   [/^Equipment not found$/, 'equipmentNotFound'],
+  // Documents
+  [/^Document not found$/, 'documentNotFound'],
+  [/^A document with this name already exists$/, 'documentNameTaken'],
+  [/^This kind of file is not accepted in the documents$/, 'fileType'],
   // Cash desks
   [/^Nobody collects their own cash desk$/, 'cashOwnDesk'],
   [/^The cash desk changed meanwhile, check the amounts again$/, 'cashDeskChanged'],

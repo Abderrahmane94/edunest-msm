@@ -24,6 +24,7 @@ import {
   AcademicYearDetailPage,
   YearRolloverPage,
   InventoryPage,
+  DocumentsPage,
   ClassroomsPage,
   ClassroomDetailPage,
   ChildrenPage,
@@ -40,7 +41,7 @@ import {
   EnrollmentDetailPage,
 } from '@/pages/admin/payments';
 import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage, TeacherAnnouncementsPage, TeacherChildrenPage, TeacherSuppliesPage } from '@/pages/teacher';
-import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentAnnouncementsPage, ParentPaymentsPage } from '@/pages/parent';
+import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentAnnouncementsPage, ParentPaymentsPage, ParentDocumentsPage } from '@/pages/parent';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { AdminLayout, ParentLayout } from '@/components/layout';
 import { YearBanner, YearSwitcher } from '@/components/layout/YearSwitcher';
@@ -70,6 +71,7 @@ import {
   Megaphone,
   CreditCard,
   Package,
+  FolderOpen,
 } from 'lucide-react';
 import { SubstitutionBanner, TeacherClassSwitcher } from '@/components/layout/TeacherClassSwitcher';
 import { usePermissions, type Area } from '@/lib/roles';
@@ -162,6 +164,7 @@ function getAdminNavItems(role: string, can: (area: Area) => boolean): NavItem[]
     // The accounts and the school's settings.
     { label: 'nav.users',         href: '/admin/users', icon: Users, area: 'staff', section: 'administration' },
     { label: 'nav.staff',         href: '/admin/staff', icon: UserCog, area: 'staff', section: 'administration' },
+    { label: 'nav.documents',     href: '/admin/documents', icon: FolderOpen, area: 'documents', section: 'administration' },
     { label: 'nav.settings',      href: '/admin/settings', icon: Settings, area: 'settings', section: 'administration' },
   ];
   return items
@@ -195,6 +198,7 @@ const parentNavItems: NavItem[] = [
   { label: 'nav.messages', href: '/parent/messages', icon: MessageCircle },
   { label: 'nav.announcements', href: '/parent/announcements', icon: Megaphone },
   { label: 'nav.payments', href: '/parent/payments', icon: Wallet },
+  { label: 'nav.documents', href: '/parent/documents', icon: FolderOpen },
   { label: 'nav.notifications', href: '/parent/notifications', icon: Bell },
 ];
 
@@ -469,6 +473,7 @@ export const routes: RouteObject[] = [
                 ],
               },
               { element: <PermissionRoute area="inventory" />, children: [{ path: 'inventory', element: <InventoryPage /> }] },
+              { element: <PermissionRoute area="documents" />, children: [{ path: 'documents', element: <DocumentsPage /> }] },
               { element: <PermissionRoute area={PAYMENT_AREAS} />, children: [{ path: 'payments', element: <PaymentManagementPage /> }] },
             ],
           },
@@ -508,6 +513,7 @@ export const routes: RouteObject[] = [
               { path: 'messages', element: <ParentMessagesPage /> },
               { path: 'announcements', element: <ParentAnnouncementsPage /> },
               { path: 'payments', element: <ParentPaymentsPage /> },
+              { path: 'documents', element: <ParentDocumentsPage /> },
               { path: 'notifications', element: <ParentNotificationsPage /> },
             ],
           },

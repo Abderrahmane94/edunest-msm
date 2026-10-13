@@ -170,6 +170,7 @@ model School {
   accessProfiles AccessProfile[]
   accessLogs       AccessLog[]
   cashHandovers    CashHandover[]
+  documents        SchoolDocument[]
   accessExceptions AccessException[]
   stockMovements StockMovement[]
   children       Child[]
@@ -1352,4 +1353,29 @@ model CashHandover {
   @@index([schoolId, createdAt])
   @@index([cashierUserId, createdAt])
   @@map("cash_handovers")
+}
+
+/// A document the school prints or sends often (enrollment form, rules,
+/// health sheet…): one file, kept in the school's library.
+model SchoolDocument {
+  id               String   @id @default(uuid())
+  schoolId         String   @map("school_id")
+  name             String
+  /// enrollment, health, rules, other
+  category         String
+  note             String?
+  filePublicId     String   @map("file_public_id")
+  fileExtension    String   @map("file_extension")
+  /// In bytes.
+  fileSize         Int      @map("file_size")
+  /// Shown to the families in their space.
+  visibleToParents Boolean  @default(false) @map("visible_to_parents")
+  createdByUserId  String?  @map("created_by_user_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  school School @relation(fields: [schoolId], references: [id])
+
+  @@index([schoolId, category])
+  @@map("school_documents")
 }

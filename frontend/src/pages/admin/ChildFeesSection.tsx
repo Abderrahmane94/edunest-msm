@@ -3,7 +3,8 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, PlusCircle, Settings2 } from 'lucide-react';
+import { AlertTriangle, FileText, PlusCircle, Settings2 } from 'lucide-react';
+import { StatementDialog } from './payments/StatementDialog';
 import {
   Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, ErrorAlert, Input,
 } from '@/components/ui';
@@ -193,6 +194,7 @@ export function ChildFeesSection({
   const closed = useYearClosed() || !can('children', 'edit');
   const [enrollOpen, setEnrollOpen] = React.useState(false);
   const notBilled = byYear && !!year && !isLoading && !isError && (periods ?? []).length === 0;
+  const [statementOpen, setStatementOpen] = React.useState(false);
   const fees = React.useMemo(() => groupByFee(periods ?? [], localToday()), [periods]);
   const navigate = useNavigate();
 
@@ -227,6 +229,12 @@ export function ChildFeesSection({
             {t('children.fees.enroll')}
           </Button>
         )}
+        {!notBilled && (periods ?? []).length > 0 && (
+          <Button type="button" variant="secondary" size="sm" className="ms-auto" onClick={() => setStatementOpen(true)}>
+            <FileText className="w-4 h-4" />
+            {t('statement.button')}
+          </Button>
+        )}
         {/* Discounts, withdrawal…: to manage the fees. */}
         {showManageBilling && can('fees', 'edit') && currentEnrollmentId && (
           <Button
@@ -240,6 +248,8 @@ export function ChildFeesSection({
           </Button>
         )}
       </div>
+
+      <StatementDialog childId={childId} yearId={byYear ? year?.id : undefined} open={statementOpen} onOpenChange={setStatementOpen} />
 
       {unpaidOtherYears.length > 0 && (
         <div className="rounded-md bg-warning-muted p-3 space-y-1">

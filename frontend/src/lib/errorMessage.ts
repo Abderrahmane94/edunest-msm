@@ -256,6 +256,7 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^This period is not late$/, 'periodNotLate'],
   [/^The parents were already reminded today$/, 'alreadyReminded'],
   [/^No email address to send the receipt to$/, 'noEmailForReceipt'],
+  [/^No email address to send the statement to$/, 'noEmailForStatement'],
   [/^The attachment is not a PDF$/, 'fileType'],
   [/^Expense not found$/, 'notFound'],
   [/^No receipt uploaded for this expense$/, 'noFile'],

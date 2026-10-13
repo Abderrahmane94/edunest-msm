@@ -5,6 +5,7 @@
  */
 
 import type { ReceiptData } from '../modules/payments/receipt.service';
+import type { StatementDocument } from '../modules/payments/statement.service';
 
 /** Escapes text interpolated into email HTML (names and labels come from user data). */
 function escapeHtml(value: string): string {
@@ -232,6 +233,46 @@ class EmailService {
         </div>
       `,
       attachments: pdf ? [pdf] : undefined,
+    });
+  }
+
+  /**
+   * Sends a statement of account: the totals in the message, the statement
+   * itself attached as a PDF.
+   */
+  async sendStatementEmail(to: string, document: StatementDocument, language: 'ar' | 'fr', pdf: EmailAttachment): Promise<void> {
+    const e = escapeHtml;
+    const ar = language === 'ar';
+    const L = ar
+      ? { title: 'كشف الحساب', year: 'السنة الدراسية', billed: 'المبلغ المفوتر', paid: 'المبلغ المدفوع', outstanding: 'الباقي للدفع', late: 'منه متأخر', attached: 'تجدون الكشف المفصل في الملف المرفق.', currency: 'د.ج' }
+      : { title: 'Relevé de compte', year: 'Année scolaire', billed: 'Total facturé', paid: 'Total payé', outstanding: 'Reste à payer', late: 'dont en retard', attached: 'Le relevé détaillé est en pièce jointe.', currency: 'DZD' };
+    const opposite = ar ? 'left' : 'right';
+    const names = document.statements.map((s) => `${s.child.firstName} ${s.child.lastName}`).join(ar ? '، ' : ', ');
+    const amount = (value: string) => `${Number(value).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${L.currency}`;
+    const field = (label: string, value: string, strong = false): string =>
+      `<tr><td style="padding:4px 0;color:#6b7280;">${e(label)}</td>` +
+      `<td style="padding:4px 0;text-align:${opposite};font-weight:${strong ? 700 : 600};" dir="ltr">${e(value)}</td></tr>`;
+
+    await this.send({
+      to,
+      subject: `${L.title} ${document.year.name} — ${names}`,
+      html: `
+        <div dir="${ar ? 'rtl' : 'ltr'}" style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#111827;text-align:${ar ? 'right' : 'left'};">
+          <h2 style="text-align:center;">${e(L.title)}</h2>
+          <p style="text-align:center;color:#6b7280;margin-top:-8px;">${e(document.school.name)}</p>
+          <p style="font-weight:600;">${e(names)}</p>
+          <table style="width:100%;font-size:14px;background:#f9fafb;padding:12px;border-radius:8px;">
+            ${field(L.year, document.year.name)}
+            ${field(L.billed, amount(document.totals.billed))}
+            ${field(L.paid, amount(document.totals.paid))}
+            ${field(L.outstanding, amount(document.totals.outstanding), true)}
+            ${Number(document.totals.late) > 0 ? field(L.late, amount(document.totals.late)) : ''}
+          </table>
+          <p style="margin-top:16px;">${e(L.attached)}</p>
+          <p style="margin-top:24px;color:#6b7280;font-size:12px;">— ${e(document.school.name)} · EduNest</p>
+        </div>
+      `,
+      attachments: [pdf],
     });
   }
 

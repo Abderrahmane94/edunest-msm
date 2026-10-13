@@ -3,7 +3,8 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { localToday } from '@/lib/period';
 import { useSearchParams } from 'react-router-dom';
-import { Receipt, Plus, Trash2, CheckCircle, AlertCircle, Minus, Eye, WifiOff, CloudUpload } from 'lucide-react';
+import { Receipt, Plus, Trash2, CheckCircle, AlertCircle, Minus, Eye, FileText, WifiOff, CloudUpload } from 'lucide-react';
+import { StatementDialog } from './StatementDialog';
 import { bidiIsolate, formatDate, formatDateTime, formatDZD, formatMonthYear } from '@/lib/formatters';
 import {
   Button,
@@ -1078,6 +1079,7 @@ export function PaymentsPage() {
   const [correctionDialogOpen, setCorrectionDialogOpen] = React.useState(false);
   const [receiptDialogOpen, setReceiptDialogOpen] = React.useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = React.useState<string | null>(null);
+  const [statementChildId, setStatementChildId] = React.useState<string | null>(null);
   const [filters, setFilters] = React.useState<PaymentRecordFilters>({});
   // A payment kept on the device, opened to allocate or correct it.
   const [fixAction, setFixAction] = React.useState<QueuedAction<OfflinePaymentPayload> | null>(null);
@@ -1171,8 +1173,9 @@ export function PaymentsPage() {
     {
       key: 'actions',
       header: '',
-      className: 'w-12',
+      className: 'w-24',
       render: (record) => (
+        <span className="flex items-center justify-end">
         <Button
           variant="ghost"
           size="sm"
@@ -1185,6 +1188,19 @@ export function PaymentsPage() {
         >
           <Eye className="w-4 h-4 text-primary" />
         </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setStatementChildId(record.childId);
+          }}
+          aria-label={t('statement.button')}
+          title={t('statement.button')}
+        >
+          <FileText className="w-4 h-4 text-primary" />
+        </Button>
+        </span>
       ),
     },
   ];
@@ -1294,6 +1310,8 @@ export function PaymentsPage() {
           branchId={selectedBranchId}
         />
       )}
+
+      <StatementDialog childId={statementChildId} open={statementChildId !== null} onOpenChange={(o) => !o && setStatementChildId(null)} />
 
       {/* Receipt View */}
       <ReceiptView

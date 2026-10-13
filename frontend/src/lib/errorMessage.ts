@@ -144,6 +144,15 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^This replacement has already ended$/, 'substitutionEnded'],
   [/^Replacement not found$/, 'substitutionNotFound'],
   [/^Equipment not found$/, 'equipmentNotFound'],
+  // Planning
+  [/^A shift must end after it starts$/, 'shiftEndsBeforeStart'],
+  [/^Two shifts of a day cannot overlap$/, 'shiftsOverlap'],
+  [/^At most two shifts a day$/, 'shiftsTooMany'],
+  [/^A usual week is the same every week or alternates, not both$/, 'shiftsMixed'],
+  [/^A time is written HH:MM$/, 'timeInvalid'],
+  [/^This person is already recorded away on these dates$/, 'absenceOverlap'],
+  [/^An absence cannot last more than a year$/, 'absenceTooLong'],
+  [/^Absence not found$/, 'absenceNotFound'],
   // Documents
   [/^Document not found$/, 'documentNotFound'],
   [/^A document with this name already exists$/, 'documentNameTaken'],

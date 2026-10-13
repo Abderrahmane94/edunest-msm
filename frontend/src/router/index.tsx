@@ -25,6 +25,7 @@ import {
   YearRolloverPage,
   InventoryPage,
   DocumentsPage,
+  PlanningPage,
   ClassroomsPage,
   ClassroomDetailPage,
   ChildrenPage,
@@ -40,7 +41,7 @@ import {
   PaymentManagementPage,
   EnrollmentDetailPage,
 } from '@/pages/admin/payments';
-import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage, TeacherAnnouncementsPage, TeacherChildrenPage, TeacherSuppliesPage } from '@/pages/teacher';
+import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage, TeacherAnnouncementsPage, TeacherChildrenPage, TeacherSuppliesPage, TeacherPlanningPage } from '@/pages/teacher';
 import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentAnnouncementsPage, ParentPaymentsPage, ParentDocumentsPage } from '@/pages/parent';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { AdminLayout, ParentLayout } from '@/components/layout';
@@ -72,6 +73,7 @@ import {
   CreditCard,
   Package,
   FolderOpen,
+  CalendarClock,
 } from 'lucide-react';
 import { SubstitutionBanner, TeacherClassSwitcher } from '@/components/layout/TeacherClassSwitcher';
 import { usePermissions, type Area } from '@/lib/roles';
@@ -164,6 +166,8 @@ function getAdminNavItems(role: string, can: (area: Area) => boolean): NavItem[]
     // The accounts and the school's settings.
     { label: 'nav.users',         href: '/admin/users', icon: Users, area: 'staff', section: 'administration' },
     { label: 'nav.staff',         href: '/admin/staff', icon: UserCog, area: 'staff', section: 'administration' },
+    // Everyone of the office: the team's week for who manages it, their own for the others.
+    { label: 'nav.planning',      href: '/admin/planning', icon: CalendarClock, section: 'administration' },
     { label: 'nav.documents',     href: '/admin/documents', icon: FolderOpen, area: 'documents', section: 'administration' },
     { label: 'nav.settings',      href: '/admin/settings', icon: Settings, area: 'settings', section: 'administration' },
   ];
@@ -190,6 +194,7 @@ const teacherNavItems: NavItem[] = [
   { label: 'nav.supplies', href: '/teacher/supplies', icon: Package },
   { label: 'nav.messages', href: '/teacher/messages', icon: MessageCircle },
   { label: 'nav.announcements', href: '/teacher/announcements', icon: Megaphone },
+  { label: 'nav.planning', href: '/teacher/planning', icon: CalendarClock },
 ];
 
 const parentNavItems: NavItem[] = [
@@ -474,6 +479,7 @@ export const routes: RouteObject[] = [
               },
               { element: <PermissionRoute area="inventory" />, children: [{ path: 'inventory', element: <InventoryPage /> }] },
               { element: <PermissionRoute area="documents" />, children: [{ path: 'documents', element: <DocumentsPage /> }] },
+              { path: 'planning', element: <PlanningPage /> },
               { element: <PermissionRoute area={PAYMENT_AREAS} />, children: [{ path: 'payments', element: <PaymentManagementPage /> }] },
             ],
           },
@@ -493,6 +499,7 @@ export const routes: RouteObject[] = [
               { path: 'reports', element: <TeacherDailyReportPage /> },
               { path: 'children', element: <TeacherChildrenPage /> },
               { path: 'supplies', element: <TeacherSuppliesPage /> },
+              { path: 'planning', element: <TeacherPlanningPage /> },
               { path: 'messages', element: <TeacherMessagesPage /> },
               { path: 'announcements', element: <TeacherAnnouncementsPage /> },
             ],

@@ -23,7 +23,7 @@ export interface PageHeaderProps {
 export function PageHeader({ title, description, back, badge, leading, actions, className }: PageHeaderProps) {
   const { t } = useTranslation();
   const backClass =
-    'inline-flex items-center gap-1.5 text-label font-medium text-text-secondary hover:text-text-heading transition-colors -ms-1 px-1 py-0.5 rounded focus-visible:outline-none focus-visible:shadow-focus-ring';
+    'inline-flex items-center gap-1.5 text-label font-medium text-text-secondary hover:text-text-heading transition-colors -ms-1 px-1 min-h-9 rounded focus-visible:outline-none focus-visible:shadow-focus-ring';
   const backContent = (
     <>
       <ArrowLeft className="w-4 h-4 rtl:rotate-180" />

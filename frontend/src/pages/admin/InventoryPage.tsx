@@ -286,11 +286,11 @@ function SuppliesTab() {
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           {i.isActive && canEdit && (
             <>
-              <Button variant="secondary" size="sm" onClick={() => setMoving({ id: i.id, type: 'purchase' })}>
+              <Button variant="secondary" size="sm" aria-label={t('inventory.movement.types.purchase')} onClick={() => setMoving({ id: i.id, type: 'purchase' })}>
                 <ShoppingCart className="w-4 h-4" />
                 <span className="hidden lg:inline">{t('inventory.movement.types.purchase')}</span>
               </Button>
-              <Button variant="secondary" size="sm" onClick={() => setMoving({ id: i.id, type: 'use' })}>
+              <Button variant="secondary" size="sm" aria-label={t('inventory.movement.types.use')} onClick={() => setMoving({ id: i.id, type: 'use' })}>
                 <Minus className="w-4 h-4" />
                 <span className="hidden lg:inline">{t('inventory.movement.types.use')}</span>
               </Button>

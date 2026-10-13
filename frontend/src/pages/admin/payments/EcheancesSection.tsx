@@ -187,7 +187,7 @@ export function EcheancesSection({
               )}
             >
               {t(`payments.enrollmentDetail.periods.filters.${f}`)}
-              <span className={cn('rounded-full px-1.5 text-micro', filter === f ? 'bg-white/20' : 'bg-subtle')}>
+              <span className={cn('rounded-full px-1.5 text-micro', filter === f ? 'bg-white/10' : 'bg-subtle')}>
                 {f === 'all' ? rows.length : counts[f]}
               </span>
             </button>

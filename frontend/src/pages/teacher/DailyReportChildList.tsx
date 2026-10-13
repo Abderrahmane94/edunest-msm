@@ -86,7 +86,7 @@ export function DailyReportChildList({
               )}
             >
               {t(`dailyReport.list.filters.${f}`)}
-              <span className={cn('rounded-full px-1.5 text-micro', active ? 'bg-white/20' : 'bg-subtle')}>
+              <span className={cn('rounded-full px-1.5 text-micro', active ? 'bg-white/10' : 'bg-subtle')}>
                 {counts[f]}
               </span>
             </button>

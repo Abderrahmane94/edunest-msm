@@ -58,6 +58,9 @@ function formatDisplay(value: string): string {
 
 type ViewMode = 'days' | 'months' | 'years';
 
+/** The calendar's width (w-[280px]). */
+const CALENDAR_WIDTH = 280;
+
 export interface DatePickerInputProps {
   id?: string;
   name?: string;
@@ -98,6 +101,18 @@ export function DatePickerInput({
   const [open, setOpen] = React.useState(false);
   const [viewMode, setViewMode] = React.useState<ViewMode>('days');
   const containerRef = React.useRef<HTMLDivElement>(null);
+  // The calendar opens from the field's start edge; when it would run off the
+  // screen there (a field at the far side of a phone), it opens from the end edge.
+  const [fromEnd, setFromEnd] = React.useState(false);
+  React.useLayoutEffect(() => {
+    if (!open || !containerRef.current) return;
+    const box = containerRef.current.getBoundingClientRect();
+    const width = Math.min(CALENDAR_WIDTH, window.innerWidth - 16);
+    const rtl = getComputedStyle(containerRef.current).direction === 'rtl';
+    const fitsFromStart = rtl ? box.right - width >= 8 : box.left + width <= window.innerWidth - 8;
+    const fitsFromEnd = rtl ? box.left + width <= window.innerWidth - 8 : box.right - width >= 8;
+    setFromEnd(!fitsFromStart && fitsFromEnd);
+  }, [open]);
   const selected = parseISODate(value);
   const [viewDate, setViewDate] = React.useState(() => selected ?? new Date());
 
@@ -213,7 +228,7 @@ export function DatePickerInput({
       {open && (
         <div
           role="dialog"
-          className="absolute z-50 mt-1 bg-card border border-border rounded-lg shadow-lg p-3 w-[280px] start-0"
+          className={cn('absolute z-50 mt-1 bg-card border border-border rounded-lg shadow-lg p-3 w-[280px] max-w-[calc(100vw-1rem)]', fromEnd ? 'end-0' : 'start-0')}
         >
           {viewMode === 'days' && (
             <>

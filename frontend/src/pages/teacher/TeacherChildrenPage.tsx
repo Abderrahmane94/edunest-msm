@@ -144,7 +144,7 @@ export function TeacherChildrenPage() {
                 key={child.id}
                 type="button"
                 onClick={() => { setSelectedChild(child); setDialogOpen(true); }}
-                className="w-full flex items-center gap-3 bg-card border border-border rounded-lg p-4 transition-all duration-150 active:scale-[0.98] text-start"
+                className="w-full flex items-center gap-3 bg-card border border-border rounded-lg p-4 transition-all duration-150 active:scale-[0.98] text-start focus-visible:outline-none focus-visible:shadow-focus-ring"
               >
                 <Avatar src={child.photo_url} name={`${child.first_name} ${child.last_name}`} size="md" />
                 <div className="flex-1 min-w-0 space-y-1">

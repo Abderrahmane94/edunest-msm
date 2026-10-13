@@ -55,11 +55,12 @@
     --color-text-primary: #3A365F;
     --color-text-secondary: #6A6690;
     --color-text-heading: #221E4C;
-    --color-text-disabled: #A29EBF;
+    /* Captions, timestamps, section labels: the faintest text that still reads (4.5:1 on a card). */
+    --color-text-disabled: #716C9A;
     --color-text-inverse: #FFFFFF;
 
     /* Primary Accent — the logo's violet */
-    --color-accent: #5B55D6;
+    --color-accent: #5751D5;
     --color-accent-hover: #4A43C2;
     --color-accent-muted: #E4E1FF;
     --color-accent-light: #7C75F0;
@@ -92,6 +93,18 @@
     --color-pink-muted: #FFE1EC;
     --color-teal: #0F9A9A;
     --color-teal-muted: #D3F3F1;
+
+    /* Ink: the same hues, deepened, for words written on their own soft
+       background (badges, tags, initials). The bright ones above stay for
+       fills, icons and buttons, where 4.5:1 is not asked of them. */
+    --color-accent-ink: #5751D5;
+    --color-success-ink: #127857;
+    --color-warning-ink: #A75114;
+    --color-danger-ink: #C52246;
+    --color-sun-ink: #956100;
+    --color-sky-ink: #1E6DAC;
+    --color-pink-ink: #C61F57;
+    --color-teal-ink: #0C7777;
 
     /* Attendance & Finance Status */
     --color-present: #16956C;
@@ -263,8 +276,8 @@
 
   /* Remove background colors for print */
   .receipt-content .bg-subtle,
-  .receipt-content .bg-danger\\/5,
-  .receipt-content .bg-warning\\/5 {
+  .receipt-content .bg-danger\/5,
+  .receipt-content .bg-warning\/5 {
     background-color: #f9f9f9 !important;
   }
 
@@ -362,4 +375,20 @@
 /* "Required" marks only matter while editing. */
 .read-mode label > .text-danger {
   display: none;
+}
+
+/* ─── Readable badges ───
+   A status colour written on its own soft background (bg-success-muted +
+   text-success, and the like) is switched to its ink, here once rather than
+   in every badge, tag and chip. */
+@layer utilities {
+  .bg-success-muted.text-success, .bg-success-muted.text-present, .bg-success-muted.text-paid,
+  .bg-success-muted .text-success, .bg-success-muted .text-present, .bg-success-muted .text-paid { color: var(--color-success-ink); }
+  .bg-warning-muted.text-warning, .bg-warning-muted.text-late, .bg-warning-muted.text-pending,
+  .bg-warning-muted .text-warning, .bg-warning-muted .text-late, .bg-warning-muted .text-pending { color: var(--color-warning-ink); }
+  .bg-danger-muted.text-danger, .bg-danger-muted.text-absent, .bg-danger-muted.text-overdue,
+  .bg-danger-muted .text-danger, .bg-danger-muted .text-absent, .bg-danger-muted .text-overdue { color: var(--color-danger-ink); }
+  .bg-primary-muted.text-primary, .bg-accent-muted.text-primary, .bg-accent-muted.text-accent,
+  .bg-primary-muted .text-primary, .bg-accent-muted .text-primary, .bg-accent-muted .text-accent { color: var(--color-accent-ink); }
+  .bg-accent-subtle .text-warning, .bg-accent-subtle.text-warning, .bg-subtle .text-warning, .bg-subtle.text-warning { color: var(--color-warning-ink); }
 }

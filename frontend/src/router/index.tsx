@@ -325,7 +325,7 @@ function TodayStatus({ present, expected, callsMissing }: { present: number; exp
       <span className="mt-1 block h-1.5 rounded-full bg-white overflow-hidden">
         <span className="block h-full rounded-full bg-success" style={{ width: `${rate}%` }} />
       </span>
-      {callsMissing > 0 && <span className="mt-1 block text-micro font-medium text-warning">{t('navStatus.callsMissing', { count: callsMissing })}</span>}
+      {callsMissing > 0 && <span className="mt-1 block text-micro font-medium text-[var(--color-warning-ink)]">{t('navStatus.callsMissing', { count: callsMissing })}</span>}
     </Link>
   );
 }
@@ -394,7 +394,8 @@ function TeacherLayoutWrapper() {
       sidebarHeader={
         <div className="flex items-center gap-2 px-1">
           <BrandMark size={34} className="shrink-0" />
-          <span className="font-playful text-[19px] font-extrabold leading-none" dir="ltr"><span className="text-text-heading">Edu</span><span className="text-primary">Nest</span></span>
+          {/* On a narrow phone the class picker needs the room: the mark alone says whose app this is. */}
+          <span className="font-playful text-[19px] font-extrabold leading-none max-[479px]:hidden" dir="ltr"><span className="text-text-heading">Edu</span><span className="text-primary">Nest</span></span>
         </div>
       }
       sidebarFooter={<SidebarFooterContent />}

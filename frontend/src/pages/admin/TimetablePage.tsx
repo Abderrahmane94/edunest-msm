@@ -128,7 +128,7 @@ export function TimetableSection() {
                   className={`
                     relative flex flex-col items-center justify-center gap-1 px-3 py-4 rounded-lg border-2 transition-all duration-150
                     ${isActive
-                      ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
+                      ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent-ink)]'
                       : 'border-border bg-card text-text-secondary hover:border-[var(--color-border-strong)] hover:bg-hover'
                     }
                   `}

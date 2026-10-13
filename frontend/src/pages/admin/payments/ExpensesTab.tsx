@@ -196,7 +196,7 @@ export function ExpensesTab() {
       key: 'description',
       header: t('finance.expenses.columns.description'),
       render: (row) => (
-        <span className="text-body text-text-secondary truncate max-w-[250px] block">
+        <span className="text-body text-text-secondary block lg:truncate lg:max-w-[250px] max-lg:break-words" title={row.description}>
           {row.description}
           {row.paidFromCashUserId && (
             <span className="block text-micro text-text-secondary">

@@ -10,14 +10,14 @@ export type ClassColor = (typeof CLASS_COLORS)[number];
 
 // Written out in full for Tailwind.
 const LOOK: Record<ClassColor, { dot: string; soft: string }> = {
-  violet: { dot: 'bg-[var(--color-accent)]', soft: 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]' },
-  sky: { dot: 'bg-[var(--color-sky)]', soft: 'bg-[var(--color-sky-muted)] text-[var(--color-sky)]' },
-  teal: { dot: 'bg-[var(--color-teal)]', soft: 'bg-[var(--color-teal-muted)] text-[var(--color-teal)]' },
-  green: { dot: 'bg-[var(--color-success)]', soft: 'bg-[var(--color-success-muted)] text-[var(--color-success)]' },
-  sun: { dot: 'bg-[var(--color-sun)]', soft: 'bg-[var(--color-sun-muted)] text-[#B97800]' },
-  orange: { dot: 'bg-[var(--color-warning)]', soft: 'bg-[var(--color-warning-muted)] text-[var(--color-warning)]' },
-  pink: { dot: 'bg-[var(--color-pink)]', soft: 'bg-[var(--color-pink-muted)] text-[var(--color-pink)]' },
-  red: { dot: 'bg-[var(--color-danger)]', soft: 'bg-[var(--color-danger-muted)] text-[var(--color-danger)]' },
+  violet: { dot: 'bg-[var(--color-accent)]', soft: 'bg-[var(--color-accent-muted)] text-[var(--color-accent-ink)]' },
+  sky: { dot: 'bg-[var(--color-sky)]', soft: 'bg-[var(--color-sky-muted)] text-[var(--color-sky-ink)]' },
+  teal: { dot: 'bg-[var(--color-teal)]', soft: 'bg-[var(--color-teal-muted)] text-[var(--color-teal-ink)]' },
+  green: { dot: 'bg-[var(--color-success)]', soft: 'bg-[var(--color-success-muted)] text-[var(--color-success-ink)]' },
+  sun: { dot: 'bg-[var(--color-sun)]', soft: 'bg-[var(--color-sun-muted)] text-[var(--color-sun-ink)]' },
+  orange: { dot: 'bg-[var(--color-warning)]', soft: 'bg-[var(--color-warning-muted)] text-[var(--color-warning-ink)]' },
+  pink: { dot: 'bg-[var(--color-pink)]', soft: 'bg-[var(--color-pink-muted)] text-[var(--color-pink-ink)]' },
+  red: { dot: 'bg-[var(--color-danger)]', soft: 'bg-[var(--color-danger-muted)] text-[var(--color-danger-ink)]' },
 };
 
 /** The color chosen for a class, or one picked from its id so it never changes. */

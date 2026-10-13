@@ -59,7 +59,7 @@ export function ParentNotificationsPage() {
                 type="button"
                 onClick={() => markAllRead.mutate()}
                 disabled={markAllRead.isPending}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-caption font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-muted)] transition-colors duration-150"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-caption font-medium text-[var(--color-accent-ink)] hover:bg-[var(--color-accent-muted)] transition-colors duration-150"
                 aria-label={t('parentNotifications.markAllRead')}
               >
                 <CheckCheck className="w-4 h-4" />
@@ -105,7 +105,7 @@ export function ParentNotificationsPage() {
                   type="button"
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="px-4 py-2 rounded-lg text-caption font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-muted)] transition-colors duration-150"
+                  className="px-4 py-2 rounded-lg text-caption font-medium text-[var(--color-accent-ink)] hover:bg-[var(--color-accent-muted)] transition-colors duration-150"
                 >
                   {isFetchingNextPage
                     ? t('common.loading')
@@ -152,7 +152,7 @@ function NotificationItem({ notification }: { notification: AppNotification }) {
         type="button"
         onClick={handleClick}
         className={cn(
-          'w-full flex items-start gap-3 p-4 rounded-lg border text-start transition-colors duration-150',
+          'w-full flex items-start gap-3 p-4 rounded-lg border text-start transition-colors duration-150 focus-visible:outline-none focus-visible:shadow-focus-ring',
           notification.is_read
             ? 'bg-card border-border hover:bg-hover'
             : 'bg-card border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-subtle)]'

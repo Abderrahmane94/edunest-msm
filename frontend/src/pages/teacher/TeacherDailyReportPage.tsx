@@ -932,7 +932,7 @@ export function TeacherDailyReportPage() {
               {syncing ? t('dailyReport.sending') : t('dailyReport.savedOffline')}
             </div>
           ) : saved ? (
-            <div className="flex flex-wrap items-center justify-center text-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">
+            <div className="flex flex-wrap items-center justify-center text-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success-ink)] font-medium text-body rounded-lg">
               <Check className="w-5 h-5 shrink-0" />
               {isEditing
                 ? t('dailyReport.updateSuccess')

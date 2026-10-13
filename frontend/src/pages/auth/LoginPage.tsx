@@ -157,7 +157,7 @@ export function LoginPage() {
               <button
                 type="button"
                 onClick={handleBackToLogin}
-                className="flex items-center gap-1.5 text-caption text-text-secondary hover:text-foreground mb-4 transition"
+                className="flex items-center gap-1.5 min-h-9 text-caption text-text-secondary hover:text-foreground mb-2 transition rounded focus-visible:outline-none focus-visible:shadow-focus-ring"
               >
                 <ArrowLeft className="w-4 h-4" />
                 {t('common.back')}
@@ -195,7 +195,7 @@ export function LoginPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting || !selectedSchoolId || !online}
-                  className="w-full h-11 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1"
+                  className="w-full h-11 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1 focus-visible:outline-none focus-visible:shadow-focus-ring"
                 >
                   {isSubmitting ? (
                     <span className="animate-pulse">{t('common.loading')}</span>
@@ -228,12 +228,13 @@ export function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="text-label font-medium text-text-heading block mb-1.5">
+              <label htmlFor="login-email" className="text-label font-medium text-text-heading block mb-1.5">
                 {t('auth.email')}
               </label>
               <div className="relative">
                 <Mail className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-disabled pointer-events-none" />
                 <input
+                  id="login-email"
                   type="email"
                   name="email"
                   value={email}
@@ -248,12 +249,12 @@ export function LoginPage() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-label font-medium text-text-heading">
+                <label htmlFor="login-password" className="text-label font-medium text-text-heading">
                   {t('auth.password')}
                 </label>
                 <Link
                   to="/reset-password"
-                  className="text-caption text-[var(--color-accent)] hover:underline"
+                  className="text-caption text-[var(--color-accent)] hover:underline py-2 -my-2 rounded focus-visible:outline-none focus-visible:shadow-focus-ring"
                 >
                   {t('auth.forgotPassword')}
                 </Link>
@@ -261,6 +262,7 @@ export function LoginPage() {
               <div className="relative">
                 <Lock className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-disabled pointer-events-none" />
                 <input
+                  id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={password}
@@ -273,7 +275,7 @@ export function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute end-3 top-1/2 -translate-y-1/2 text-text-disabled hover:text-text-secondary transition"
+                  className="absolute end-1 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-md text-text-disabled hover:text-text-secondary transition focus-visible:outline-none focus-visible:shadow-focus-ring"
                   aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -284,7 +286,7 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting || !online}
-              className="w-full h-11 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1"
+              className="w-full h-11 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1 focus-visible:outline-none focus-visible:shadow-focus-ring"
             >
               {isSubmitting ? (
                 <span className="animate-pulse">{t('common.loading')}</span>

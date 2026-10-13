@@ -20,12 +20,12 @@ export interface AvatarProps {
 // The same name always gets the same color.
 const AVATAR_COLORS = [
   'bg-[var(--color-accent-muted)] text-[var(--color-accent-hover)]',
-  'bg-[var(--color-warning-muted)] text-[var(--color-warning)]',
-  'bg-[var(--color-success-muted)] text-[var(--color-success)]',
-  'bg-[var(--color-pink-muted)] text-[var(--color-pink)]',
-  'bg-[var(--color-sky-muted)] text-[var(--color-sky)]',
-  'bg-[var(--color-teal-muted)] text-[var(--color-teal)]',
-  'bg-[var(--color-sun-muted)] text-[#A86C00]',
+  'bg-[var(--color-warning-muted)] text-[var(--color-warning-ink)]',
+  'bg-[var(--color-success-muted)] text-[var(--color-success-ink)]',
+  'bg-[var(--color-pink-muted)] text-[var(--color-pink-ink)]',
+  'bg-[var(--color-sky-muted)] text-[var(--color-sky-ink)]',
+  'bg-[var(--color-teal-muted)] text-[var(--color-teal-ink)]',
+  'bg-[var(--color-sun-muted)] text-[var(--color-sun-ink)]',
 ];
 
 export function avatarColor(name: string): string {

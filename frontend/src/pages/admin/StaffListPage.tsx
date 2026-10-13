@@ -156,7 +156,7 @@ export function StaffListPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title={t('staff.title')} />
+      <PageHeader title={t('staff.title')} description={t('pageIntro.staff')} />
 
       <FilterBar
         search={{ onSearch: handleSearch, placeholder: t('staff.filters.searchPlaceholder'), defaultValue: search }}

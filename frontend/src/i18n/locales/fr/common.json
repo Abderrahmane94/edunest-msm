@@ -314,6 +314,30 @@
     "timetable": "Jours",
     "communication": "Échanges"
   },
+  "navSection": {
+    "daily": "Quotidien",
+    "management": "Gestion",
+    "administration": "Administration"
+  },
+  "navStatus": {
+    "present": "Présents aujourd'hui",
+    "callsMissing_one": "1 appel non fait",
+    "callsMissing_many": "{{count}} appels non faits",
+    "callsMissing_other": "{{count}} appels non faits"
+  },
+  "pageIntro": {
+    "children": "Les enfants inscrits cette année : leur fiche, leur classe, leurs parents et leurs frais.",
+    "communication": "Ce que l'école dit aux familles et à l'équipe : annonces, événements, messages.",
+    "inventory": "Ce que l'école consomme et ce qu'elle possède : fournitures à racheter, matériel salle par salle.",
+    "payments": "L'argent des familles : encaisser, suivre les retards, les caisses et les dépenses.",
+    "payroll": "Les salaires de l'équipe : ce qui est dû chaque mois et ce qui a été versé.",
+    "settings": "L'école elle-même : ses informations, ses années, ses salles et les droits de chacun.",
+    "staff": "Les personnes qui travaillent à l'école : contrat, salaire et dossier.",
+    "users": "Les comptes qui se connectent à EduNest : équipe et parents.",
+    "trash": "Ce qui a été supprimé reste ici un temps : vous pouvez le restaurer.",
+    "billing": "Les plans, les abonnements des écoles et leurs paiements.",
+    "teacherCommunication": "Les annonces de l'école et les événements de votre classe."
+  },
   "nav": {
     "dashboard": "Tableau de bord",
     "schools": "Écoles",

@@ -1,4 +1,4 @@
-import { Navigate, Outlet, useParams, useSearchParams, type RouteObject } from 'react-router-dom';
+import { Link, Navigate, Outlet, useParams, useSearchParams, type RouteObject } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLogoutWithConfirm } from '@/components/LogoutConfirm';
@@ -48,6 +48,7 @@ import { BrandMark } from '@/components/layout/BrandMark';
 import { Avatar } from '@/components/ui';
 import type { NavItem } from '@/components/layout';
 import { useSchool } from '@/hooks/useSchool';
+import { useOfficeNavCounts, usePersonalNavCounts } from '@/hooks/useNavCounts';
 import {
   LayoutDashboard,
   Users,
@@ -148,17 +149,20 @@ function getAdminNavItems(role: string, can: (area: Area) => boolean): NavItem[]
 
   // The director sees everything; the office staff, the areas their profile opens.
   const items: (NavItem & { area?: Area | Area[] })[] = [
-    { label: 'nav.dashboard',     href: '/admin', icon: LayoutDashboard },
-    { label: 'nav.users',         href: '/admin/users', icon: Users, area: 'staff' },
-    { label: 'nav.staff',         href: '/admin/staff', icon: UserCog, area: 'staff' },
-    { label: 'nav.classrooms',    href: '/admin/classrooms', icon: School, area: 'classes' },
-    { label: 'nav.children',      href: '/admin/children', icon: Baby, area: 'children' },
-    { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck, area: 'classes' },
-    { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle, area: 'communication' },
-    { label: 'nav.payments',      href: '/admin/payments', icon: CreditCard, area: PAYMENT_AREAS },
-    { label: 'nav.payroll',       href: '/admin/payroll', icon: Banknote, area: 'payroll' },
-    { label: 'nav.inventory',     href: '/admin/inventory', icon: Package, area: 'inventory' },
-    { label: 'nav.settings',      href: '/admin/settings', icon: Settings, area: 'settings' },
+    // Every day: the children and their classes.
+    { label: 'nav.dashboard',     href: '/admin', icon: LayoutDashboard, section: 'daily' },
+    { label: 'nav.attendance',    href: '/admin/attendance', icon: ClipboardCheck, area: 'classes', section: 'daily' },
+    { label: 'nav.children',      href: '/admin/children', icon: Baby, area: 'children', section: 'daily' },
+    { label: 'nav.classrooms',    href: '/admin/classrooms', icon: School, area: 'classes', section: 'daily' },
+    { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle, area: 'communication', section: 'daily' },
+    // The money and the supplies.
+    { label: 'nav.payments',      href: '/admin/payments', icon: CreditCard, area: PAYMENT_AREAS, section: 'management' },
+    { label: 'nav.payroll',       href: '/admin/payroll', icon: Banknote, area: 'payroll', section: 'management' },
+    { label: 'nav.inventory',     href: '/admin/inventory', icon: Package, area: 'inventory', section: 'management' },
+    // The accounts and the school's settings.
+    { label: 'nav.users',         href: '/admin/users', icon: Users, area: 'staff', section: 'administration' },
+    { label: 'nav.staff',         href: '/admin/staff', icon: UserCog, area: 'staff', section: 'administration' },
+    { label: 'nav.settings',      href: '/admin/settings', icon: Settings, area: 'settings', section: 'administration' },
   ];
   return items
     .filter((item) => !item.area || (Array.isArray(item.area) ? item.area : [item.area]).some((a) => can(a)))
@@ -271,6 +275,29 @@ function SchoolSidebarHeader() {
   );
 }
 
+/** Top of the office menu: who is in today, and the roll calls still to do. */
+function TodayStatus({ present, expected, callsMissing }: { present: number; expected: number; callsMissing: number }) {
+  const { t } = useTranslation();
+  const rate = expected > 0 ? Math.min(100, Math.round((present / expected) * 100)) : 0;
+  return (
+    <Link
+      to="/admin/attendance"
+      className="block rounded-xl bg-[var(--color-accent-subtle)] px-3 py-2 hover:bg-[var(--color-accent-muted)] transition-colors focus-visible:outline-none focus-visible:shadow-focus-ring"
+    >
+      <span className="flex items-baseline justify-between gap-2">
+        <span className="text-micro font-semibold text-text-secondary">{t('navStatus.present')}</span>
+        <span className="text-body font-bold text-text-heading tabular-nums" dir="ltr">
+          {present} / {expected}
+        </span>
+      </span>
+      <span className="mt-1 block h-1.5 rounded-full bg-white overflow-hidden">
+        <span className="block h-full rounded-full bg-success" style={{ width: `${rate}%` }} />
+      </span>
+      {callsMissing > 0 && <span className="mt-1 block text-micro font-medium text-warning">{t('navStatus.callsMissing', { count: callsMissing })}</span>}
+    </Link>
+  );
+}
+
 /** Keeps the échéances on an admin's device, for recording payments offline. */
 function OfflinePaymentsPreloader() {
   const { branchId } = useDefaultBranch();
@@ -296,9 +323,10 @@ function TrashRoute() {
 function AdminLayoutWrapper() {
   const { user } = useAuth();
   const { can } = usePermissions();
-  const navItems = getAdminNavItems(user?.role || 'admin', can);
   // The school's office: the director and the administrative staff (not super_admin).
   const isAdmin = user?.role === 'admin' || user?.role === 'administrative';
+  const { counts, today } = useOfficeNavCounts(isAdmin);
+  const navItems = getAdminNavItems(user?.role || 'admin', can).map((item) => ({ ...item, badge: counts[item.href] }));
 
   return (
     <>
@@ -316,6 +344,7 @@ function AdminLayoutWrapper() {
           )
         }
         sidebarFooter={<SidebarFooterContent />}
+        sidebarStatus={today ? <TodayStatus {...today} /> : undefined}
         yearSwitcher={isAdmin ? <YearSwitcher /> : undefined}
         yearBanner={isAdmin ? <YearBanner /> : undefined}
       />
@@ -324,9 +353,10 @@ function AdminLayoutWrapper() {
 }
 
 function TeacherLayoutWrapper() {
+  const counts = usePersonalNavCounts();
   return (
     <AdminLayout
-      navItems={teacherNavItems}
+      navItems={teacherNavItems.map((item) => ({ ...item, badge: counts[item.href] }))}
       sidebarHeader={
         <div className="flex items-center gap-2 px-1">
           <BrandMark size={34} className="shrink-0" />
@@ -341,7 +371,8 @@ function TeacherLayoutWrapper() {
 }
 
 function ParentLayoutWrapper() {
-  return <ParentLayout navItems={parentNavItems} />;
+  const counts = usePersonalNavCounts();
+  return <ParentLayout navItems={parentNavItems.map((item) => ({ ...item, badge: counts[item.href] }))} />;
 }
 
 export const routes: RouteObject[] = [

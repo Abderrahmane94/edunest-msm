@@ -95,9 +95,10 @@ export function useStaffColleagues() {
 }
 
 /** List staff conversations for the current user. */
-export function useStaffConversations() {
+export function useStaffConversations(enabled = true) {
   return useQuery({
     queryKey: ['staff-conversations'],
+    enabled,
     queryFn: async () => {
       const res = await apiClient.get<unknown>('/communication/staff/conversations');
       const raw = Array.isArray(res.data) ? res.data : [];

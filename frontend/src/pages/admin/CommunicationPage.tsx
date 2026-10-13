@@ -75,6 +75,7 @@ export function CommunicationPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title={t('communication.title')}
+        description={t('pageIntro.communication')}
         actions={
           !can('communication', 'edit') ? undefined : activeTab === 'announcements' ? (
             <CreateButton label={t('communication.announcements.create')} onClick={() => setShowAnnouncementDialog(true)} />

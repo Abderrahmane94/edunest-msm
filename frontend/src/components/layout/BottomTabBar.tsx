@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MoreHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { NavItem } from './Sidebar';
+import { NavBadge, type NavItem } from './Sidebar';
 import { navChip } from './navColors';
 
 interface BottomTabBarProps {
@@ -30,6 +30,7 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
   const visibleItems = hasOverflow ? items.slice(0, MAX_VISIBLE_WITH_OVERFLOW) : items;
   const overflowItems = hasOverflow ? items.slice(MAX_VISIBLE_WITH_OVERFLOW) : [];
   const isOverflowActive = overflowItems.some((item) => isItemActive(item, location.pathname));
+  const overflowBadge = overflowItems.reduce((n, item) => n + (item.badge ?? 0), 0);
 
   React.useEffect(() => {
     if (!moreOpen) return;
@@ -72,11 +73,12 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
               <>
                 <span
                   className={cn(
-                    'flex items-center justify-center w-12 h-7 rounded-full transition-colors duration-150',
+                    'relative flex items-center justify-center w-12 h-7 rounded-full transition-colors duration-150',
                     isActive && 'bg-[var(--color-accent-muted)]',
                   )}
                 >
                   <item.icon className="w-5 h-5" />
+                  <NavBadge count={item.badge} className="absolute -top-1 end-0 min-w-[18px] h-[18px] px-1 ring-2 ring-white" />
                 </span>
             {/* A short name when the full one wouldn't fit (e.g. "Accueil" for the dashboard). */}
             <span className="text-micro font-medium truncate max-w-[72px]">
@@ -100,11 +102,12 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
           >
             <span
               className={cn(
-                'flex items-center justify-center w-12 h-7 rounded-full transition-colors duration-150',
+                'relative flex items-center justify-center w-12 h-7 rounded-full transition-colors duration-150',
                 isOverflowActive && 'bg-[var(--color-accent-muted)]',
               )}
             >
               <MoreHorizontal className="w-5 h-5" />
+              <NavBadge count={overflowBadge} className="absolute -top-1 end-0 min-w-[18px] h-[18px] px-1 ring-2 ring-white" />
             </span>
             <span className="text-micro font-medium">{t('common.more')}</span>
           </button>
@@ -139,8 +142,13 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
 
             <div className="grid grid-cols-3 gap-3">
               {overflowItems.map((item, i) => (
+                <React.Fragment key={item.href}>
+                {item.section && item.section !== overflowItems[i - 1]?.section && (
+                  <p className="col-span-3 px-1 pt-1 text-micro font-bold uppercase tracking-wider text-text-disabled">
+                    {t(`navSection.${item.section}`)}
+                  </p>
+                )}
                 <NavLink
-                  key={item.href}
                   to={item.href}
                   end={item.href === '/admin' || item.href === '/teacher' || item.href === '/parent'}
                   className={({ isActive }) =>
@@ -152,11 +160,13 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
                     )
                   }
                 >
-                  <span className={cn('w-10 h-10 rounded-xl flex items-center justify-center', navChip(MAX_VISIBLE_WITH_OVERFLOW + i))}>
+                  <span className={cn('relative w-10 h-10 rounded-xl flex items-center justify-center', navChip(MAX_VISIBLE_WITH_OVERFLOW + i))}>
                     <item.icon className="w-5 h-5" />
+                    <NavBadge count={item.badge} className="absolute -top-1.5 -end-1.5 min-w-[18px] h-[18px] px-1 ring-2 ring-white" />
                   </span>
                   <span className="text-micro font-medium">{t(item.label, item.label)}</span>
                 </NavLink>
+                </React.Fragment>
               ))}
             </div>
           </div>

@@ -94,9 +94,10 @@ export interface PlatformDashboard {
   schoolRows: PlatformSchoolRow[];
 }
 
-export function useAdminDashboard() {
+export function useAdminDashboard(enabled = true) {
   return useQuery({
     queryKey: ['admin', 'dashboard'],
+    enabled,
     queryFn: async () => {
       const res = await apiClient.get<AdminDashboard>('/admin/dashboard');
       if (!res.success || !res.data) throw apiError(res.error, 'Failed to load the dashboard');

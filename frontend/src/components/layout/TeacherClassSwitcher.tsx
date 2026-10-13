@@ -16,7 +16,7 @@ export function TeacherClassSwitcher() {
       <select
         value={current.id}
         onChange={(e) => setTeacherClassId(e.target.value)}
-        className="bg-transparent text-foreground font-medium focus:outline-none max-w-[15rem]"
+        className="bg-transparent text-foreground font-medium focus:outline-none max-w-[8.5rem] sm:max-w-[15rem]"
       >
         {classes.map((c) => (
           <option key={c.id} value={c.id}>

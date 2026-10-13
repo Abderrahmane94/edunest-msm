@@ -80,7 +80,7 @@ export function TeacherMessagesPage() {
             type="button"
             onClick={() => setTab('parents')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-caption font-medium transition-colors duration-150',
+              'flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-lg text-caption font-medium transition-colors duration-150',
               tab === 'parents'
                 ? 'bg-[var(--color-accent)] text-[var(--color-text-inverse)]'
                 : 'text-text-secondary hover:bg-hover'
@@ -93,7 +93,7 @@ export function TeacherMessagesPage() {
             type="button"
             onClick={() => setTab('staff')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-caption font-medium transition-colors duration-150',
+              'flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-lg text-caption font-medium transition-colors duration-150',
               tab === 'staff'
                 ? 'bg-[var(--color-accent)] text-[var(--color-text-inverse)]'
                 : 'text-text-secondary hover:bg-hover'

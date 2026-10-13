@@ -1,6 +1,7 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { Receipt, Plus, Trash2, CheckCircle, AlertCircle, Minus, Eye, WifiOff, CloudUpload } from 'lucide-react';
 import { bidiIsolate, formatDate, formatDateTime, formatDZD, formatMonthYear } from '@/lib/formatters';
 import {
@@ -97,10 +98,13 @@ function RecordPaymentDialog({
   onOpenChange,
   branchId,
   fixAction = null,
+  initialChildId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   branchId: string;
+  /** Opened for this child (from the late list). */
+  initialChildId?: string;
   fixAction?: QueuedAction<OfflinePaymentPayload> | null;
 }) {
   const { t, i18n } = useTranslation();
@@ -126,6 +130,10 @@ function RecordPaymentDialog({
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [result, setResult] = React.useState<RecordPaymentResult | null>(null);
   const prevTotalRef = React.useRef('');
+
+  React.useEffect(() => {
+    if (open && initialChildId) setChildId(initialChildId);
+  }, [open, initialChildId]);
 
   // A payment kept on the device, opened to allocate or correct it.
   React.useEffect(() => {
@@ -1057,6 +1065,25 @@ export function PaymentsPage() {
   const [recordDialogOpen, setRecordDialogOpen] = React.useState(false);
   // Corrections are the director's.
   const { can, canCorrectPayments } = usePermissions();
+  // « Encaisser » on a late line opens the payment for that child (?pay=<child>).
+  const [params, setParams] = useSearchParams();
+  const [payChildId, setPayChildId] = React.useState<string | undefined>();
+  const payParam = params.get('pay');
+  React.useEffect(() => {
+    if (!payParam) return;
+    if (can('collections', 'edit')) {
+      setPayChildId(payParam);
+      setRecordDialogOpen(true);
+    }
+    setParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        p.delete('pay');
+        return p;
+      },
+      { replace: true },
+    );
+  }, [payParam]); // eslint-disable-line react-hooks/exhaustive-deps
   const isDirector = canCorrectPayments && can('collections', 'edit');
   const [correctionDialogOpen, setCorrectionDialogOpen] = React.useState(false);
   const [receiptDialogOpen, setReceiptDialogOpen] = React.useState(false);
@@ -1244,8 +1271,12 @@ export function PaymentsPage() {
       {selectedBranchId && (
         <RecordPaymentDialog
           open={recordDialogOpen}
-          onOpenChange={setRecordDialogOpen}
+          onOpenChange={(isOpen) => {
+            setRecordDialogOpen(isOpen);
+            if (!isOpen) setPayChildId(undefined);
+          }}
           branchId={selectedBranchId}
+          initialChildId={payChildId}
         />
       )}
 

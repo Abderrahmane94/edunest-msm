@@ -8,6 +8,8 @@ import { SearchInput, type SearchInputProps } from './SearchInput';
 export interface FilterBarProps {
   /** A search field at the start of the bar. */
   search?: Pick<SearchInputProps, 'onSearch' | 'placeholder' | 'defaultValue'>;
+  /** A row of chips (the list's main filter), always in view. */
+  chips?: React.ReactNode;
   /** The filter fields (selects, dates…), laid out in a grid. */
   children?: React.ReactNode;
   /** How many filters differ from their default: shown on the phone's "Filters" button. */
@@ -33,6 +35,7 @@ const GRID: Record<NonNullable<FilterBarProps['columns']>, string> = {
  */
 export function FilterBar({
   search,
+  chips,
   children,
   activeCount = 0,
   summary,
@@ -46,6 +49,7 @@ export function FilterBar({
 
   return (
     <div className={cn('bg-card border border-border rounded-lg p-3 sm:p-4 space-y-3', className)}>
+      {chips}
       {(search || hasFields) && (
         <div className="flex items-center gap-2">
           {search && <SearchInput {...search} className="flex-1 min-w-0 sm:max-w-sm" />}

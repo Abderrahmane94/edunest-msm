@@ -10,6 +10,7 @@ import {
   DataTable,
   ErrorAlert,
   FilterBar,
+  FilterChips,
   ListSkeleton,
   PageHeader,
   RoleBadge,
@@ -81,6 +82,7 @@ export function UsersPage() {
 
   const users = data?.users ?? [];
   const total = data?.total ?? 0;
+  const roleCounts = data?.roleCounts;
 
   function handleSort(column: string, direction: 'asc' | 'desc') {
     setSortColumn(column);
@@ -219,23 +221,22 @@ export function UsersPage() {
           setStatusFilter('');
           setPage(1);
         }}
+        columns={2}
+        chips={
+          <FilterChips
+            label={t('users.filters.role')}
+            value={roleFilter}
+            onChange={(v) => {
+              setRoleFilter(v);
+              setPage(1);
+            }}
+            options={[
+              { value: '' as const, label: t('users.filters.allRoles'), count: roleCounts && Object.values(roleCounts).reduce((a, b) => a + b, 0) },
+              ...(['admin', 'administrative', 'teacher', 'parent'] as const).map((r) => ({ value: r, label: t(`users.roles.${r}`), count: roleCounts?.[r] })),
+            ]}
+          />
+        }
       >
-        <FormSelect
-          label={t('users.filters.role')}
-          name="users-filter-role"
-          value={roleFilter}
-          onChange={(e) => {
-            setRoleFilter(e.target.value as '' | 'admin' | 'administrative' | 'teacher' | 'parent');
-            setPage(1);
-          }}
-          options={[
-            { value: '', label: t('users.filters.allRoles') },
-            { value: 'admin', label: t('users.roles.admin') },
-            { value: 'administrative', label: t('users.roles.administrative') },
-            { value: 'teacher', label: t('users.roles.teacher') },
-            { value: 'parent', label: t('users.roles.parent') },
-          ]}
-        />
         <FormSelect
           label={t('users.filters.status')}
           name="users-filter-status"

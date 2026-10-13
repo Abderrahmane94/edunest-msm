@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDateIn } from '@/lib/formatters';
 import { ClipboardCheck, Calendar, BarChart2, Users, Eye } from 'lucide-react';
-import { Button, DataTable, Input, KPICard, PageHeader, StatusBadge, Tabs } from '@/components/ui';
+import { Button, DataTable, FilterChips, Input, KPICard, PageHeader, StatusBadge, Tabs } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useClassrooms, type Classroom } from '@/hooks/useClassrooms';
@@ -124,6 +124,13 @@ export function AttendancePage() {
     const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
     return { total, present, absent, late, rate };
   }, [dailyRecords]);
+
+  // The day's list, narrowed to one status by the chips.
+  const [statusFilter, setStatusFilter] = React.useState<'' | 'present' | 'absent' | 'late'>('');
+  const shownRecords = React.useMemo(
+    () => (statusFilter ? (dailyRecords ?? []).filter((r) => r.status === statusFilter) : dailyRecords ?? []),
+    [dailyRecords, statusFilter],
+  );
 
   // Monthly KPI stats
   const monthlyStats = React.useMemo(() => {
@@ -362,12 +369,25 @@ export function AttendancePage() {
               </div>
             </div>
           ) : (dailyRecords ?? []).length > 0 ? (
+            <>
+            <FilterChips
+              label={t('attendance.columns.status')}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { value: '', label: t('attendance.kpi.total'), count: dailyStats.total },
+                { value: 'present', label: t('attendance.statuses.present'), count: dailyStats.present, dot: 'bg-success' },
+                { value: 'absent', label: t('attendance.statuses.absent'), count: dailyStats.absent, dot: 'bg-danger' },
+                { value: 'late', label: t('attendance.statuses.late'), count: dailyStats.late, dot: 'bg-warning' },
+              ]}
+            />
             <DataTable<AttendanceRecord>
               columns={dailyColumns}
-              data={dailyRecords ?? []}
+              data={shownRecords}
               keyExtractor={(r) => r.id}
               emptyMessage={t('attendance.noRecords')}
             />
+            </>
           ) : null}
         </>
       )}

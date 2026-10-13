@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('../../lib/prisma', () => ({
   default: {
-    user: { findMany: vi.fn(), count: vi.fn() },
+    user: { findMany: vi.fn(), count: vi.fn(), groupBy: vi.fn() },
   },
 }));
 
@@ -12,7 +12,7 @@ import prisma from '../../lib/prisma';
 import { usersService } from './users.service';
 
 const mockPrisma = prisma as unknown as {
-  user: { findMany: ReturnType<typeof vi.fn>; count: ReturnType<typeof vi.fn> };
+  user: { findMany: ReturnType<typeof vi.fn>; count: ReturnType<typeof vi.fn>; groupBy: ReturnType<typeof vi.fn> };
 };
 
 describe('usersService.list filters', () => {
@@ -20,6 +20,7 @@ describe('usersService.list filters', () => {
     vi.resetAllMocks();
     mockPrisma.user.findMany.mockResolvedValue([]);
     mockPrisma.user.count.mockResolvedValue(0);
+    mockPrisma.user.groupBy.mockResolvedValue([]);
   });
 
   it('matches every search word against name, email or phone', async () => {
@@ -49,5 +50,19 @@ describe('usersService.list filters', () => {
     const where = { schoolId: 'school-1', role: 'teacher', isActive: false };
     expect(mockPrisma.user.findMany.mock.calls[0][0].where).toEqual(where);
     expect(mockPrisma.user.count).toHaveBeenCalledWith({ where });
+  });
+
+  it('counts the accounts per role for the same status, whatever the role shown', async () => {
+    mockPrisma.user.groupBy.mockResolvedValue([
+      { role: 'teacher', _count: { _all: 4 } },
+      { role: 'parent', _count: { _all: 12 } },
+    ]);
+    const { roleCounts } = await usersService.list('school-1', 1, 10, undefined, 'createdAt', 'desc', {
+      role: 'teacher',
+      status: 'active',
+    });
+
+    expect(roleCounts).toEqual({ admin: 0, administrative: 0, teacher: 4, parent: 12 });
+    expect(mockPrisma.user.groupBy.mock.calls[0][0].where).toEqual({ schoolId: 'school-1', role: { not: 'super_admin' }, isActive: true });
   });
 });

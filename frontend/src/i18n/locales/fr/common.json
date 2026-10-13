@@ -4,6 +4,28 @@
     "tagline": "Système de gestion de maternelle"
   },
   "dashboard": {
+    "key": {
+      "present": "Présents aujourd'hui",
+      "presentSub_zero": "Aucun absent signalé",
+      "presentSub_one": "1 absent",
+      "presentSub_many": "{{count}} absents",
+      "presentSub_other": "{{count}} absents",
+      "noSchool": "Pas d'école aujourd'hui",
+      "children": "Enfants inscrits",
+      "childrenSub_zero": "Aucune inscription ce mois",
+      "childrenSub_one": "1 nouvelle inscription ce mois",
+      "childrenSub_many": "{{count}} nouvelles inscriptions ce mois",
+      "childrenSub_other": "{{count}} nouvelles inscriptions ce mois",
+      "collected": "Encaissé ce mois",
+      "collectedSub": "Espèces, CCP et BaridiMob",
+      "late": "Impayés en retard",
+      "lateSub_one": "1 enfant concerné",
+      "lateSub_many": "{{count}} enfants concernés",
+      "lateSub_other": "{{count}} enfants concernés",
+      "lateNone": "Aucun retard de paiement",
+      "urgent": "Urgent",
+      "soon": "À suivre"
+    },
     "title": "Tableau de bord",
     "admin": {
       "welcome": "Bonjour, {{name}} 👋",

@@ -31,6 +31,7 @@ import { useLowStockCount } from '@/hooks/useInventory';
 import { useEquipmentToRepair } from '@/hooks/useEquipment';
 import { useCashSummary } from '@/hooks/useCashDesks';
 import { classDot, useClassColor } from '@/components/ClassTag';
+import { KeyFigures } from './KeyFigures';
 import { useIsDirector } from '@/lib/roles';
 import { today, useSubstitutions } from '@/hooks/useSubstitutions';
 import { ActionList, BarChart, BigNumber, Progress, Section, Tile, type ActionItem } from './parts';
@@ -141,7 +142,12 @@ function TodoList({ data }: { data: Dashboard }) {
     });
   }
   return (
-    <ActionList title={t('dashboard.admin.todo.title')} allGood={t('dashboard.admin.todo.allGood')} items={items} />
+    <ActionList
+      title={t('dashboard.admin.todo.title')}
+      allGood={t('dashboard.admin.todo.allGood')}
+      items={items}
+      tags={{ danger: t('dashboard.key.urgent'), warning: t('dashboard.key.soon') }}
+    />
   );
 }
 
@@ -590,6 +596,8 @@ export function AdminDashboard() {
           </p>
         </div>
       </header>
+
+      <KeyFigures data={data} />
 
       <TodoList data={data} />
 

@@ -157,7 +157,19 @@ export interface ActionItem {
 }
 
 /** What needs doing, each line leading to its page; a reassuring line when there's nothing. */
-export function ActionList({ title, allGood, items }: { title: string; allGood: string; items: ActionItem[] }) {
+export function ActionList({
+  title,
+  allGood,
+  items: given,
+  tags,
+}: {
+  title: string;
+  allGood: string;
+  items: ActionItem[];
+  /** Names the two levels ("Urgent", "À suivre") and lists the urgent lines first. */
+  tags?: { danger: string; warning: string };
+}) {
+  const items = tags ? [...given].sort((a, b) => Number(b.tone === 'danger') - Number(a.tone === 'danger')) : given;
   if (items.length === 0) {
     return (
       <div className="flex items-center gap-3 bg-[var(--color-success-subtle)] border border-[var(--color-success-muted)] rounded-lg px-4 py-3">
@@ -187,6 +199,16 @@ export function ActionList({ title, allGood, items }: { title: string; allGood: 
                 {item.icon}
               </span>
               <span className="text-body text-text-heading flex-1 min-w-0">{item.text}</span>
+              {tags && (item.tone === 'danger' || item.tone === 'warning') && (
+                <span
+                  className={cn(
+                    'shrink-0 rounded-full px-2 py-0.5 text-micro font-semibold',
+                    item.tone === 'danger' ? 'bg-danger-muted text-danger' : 'bg-warning-muted text-warning',
+                  )}
+                >
+                  {tags[item.tone]}
+                </span>
+              )}
               <ChevronIcon />
             </Link>
           </li>

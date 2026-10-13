@@ -18,7 +18,8 @@ const buttonVariants = cva(
           'bg-transparent text-text-secondary border-none hover:bg-subtle hover:text-text-primary',
       },
       size: {
-        sm: 'px-3 py-[5px] text-label rounded-lg',
+        // Tall enough for a finger on a phone.
+        sm: 'px-3 py-[5px] min-h-[36px] sm:min-h-0 text-label rounded-lg',
         md: 'px-4 py-2 text-body rounded-xl',
         lg: 'px-5 py-[10px] text-body-lg rounded-xl',
         icon: 'h-9 w-9 rounded-xl',

@@ -25,6 +25,8 @@ export const createExpenseSchema = z.object({
   academicYearId: z.string().uuid('Invalid academic year ID').optional(),
   /** Paid with money from the cash desk of whoever records it. */
   paidFromCash: z.boolean().optional(),
+  /** Id made by the form: the same expense sent twice is saved once. */
+  clientId: z.string().uuid('Invalid client ID').optional(),
 });
 
 export const updateExpenseSchema = z.object({

@@ -3,7 +3,7 @@ import { academicYearsService } from '../academic-years/academic-years.service';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { extensionForUpload, extensionOf, mimeTypeForExtension, sniffExtension } from '../../utils/file-type';
 import type { CreateExpenseInput, ExpenseListFilters, UpdateExpenseInput } from './expense.schema';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 export class ExpenseServiceError extends Error {
   constructor(
@@ -20,12 +20,40 @@ class ExpenseService {
    * Create a new expense for a school.
    */
   async create(schoolId: string, input: CreateExpenseInput, createdByUserId: string) {
+    // Sent again (the first answer was lost, or the receipt that follows failed):
+    // it is already saved, give it back instead of recording it twice.
+    if (input.clientId) {
+      const existing = await this.findByClientId(input.clientId, schoolId);
+      if (existing) return existing;
+    }
     const academicYearId = input.academicYearId
       ? await this.checkedYear(schoolId, input.academicYearId)
       : await academicYearsService.yearForDate(schoolId, new Date(input.date));
+    try {
+      return await this.insert(schoolId, input, createdByUserId, academicYearId);
+    } catch (error) {
+      // Two sends at once: the other one saved it.
+      if (input.clientId && error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const existing = await this.findByClientId(input.clientId, schoolId);
+        if (existing) return existing;
+      }
+      throw error;
+    }
+  }
+
+  private async findByClientId(clientId: string, schoolId: string) {
+    const existing = await prisma.expense.findUnique({ where: { clientId } });
+    if (existing && existing.schoolId !== schoolId) {
+      throw new ExpenseServiceError('This client ID belongs to another expense', 409);
+    }
+    return existing;
+  }
+
+  private insert(schoolId: string, input: CreateExpenseInput, createdByUserId: string, academicYearId: string | null) {
     return prisma.expense.create({
       data: {
         schoolId,
+        clientId: input.clientId,
         category: input.category,
         description: input.description,
         amount: input.amount,

@@ -239,6 +239,8 @@ export interface RecordCorrectionInput {
   referenceNote: string;
   correctsPaymentId: string;
   allocations: PaymentAllocationInput[];
+  /** The form's id: sent again, the correction is saved once. */
+  clientId?: string;
 }
 
 /**
@@ -276,6 +278,7 @@ export function useRecordCorrection() {
         referenceNote: data.referenceNote,
         correctsPaymentId: data.correctsPaymentId,
         allocations: data.allocations,
+        clientId: data.clientId,
       });
       if (!res.success) {
         throw apiError(res.error, 'Failed to record correction');

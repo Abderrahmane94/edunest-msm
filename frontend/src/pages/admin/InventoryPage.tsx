@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Armchair, ClipboardList, History, Minus, Package, Pencil, ShoppingCart } from 'lucide-react';
 import {
   Button,
+  CardGrid,
   CreateButton,
   DataTable,
   Dialog,
@@ -20,6 +21,8 @@ import {
   Tabs,
   SearchInput,
   StatusBadge,
+  ViewToggle,
+  useListView,
   type Column,
 } from '@/components/ui';
 import { FormField } from '@/components/forms';
@@ -238,6 +241,8 @@ function SuppliesTab() {
     .filter((i) => !onlyLow || i.isLow)
     .filter((i) => !q || i.name.toLowerCase().includes(q));
 
+  const [view, setView] = useListView('supplies');
+
   const columns: Column<StockItem>[] = [
     {
       key: 'name',
@@ -312,7 +317,12 @@ function SuppliesTab() {
       <SectionHeader
         title={t('inventory.suppliesTitle')}
         description={t('inventory.description')}
-        actions={canEdit && <CreateButton label={t('inventory.create')} onClick={() => setEditing(null)} />}
+        actions={
+          <>
+            <ViewToggle view={view} onChange={setView} />
+            {canEdit && <CreateButton label={t('inventory.create')} onClick={() => setEditing(null)} />}
+          </>
+        }
       />
 
       {low.length > 0 && (
@@ -351,6 +361,26 @@ function SuppliesTab() {
         <ErrorAlert message={errorMessage(error, t)} />
       ) : all.length === 0 ? (
         <EmptyState message={t('inventory.empty')} />
+      ) : view === 'cards' ? (
+        <CardGrid<StockItem>
+          items={shown}
+          keyOf={(i) => i.id}
+          onOpen={(i) => setHistoryId(i.id)}
+          // The same cells and buttons as the table's.
+          footer={columns.find((c) => c.key === 'actions')?.render}
+          emptyMessage={t('inventory.noMatch')}
+          render={(i) => (
+            <>
+              {columns.find((c) => c.key === 'name')?.render?.(i)}
+              {columns.find((c) => c.key === 'stock')?.render?.(i)}
+              {Number(i.alertThreshold) > 0 && (
+                <span className="block text-caption text-text-secondary">
+                  {t('inventory.columns.threshold')} : {qty(i.alertThreshold)} {i.unit}
+                </span>
+              )}
+            </>
+          )}
+        />
       ) : (
         <DataTable
           columns={columns}

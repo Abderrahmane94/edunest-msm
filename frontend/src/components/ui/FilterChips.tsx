@@ -24,7 +24,7 @@ export interface FilterChipsProps<T extends string> {
  */
 export function FilterChips<T extends string>({ options, value, onChange, label, className }: FilterChipsProps<T>) {
   return (
-    <div role="group" aria-label={label} className={cn('flex gap-2 overflow-x-auto pb-1 -mx-1 px-1', className)}>
+    <div role="group" aria-label={label} className={cn('no-scrollbar flex gap-2 overflow-x-auto pb-1 -mx-1 px-1', className)}>
       {options.map((o) => {
         const active = o.value === value;
         return (

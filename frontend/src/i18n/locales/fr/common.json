@@ -336,6 +336,12 @@
     "timetable": "Jours",
     "communication": "Échanges"
   },
+  "listView": {
+    "label": "Affichage",
+    "cards": "Cartes",
+    "table": "Tableau",
+    "noStaffProfile": "Dossier à compléter"
+  },
   "navSection": {
     "daily": "Quotidien",
     "management": "Gestion",

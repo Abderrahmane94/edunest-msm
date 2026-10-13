@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '@/lib/formatters';
-import { DataTable, FilterBar, ListSkeleton, PageHeader, RoleBadge, StatusBadge } from '@/components/ui';
+import { CardGrid, DataTable, FilterBar, ListSkeleton, PageHeader, RoleBadge, StatusBadge, ViewToggle, useListView } from '@/components/ui';
 import { avatarColor } from '@/components/ui/Avatar';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
@@ -87,6 +87,8 @@ export function StaffListPage() {
     };
   }
 
+  const [view, setView] = useListView('staff');
+
   const columns: Column<StaffRow>[] = [
     {
       key: 'name',
@@ -156,7 +158,7 @@ export function StaffListPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title={t('staff.title')} description={t('pageIntro.staff')} />
+      <PageHeader title={t('staff.title')} description={t('pageIntro.staff')} actions={<ViewToggle view={view} onChange={setView} />} />
 
       <FilterBar
         search={{ onSearch: handleSearch, placeholder: t('staff.filters.searchPlaceholder'), defaultValue: search }}
@@ -231,6 +233,45 @@ export function StaffListPage() {
 
       {isLoading ? (
         <ListSkeleton />
+      ) : view === 'cards' ? (
+        <CardGrid<StaffRow>
+          items={pageRows}
+          keyOf={(row) => row.user.id}
+          onOpen={(row) => navigate(`/admin/staff/${row.user.id}`)}
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+          emptyMessage={search || activeFilters ? t('staff.filters.noMatch') : t('staff.noStaff')}
+          render={(row) => (
+            <>
+              <span className="flex items-center gap-3 min-w-0">
+                <span className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-body font-semibold ${avatarColor(`${row.user.first_name} ${row.user.last_name}`)}`}>
+                  {row.user.first_name.charAt(0)}{row.user.last_name.charAt(0)}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-body-lg font-semibold text-text-heading [overflow-wrap:anywhere]">
+                    {row.user.first_name} {row.user.last_name}
+                  </span>
+                  <span className="block text-caption text-text-secondary [overflow-wrap:anywhere]">
+                    {row.profile?.position ?? t('listView.noStaffProfile')}
+                  </span>
+                </span>
+              </span>
+              <span className="flex flex-wrap items-center gap-1.5">
+                <RoleBadge role={row.user.role} />
+                {!row.user.is_active && <StatusBadge variant="neutral">{t('users.inactive')}</StatusBadge>}
+                {row.profile && <StatusBadge variant="info">{t(`staff.contractTypes.${row.profile.contract_type}`)}</StatusBadge>}
+              </span>
+              {row.profile && (
+                <span className="block text-caption text-text-secondary" dir="ltr">
+                  {formatDate(row.profile.contract_start)}
+                  {row.profile.contract_end ? ` – ${formatDate(row.profile.contract_end)}` : ''}
+                </span>
+              )}
+            </>
+          )}
+        />
       ) : (
       <DataTable<StaffRow>
         columns={columns}

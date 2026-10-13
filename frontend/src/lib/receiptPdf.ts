@@ -1,3 +1,5 @@
+import { prepareForCanvas } from '@/lib/canvasText';
+
 type PdfDocument = InstanceType<(typeof import('jspdf'))['default']>;
 
 /** Page margin, in mm. */
@@ -7,8 +9,8 @@ const A4_WIDTH_PX = 794;
 
 /**
  * Renders a receipt's markup to an A4 PDF in the browser. It's an image of
- * the receipt, so Arabic shaping and right-to-left layout come out exactly as
- * displayed. The libraries load only when a PDF is actually needed.
+ * the receipt, drawn by html2canvas; `prepareForCanvas` puts right what that
+ * library gets wrong in Arabic. The libraries load only when a PDF is actually needed.
  */
 async function renderReceiptPdf(source: HTMLElement): Promise<PdfDocument> {
   const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
@@ -30,6 +32,7 @@ async function renderReceiptPdf(source: HTMLElement): Promise<PdfDocument> {
 
   try {
     await document.fonts.ready;
+    prepareForCanvas(wrapper);
     const canvas = await html2canvas(wrapper, {
       scale: 2,
       useCORS: true,

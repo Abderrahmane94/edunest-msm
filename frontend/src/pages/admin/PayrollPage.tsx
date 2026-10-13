@@ -1,3 +1,4 @@
+import { prepareForCanvas } from '@/lib/canvasText';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
@@ -804,6 +805,7 @@ async function renderPDF(html: string, filename: string) {
 
   const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')]);
 
+  prepareForCanvas(wrapper);
   const canvas = await html2canvas(wrapper.firstElementChild as HTMLElement, {
     scale: 2,
     useCORS: true,

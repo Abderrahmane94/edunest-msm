@@ -73,7 +73,8 @@ app.get('/health', (_req, res) => {
 // Rate limiter: 100 requests per minute per IP
 const rateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 100,
+  // Per address: a school's whole office often shares one connection.
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: errorResponse('RATE_LIMIT_EXCEEDED', 'Too many requests, please try again later'),

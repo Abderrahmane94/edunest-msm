@@ -8,8 +8,26 @@ import { avatarColor } from '@/components/ui/Avatar';
 import { ClassTag } from '@/components/ClassTag';
 import { formatDate, formatDZD } from '@/lib/formatters';
 import { usePermissions } from '@/lib/roles';
-import { useEmergencyContacts, useMedicalNotes, useParentLinks, type Child, type MedicalNote } from '@/hooks/useChildren';
+import { useEmergencyContacts, useMedicalNotes, useParentLinks, type MedicalNote } from '@/hooks/useChildren';
 import { useChildBillingPeriods } from '@/hooks/usePayments';
+
+/** What the quick view needs of a child (a line of the office's list, or of a teacher's class). */
+export interface QuickChild {
+  id: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth?: string;
+  classroom_id?: string;
+  classroom_name?: string;
+  is_active?: boolean;
+}
+
+/**
+ * Who looks: the office sees the parents and what is owed, and can open the
+ * file; a teacher sees what serves in class (health, who to call, who may
+ * pick the child up).
+ */
+type Scope = 'office' | 'class';
 
 /** "8 mois", "2 ans 4 mois", "5 ans": months count while they still matter. */
 export function childAge(dateOfBirth: string, t: TFunction, now: Date = new Date()): string {
@@ -43,13 +61,14 @@ const call = (phone: string) => (
   </a>
 );
 
-function Body({ child }: { child: Child }) {
+function Body({ child, scope }: { child: QuickChild; scope: Scope }) {
   const { t, i18n } = useTranslation();
   const { can } = usePermissions();
   const { data: notes, isLoading: notesLoading } = useMedicalNotes(child.id);
-  const { data: links, isLoading: linksLoading } = useParentLinks(child.id);
+  const office = scope === 'office';
+  const { data: links, isLoading: linksLoading } = useParentLinks(office ? child.id : '');
   const { data: contacts, isLoading: contactsLoading } = useEmergencyContacts(child.id);
-  const seesMoney = can('collections') || can('fees');
+  const seesMoney = office && (can('collections') || can('fees'));
   const { data: periods } = useChildBillingPeriods(seesMoney ? child.id : '');
   const owed = (periods ?? []).filter((p) => !p.cancelledAt).reduce((sum, p) => sum + Number(p.outstanding ?? 0), 0);
   const late = (periods ?? []).some((p) => !p.cancelledAt && p.isLate && Number(p.outstanding ?? 0) > 0);
@@ -79,6 +98,7 @@ function Body({ child }: { child: Child }) {
         )}
       </Section>
 
+      {office && (
       <Section title={t('children.columns.parents')}>
         {linksLoading ? (
           <ListSkeleton rows={1} />
@@ -101,6 +121,7 @@ function Body({ child }: { child: Child }) {
           </ul>
         )}
       </Section>
+      )}
 
       <Section title={t('children.emergencyContacts.title')}>
         {contactsLoading ? (
@@ -141,7 +162,7 @@ function Body({ child }: { child: Child }) {
 }
 
 /** The essentials of a child without leaving the list; the whole file is one tap away. */
-export function ChildQuickView({ child, onClose }: { child: Child | null; onClose: () => void }) {
+export function ChildQuickView({ child, onClose, scope = 'office' }: { child: QuickChild | null; onClose: () => void; scope?: Scope }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const name = child ? `${child.first_name} ${child.last_name}` : '';
@@ -158,21 +179,29 @@ export function ChildQuickView({ child, onClose }: { child: Child | null; onClos
                 </div>
                 <div className="min-w-0">
                   <DialogTitle>{name}</DialogTitle>
-                  <DialogDescription>
-                    {childAge(child.date_of_birth, t)} · <span dir="ltr">{formatDate(child.date_of_birth)}</span>
-                  </DialogDescription>
+                  {child.date_of_birth && (
+                    <DialogDescription>
+                      {childAge(child.date_of_birth, t)} · <span dir="ltr">{formatDate(child.date_of_birth)}</span>
+                    </DialogDescription>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap pt-2">
                 {child.classroom_name ? <ClassTag id={child.classroom_id} name={child.classroom_name} /> : <StatusBadge variant="neutral">{t('children.quick.noClass')}</StatusBadge>}
-                {!child.is_active && <StatusBadge variant="neutral">{t('children.inactive')}</StatusBadge>}
+                {child.is_active === false && <StatusBadge variant="neutral">{t('children.inactive')}</StatusBadge>}
               </div>
             </DialogHeader>
-            <Body child={child} />
-            <Button type="button" className="w-full" onClick={() => navigate(`/admin/children/${child.id}`)}>
-              <ExternalLink className="w-4 h-4" />
-              {t('children.quick.openFile')}
-            </Button>
+            <Body child={child} scope={scope} />
+            {scope === 'office' ? (
+              <Button type="button" className="w-full" onClick={() => navigate(`/admin/children/${child.id}`)}>
+                <ExternalLink className="w-4 h-4" />
+                {t('children.quick.openFile')}
+              </Button>
+            ) : (
+              <Button type="button" variant="secondary" className="w-full" onClick={onClose}>
+                {t('common.close')}
+              </Button>
+            )}
           </div>
         )}
       </DialogContent>

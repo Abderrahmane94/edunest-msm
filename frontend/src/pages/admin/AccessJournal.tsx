@@ -28,7 +28,7 @@ import {
   type ExceptionKey,
 } from '@/hooks/useAccessProfiles';
 
-const FLAGS = ['delete', 'correctPayments'] as const;
+const FLAGS = ['delete', 'correctPayments', 'collectCash'] as const;
 const isFlag = (k: string) => (FLAGS as readonly string[]).includes(k);
 
 /** "Paie", "Supprimer", "Nom". */
@@ -38,7 +38,7 @@ function keyLabel(key: string, t: TFunction): string {
   return t(`accessProfiles.areas.${key}`);
 }
 
-/** "Gérer", "Voir", "oui" / "non" for the two separate rights. */
+/** "Gérer", "Voir", "oui" / "non" for the separate rights. */
 function levelLabel(key: string, level: string, t: TFunction): string {
   if (key === 'name') return `« ${level} »`;
   if (isFlag(key)) return t(level === 'edit' ? 'accessProfiles.journal.yes' : 'accessProfiles.journal.no');

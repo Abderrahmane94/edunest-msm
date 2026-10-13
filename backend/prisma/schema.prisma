@@ -153,6 +153,10 @@ model School {
   contactEmail String     @map("contact_email")
   contactPhone String     @map("contact_phone")
   isActive     Boolean    @default(true) @map("is_active")
+  /// Cash left in the desks is flagged from this amount (DZD)…
+  cashAlertAmount Decimal @default(50000) @map("cash_alert_amount") @db.Decimal(10, 2)
+  /// …or when the oldest cash in a desk is this many days old.
+  cashAlertDays   Int     @default(3) @map("cash_alert_days")
   deletedAt    DateTime?  @map("deleted_at")
   createdAt    DateTime   @default(now()) @map("created_at")
 
@@ -165,6 +169,7 @@ model School {
   substitutions  Substitution[]
   accessProfiles AccessProfile[]
   accessLogs       AccessLog[]
+  cashHandovers    CashHandover[]
   accessExceptions AccessException[]
   stockMovements StockMovement[]
   children       Child[]
@@ -228,6 +233,8 @@ model User {
   substitutionsCreated        Substitution[]       @relation("SubstitutionCreatedBy")
   accessProfile               AccessProfile?       @relation(fields: [accessProfileId], references: [id], onDelete: SetNull)
   accessExceptions            AccessException[]    @relation("AccessExceptionUser")
+  cashHandoversGiven          CashHandover[]       @relation("CashHandoverCashier")
+  cashHandoversTaken          CashHandover[]       @relation("CashHandoverCollector")
 
   @@index([deletedAt])
   @@index([email])
@@ -588,14 +595,20 @@ model Expense {
   academicYearId  String?  @map("academic_year_id")
   receiptPublicId String?  @map("receipt_public_id")
   createdByUserId String   @map("created_by_user_id")
+  /// Paid with money from this person's cash desk (deducted from it).
+  paidFromCashUserId String? @map("paid_from_cash_user_id")
+  /// The handover it was counted in; null while not yet handed over.
+  cashHandoverId  String?  @map("cash_handover_id")
   createdAt       DateTime @default(now()) @map("created_at")
 
   school        School         @relation(fields: [schoolId], references: [id])
+  cashHandover  CashHandover?  @relation(fields: [cashHandoverId], references: [id])
   academicYear  AcademicYear?  @relation(fields: [academicYearId], references: [id])
   /// The purchase of supplies it was recorded with, if any.
   stockMovement StockMovement?
 
   @@index([schoolId, academicYearId])
+  @@index([paidFromCashUserId, cashHandoverId])
   @@map("expenses")
 }
 
@@ -1003,9 +1016,16 @@ model PaymentRecord {
   clientId          String?        @unique @map("client_id")
   /// The school year of the échéances it pays (a payment pays one year only).
   academicYearId    String?        @map("academic_year_id")
+  /// Cash only: whose cash desk the money is in (who took it; for a refund,
+  /// whose desk it leaves). Null for other channels and for payments from
+  /// before cash desks existed.
+  cashierUserId     String?        @map("cashier_user_id")
+  /// The handover it was counted in; null while still in the cash desk.
+  cashHandoverId    String?        @map("cash_handover_id")
   createdAt         DateTime       @default(now()) @map("created_at")
 
   branch           Branch              @relation(fields: [branchId], references: [id])
+  cashHandover     CashHandover?       @relation(fields: [cashHandoverId], references: [id])
   child            Child               @relation(fields: [childId], references: [id])
   recorder         User                @relation("PaymentRecorder", fields: [recordedBy], references: [id])
   correctedPayment PaymentRecord?      @relation("PaymentCorrections", fields: [correctsPaymentId], references: [id])
@@ -1017,6 +1037,7 @@ model PaymentRecord {
   @@index([branchId, academicYearId])
   @@index([childId])
   @@index([correctsPaymentId])
+  @@index([cashierUserId, cashHandoverId])
   @@map("payment_records")
 }
 
@@ -1287,4 +1308,46 @@ model AccessException {
   @@unique([userId, area])
   @@index([schoolId])
   @@map("access_exceptions")
+}
+
+/// A cash desk handed over: the money one person took (cash payments, less
+/// refunds and cash expenses, plus the float they started with), counted by
+/// who collects it. Never edited: it settles who held what.
+model CashHandover {
+  id                String   @id @default(uuid())
+  schoolId          String   @map("school_id")
+  /// Whose cash desk.
+  cashierUserId     String   @map("cashier_user_id")
+  /// Who counted and took the money.
+  collectedByUserId String   @map("collected_by_user_id")
+  /// handover (to someone else) or deposit (a director's own desk, to the bank or safe).
+  kind              String   @default("handover")
+  /// The float left at the previous handover.
+  openingFloat      Decimal  @map("opening_float") @db.Decimal(10, 2)
+  /// Cash payments less cash refunds since then.
+  cashIn            Decimal  @map("cash_in") @db.Decimal(10, 2)
+  /// Expenses paid from the desk since then.
+  cashOut           Decimal  @map("cash_out") @db.Decimal(10, 2)
+  /// openingFloat + cashIn - cashOut.
+  expectedAmount    Decimal  @map("expected_amount") @db.Decimal(10, 2)
+  /// What was found in the desk.
+  countedAmount     Decimal  @map("counted_amount") @db.Decimal(10, 2)
+  /// Left in the desk to give change; the rest is taken.
+  floatLeft         Decimal  @default(0) @map("float_left") @db.Decimal(10, 2)
+  /// countedAmount - expectedAmount: negative when money is missing.
+  difference        Decimal  @db.Decimal(10, 2)
+  /// Why there is a difference (required when there is one).
+  reason            String?
+  note              String?
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  school      School          @relation(fields: [schoolId], references: [id])
+  cashier     User            @relation("CashHandoverCashier", fields: [cashierUserId], references: [id])
+  collectedBy User            @relation("CashHandoverCollector", fields: [collectedByUserId], references: [id])
+  payments    PaymentRecord[]
+  expenses    Expense[]
+
+  @@index([schoolId, createdAt])
+  @@index([cashierUserId, createdAt])
+  @@map("cash_handovers")
 }

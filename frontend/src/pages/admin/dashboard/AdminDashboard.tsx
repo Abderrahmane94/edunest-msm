@@ -4,6 +4,7 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Baby,
+  Banknote,
   CalendarDays,
   CheckCircle2,
   ClipboardCheck,
@@ -28,6 +29,8 @@ import { cn } from '@/lib/utils';
 
 import { useLowStockCount } from '@/hooks/useInventory';
 import { useEquipmentToRepair } from '@/hooks/useEquipment';
+import { useCashSummary } from '@/hooks/useCashDesks';
+import { useIsDirector } from '@/lib/roles';
 import { today, useSubstitutions } from '@/hooks/useSubstitutions';
 import { ActionList, BarChart, BigNumber, Progress, Section, Tile, type ActionItem } from './parts';
 import { TONE_FILL, TONE_ICON, useNumbers, type Tone } from './theme';
@@ -39,6 +42,8 @@ function TodoList({ data }: { data: Dashboard }) {
   const n = useNumbers();
   const { data: lowStock = 0 } = useLowStockCount();
   const { data: toRepair = 0 } = useEquipmentToRepair();
+  const { data: cash } = useCashSummary();
+  const isDirector = useIsDirector();
   // Teachers away today with nobody taking their class.
   const { data: todaysReplacements = [] } = useSubstitutions({ on: today() });
   const uncovered = todaysReplacements.filter((r) => !r.substituteUserId);
@@ -95,6 +100,25 @@ function TodoList({ data }: { data: Dashboard }) {
       icon: <FileSignature className="w-4 h-4" />,
       text: t('dashboard.admin.todo.pendingConsents', { count: data.communication.pendingConsents }),
       to: '/admin/communication?tab=events',
+    });
+  }
+  if (cash?.toCollect && cash.toCollect.count > 0) {
+    items.push({
+      key: 'cash-collect',
+      tone: 'warning',
+      icon: <Banknote className="w-4 h-4" />,
+      text: t('dashboard.admin.todo.cashToCollect', { count: cash.toCollect.count, amount: n.money(Number(cash.toCollect.total)) }),
+      to: '/admin/payments?tab=cash',
+    });
+  }
+  // A director's own desk is already among those to collect.
+  if (cash?.mine?.due && !isDirector) {
+    items.push({
+      key: 'cash-mine',
+      tone: 'warning',
+      icon: <Banknote className="w-4 h-4" />,
+      text: t('dashboard.admin.todo.cashMine', { amount: n.money(Number(cash.mine.expected)) }),
+      to: '/admin/payments?tab=cash',
     });
   }
   if (lowStock > 0) {

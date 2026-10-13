@@ -27,12 +27,14 @@ export interface Permissions {
   delete: boolean;
   /** Record a correction of a payment. */
   correctPayments: boolean;
+  /** Count and take the cash of the others' cash desks. */
+  collectCash: boolean;
 }
 
 const all = (level: Level) => Object.fromEntries(AREAS.map((a) => [a, level])) as Record<Area, Level>;
 
 /** The director's rights: everything. */
-export const FULL_PERMISSIONS: Permissions = { areas: all('edit'), delete: true, correctPayments: true };
+export const FULL_PERMISSIONS: Permissions = { areas: all('edit'), delete: true, correctPayments: true, collectCash: true };
 
 /**
  * The default office profile: what the administrative staff could do before
@@ -53,17 +55,18 @@ export const OFFICE_DEFAULT_PERMISSIONS: Permissions = {
   },
   delete: false,
   correctPayments: false,
+  collectCash: false,
 };
 
 /** Profile JSON as stored, made whole (unknown areas off, missing ones none). */
 export function normalizePermissions(raw: unknown): Permissions {
-  const r = (raw && typeof raw === 'object' ? raw : {}) as Partial<{ areas: Record<string, unknown>; delete: unknown; correctPayments: unknown }>;
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Partial<{ areas: Record<string, unknown>; delete: unknown; correctPayments: unknown; collectCash: unknown }>;
   const areas = all('none');
   for (const a of AREAS) {
     const v = r.areas?.[a];
     if (v === 'view' || v === 'edit') areas[a] = v;
   }
-  return { areas, delete: r.delete === true, correctPayments: r.correctPayments === true };
+  return { areas, delete: r.delete === true, correctPayments: r.correctPayments === true, collectCash: r.collectCash === true };
 }
 
 /** Whether these rights reach `level` in `area` (edit includes view). */

@@ -13,6 +13,7 @@ const permissionsSchema = z.object({
   areas: z.object(Object.fromEntries(AREAS.map((a) => [a, level])) as Record<(typeof AREAS)[number], typeof level>),
   delete: z.boolean(),
   correctPayments: z.boolean(),
+  collectCash: z.boolean().default(false),
 });
 const createSchema = z.object({
   name: z.string().trim().min(1).max(80),

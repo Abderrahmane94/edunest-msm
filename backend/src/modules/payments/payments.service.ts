@@ -368,6 +368,8 @@ class PaymentService {
           correctsPaymentId: null,
           clientId: clientId ?? null,
           academicYearId,
+          // Cash goes into the desk of whoever took it.
+          cashierUserId: channel === 'cash' ? recordedBy : null,
         },
       });
 
@@ -658,6 +660,14 @@ class PaymentService {
           correctsPaymentId,
           // A correction counts in the year of the payment it corrects.
           academicYearId: originalPayment.academicYearId,
+          // Cash given back leaves the desk the payment is still in; once that
+          // desk was handed over, the desk of whoever gives it back.
+          cashierUserId:
+            channel !== 'cash'
+              ? null
+              : originalPayment.channel === 'cash' && originalPayment.cashierUserId && !originalPayment.cashHandoverId
+                ? originalPayment.cashierUserId
+                : recordedBy,
         },
       });
 

@@ -151,6 +151,8 @@ export interface CollectInput {
   expectedAmount: number;
   reason?: string | null;
   note?: string | null;
+  /** The form's id: sent again, the handover is saved once. */
+  clientId?: string;
 }
 
 export function useCollectCashDesk() {

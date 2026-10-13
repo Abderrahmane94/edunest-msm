@@ -606,6 +606,8 @@ model Expense {
   paidFromCashUserId String? @map("paid_from_cash_user_id")
   /// The handover it was counted in; null while not yet handed over.
   cashHandoverId  String?  @map("cash_handover_id")
+  /// Id made by the form that recorded it: the same expense sent twice is saved once.
+  clientId        String?  @unique @map("client_id")
   createdAt       DateTime @default(now()) @map("created_at")
 
   school        School         @relation(fields: [schoolId], references: [id])
@@ -1346,6 +1348,8 @@ model CashHandover {
   /// Why there is a difference (required when there is one).
   reason            String?
   note              String?
+  /// Id made by the form that recorded it: the same handover sent twice is saved once.
+  clientId          String?  @unique @map("client_id")
   createdAt         DateTime @default(now()) @map("created_at")
 
   school      School          @relation(fields: [schoolId], references: [id])

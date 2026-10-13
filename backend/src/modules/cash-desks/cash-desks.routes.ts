@@ -13,6 +13,8 @@ const collectSchema = z.object({
   expectedAmount: z.number().min(-99999999.99).max(99999999.99),
   reason: z.string().trim().max(500).nullable().optional(),
   note: z.string().trim().max(500).nullable().optional(),
+  /** Id made by the form: the same handover sent twice is saved once. */
+  clientId: z.string().uuid().optional(),
 });
 const settingsSchema = z.object({
   cashAlertAmount: amount,

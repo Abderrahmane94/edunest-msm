@@ -1,3 +1,4 @@
+import { useSubmissionId } from '@/lib/submissionId';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Banknote, Printer, Settings } from 'lucide-react';
@@ -213,6 +214,8 @@ function SlipDialog({ id, onClose }: { id: string | null; onClose: () => void })
 function CollectForm({ desk, own, onDone, onCancel }: { desk: CashDeskDetail; own: boolean; onDone: (handoverId: string) => void; onCancel: () => void }) {
   const { t } = useTranslation();
   const collect = useCollectCashDesk();
+  // Sent again after a lost answer: one handover, not two (the form is new each time it opens).
+  const [submissionId] = useSubmissionId();
   const [counted, setCounted] = React.useState('');
   const [floatLeft, setFloatLeft] = React.useState('0');
   const [reason, setReason] = React.useState('');
@@ -240,6 +243,7 @@ function CollectForm({ desk, own, onDone, onCancel }: { desk: CashDeskDetail; ow
         expectedAmount: expected,
         reason: needsReason ? reason.trim() : null,
         note: note.trim() || null,
+        clientId: submissionId,
       });
       onDone(id);
     } catch (err) {

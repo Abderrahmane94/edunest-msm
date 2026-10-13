@@ -99,6 +99,8 @@ export const recordCorrectionSchema = z.object({
   allocations: z
     .array(paymentAllocationSchema)
     .min(1, 'At least one allocation is required'),
+  /** Id made by the form: the same correction sent twice is saved once. */
+  clientId: z.string().uuid('Invalid client ID').optional(),
 });
 
 // --- Enrollment Withdrawal ---

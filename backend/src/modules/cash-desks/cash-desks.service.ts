@@ -23,6 +23,8 @@ export interface CollectInput {
   expectedAmount: number;
   reason?: string | null;
   note?: string | null;
+  /** Id made by the form: the same handover sent twice is saved once. */
+  clientId?: string;
 }
 
 const OFFICE_ROLES = ['admin', 'administrative'] as const;
@@ -198,6 +200,36 @@ class CashDesksService {
     if (floatLeft.gt(counted)) throw new CashDeskServiceError('The float left cannot exceed the counted amount');
     const reason = input.reason?.trim() || null;
 
+    // Sent again (the first answer was lost): it is already counted, give it back.
+    const already = async () => {
+      if (!input.clientId) return null;
+      const existing = await prisma.cashHandover.findUnique({ where: { clientId: input.clientId }, select: { id: true, schoolId: true, cashierUserId: true } });
+      if (existing && (existing.schoolId !== actor.schoolId || existing.cashierUserId !== cashierUserId)) {
+        throw new CashDeskServiceError('This client ID belongs to another handover', 409, 'CONFLICT');
+      }
+      return existing ? { id: existing.id } : null;
+    };
+    const done = await already();
+    if (done) return done;
+
+    try {
+      return await this.collectTransaction(actor, cashierUserId, input, { own, counted, floatLeft, reason });
+    } catch (error) {
+      // Two sends at once: the other one saved it.
+      if (input.clientId && error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const saved = await already();
+        if (saved) return saved;
+      }
+      throw error;
+    }
+  }
+
+  private collectTransaction(
+    actor: { userId: string; role: string; schoolId: string },
+    cashierUserId: string,
+    input: CollectInput,
+    { own, counted, floatLeft, reason }: { own: boolean; counted: Prisma.Decimal; floatLeft: Prisma.Decimal; reason: string | null },
+  ) {
     return prisma.$transaction(async (tx) => {
       await this.officeUser(cashierUserId, actor.schoolId, tx);
       const o = await this.open(cashierUserId, tx);
@@ -225,6 +257,7 @@ class CashDesksService {
           difference,
           reason: difference.isZero() ? null : reason,
           note: input.note?.trim() || null,
+          clientId: input.clientId,
         },
       });
       // Only what was counted: a payment recorded meanwhile stays in the desk.

@@ -1,3 +1,4 @@
+import { useSubmissionId } from '@/lib/submissionId';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
@@ -402,6 +403,8 @@ function CreateExpenseDialog({
 
   const createExpense = useCreateExpense();
   const uploadReceipt = useUploadExpenseReceipt();
+  // Sent again (a lost answer, or the receipt that follows failed): one expense, not two.
+  const [submissionId, renewSubmissionId] = useSubmissionId();
 
   const categoryOptions = CATEGORY_KEYS.map((key) => ({
     value: key,
@@ -416,6 +419,7 @@ function CreateExpenseDialog({
     setReceiptFile(null);
     setPaidFromCash(false);
     setError(null);
+    renewSubmissionId();
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -430,6 +434,7 @@ function CreateExpenseDialog({
         amount: parseFloat(amount),
         date,
         ...(hasDesk && paidFromCash ? { paidFromCash: true } : {}),
+        clientId: submissionId,
       });
       if (receiptFile && created) {
         await uploadReceipt.mutateAsync({ id: created.id, file: receiptFile });

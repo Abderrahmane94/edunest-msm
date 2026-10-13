@@ -1,3 +1,4 @@
+import { useSubmissionId } from '@/lib/submissionId';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -60,6 +61,8 @@ export function RecordCorrectionDialog({ open, onOpenChange, branchId }: Props) 
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [success, setSuccess] = React.useState(false);
   const [resultReceiptNumber, setResultReceiptNumber] = React.useState('');
+  // Pressed twice, or sent again after a lost answer: one correction, not two.
+  const [submissionId, renewSubmissionId] = useSubmissionId();
 
   // Fetch payment records (non-corrections only) for selection
   // Only once the dialog is open: the whole list is not needed to show the page behind it.
@@ -124,6 +127,7 @@ export function RecordCorrectionDialog({ open, onOpenChange, branchId }: Props) 
     setErrors({});
     setSuccess(false);
     setResultReceiptNumber('');
+    renewSubmissionId();
   }
 
   function handleClose(isOpen: boolean) {
@@ -208,7 +212,9 @@ export function RecordCorrectionDialog({ open, onOpenChange, branchId }: Props) 
         referenceNote: referenceNote.trim(),
         correctsPaymentId: selectedPaymentId,
         allocations: correctionAllocations,
+        clientId: submissionId,
       });
+      renewSubmissionId();
       setResultReceiptNumber(result.receiptNumber);
       setSuccess(true);
     } catch (err) {

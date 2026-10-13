@@ -98,12 +98,13 @@ class PaymentService {
     }
   }
 
-  private async findByClientId(clientId: string, childId: string) {
+  private async findByClientId(clientId: string, childId: string, isCorrection = false) {
     const existing = await prisma.paymentRecord.findUnique({
       where: { clientId },
       include: { allocations: true },
     });
-    if (existing && existing.childId !== childId) {
+    // The id of something else (another child's, or a correction's for a payment): never given back as this one.
+    if (existing && (existing.childId !== childId || !!existing.isCorrection !== isCorrection)) {
       throw new PaymentServiceError('This client ID belongs to another payment', 409, 'CONFLICT');
     }
     return existing;
@@ -438,6 +439,52 @@ class PaymentService {
       referenceNote: string;
       correctsPaymentId: string;
       allocations: Array<{ billingPeriodId: string; amount: Prisma.Decimal }>;
+      /** Id made by the form: the same correction sent twice is saved once. */
+      clientId?: string;
+    },
+    branchId: string,
+  ) {
+    const { clientId } = input;
+    // Sent again (the first answer was lost): it is already saved, give it
+    // back instead of taking the money off twice.
+    const already = async () => {
+      if (!clientId) return null;
+      const existing = await this.findByClientId(clientId, input.childId, true);
+      if (existing && existing.correctsPaymentId !== input.correctsPaymentId) {
+        throw new PaymentServiceError('This client ID belongs to another payment', 409, 'CONFLICT');
+      }
+      return existing;
+    };
+    const done = await already();
+    if (done) return done;
+    try {
+      return await this.recordCorrectionTransaction(input, branchId);
+    } catch (error) {
+      // Two sends at once: the other one saved it.
+      if (
+        clientId &&
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002' &&
+        String(error.meta?.target ?? '').includes('client_id')
+      ) {
+        const saved = await already();
+        if (saved) return saved;
+      }
+      throw error;
+    }
+  }
+
+  private async recordCorrectionTransaction(
+    input: {
+      childId: string;
+      totalAmount: Prisma.Decimal;
+      channel: 'cash' | 'ccp' | 'baridimob';
+      valueDate: Date;
+      recordedBy: string;
+      referenceNote: string;
+      correctsPaymentId: string;
+      allocations: Array<{ billingPeriodId: string; amount: Prisma.Decimal }>;
+      clientId?: string;
     },
     branchId: string,
   ) {
@@ -658,6 +705,7 @@ class PaymentService {
           referenceNote: trimmedNote,
           isCorrection: true,
           correctsPaymentId,
+          clientId: input.clientId,
           // A correction counts in the year of the payment it corrects.
           academicYearId: originalPayment.academicYearId,
           // Cash given back leaves the desk the payment is still in; once that

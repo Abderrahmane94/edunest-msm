@@ -27,6 +27,8 @@ export interface CreateExpenseInput {
   date: string;
   /** Paid with money from my cash desk. */
   paidFromCash?: boolean;
+  /** The form's id: sent again, the expense is saved once. */
+  clientId?: string;
 }
 
 export type UpdateExpenseInput = Partial<CreateExpenseInput>;

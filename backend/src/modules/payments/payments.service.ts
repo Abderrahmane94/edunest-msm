@@ -878,6 +878,8 @@ class PaymentService {
       /** Payments of one school year. */
       academicYearId?: string;
     } = {},
+    /** One page of the list; without it, the whole list (pickers). */
+    paging?: { page: number; pageSize: number },
   ) {
     const where: Prisma.PaymentRecordWhereInput = {
       branchId,
@@ -918,12 +920,15 @@ class PaymentService {
           },
         },
       },
-      orderBy: {
-        valueDate: 'desc',
-      },
+      // The latest first; two of the same day in the order they were entered.
+      orderBy: [{ valueDate: 'desc' }, { createdAt: 'desc' }],
+      ...(paging ? { skip: (paging.page - 1) * paging.pageSize, take: paging.pageSize } : {}),
     });
 
-    return records;
+    if (!paging) return { records, total: records.length, totalAmount: null };
+    // Over everything that matches, not this page only.
+    const all = await prisma.paymentRecord.aggregate({ where, _count: { _all: true }, _sum: { totalAmount: true } });
+    return { records, total: all._count._all, totalAmount: (all._sum.totalAmount ?? new Prisma.Decimal(0)).toFixed(2) };
   }
 
   /**

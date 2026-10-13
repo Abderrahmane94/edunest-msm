@@ -4,8 +4,8 @@ import { reconciliationService, ReconciliationServiceError } from './reconciliat
 import { receiptService } from './receipt.service';
 import { emailService } from '../../services/email.service';
 import { recordPaymentSchema, recordCorrectionSchema } from './payments.schema';
-import { successResponse, errorResponse } from '../../utils/response';
-import { academicYearQuery } from '../../utils/validators';
+import { successResponse, errorResponse, paginatedResponse } from '../../utils/response';
+import { academicYearQuery, paginationSchema } from '../../utils/validators';
 import { validateBranchAccess, resolveBranchFilter } from './tenant-scope.middleware';
 import { derivePeriodStatus } from './billing-period.service';
 import prisma from '../../lib/prisma';
@@ -222,7 +222,15 @@ export const paymentsController = {
       }
       filters.academicYearId = academicYearQuery(req.query);
 
-      const records = await paymentService.listRecords(effectiveBranchId, filters);
+      // Asked page by page (the payments screen): the page, the count and the sum of all that match.
+      if (req.query.page !== undefined || req.query.pageSize !== undefined) {
+        const { page, pageSize } = paginationSchema.parse(req.query);
+        const { records, total, totalAmount } = await paymentService.listRecords(effectiveBranchId, filters, { page, pageSize });
+        const response = paginatedResponse(records, page, pageSize, total);
+        res.status(200).json({ ...response, meta: { ...response.meta, totalAmount } });
+        return;
+      }
+      const { records } = await paymentService.listRecords(effectiveBranchId, filters);
       res.status(200).json(successResponse(records));
     } catch (error) {
       if (error instanceof PaymentServiceError) {

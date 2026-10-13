@@ -155,9 +155,35 @@ export interface PaymentRecordFilters {
 }
 
 /**
- * List payment records for a branch.
+ * One page of a branch's payments, with how many match and what they add up to.
  */
-export function usePaymentRecords(branchId: string, filters?: PaymentRecordFilters) {
+export function usePaymentRecordsPage(branchId: string, filters: PaymentRecordFilters, page: number, pageSize: number) {
+  const { yearId, ready } = useYearScope();
+  return useQuery({
+    queryKey: ['payment-records', branchId, filters, yearId, 'page', page, pageSize],
+    queryFn: async () => {
+      const queryParams = new URLSearchParams();
+      if (yearId) queryParams.set('academic_year_id', yearId);
+      queryParams.set('branchId', branchId);
+      queryParams.set('page', String(page));
+      queryParams.set('pageSize', String(pageSize));
+      for (const [key, value] of Object.entries(filters)) if (value) queryParams.set(key, value);
+      const res = await apiClient.get<unknown>(`/payments/records?${queryParams.toString()}`);
+      if (!res.success) throw apiError(res.error, 'Failed to fetch payment records');
+      const meta = res.meta as { pagination?: { total?: number }; totalAmount?: string | null } | undefined;
+      const records = Array.isArray(res.data) ? res.data.map((r) => mapPaymentRecord(r as Record<string, unknown>)) : [];
+      return { records, total: meta?.pagination?.total ?? records.length, totalAmount: Number(meta?.totalAmount ?? 0) };
+    },
+    enabled: !!branchId && ready,
+    // Keep the page on screen while the next one loads.
+    placeholderData: (prev) => prev,
+  });
+}
+
+/**
+ * List payment records for a branch (all of them: for pickers).
+ */
+export function usePaymentRecords(branchId: string, filters?: PaymentRecordFilters, options: { enabled?: boolean } = {}) {
   const { yearId, ready } = useYearScope();
   const queryParams = new URLSearchParams();
   if (yearId) queryParams.set('academic_year_id', yearId);
@@ -185,7 +211,7 @@ export function usePaymentRecords(branchId: string, filters?: PaymentRecordFilte
       }
       return [];
     },
-    enabled: !!branchId && ready,
+    enabled: !!branchId && ready && options.enabled !== false,
   });
 }
 

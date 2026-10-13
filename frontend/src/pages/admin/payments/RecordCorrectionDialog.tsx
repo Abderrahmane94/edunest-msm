@@ -62,7 +62,8 @@ export function RecordCorrectionDialog({ open, onOpenChange, branchId }: Props) 
   const [resultReceiptNumber, setResultReceiptNumber] = React.useState('');
 
   // Fetch payment records (non-corrections only) for selection
-  const { data: allRecords } = usePaymentRecords(branchId);
+  // Only once the dialog is open: the whole list is not needed to show the page behind it.
+  const { data: allRecords } = usePaymentRecords(branchId, undefined, { enabled: open });
   const originalPayments = React.useMemo(() => {
     if (!allRecords) return [];
     return allRecords.filter((r) => !r.isCorrection);

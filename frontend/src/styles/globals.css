@@ -1,5 +1,5 @@
-/* ─── Google Fonts ─── */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;500&family=Baloo+Bhaijaan+2:wght@600;700;800&display=swap');
+/* The web fonts are asked for by index.html, beside this stylesheet rather than
+   after it (an @import here made the first paint wait for both, one after the other). */
 
 /* ─── Local Font Fallbacks ─── */
 /* Ensures text renders immediately with system fonts while Google Fonts load */

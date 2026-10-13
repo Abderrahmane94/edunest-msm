@@ -25,7 +25,7 @@ import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import { useBranchFees } from '@/hooks/useBranchFees';
 import {
   useChildBillingPeriods,
-  usePaymentRecords,
+  usePaymentRecordsPage,
   type BillingPeriod,
   type PaymentChannel,
   type PaymentRecord,
@@ -1050,6 +1050,9 @@ function PaymentHistoryFilters({
 
 // ─── Payments Page ─────────────────────────────────────────────────────────────
 
+/** Payments shown at a time; the count and the total are of all that match. */
+const RECORDS_PER_PAGE = 25;
+
 export function PaymentsPage() {
   const { t, i18n } = useTranslation();
   const { branchId: selectedBranchId } = useDefaultBranch();
@@ -1085,7 +1088,11 @@ export function PaymentsPage() {
   const [fixAction, setFixAction] = React.useState<QueuedAction<OfflinePaymentPayload> | null>(null);
   const [provisionalPayment, setProvisionalPayment] = React.useState<OfflinePaymentPayload | null>(null);
 
-  const { data: records, isLoading } = usePaymentRecords(selectedBranchId, filters);
+  const [page, setPage] = React.useState(1);
+  // Other filters, another list: back to its first page.
+  React.useEffect(() => setPage(1), [filters, selectedBranchId]);
+  const { data: recordsPage, isLoading } = usePaymentRecordsPage(selectedBranchId, filters, page, RECORDS_PER_PAGE);
+  const records = recordsPage?.records;
 
   function handleViewReceipt(record: PaymentRecord) {
     setSelectedPaymentId(record.id);
@@ -1246,11 +1253,8 @@ export function PaymentsPage() {
       {!isLoading && records && (
         <p className="text-caption text-text-secondary">
           {t('payments.filters.summary', {
-            count: records.length,
-            amount: formatDZD(
-              records.reduce((sum, r) => sum + Number(r.totalAmount), 0),
-              i18n.language,
-            ),
+            count: recordsPage?.total ?? records.length,
+            amount: formatDZD(recordsPage?.totalAmount ?? 0, i18n.language),
           })}
         </p>
       )}
@@ -1269,6 +1273,10 @@ export function PaymentsPage() {
           columns={columns}
           data={records ?? []}
           keyExtractor={(record) => record.id}
+          page={page}
+          pageSize={RECORDS_PER_PAGE}
+          total={recordsPage?.total ?? 0}
+          onPageChange={setPage}
           emptyMessage={t('payments.recording.empty')}
         />
       )}

@@ -22,6 +22,11 @@
     <!-- Preconnect to Google Fonts to reduce latency -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- The fonts load beside the page without holding its first paint: text shows
+         in the system font, then switches (display=swap) when they arrive. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Noto+Sans+Arabic:wght@400;500;600;700&amp;family=Amiri:ital,wght@0,400;0,700;1,400;1,700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Baloo+Bhaijaan+2:wght@600;700;800&amp;display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Noto+Sans+Arabic:wght@400;500;600;700&amp;family=Amiri:ital,wght@0,400;0,700;1,400;1,700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Baloo+Bhaijaan+2:wght@600;700;800&amp;display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Noto+Sans+Arabic:wght@400;500;600;700&amp;family=Amiri:ital,wght@0,400;0,700;1,400;1,700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Baloo+Bhaijaan+2:wght@600;700;800&amp;display=swap" /></noscript>
   </head>
   <body>
     <div id="root"></div>

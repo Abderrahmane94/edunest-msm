@@ -69,7 +69,7 @@ export function ChildDetailPage() {
   // Read-only: a closed year, or a profile that only views children.
   const closed = useYearClosed() || !can('children', 'edit');
   const { data: classrooms } = useClassrooms(schoolYear?.id);
-  const { data: usersData } = useUsers({ pageSize: 100 });
+  const { data: usersData } = useUsers({ all: true, role: 'parent' });
   const parents = (usersData?.users ?? []).filter((u) => u.role === 'parent');
 
   const [formData, setFormData] = React.useState({

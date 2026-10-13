@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { Prisma } from '@prisma/client';
+import { ZodError } from 'zod';
 import { errorResponse } from '../utils/response';
 
 /** Messages of the upload filters (multer fileFilter) that refuse a file type. */
@@ -24,6 +25,11 @@ export function describeKnownError(err: unknown): KnownError | null {
   }
   if (err instanceof Error && FILE_TYPE_MESSAGES.includes(err.message)) {
     return { status: 400, code: 'INVALID_FILE_TYPE', message: err.message };
+  }
+
+  // A value that did not pass validation inside a handler (page, sort, filters...)
+  if (err instanceof ZodError) {
+    return { status: 400, code: 'VALIDATION_ERROR', message: 'Request validation failed' };
   }
 
   // Request body (express.json)

@@ -78,7 +78,7 @@ function LinkParentDialog({
 }) {
   const { t } = useTranslation();
   const linkParent = useLinkParent();
-  const { data: usersData } = useUsers({ pageSize: 100 });
+  const { data: usersData } = useUsers({ all: true, role: 'parent' });
 
   const parents = (usersData?.users ?? []).filter((u) => u.role === 'parent');
 

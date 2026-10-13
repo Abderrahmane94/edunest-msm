@@ -17,6 +17,7 @@ import {
   consentResponseParamSchema,
   respondConsentSchema,
   eventsQuerySchema,
+  sendTextMessageSchema,
 } from './communication.schema';
 
 describe('Communication Schemas', () => {
@@ -73,6 +74,13 @@ describe('Communication Schemas', () => {
       };
       const result = sendMessageSchema.safeParse(input);
       expect(result.success).toBe(false);
+    });
+
+    it('what a client posts as JSON is text only: it cannot name a stored file', () => {
+      expect(sendTextMessageSchema.safeParse({ content: 'Bonjour', messageType: 'text' }).success).toBe(true);
+      expect(sendTextMessageSchema.safeParse({ messageType: 'document', cloudinaryPublicId: 'staff-documents/contract.pdf' }).success).toBe(false);
+      expect(sendTextMessageSchema.safeParse({ messageType: 'photo', cloudinaryPublicId: 'children/photo.jpg', content: 'x' }).success).toBe(false);
+      expect(sendTextMessageSchema.safeParse({ content: 'Bonjour', messageType: 'text', cloudinaryPublicId: 'children/photo.jpg' }).success).toBe(false);
     });
 
     it('should accept valid photo message with cloudinaryPublicId', () => {

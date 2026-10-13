@@ -43,7 +43,7 @@ function CreateClassroomDialog({
 }) {
   const { t } = useTranslation();
   const createClassroom = useCreateClassroom();
-  const { data: usersData } = useUsers({ pageSize: 100 });
+  const { data: usersData } = useUsers({ all: true, role: 'teacher' });
 
   const teachers = (usersData?.users ?? []).filter((u) => u.role === 'teacher');
 
@@ -228,7 +228,7 @@ function AssignTeacherDialog({
 }) {
   const { t } = useTranslation();
   const assignTeacher = useAssignTeacher();
-  const { data: usersData } = useUsers({ pageSize: 100 });
+  const { data: usersData } = useUsers({ all: true, role: 'teacher' });
 
   const teachers = (usersData?.users ?? []).filter((u) => u.role === 'teacher');
   const [teacherId, setTeacherId] = React.useState('');

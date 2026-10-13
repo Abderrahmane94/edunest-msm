@@ -20,7 +20,22 @@ export async function tenancyMiddleware(req: Request, res: Response, next: NextF
     return;
   }
 
-  const { schoolId, role } = req.user;
+  const { schoolId, role, userId } = req.user;
+
+  // The token says who the user was when it was issued; the account says who
+  // they are now. Deactivated, removed, or given another role since: the
+  // token is refused (the client asks for a new one, or signs in again).
+  const account = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isActive: true, role: true, school: { select: { isActive: true } } },
+  });
+  if (!account || !account.isActive || account.role !== role) {
+    res.status(401).json({
+      success: false,
+      error: { code: 'UNAUTHORIZED', message: 'Invalid or expired access token' },
+    });
+    return;
+  }
 
   // super_admin operates across all schools — skip tenant scoping entirely.
   // Their queries target explicit schoolId params/body, not filtered by JWT.
@@ -37,8 +52,8 @@ export async function tenancyMiddleware(req: Request, res: Response, next: NextF
     return;
   }
 
-  // Enforce school active status on every request
-  const school = await prisma.school.findUnique({ where: { id: schoolId } });
+  // Enforce school active status on every request (read with the account above)
+  const school = account.school;
   if (!school || !school.isActive) {
     res.status(403).json({
       success: false,

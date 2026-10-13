@@ -30,6 +30,8 @@ export const passwordResetConfirmSchema = z.object({
 });
 
 export const changePasswordSchema = z.object({
+  /** Asked for unless the account is on a temporary password (first login, reset by the office). */
+  currentPassword: z.string().max(128).optional(),
   newPassword: z
     .string()
     .min(8, 'Password must be at least 8 characters')

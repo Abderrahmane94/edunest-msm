@@ -137,6 +137,16 @@ export const sendMessageSchema = z
   );
 
 /**
+ * What a client may post as JSON: text only. A photo or a document goes
+ * through the file route, where the server stores the file and names it
+ * itself; a sender naming a stored file could be handed a link to any file.
+ */
+export const sendTextMessageSchema = sendMessageSchema.refine(
+  (data) => data.messageType === 'text' && !data.cloudinaryPublicId,
+  { message: 'Photos and documents are sent as files', path: ['messageType'] },
+);
+
+/**
  * Schema for conversation ID route parameter.
  */
 export const conversationIdParamSchema = z.object({

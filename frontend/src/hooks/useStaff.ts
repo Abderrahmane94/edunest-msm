@@ -1,3 +1,4 @@
+import { everyPage, FULL_PAGE } from '@/lib/everyPage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, apiError } from '@/lib/api-client';
 
@@ -46,18 +47,28 @@ function mapStaffProfile(raw: Record<string, unknown>): StaffProfile {
 interface StaffListParams {
   page?: number;
   pageSize?: number;
+  /** Every profile, however many. */
+  all?: boolean;
 }
 
 export function useStaffList(params: StaffListParams = {}) {
-  const { page = 1, pageSize = 20 } = params;
+  const { page = 1, pageSize = 20, all = false } = params;
   return useQuery({
     queryKey: ['staff', params],
     queryFn: async () => {
-      const res = await apiClient.get<Record<string, unknown>[]>(`/staff?page=${page}&pageSize=${pageSize}`);
-      if (!res.success) throw apiError(res.error, 'Failed to load staff');
-      const list = Array.isArray(res.data) ? res.data.map(mapStaffProfile) : [];
-      const total = (res.meta as { pagination?: { total?: number } })?.pagination?.total ?? list.length;
-      return { profiles: list, total };
+      const loadPage = async (pageNumber: number, size: number) => {
+        const res = await apiClient.get<Record<string, unknown>[]>(`/staff?page=${pageNumber}&pageSize=${size}`);
+        if (!res.success) throw apiError(res.error, 'Failed to load staff');
+        const list = Array.isArray(res.data) ? res.data.map(mapStaffProfile) : [];
+        const total = (res.meta as { pagination?: { total?: number } })?.pagination?.total ?? list.length;
+        return { profiles: list, total };
+      };
+      if (!all) return loadPage(page, pageSize);
+      const whole = await everyPage(async (pageNumber) => {
+        const result = await loadPage(pageNumber, FULL_PAGE);
+        return { items: result.profiles, total: result.total };
+      });
+      return { profiles: whole.items, total: whole.total };
     },
   });
 }

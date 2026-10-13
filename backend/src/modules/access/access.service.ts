@@ -25,7 +25,9 @@ const NONE: Permissions = normalizePermissions({});
 export const DEFAULT_PROFILE_NAME = 'Agent administratif';
 
 /** What an exception can change: an area, or one of the two separate rights. */
-export const EXCEPTION_KEYS = [...AREAS, 'delete', 'correctPayments'] as const;
+/** The rights kept apart from the areas: on or off. */
+export const FLAG_KEYS = ['delete', 'correctPayments', 'collectCash'] as const;
+export const EXCEPTION_KEYS = [...AREAS, ...FLAG_KEYS] as const;
 export type ExceptionKey = (typeof EXCEPTION_KEYS)[number];
 
 /** Who acts (the director): kept by name in the journal. */
@@ -42,7 +44,7 @@ function diffPermissions(a: Permissions, b: Permissions): Change[] {
   for (const area of AREAS) {
     if (a.areas[area] !== b.areas[area]) changes.push({ key: area, from: a.areas[area], to: b.areas[area] });
   }
-  for (const key of ['delete', 'correctPayments'] as const) {
+  for (const key of FLAG_KEYS) {
     if (a[key] !== b[key]) changes.push({ key, from: a[key] ? 'edit' : 'none', to: b[key] ? 'edit' : 'none' });
   }
   return changes;
@@ -50,9 +52,9 @@ function diffPermissions(a: Permissions, b: Permissions): Change[] {
 
 /** Rights with exceptions applied over them. */
 export function withExceptions(p: Permissions, exceptions: { area: string; level: string }[]): Permissions {
-  const out: Permissions = { areas: { ...p.areas }, delete: p.delete, correctPayments: p.correctPayments };
+  const out: Permissions = { ...p, areas: { ...p.areas } };
   for (const e of exceptions) {
-    if (e.area === 'delete' || e.area === 'correctPayments') out[e.area] = e.level === 'edit';
+    if ((FLAG_KEYS as readonly string[]).includes(e.area)) out[e.area as (typeof FLAG_KEYS)[number]] = e.level === 'edit';
     else if ((AREAS as readonly string[]).includes(e.area) && ['none', 'view', 'edit'].includes(e.level)) {
       out.areas[e.area as Area] = e.level as Level;
     }
@@ -234,7 +236,7 @@ class AccessService {
   /** Sets a person's exception in one area (replacing the one there). */
   async setException(actor: Actor, userId: string, input: { area: ExceptionKey; level: Level; endsOn?: string | null; note?: string | null }) {
     const user = await this.officeUser(userId, actor.schoolId);
-    const flag = input.area === 'delete' || input.area === 'correctPayments';
+    const flag = (FLAG_KEYS as readonly string[]).includes(input.area);
     if (flag && input.level === 'view') throw new AccessServiceError('This right is on or off', 400);
     const endsOn = input.endsOn ? asDay(input.endsOn) : null;
     if (endsOn && endsOn < asDay()) throw new AccessServiceError('The end date is already past', 400);

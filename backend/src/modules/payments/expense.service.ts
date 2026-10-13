@@ -33,8 +33,16 @@ class ExpenseService {
         date: new Date(input.date),
         academicYearId,
         createdByUserId,
+        paidFromCashUserId: input.paidFromCash ? createdByUserId : null,
       },
     });
+  }
+
+  /** An expense counted in a cash handover is part of that count for good. */
+  private assertNotHandedOver(expense: { cashHandoverId: string | null }): void {
+    if (expense.cashHandoverId) {
+      throw new ExpenseServiceError('This expense was counted in a cash handover and can no longer be changed', 409);
+    }
   }
 
   private async checkedYear(schoolId: string, academicYearId: string): Promise<string> {
@@ -94,7 +102,7 @@ class ExpenseService {
   /**
    * Update an expense.
    */
-  async update(id: string, schoolId: string, input: UpdateExpenseInput) {
+  async update(id: string, schoolId: string, input: UpdateExpenseInput, userId?: string) {
     const expense = await prisma.expense.findFirst({
       where: { id, schoolId },
     });
@@ -102,6 +110,10 @@ class ExpenseService {
     if (!expense) {
       throw new ExpenseServiceError('Expense not found', 404);
     }
+    this.assertNotHandedOver(expense);
+    // Whose desk it was paid from stays; ticking it takes it from the desk of whoever edits.
+    const paidFromCashUserId =
+      input.paidFromCash === undefined ? undefined : input.paidFromCash ? (expense.paidFromCashUserId ?? userId ?? null) : null;
     if (input.academicYearId) await this.checkedYear(schoolId, input.academicYearId);
 
     return prisma.expense.update({
@@ -113,6 +125,7 @@ class ExpenseService {
         ...(input.amount !== undefined && { amount: input.amount }),
         ...(input.currency !== undefined && { currency: input.currency }),
         ...(input.date !== undefined && { date: new Date(input.date) }),
+        ...(paidFromCashUserId !== undefined && { paidFromCashUserId }),
       },
     });
   }
@@ -128,6 +141,7 @@ class ExpenseService {
     if (!expense) {
       throw new ExpenseServiceError('Expense not found', 404);
     }
+    this.assertNotHandedOver(expense);
 
     if (expense.receiptPublicId) {
       await cloudinaryService.deleteFile(expense.receiptPublicId);

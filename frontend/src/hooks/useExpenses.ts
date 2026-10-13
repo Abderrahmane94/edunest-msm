@@ -12,6 +12,10 @@ export interface Expense {
   date: string;
   receiptPublicId: string | null;
   createdByUserId: string;
+  /** Paid with money from this person's cash desk. */
+  paidFromCashUserId: string | null;
+  /** The cash handover it was counted in: it can no longer be changed. */
+  cashHandoverId: string | null;
   createdAt: string;
 }
 
@@ -21,6 +25,8 @@ export interface CreateExpenseInput {
   amount: number;
   currency?: string;
   date: string;
+  /** Paid with money from my cash desk. */
+  paidFromCash?: boolean;
 }
 
 export type UpdateExpenseInput = Partial<CreateExpenseInput>;

@@ -4,6 +4,14 @@ import { expenseListFiltersSchema, type CreateExpenseInput, type UpdateExpenseIn
 import { successResponse, errorResponse, paginatedResponse } from '../../utils/response';
 import { paginationSchema } from '../../utils/validators';
 import { contentDisposition } from '../../utils/file-type';
+import { can, NOT_ALLOWED_MESSAGE } from '../../middleware/permission.middleware';
+
+/** Only whoever records payments has a cash desk to pay from. */
+async function refusedCash(req: Request, res: Response): Promise<boolean> {
+  if (!(req.body as { paidFromCash?: boolean }).paidFromCash || (await can(req, 'collections', 'edit'))) return false;
+  res.status(403).json(errorResponse('FORBIDDEN', NOT_ALLOWED_MESSAGE));
+  return true;
+}
 
 export const expenseController = {
   /**
@@ -14,6 +22,7 @@ export const expenseController = {
       const schoolId = req.user!.schoolId!;
       const userId = req.user!.userId;
       const input = req.body as CreateExpenseInput;
+      if (await refusedCash(req, res)) return;
       const expense = await expenseService.create(schoolId, input, userId);
       res.status(201).json(successResponse(expense));
     } catch (error) {
@@ -75,7 +84,8 @@ export const expenseController = {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const input = req.body as UpdateExpenseInput;
-      const expense = await expenseService.update(id, schoolId, input);
+      if (await refusedCash(req, res)) return;
+      const expense = await expenseService.update(id, schoolId, input, req.user!.userId);
       res.status(200).json(successResponse(expense));
     } catch (error) {
       if (error instanceof ExpenseServiceError) {

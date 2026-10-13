@@ -35,6 +35,7 @@ const EMPTY: Permissions = {
   areas: Object.fromEntries(AREAS.map((a) => [a, 'none'])) as Record<Area, Level>,
   delete: false,
   correctPayments: false,
+  collectCash: false,
 };
 
 /** Creates or edits a profile: its name and, area by area, none / view / manage. */
@@ -151,7 +152,7 @@ function ProfileDialog({
           </div>
 
           <div className="space-y-2">
-            {(['delete', 'correctPayments'] as const).map((k) => (
+            {(['delete', 'correctPayments', 'collectCash'] as const).map((k) => (
               <label key={k} className="flex items-start gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -208,6 +209,7 @@ function Summary({ p }: { p: Permissions }) {
       ))}
       {p.delete && <span className="px-2 py-0.5 rounded-full text-micro font-medium bg-danger-muted text-danger">{t('accessProfiles.extra.delete')}</span>}
       {p.correctPayments && <span className="px-2 py-0.5 rounded-full text-micro font-medium bg-warning-muted text-warning">{t('accessProfiles.extra.correctPayments')}</span>}
+      {p.collectCash && <span className="px-2 py-0.5 rounded-full text-micro font-medium bg-warning-muted text-warning">{t('accessProfiles.extra.collectCash')}</span>}
     </div>
   );
 }

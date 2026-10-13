@@ -114,8 +114,8 @@ export function useAccessJournal(filters: { userId?: string } = {}, enabled = tr
 
 // ─── Per-person exceptions ───
 
-/** An area, or one of the two separate rights. */
-export type ExceptionKey = import('@/lib/roles').Area | 'delete' | 'correctPayments';
+/** An area, or one of the separate rights. */
+export type ExceptionKey = import('@/lib/roles').Area | 'delete' | 'correctPayments' | 'collectCash';
 
 export interface AccessException {
   id: string;

@@ -26,6 +26,7 @@ export interface Permissions {
   areas: Record<Area, Level>;
   delete: boolean;
   correctPayments: boolean;
+  collectCash: boolean;
 }
 
 /**
@@ -58,6 +59,8 @@ export function usePermissions() {
     can,
     canDelete: isDirector || !!p?.delete,
     canCorrectPayments: isDirector || !!p?.correctPayments,
+    /** Count and take the money of the others' cash desks. */
+    canCollectCash: isDirector || !!p?.collectCash,
     isDirector,
     /** Rights are known (always for the director). */
     ready: isDirector || !!p || user?.role !== 'administrative',

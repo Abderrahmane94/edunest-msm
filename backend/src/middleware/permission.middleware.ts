@@ -25,6 +25,8 @@ interface Options {
   delete?: boolean;
   /** Also needs the right to correct payments. */
   correctPayments?: boolean;
+  /** Also needs the right to collect the cash desks. */
+  collectCash?: boolean;
 }
 
 function guard(needs: Need[], options: Options) {
@@ -39,7 +41,8 @@ function guard(needs: Need[], options: Options) {
         const ok =
           needs.some(([area, level]) => allows(p, area, level)) &&
           (!options.delete || p.delete) &&
-          (!options.correctPayments || p.correctPayments);
+          (!options.correctPayments || p.correctPayments) &&
+          (!options.collectCash || p.collectCash);
         if (ok) return next();
       }
       res.status(403).json(errorResponse('FORBIDDEN', NOT_ALLOWED_MESSAGE));

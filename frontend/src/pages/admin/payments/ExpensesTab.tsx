@@ -197,6 +197,11 @@ export function ExpensesTab() {
       render: (row) => (
         <span className="text-body text-text-secondary truncate max-w-[250px] block">
           {row.description}
+          {row.paidFromCashUserId && (
+            <span className="block text-micro text-text-secondary">
+              {t(row.cashHandoverId ? 'cashDesks.expense.badgeCounted' : 'cashDesks.expense.badge')}
+            </span>
+          )}
         </span>
       ),
     },
@@ -384,6 +389,9 @@ function CreateExpenseDialog({
   const { data: viewedYear } = useViewedYear();
   const [date, setDate] = React.useState(() => defaultExpenseDate(viewedYear));
   const [receiptFile, setReceiptFile] = React.useState<File | null>(null);
+  // Only whoever records payments has a cash desk to pay from.
+  const hasDesk = usePermissions().can('collections', 'edit');
+  const [paidFromCash, setPaidFromCash] = React.useState(false);
 
   // The year may load, or change, after the dialog was first rendered.
   React.useEffect(() => {
@@ -405,6 +413,7 @@ function CreateExpenseDialog({
     setAmount('');
     setDate(defaultExpenseDate(viewedYear));
     setReceiptFile(null);
+    setPaidFromCash(false);
     setError(null);
   }
 
@@ -419,6 +428,7 @@ function CreateExpenseDialog({
         description: description.trim(),
         amount: parseFloat(amount),
         date,
+        ...(hasDesk && paidFromCash ? { paidFromCash: true } : {}),
       });
       if (receiptFile && created) {
         await uploadReceipt.mutateAsync({ id: created.id, file: receiptFile });
@@ -483,6 +493,22 @@ function CreateExpenseDialog({
             />
           </FormField>
 
+          {hasDesk && (
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                id="expense-cash"
+                type="checkbox"
+                className="w-4 h-4 mt-0.5 rounded border-border text-primary"
+                checked={paidFromCash}
+                onChange={(e) => setPaidFromCash(e.target.checked)}
+              />
+              <span className="text-body text-foreground">
+                {t('cashDesks.expense.paidFromCash')}
+                <span className="block text-caption text-text-secondary">{t('cashDesks.expense.paidFromCashHint')}</span>
+              </span>
+            </label>
+          )}
+
           <FormField label={t('finance.expenses.columns.receipt')} htmlFor="expense-receipt-create">
             <ReceiptFilePicker
               file={receiptFile}
@@ -527,6 +553,10 @@ function EditExpenseDialog({
   const [amount, setAmount] = React.useState(String(expense.amount));
   const [date, setDate] = React.useState(expense.date.slice(0, 10));
   const [confirmingDelete, setConfirmingDelete] = React.useState(false);
+  const hasDesk = usePermissions().can('collections', 'edit') || !!expense.paidFromCashUserId;
+  const [paidFromCash, setPaidFromCash] = React.useState(!!expense.paidFromCashUserId);
+  // Counted in a cash handover: part of that count for good.
+  const locked = !!expense.cashHandoverId;
   const [actionError, setActionError] = React.useState<string | null>(null);
   const showError = (err: unknown) => setActionError(errorMessage(err, t));
 
@@ -553,6 +583,7 @@ function EditExpenseDialog({
         description: description.trim(),
         amount: parseFloat(amount),
         date,
+        ...(paidFromCash !== !!expense.paidFromCashUserId ? { paidFromCash } : {}),
       },
       { onSuccess: () => onOpenChange(false), onError: showError },
     );
@@ -618,6 +649,25 @@ function EditExpenseDialog({
             />
           </FormField>
 
+          {hasDesk && (
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                id="expense-cash-edit"
+                type="checkbox"
+                className="w-4 h-4 mt-0.5 rounded border-border text-primary"
+                checked={paidFromCash}
+                disabled={locked}
+                onChange={(e) => setPaidFromCash(e.target.checked)}
+              />
+              <span className="text-body text-foreground">
+                {t('cashDesks.expense.paidFromCash')}
+                <span className="block text-caption text-text-secondary">{t('cashDesks.expense.paidFromCashHint')}</span>
+              </span>
+            </label>
+          )}
+
+          {locked && <p className="text-caption text-warning">{t('cashDesks.expense.locked')}</p>}
+
           <FormField label={t('finance.expenses.columns.receipt')} htmlFor="expense-receipt-edit">
             <div className="flex items-center gap-2">
               {expense.receiptPublicId && (
@@ -668,7 +718,7 @@ function EditExpenseDialog({
             {receipt.error && <p className="text-caption text-danger mt-1">{receipt.error}</p>}
           </FormField>
 
-          <div className="border-t border-border pt-4">
+          <div className={locked ? 'hidden' : 'border-t border-border pt-4'}>
             <p className="text-caption font-medium text-danger mb-2">{t('finance.expenses.detail.dangerZone')}</p>
             {confirmingDelete ? (
               <div className="flex items-center gap-2">
@@ -696,7 +746,7 @@ function EditExpenseDialog({
             <Button
               variant="primary"
               type="submit"
-              disabled={!category || !description.trim() || !amount || updateExpense.isPending}
+              disabled={locked || !category || !description.trim() || !amount || updateExpense.isPending}
             >
               {updateExpense.isPending ? t('common.loading') : t('finance.expenses.form.submit')}
             </Button>

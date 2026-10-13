@@ -22,6 +22,8 @@ export const createExpenseSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   /** The school year it counts in; by default the one its date falls in. */
   academicYearId: z.string().uuid('Invalid academic year ID').optional(),
+  /** Paid with money from the cash desk of whoever records it. */
+  paidFromCash: z.boolean().optional(),
 });
 
 export const updateExpenseSchema = z.object({
@@ -49,6 +51,7 @@ export const updateExpenseSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
     .optional(),
   academicYearId: z.string().uuid('Invalid academic year ID').optional(),
+  paidFromCash: z.boolean().optional(),
 });
 
 const isoDate = z

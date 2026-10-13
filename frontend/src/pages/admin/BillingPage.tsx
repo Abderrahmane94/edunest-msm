@@ -1,3 +1,4 @@
+import { prepareForCanvas } from '@/lib/canvasText';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreditCard, Building2, CheckCircle, AlertCircle, Plus, Pencil, Trash2, X, Save, Banknote, Clock, XCircle, Search, Calendar, Download } from 'lucide-react';
@@ -902,6 +903,7 @@ function PaymentsTab() {
 
     const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')]);
 
+    prepareForCanvas(wrapper);
     const canvas = await html2canvas(wrapper.firstElementChild as HTMLElement, {
       scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', windowWidth: 794,
     });
@@ -1082,6 +1084,7 @@ function PaymentsTab() {
 
     const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')]);
 
+    prepareForCanvas(wrapper);
     const canvas = await html2canvas(wrapper.firstElementChild as HTMLElement, {
       scale: 2,
       useCORS: true,

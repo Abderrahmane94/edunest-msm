@@ -155,7 +155,7 @@ export function StatementDocument({ data, language, compact = false }: { data: S
           </div>
           <div className={compact ? 'text-start' : 'text-end shrink-0'}>
             <p className="text-[12px] font-semibold uppercase tracking-wide text-primary">{tr('title')}</p>
-            <p className="text-[18px] font-bold mt-0.5">{tr('year', { name: data.year.name })}</p>
+            <p className="text-[18px] font-bold mt-0.5">{tr('year', { name: `⁦${data.year.name}⁩` })}</p>
             <p className="text-[12px] text-[#6b7280]">{tr('issuedOn')} <bdi dir="ltr">{formatDate(data.generatedOn)}</bdi></p>
           </div>
         </header>

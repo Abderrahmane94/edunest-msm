@@ -22,6 +22,7 @@ export { ErrorAlert } from './ErrorAlert';
 export { PageHeader, type PageHeaderProps } from './PageHeader';
 export { Tabs, type TabItem, type TabsProps } from './Tabs';
 export { FilterBar, type FilterBarProps } from './FilterBar';
+export { FilterChips, type FilterChip, type FilterChipsProps } from './FilterChips';
 export { SearchInput, type SearchInputProps } from './SearchInput';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { ListSkeleton } from './ListSkeleton';

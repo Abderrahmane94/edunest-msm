@@ -73,11 +73,12 @@ export const usersController = {
       const schoolId = req.user!.role === 'super_admin' ? null : req.user!.schoolId!;
       const { page, pageSize, search, sortBy, sortDir, role, status } = userListQuerySchema.parse(req.query);
       const prismaSort = userSortColumnMap[sortBy] || 'createdAt';
-      const { users, total } = await usersService.list(schoolId, page, pageSize, search, prismaSort, sortDir, {
+      const { users, total, roleCounts } = await usersService.list(schoolId, page, pageSize, search, prismaSort, sortDir, {
         role,
         status,
       });
-      res.status(200).json(paginatedResponse(users, page, pageSize, total));
+      const response = paginatedResponse(users, page, pageSize, total);
+      res.status(200).json({ ...response, meta: { ...response.meta, roleCounts } });
     } catch (error) {
       if (error instanceof UserServiceError) {
         res.status(error.statusCode).json(errorResponse('USER_ERROR', error.message));

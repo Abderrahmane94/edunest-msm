@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, BellRing, Wallet } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { AlertTriangle, Banknote, BellRing, Wallet } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
-import { Button, DataTable, FilterBar, SectionHeader, StatusBadge } from '@/components/ui';
+import { Button, DataTable, FilterBar, FilterChips, SectionHeader, StatusBadge } from '@/components/ui';
+import { usePermissions } from '@/lib/roles';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
@@ -41,7 +43,10 @@ export function LateDashboardPage() {
   const { branchId: selectedBranchId } = useDefaultBranch();
   const [statusFilter, setStatusFilter] = React.useState<LatePeriodStatus | ''>('');
 
-  const { data: allEntries, isLoading } = useLateDashboard(selectedBranchId, statusFilter);
+  // The whole late list is loaded: the status chips count it and filter it here.
+  const { data: allEntries, isLoading } = useLateDashboard(selectedBranchId);
+  const navigate = useNavigate();
+  const canCollect = usePermissions().can('collections', 'edit');
 
   // ─── Filters (the late list is small and loaded whole, so filter here) ───
   const [search, setSearch] = React.useState('');
@@ -79,7 +84,8 @@ export function LateDashboardPage() {
     return [...byId].sort((a, b) => a[1].localeCompare(b[1])).map(([value, label]) => ({ value, label }));
   }, [allEntries, t]);
 
-  const entries = React.useMemo(() => {
+  // Everything but the status: what the status chips count.
+  const matching = React.useMemo(() => {
     const needle = search.trim().toLowerCase();
     return (allEntries ?? []).filter((e) => {
       if (needle && !e.childName.toLowerCase().includes(needle)) return false;
@@ -90,6 +96,7 @@ export function LateDashboardPage() {
       return true;
     });
   }, [allEntries, search, classroomFilter, feeFilter, minDays]);
+  const entries = React.useMemo(() => (statusFilter ? matching.filter((e) => e.status === statusFilter) : matching), [matching, statusFilter]);
 
   const hasFilters = !!(search || classroomFilter || feeFilter || minDays || statusFilter);
   const totalOutstanding = entries.reduce((sum, e) => sum + Number(e.outstanding), 0);
@@ -103,10 +110,10 @@ export function LateDashboardPage() {
     setStatusFilter('');
   }
 
-  const statusOptions = [
-    { value: '', label: t('payments.late.filterAll') },
-    { value: 'late', label: t('payments.late.statusLate') },
-    { value: 'late_partial', label: t('payments.late.statusLatePartial') },
+  const statusOptions: { value: LatePeriodStatus | ''; label: string; count: number; dot?: string }[] = [
+    { value: '', label: t('payments.late.filterAll'), count: matching.length },
+    { value: 'late', label: t('payments.late.statusLate'), count: matching.filter((e) => e.status === 'late').length, dot: 'bg-danger' },
+    { value: 'late_partial', label: t('payments.late.statusLatePartial'), count: matching.filter((e) => e.status === 'late_partial').length, dot: 'bg-warning' },
   ];
 
   const columns: Column<LateDashboardEntry>[] = [
@@ -128,16 +135,10 @@ export function LateDashboardPage() {
       key: 'fee',
       header: t('payments.late.columns.fee'),
       render: (entry) => (
-        <span className="text-body text-foreground">{feeLabel(entry)}</span>
-      ),
-    },
-    {
-      key: 'periodLabel',
-      header: t('payments.late.columns.periodLabel'),
-      render: (entry) => (
-        <span className="text-body text-foreground">
-          {entry.periodLabel}
-        </span>
+        <div>
+          <span className="text-body text-foreground">{feeLabel(entry)}</span>
+          <p className="text-caption text-text-secondary">{entry.periodLabel}</p>
+        </div>
       ),
     },
     {
@@ -167,25 +168,24 @@ export function LateDashboardPage() {
       key: 'amountDue',
       header: t('payments.late.columns.amountDue'),
       render: (entry) => (
-        <span className="text-body text-foreground" dir="ltr">
-          {formatDZD(Number(entry.amountDue), i18n.language)}
-        </span>
-      ),
-    },
-    {
-      key: 'totalPaid',
-      header: t('payments.late.columns.totalPaid'),
-      render: (entry) => (
-        <span className="text-body text-foreground" dir="ltr">
-          {formatDZD(Number(entry.totalPaid), i18n.language)}
-        </span>
+        // What was already paid sits under the amount: one column less, the actions stay in view.
+        <div>
+          <span className="text-body text-foreground whitespace-nowrap" dir="ltr">
+            {formatDZD(Number(entry.amountDue), i18n.language)}
+          </span>
+          {Number(entry.totalPaid) > 0 && (
+            <p className="text-caption text-success whitespace-nowrap">
+              {t('payments.late.columns.totalPaid')} : <span dir="ltr">{formatDZD(Number(entry.totalPaid), i18n.language)}</span>
+            </p>
+          )}
+        </div>
       ),
     },
     {
       key: 'outstanding',
       header: t('payments.late.columns.outstanding'),
       render: (entry) => (
-        <span className="text-body font-medium text-danger" dir="ltr">
+        <span className="text-body font-semibold text-danger whitespace-nowrap" dir="ltr">
           {formatDZD(Number(entry.outstanding), i18n.language)}
         </span>
       ),
@@ -216,6 +216,17 @@ export function LateDashboardPage() {
       header: '',
       render: (entry) => (
         <div className="flex items-center justify-end gap-1">
+          {canCollect && entry.childId && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate(`/admin/payments?pay=${entry.childId}`)}
+            >
+              <Banknote className="w-4 h-4" />
+              {t('payments.late.collect')}
+            </Button>
+          )}
           <Button
             type="button"
             variant="ghost"
@@ -254,6 +265,8 @@ export function LateDashboardPage() {
           amount: formatDZD(totalOutstanding, i18n.language),
         })}
         onReset={resetFilters}
+        columns={3}
+        chips={<FilterChips label={t('payments.late.filterStatus')} value={statusFilter} onChange={setStatusFilter} options={statusOptions} />}
       >
           <FormSelect
             label={t('payments.late.filters.classroom')}
@@ -268,13 +281,6 @@ export function LateDashboardPage() {
             value={feeFilter}
             onChange={(e) => setFeeFilter(e.target.value)}
             options={[{ value: '', label: t('payments.late.filters.allFees') }, ...feeOptions]}
-          />
-          <FormSelect
-            label={t('payments.late.filterStatus')}
-            name="statusFilter"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as LatePeriodStatus | '')}
-            options={statusOptions}
           />
           <FormSelect
             label={t('payments.late.filters.minDays')}

@@ -3416,6 +3416,7 @@
       "selectBranch": "Sélectionner une branche",
       "filterStatus": "Statut",
       "filterAll": "Tous les retards",
+      "collect": "Encaisser",
       "statusLate": "En retard",
       "statusLatePartial": "Partiel en retard",
       "empty": "Aucun paiement en retard. Tous les comptes sont à jour.",

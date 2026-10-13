@@ -32,6 +32,8 @@ interface UsersParams {
 interface UsersResult {
   users: User[];
   total: number;
+  /** Accounts per role for the same search and status, whatever the role shown. */
+  roleCounts?: Record<'admin' | 'administrative' | 'teacher' | 'parent', number>;
 }
 
 // The API returns camelCase fields; map them to the interface the UI expects
@@ -87,7 +89,8 @@ export function useUsers(params: UsersParams = {}) {
         total = wrapped.total;
       }
 
-      return { users, total } as UsersResult;
+      const roleCounts = (res.meta as { roleCounts?: UsersResult['roleCounts'] } | undefined)?.roleCounts;
+      return { users, total, roleCounts } as UsersResult;
     },
     placeholderData: (prev) => prev,
   });

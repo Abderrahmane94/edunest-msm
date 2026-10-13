@@ -251,7 +251,6 @@ export const usersService = {
       ? { schoolId, role: { not: 'super_admin' } }
       : { role: { not: 'super_admin' } };
 
-    if (filters.role) where.role = filters.role;
     if (filters.status) where.isActive = filters.status === 'active';
 
     // Each search word must match the name, email or phone, so a full name
@@ -267,6 +266,12 @@ export const usersService = {
         ],
       }));
     }
+
+    // Per role for the same search and status: the list's role chips show them.
+    const byRole = await prisma.user.groupBy({ by: ['role'], where: { ...where }, _count: { _all: true } });
+    const roleCounts = { admin: 0, administrative: 0, teacher: 0, parent: 0 };
+    for (const g of byRole) if (g.role in roleCounts) roleCounts[g.role as keyof typeof roleCounts] = g._count._all;
+    if (filters.role) where.role = filters.role;
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
@@ -295,7 +300,7 @@ export const usersService = {
       prisma.user.count({ where }),
     ]);
 
-    return { users, total };
+    return { users, total, roleCounts };
   },
 
   /**

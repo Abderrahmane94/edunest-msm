@@ -17,6 +17,7 @@ import {
   DialogDescription,
   DialogFooter,
   FilterBar,
+  FilterChips,
   ListSkeleton,
   PageHeader,
 } from '@/components/ui';
@@ -344,20 +345,24 @@ export function ChildrenPage() {
         activeCount={[classroomFilter, genderFilter, parentFilter, statusFilter].filter(Boolean).length}
         summary={t('children.filters.summary', { count: total })}
         onReset={resetFilters}
+        columns={3}
+        chips={
+          (classrooms ?? []).length > 0 && (
+            <FilterChips
+              label={t('children.filters.classroom')}
+              value={classroomFilter}
+              onChange={(v) => {
+                setClassroomFilter(v);
+                setPage(1);
+              }}
+              options={[
+                { value: '', label: t('children.filters.allClassrooms') },
+                ...(classrooms ?? []).map((c) => ({ value: c.id, label: c.name, count: c.enrolled_count })),
+              ]}
+            />
+          )
+        }
       >
-      <FormSelect
-        label={t('children.filters.classroom')}
-        name="children-filter-classroom"
-        value={classroomFilter}
-        onChange={(e) => {
-          setClassroomFilter(e.target.value);
-          setPage(1);
-        }}
-        options={[
-          { value: '', label: t('children.filters.allClassrooms') },
-          ...(classrooms ?? []).map((c) => ({ value: c.id, label: c.name })),
-        ]}
-      />
       <FormSelect
         label={t('children.filters.gender')}
         name="children-filter-gender"

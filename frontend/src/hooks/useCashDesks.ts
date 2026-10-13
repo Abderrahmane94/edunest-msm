@@ -138,6 +138,8 @@ export function useCashSummary(enabled = true) {
   return useQuery({
     queryKey: ['cash-desks', 'summary'],
     enabled,
+    // Money moves from other screens and other people: always asked again.
+    staleTime: 0,
     queryFn: () => get<CashSummary>('/cash-desks/summary', 'Failed to load'),
   });
 }

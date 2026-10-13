@@ -30,15 +30,17 @@ test.describe('Admin — user management', () => {
     await page.locator('#cu-email').fill('e2e.newteacher@edunest.dz');
     await page.getByRole('button', { name: 'Créer', exact: true }).click();
 
+    // The account's own temporary password is shown once, to pass on; it
+    // must be changed on first login (backend: users.service.ts createDirectly()).
+    const temporaryPassword = (await page.getByTestId('new-account-password').innerText()).trim();
+    await page.getByRole('button', { name: "C'est noté" }).click();
     await expect(page.getByText('e2e.newteacher@edunest.dz')).toBeVisible();
 
-    // The newly created user's default password is "edunest26" and must be
-    // changed on first login (backend: users.service.ts createUser()).
     await page.getByRole('button', { name: 'Se déconnecter' }).click();
     await expect(page).toHaveURL(/\/login/);
 
     await page.locator('input[name="email"]').fill('e2e.newteacher@edunest.dz');
-    await page.locator('input[name="password"]').fill('edunest26');
+    await page.locator('input[name="password"]').fill(temporaryPassword);
     await page.getByRole('button', { name: 'Se connecter' }).click();
 
     // ProtectedRoute renders ChangePasswordPage in place, without a URL change.

@@ -72,6 +72,7 @@ export const childrenController = {
       const status = str(q.status);
       const hasParent = str(q.has_parent);
       const { children, total } = await childrenService.list(schoolId, page, pageSize, {
+        teacherUserId: req.user!.role === 'teacher' ? req.user!.userId : undefined,
         academicYearId: academicYearQuery(q),
         classroomId: str(q.classroom_id),
         search: str(q.search)?.slice(0, 100),
@@ -97,7 +98,10 @@ export const childrenController = {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const requestingParentUserId = req.user!.role === 'parent' ? req.user!.userId : undefined;
+      if (req.user!.role === 'teacher') await childrenService.assertTeacherOf(id, schoolId, req.user!.userId);
       const child = await childrenService.getById(id, schoolId, requestingParentUserId, academicYearQuery(req.query));
+      // What a family still owes is the office's business, not the teacher's.
+      if (req.user!.role === 'teacher') child.unpaidOtherYears = [];
       res.status(200).json(successResponse(child));
     } catch (error) {
       if (error instanceof ChildServiceError) {
@@ -197,6 +201,7 @@ export const childrenController = {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
       const requestingParentUserId = req.user!.role === 'parent' ? req.user!.userId : undefined;
+      if (req.user!.role === 'teacher') await childrenService.assertTeacherOf(id, schoolId, req.user!.userId);
       const photoUrl = await childrenService.getPhotoUrl(id, schoolId, requestingParentUserId);
       res.status(200).json(successResponse(photoUrl));
     } catch (error) {
@@ -234,6 +239,7 @@ export const childrenController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
+      if (req.user!.role === 'teacher') await childrenService.assertTeacherOf(id, schoolId, req.user!.userId);
       const links = await childrenService.getParentLinks(id, schoolId);
       res.status(200).json(successResponse(links));
     } catch (error) {
@@ -328,6 +334,7 @@ export const childrenController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
+      if (req.user!.role === 'teacher') await childrenService.assertTeacherOf(id, schoolId, req.user!.userId);
       const contacts = await childrenService.getEmergencyContacts(id, schoolId);
       res.status(200).json(successResponse(contacts));
     } catch (error) {

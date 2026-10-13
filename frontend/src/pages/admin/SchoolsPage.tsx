@@ -21,6 +21,7 @@ import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient, apiError } from '@/lib/api-client';
+import { announceNewAccount, type NewAccount } from '@/lib/newAccount';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSchoolsList, type SchoolItem } from '@/hooks/useSchools';
 import { ErrorAlert, FilterBar, ListSkeleton, PageHeader, useConfirm, type ConfirmOptions } from '@/components/ui';
@@ -33,8 +34,9 @@ export function useCreateSchool() {
       name: string; address: string; wilaya: string; contactEmail: string; contactPhone: string;
       director: { firstName: string; lastName: string; email: string; preferredLanguage: string };
     }) => {
-      const res = await apiClient.post('/schools', data);
+      const res = await apiClient.post<{ director?: NewAccount }>('/schools', data);
       if (!res.success) throw apiError(res.error, 'Failed to create school');
+      announceNewAccount(res.data?.director);
       return res.data;
     },
     onSuccess: () => {

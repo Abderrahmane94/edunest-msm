@@ -1,15 +1,55 @@
-import { Router } from 'express';
+import { Router, type NextFunction, type Request, type Response } from 'express';
 import { requirePermission, requireAnyPermission } from '../../middleware/permission.middleware';
 import { branchFeeService, BranchFeeServiceError } from './branch-fee.service';
 import { rejectClosedYear, yearOf } from '../../middleware/closed-year.middleware';
+import { validateBranchAccess, validateBranchFeeAccess, validateEnrollmentAccess } from './tenant-scope.middleware';
 
 const router = Router();
+
+type Guard = (req: Request, res: Response, next: NextFunction) => Promise<void>;
+const NOT_OF_BRANCH = { success: false, error: { code: 'NOT_FOUND', message: 'Fee not found' } };
+
+/** The branch in the path is one of the user's school (the refusal is answered by the check). */
+const ownBranch: Guard = async (req, res, next) => {
+  try {
+    if (await validateBranchAccess(req.params.branchId, req, res)) next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** The fee in the path is one of the user's school, and of the branch in the path. */
+const ownFee: Guard = async (req, res, next) => {
+  try {
+    const branchId = await validateBranchFeeAccess(req.params.id, req, res);
+    if (!branchId) return;
+    if (branchId !== req.params.branchId) {
+      res.status(404).json(NOT_OF_BRANCH);
+      return;
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** The enrollment in the path, and the fee in the body when there is one, are of the user's school. */
+const ownEnrollmentAndFee: Guard = async (req, res, next) => {
+  try {
+    if (!(await validateEnrollmentAccess(req.params.enrollmentId, req, res))) return;
+    const feeId = (req.body as { branchFeeId?: unknown } | undefined)?.branchFeeId;
+    if (typeof feeId === 'string' && feeId && !(await validateBranchFeeAccess(feeId, req, res))) return;
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
 
 /**
  * GET /api/payments/branches/:branchId/fees
  * List all fees for a branch.
  */
-router.get('/branches/:branchId/fees', requireAnyPermission([['fees', 'view'], ['children', 'view'], ['collections', 'view'], ['classes', 'view']]), async (req, res) => {
+router.get('/branches/:branchId/fees', requireAnyPermission([['fees', 'view'], ['children', 'view'], ['collections', 'view'], ['classes', 'view']]), ownBranch, async (req, res) => {
   try {
     const { branchId } = req.params;
     const onlyActive = req.query.all !== 'true';
@@ -34,7 +74,7 @@ router.get('/branches/:branchId/fees', requireAnyPermission([['fees', 'view'], [
  * POST /api/payments/branches/:branchId/fees
  * Create a new fee for a branch.
  */
-router.post('/branches/:branchId/fees', requirePermission('fees', 'edit'), async (req, res) => {
+router.post('/branches/:branchId/fees', requirePermission('fees', 'edit'), ownBranch, async (req, res) => {
   try {
     const { branchId } = req.params;
     const { name, amount, showInWizard, billingCycle, billingDueDay, gracePeriodDays } = req.body;
@@ -66,7 +106,7 @@ router.post('/branches/:branchId/fees', requirePermission('fees', 'edit'), async
  * PUT /api/payments/branches/:branchId/fees/:id
  * Update a fee.
  */
-router.put('/branches/:branchId/fees/:id', requirePermission('fees', 'edit'), async (req, res) => {
+router.put('/branches/:branchId/fees/:id', requirePermission('fees', 'edit'), ownFee, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, amount, isActive, appliesToSchool, showInWizard, billingCycle, billingDueDay, gracePeriodDays } =
@@ -102,7 +142,7 @@ router.put('/branches/:branchId/fees/:id', requirePermission('fees', 'edit'), as
  * DELETE /api/payments/branches/:branchId/fees/:id
  * Deactivate a fee (soft delete).
  */
-router.delete('/branches/:branchId/fees/:id', requirePermission('fees', 'edit'), async (req, res) => {
+router.delete('/branches/:branchId/fees/:id', requirePermission('fees', 'edit'), ownFee, async (req, res) => {
   try {
     const { id } = req.params;
     await branchFeeService.deactivate(id);
@@ -126,7 +166,7 @@ router.delete('/branches/:branchId/fees/:id', requirePermission('fees', 'edit'),
  * POST /api/payments/enrollments/:enrollmentId/apply-fee
  * Apply a fee to an enrollment (creates a billing period).
  */
-router.post('/enrollments/:enrollmentId/apply-fee', requirePermission('fees', 'edit'), rejectClosedYear((req) => yearOf.enrollment(req.params.enrollmentId)), async (req, res) => {
+router.post('/enrollments/:enrollmentId/apply-fee', requirePermission('fees', 'edit'), rejectClosedYear((req) => yearOf.enrollment(req.params.enrollmentId)), ownEnrollmentAndFee, async (req, res) => {
   try {
     const { enrollmentId } = req.params;
     const { branchFeeId } = req.body;
@@ -161,7 +201,7 @@ router.post('/enrollments/:enrollmentId/apply-fee', requirePermission('fees', 'e
  * Batch-assign a fee to children/classrooms/school.
  * Body: { target: 'children' | 'classrooms' | 'school', childIds?: string[], classroomIds?: string[] }
  */
-router.post('/branches/:branchId/fees/:id/assign', requirePermission('fees', 'edit'), async (req, res) => {
+router.post('/branches/:branchId/fees/:id/assign', requirePermission('fees', 'edit'), ownFee, async (req, res) => {
   try {
     const { branchId, id } = req.params;
     const { target, childIds, classroomIds } = req.body;

@@ -1,3 +1,4 @@
+import { announceNewAccount, type NewAccount } from '@/lib/newAccount';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, apiError } from '@/lib/api-client';
 import { useYearScope } from './useSelectedYear';
@@ -376,7 +377,7 @@ export function useRegisterChild() {
   return useMutation({
     mutationFn: async (data: RegisterChildInput): Promise<{ childId: string; billed: boolean }> => {
       const { child } = data;
-      const res = await apiClient.post<{ child: { id: string }; billing: unknown }>('/children/register', {
+      const res = await apiClient.post<{ child: { id: string }; billing: unknown; newParentAccount: NewAccount | null }>('/children/register', {
         child: {
           firstName: child.first_name,
           lastName: child.last_name,
@@ -403,6 +404,7 @@ export function useRegisterChild() {
         billing: data.billing,
       });
       if (!res.success) throw apiError(res.error, 'Failed to register child');
+      announceNewAccount(res.data!.newParentAccount);
       return { childId: res.data!.child.id, billed: !!res.data!.billing };
     },
     onSuccess: () => {

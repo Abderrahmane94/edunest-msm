@@ -43,10 +43,16 @@ class ChildrenService {
   async register(
     schoolId: string,
     input: RegisterChildInput,
-  ): Promise<{ child: ChildWithEnrollments; billing: EnrollmentGenerationResult | null }> {
+  ): Promise<{
+    child: ChildWithEnrollments;
+    billing: EnrollmentGenerationResult | null;
+    /** The parent account created on the way, with its first password (told once). */
+    newParentAccount: { email: string; temporaryPassword: string } | null;
+  }> {
     return prisma.$transaction(
       async (tx) => {
         const child = await this.create(schoolId, input.child, tx);
+        let newParentAccount: { email: string; temporaryPassword: string } | null = null;
 
         if (input.parent) {
           const { relationship, newParent } = input.parent;
@@ -58,6 +64,7 @@ class ChildrenService {
               tx,
             );
             parentUserId = user.id;
+            newParentAccount = { email: user.email, temporaryPassword: user.temporaryPassword };
           }
           await this.createParentLink(child.id, schoolId, { parentUserId: parentUserId!, relationship }, tx);
         }
@@ -87,7 +94,7 @@ class ChildrenService {
           });
         }
 
-        return { child, billing };
+        return { child, billing, newParentAccount };
       },
       // Many small writes against a remote database: the 5 s default is too tight.
       { maxWait: 10_000, timeout: 30_000 },
@@ -143,6 +150,11 @@ class ChildrenService {
   ): Promise<{ children: ChildWithEnrollments[]; total: number }> {
     const where: Record<string, unknown> = { schoolId };
     const and: Record<string, unknown>[] = [];
+
+    // A teacher sees the children of their classes (and of those they replace today).
+    if (filters.teacherUserId) {
+      and.push({ enrollments: { some: { classroomId: { in: await teacherClassroomIds(filters.teacherUserId, schoolId) } } } });
+    }
 
     // Filter by classroom enrollment if classroom_id is provided
     if (filters.classroomId) {
@@ -275,6 +287,18 @@ class ChildrenService {
       schoolYears,
       unpaidOtherYears,
     };
+  }
+
+  /**
+   * Throws unless the child is in one of the teacher's classes (their own, or
+   * one they replace today): a teacher reads the files of their children only.
+   */
+  async assertTeacherOf(childId: string, schoolId: string, teacherUserId: string): Promise<void> {
+    const enrollment = await prisma.classroomEnrollment.findFirst({
+      where: { childId, classroomId: { in: await teacherClassroomIds(teacherUserId, schoolId) } },
+      select: { id: true },
+    });
+    if (!enrollment) throw new ChildServiceError('This child is not in your assigned classroom', 403);
   }
 
   /**
@@ -1000,6 +1024,8 @@ class ChildrenService {
 }
 
 export interface ChildListFilters {
+  /** Only the children this teacher works with. */
+  teacherUserId?: string;
   classroomId?: string;
   /** Children of one school year. */
   academicYearId?: string;

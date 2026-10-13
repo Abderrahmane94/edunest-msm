@@ -1,10 +1,12 @@
+import { announceNewAccount, type NewAccount } from '@/lib/newAccount';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Shield, ShieldOff, Users, UserPlus, Settings } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
-import { Button, DangerZone, DataTable, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, EditButton, EditFormActions, EmptyState, EntityDeleteButton, ErrorAlert, Input, ListSkeleton, PageHeader, ReadOnlyFieldset, RoleBadge, StatusBadge, Tabs, useConfirm, useEditMode } from '@/components/ui';
+import { Button, DangerZone, DataTable, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, EditButton, EditFormActions, EmptyState, EntityDeleteButton, ErrorAlert, Input, ListSkeleton, PageHeader, ReadOnlyFieldset, RoleBadge, StatusBadge, Tabs, useConfirm, useEditMode } from '@/components/ui';
+
 import { avatarColor } from '@/components/ui/Avatar';
 import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
@@ -72,8 +74,9 @@ function useCreateUserInSchool(schoolId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string }) => {
-      const res = await apiClient.post(`/schools/${schoolId}/users`, data);
+      const res = await apiClient.post<NewAccount>(`/schools/${schoolId}/users`, data);
       if (!res.success) throw apiError(res.error, 'Failed to create user');
+      announceNewAccount(res.data);
       return res.data;
     },
     onSuccess: () => {

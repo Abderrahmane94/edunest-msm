@@ -1,3 +1,4 @@
+import { NewAccountDialog } from '@/components/NewAccountDialog';
 import * as React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -46,6 +47,7 @@ export function AdminLayout({ navItems, sidebarHeader, sidebarFooter, sidebarSta
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
+          <NewAccountDialog />
         </PageContainer>
       </div>
 

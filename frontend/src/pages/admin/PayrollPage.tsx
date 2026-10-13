@@ -8,6 +8,7 @@ import { Banknote, Pencil, Trash2, Download, Users } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { formatDate } from '@/lib/formatters';
+import { escapeHtml } from '@/lib/printDocument';
 import {
   Button,
   CreateButton,
@@ -865,7 +866,7 @@ function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean, 
   const row = (label: string, value: string, valueColor = '#111827', ltrValue = true) =>
     `<tr>
       <td dir="${dir}" style="padding:10px 0;font-size:11px;color:#6b7280;width:50%;text-align:${startAlign};border-bottom:1px solid #f3f4f6;">${label}</td>
-      <td dir="${ltrValue ? 'ltr' : dir}" style="padding:10px 0;font-size:11px;font-weight:600;color:${valueColor};text-align:${endAlign};border-bottom:1px solid #f3f4f6;unicode-bidi:embed;">${value}</td>
+      <td dir="${ltrValue ? 'ltr' : dir}" style="padding:10px 0;font-size:11px;font-weight:600;color:${valueColor};text-align:${endAlign};border-bottom:1px solid #f3f4f6;unicode-bidi:embed;">${escapeHtml(value)}</td>
     </tr>`;
 
   const hasBonuses = parseFloat(p.bonuses) > 0;
@@ -886,7 +887,7 @@ function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean, 
   </table>
 
   <div style="padding:28px 32px;">
-    <div dir="${dir}" style="font-size:20px;font-weight:700;color:#111827;margin-bottom:2px;text-align:${startAlign};">${p.employeeName}</div>
+    <div dir="${dir}" style="font-size:20px;font-weight:700;color:#111827;margin-bottom:2px;text-align:${startAlign};">${escapeHtml(p.employeeName)}</div>
     <div dir="${dir}" style="font-size:11px;color:#6b7280;margin-bottom:24px;text-align:${startAlign};">${t(`users.roles.${p.role}`)} — ${monthLabel}</div>
 
     <div style="background:#f9fafb;border-radius:12px;padding:20px 24px;margin-bottom:20px;">
@@ -942,7 +943,7 @@ function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName:
     .map((p, i) => {
       const bg = i % 2 === 1 ? '#f9fafb' : '#ffffff';
       return `<tr style="background:${bg};">
-        <td dir="${dir}" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${startAlign};font-weight:500;">${p.employeeName}</td>
+        <td dir="${dir}" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${startAlign};font-weight:500;">${escapeHtml(p.employeeName)}</td>
         <td dir="${dir}" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${startAlign};color:#6b7280;">${monthName(p.month, p.year)}</td>
         <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${endAlign};unicode-bidi:embed;">${Number(p.baseSalary).toLocaleString('fr-FR')} DZD</td>
         <td dir="ltr" style="padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:${endAlign};color:#16a34a;unicode-bidi:embed;">${parseFloat(p.bonuses) > 0 ? `+${Number(p.bonuses).toLocaleString('fr-FR')} DZD` : '—'}</td>

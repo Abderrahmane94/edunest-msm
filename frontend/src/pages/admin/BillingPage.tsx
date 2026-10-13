@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreditCard, Building2, CheckCircle, AlertCircle, Plus, Pencil, Trash2, X, Save, Banknote, Clock, XCircle, Search, Calendar, Download } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
+import { escapeHtml } from '@/lib/printDocument';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import {
@@ -854,7 +855,7 @@ function PaymentsTab() {
     const detailRow = (label: string, value: string, valueDir = dir, valueColor = '#111827') =>
       `<tr>
         <td dir="${dir}" style="padding:10px 0; font-size:11px; color:#6b7280; width:45%; text-align:${startAlign}; border-bottom:1px solid #f3f4f6;">${label}</td>
-        <td dir="${valueDir}" style="padding:10px 0; font-size:11px; font-weight:600; color:${valueColor}; text-align:${endAlign}; border-bottom:1px solid #f3f4f6; unicode-bidi:embed;">${value}</td>
+        <td dir="${valueDir}" style="padding:10px 0; font-size:11px; font-weight:600; color:${valueColor}; text-align:${endAlign}; border-bottom:1px solid #f3f4f6; unicode-bidi:embed;">${escapeHtml(value)}</td>
       </tr>`;
 
     const html = `
@@ -871,8 +872,8 @@ function PaymentsTab() {
     </tr>
   </table>
   <div style="padding:28px 32px; direction:${dir};">
-    <div dir="${dir}" style="font-size:18px; font-weight:700; color:#111827; margin-bottom:4px; text-align:${startAlign};">${schoolName}</div>
-    <div dir="${dir}" style="font-size:11px; color:#6b7280; margin-bottom:24px; text-align:${startAlign};">${t('billing.subscriptions.plan')}: ${p.subscription.plan.name}</div>
+    <div dir="${dir}" style="font-size:18px; font-weight:700; color:#111827; margin-bottom:4px; text-align:${startAlign};">${escapeHtml(schoolName)}</div>
+    <div dir="${dir}" style="font-size:11px; color:#6b7280; margin-bottom:24px; text-align:${startAlign};">${t('billing.subscriptions.plan')}: ${escapeHtml(p.subscription.plan.name)}</div>
     <div style="background:#f9fafb; border-radius:12px; padding:20px 24px;">
       <table dir="${dir}" style="width:100%; border-collapse:collapse;">
         <tbody>
@@ -962,9 +963,9 @@ function PaymentsTab() {
     // ── Helpers ────────────────────────────────────────────────────────────────
     // Cells containing numbers/dates must always be LTR so digits aren't mirrored
     const numCell  = (content: string, extra = '') =>
-      `<td dir="ltr" style="padding:9px 12px; border-bottom:1px solid #e5e7eb; font-size:11px; text-align:${endAlign}; unicode-bidi:embed; ${extra}">${content}</td>`;
+      `<td dir="ltr" style="padding:9px 12px; border-bottom:1px solid #e5e7eb; font-size:11px; text-align:${endAlign}; unicode-bidi:embed; ${extra}">${escapeHtml(content)}</td>`;
     const textCell = (content: string, extra = '') =>
-      `<td dir="${dir}" style="padding:9px 12px; border-bottom:1px solid #e5e7eb; font-size:11px; color:#374151; text-align:${startAlign}; ${extra}">${content}</td>`;
+      `<td dir="${dir}" style="padding:9px 12px; border-bottom:1px solid #e5e7eb; font-size:11px; color:#374151; text-align:${startAlign}; ${extra}">${escapeHtml(content)}</td>`;
 
     const rows = payments.map((p, i) => {
       const bg = i % 2 === 1 ? '#f9fafb' : '#ffffff';
@@ -1018,7 +1019,7 @@ function PaymentsTab() {
   <!-- Body -->
   <div style="padding:24px 32px 0; direction:${dir};">
 
-    <div dir="${dir}" style="font-size:16px; font-weight:700; color:#111827; margin-bottom:${filterParts.length ? '4px' : '16px'}; text-align:${startAlign};">${schoolName}</div>
+    <div dir="${dir}" style="font-size:16px; font-weight:700; color:#111827; margin-bottom:${filterParts.length ? '4px' : '16px'}; text-align:${startAlign};">${escapeHtml(schoolName)}</div>
     ${filterParts.length ? `<div dir="${dir}" style="font-size:10px; color:#6b7280; margin-bottom:16px; text-align:${startAlign};">${filterParts.join('   ·   ')}</div>` : ''}
 
     <!-- Summary cards -->

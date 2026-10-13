@@ -1,3 +1,4 @@
+import { announceNewAccount } from '@/lib/newAccount';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -141,7 +142,10 @@ export function SubstitutionDialog({
           notifyParents: notifyParents && substitute !== NOBODY,
           allowBusySubstitute,
         });
-        if (res.newSubstitute) setCreated({ newSubstitute: true, email: newSub.email.trim() });
+        if (res.newSubstitute) {
+          announceNewAccount({ email: newSub.email.trim(), temporaryPassword: res.temporaryPassword ?? undefined });
+          setCreated({ newSubstitute: true, email: newSub.email.trim() });
+        }
         else onOpenChange(false);
       }
     } catch (err) {

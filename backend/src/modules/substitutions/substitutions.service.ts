@@ -75,6 +75,7 @@ class SubstitutionsService {
     const result = await prisma.$transaction(async (tx) => {
       let substituteId = input.substituteUserId;
       let newSubstitute = false;
+      let temporaryPassword: string | null = null;
       if (input.newSubstitute) {
         const user = await usersService.createDirectly(
           schoolId,
@@ -83,6 +84,7 @@ class SubstitutionsService {
         );
         substituteId = user.id;
         newSubstitute = true;
+        temporaryPassword = user.temporaryPassword;
       }
       await this.check(tx, schoolId, classroom, substituteId, start, end, input.allowBusySubstitute);
       const substitution = await tx.substitution.create({
@@ -100,7 +102,7 @@ class SubstitutionsService {
         },
         include,
       });
-      return { substitution, newSubstitute };
+      return { substitution, newSubstitute, temporaryPassword };
     });
 
     void this.notify(result.substitution, input.notifyParents);

@@ -1,4 +1,5 @@
-function escapeHtml(value: string): string {
+/** Text made safe to put inside HTML built as a string. */
+export function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
 

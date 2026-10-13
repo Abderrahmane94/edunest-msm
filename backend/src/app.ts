@@ -35,6 +35,24 @@ import planningRoutes from './modules/planning/planning.routes';
 
 const app = express();
 
+// Behind the host's proxies every request comes from the proxy's address:
+// without this, the rate limits below would be one counter for everybody.
+// The number of proxies in front (TRUST_PROXY_HOPS); never more than there
+// really are, or a visitor could pass for another address.
+const proxyHops = Number(process.env.TRUST_PROXY_HOPS ?? (process.env.NODE_ENV === 'production' ? 1 : 0));
+if (Number.isInteger(proxyHops) && proxyHops > 0) app.set('trust proxy', proxyHops);
+
+// Said once, to set TRUST_PROXY_HOPS right: how many addresses the proxies hand over.
+let proxyChainSaid = false;
+app.use((req, _res, next) => {
+  if (!proxyChainSaid && req.headers['x-forwarded-for']) {
+    proxyChainSaid = true;
+    const chain = String(req.headers['x-forwarded-for']).split(',').length;
+    console.log(`[EduNest] X-Forwarded-For carries ${chain} address(es); trusting ${proxyHops} proxy hop(s)`);
+  }
+  next();
+});
+
 // Security headers
 app.use(helmet());
 

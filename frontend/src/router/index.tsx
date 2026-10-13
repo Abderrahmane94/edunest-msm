@@ -182,9 +182,21 @@ const PAYMENT_AREAS: Area[] = ['collections', 'expenses', 'fees'];
 /** A page of an area: the office staff without the right land on the dashboard. */
 function PermissionRoute({ area, level = 'view' }: { area: Area | Area[]; level?: 'view' | 'edit' }) {
   const { can, ready } = usePermissions();
+  const { user } = useAuth();
   if (!ready) return null;
   const areas = Array.isArray(area) ? area : [area];
+  // The platform account belongs to no school: a school's own pages have nothing to show it.
+  if (user?.role === 'super_admin' && !areas.some((a) => PLATFORM_AREAS.includes(a))) return <Navigate to="/admin" replace />;
   return areas.some((a) => can(a, level)) ? <Outlet /> : <Navigate to="/admin" replace />;
+}
+
+/** The areas the platform account works in (accounts, settings); the others are a school's daily life. */
+const PLATFORM_AREAS: Area[] = ['staff', 'settings'];
+
+/** A school's page with no area of its own: not for the platform account. */
+function SchoolRoute() {
+  const { user } = useAuth();
+  return user?.role === 'super_admin' ? <Navigate to="/admin" replace /> : <Outlet />;
 }
 
 const teacherNavItems: NavItem[] = [
@@ -479,7 +491,7 @@ export const routes: RouteObject[] = [
               },
               { element: <PermissionRoute area="inventory" />, children: [{ path: 'inventory', element: <InventoryPage /> }] },
               { element: <PermissionRoute area="documents" />, children: [{ path: 'documents', element: <DocumentsPage /> }] },
-              { path: 'planning', element: <PlanningPage /> },
+              { element: <SchoolRoute />, children: [{ path: 'planning', element: <PlanningPage /> }] },
               { element: <PermissionRoute area={PAYMENT_AREAS} />, children: [{ path: 'payments', element: <PaymentManagementPage /> }] },
             ],
           },

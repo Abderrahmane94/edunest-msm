@@ -1017,6 +1017,14 @@
     "inactive": "Inactif",
     "activate": "Activer",
     "deactivate": "Désactiver",
+    "newAccount": {
+      "title": "Compte créé",
+      "description": "Mot de passe provisoire à transmettre, par téléphone ou de vive voix, à",
+      "shownOnce": "Notez-le maintenant : il ne sera plus affiché.",
+      "mustChange": "À sa première connexion, la personne devra choisir son propre mot de passe.",
+      "lost": "S'il est perdu, générez-en un autre avec « Réinitialiser le mot de passe », dans la liste des utilisateurs.",
+      "noted": "C'est noté"
+    },
     "resetPassword": {
       "button": "Réinitialiser le mot de passe",
       "title": "Réinitialiser le mot de passe",
@@ -1072,7 +1080,7 @@
     "create_form": {
       "title": "Créer un utilisateur",
       "description": "Créez un compte directement dans cette école.",
-      "defaultPasswordHint": "Mot de passe par défaut : edunest26 — l'utilisateur devra le changer à sa première connexion.",
+      "defaultPasswordHint": "Un mot de passe provisoire propre à ce compte s'affichera une seule fois après la création ; l'utilisateur devra le changer à sa première connexion.",
       "school": "École",
       "selectSchool": "Sélectionner une école",
       "schoolRequired": "Veuillez sélectionner une école",
@@ -1270,7 +1278,7 @@
       "hasClass": "a sa classe ({{name}})",
       "alreadyReplacing": "remplace déjà en {{name}} aujourd'hui",
       "newSubstitute": "Nouveau remplaçant (extérieur)…",
-      "newSubstituteHint": "Un compte enseignant lui est créé avec le mot de passe provisoire edunest26, à changer à la première connexion. Désactivez-le à la fin du remplacement.",
+      "newSubstituteHint": "Un compte enseignant lui est créé ; son mot de passe provisoire s'affichera une seule fois après l'enregistrement. Désactivez le compte à la fin du remplacement.",
       "nobody": "Personne (classe sans enseignant)",
       "nobodyHint": "La classe apparaîtra « sans enseignant » dans le tableau de bord ces jours-là.",
       "reason": "Motif",
@@ -1282,7 +1290,7 @@
       "busyTitle": "Remplaçant déjà occupé",
       "busyDescription": "Il ou elle remplace déjà en {{classroom}} sur ces jours. Lui confier aussi cette classe ?",
       "busyConfirm": "Confier les deux classes",
-      "accountCreated": "Remplacement enregistré. Le compte de {{email}} est créé avec le mot de passe provisoire edunest26."
+      "accountCreated": "Remplacement enregistré. Le compte de {{email}} est créé."
     },
     "list": {
       "replacedBy": "Remplacé(e) par {{name}}",

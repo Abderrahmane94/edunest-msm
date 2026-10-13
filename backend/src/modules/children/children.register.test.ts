@@ -108,7 +108,7 @@ describe('childrenService.register', () => {
       tx,
       expect.objectContaining({ childId: 'child-1', academicYearId: yearId }),
     );
-    expect(result).toEqual({ child, billing: { enrollmentId: 'enr-1' } });
+    expect(result).toMatchObject({ child, billing: { enrollmentId: 'enr-1' } });
   });
 
   it('links an existing parent without creating an account', async () => {

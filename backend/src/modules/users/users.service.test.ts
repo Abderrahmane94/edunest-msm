@@ -108,7 +108,9 @@ describe('UsersService', () => {
 
       const result = await usersService.createDirectly(schoolId, input);
 
-      expect(result).toEqual({ id: 'new-user', email, schoolId });
+      expect(result).toMatchObject({ id: 'new-user', email, schoolId });
+      // Its own first password, never a shared one.
+      expect(result.temporaryPassword).toMatch(/^[A-Za-z0-9]{4}-[A-Za-z0-9]{4}$/);
       expect(mockPrisma.user.create).toHaveBeenCalled();
     });
   });

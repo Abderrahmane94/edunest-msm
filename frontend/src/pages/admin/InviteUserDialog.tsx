@@ -11,15 +11,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSchoolsList } from '@/hooks/useSchools';
 import { useRestoreRecord } from '@/hooks/useTrash';
+import { announceNewAccount, type NewAccount } from '@/lib/newAccount';
 
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string; address?: string; nationalId?: string }) => {
-      const res = await apiClient.post('/users', data);
+      const res = await apiClient.post<NewAccount>('/users', data);
       if (!res.success) {
         throw new ApiRequestError(res.error ?? { code: 'UNKNOWN_ERROR', message: 'Failed to create user' });
       }
+      announceNewAccount(res.data);
       return res.data;
     },
     onSuccess: () => {

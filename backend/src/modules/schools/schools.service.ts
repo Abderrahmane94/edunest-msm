@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { accessService } from '../access/access.service';
 import prisma from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
+import { temporaryPassword } from '../users/users.service';
 import type { CreateSchoolInput, UpdateSchoolInput, SchoolResponse } from './schools.types';
 
 const BCRYPT_ROUNDS = 10;
@@ -29,11 +30,13 @@ class SchoolsService {
   /**
    * Create a new school (super_admin only).
    */
-  async create(input: CreateSchoolInput): Promise<SchoolResponse & { director: { id: string; email: string; firstName: string; lastName: string } }> {
+  async create(input: CreateSchoolInput): Promise<SchoolResponse & { director: { id: string; email: string; firstName: string; lastName: string; temporaryPassword: string } }> {
     // No pre-check needed: email is only unique per-school (see migration
     // 0011/0012), and this school doesn't exist yet, so the director's email
     // can't already be taken within it — the same person can direct multiple schools.
-    const passwordHash = await bcrypt.hash('edunest26', BCRYPT_ROUNDS);
+    // The director's first password, told once to the platform.
+    const password = temporaryPassword();
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     const { school, director } = await prisma.$transaction(async (tx) => {
       const newSchool = await tx.school.create({
@@ -67,7 +70,7 @@ class SchoolsService {
       return { school: newSchool, director: newDirector };
     });
 
-    return { ...withLogoUrl(school), director };
+    return { ...withLogoUrl(school), director: { ...director, temporaryPassword: password } };
   }
 
   /**

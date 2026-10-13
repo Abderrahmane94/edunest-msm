@@ -469,7 +469,8 @@ export const usersService = {
   },
 
   /**
-   * Create a user directly in a school (no invitation token required).
+   * Create a user directly in a school (no invitation token required), with a
+   * temporary password of their own, returned once (`temporaryPassword`).
    * Used by super_admin (any school) and admin (their own school).
    */
   async createDirectly(schoolId: string, input: CreateUserDirectlyInput, db: DbClient = prisma) {
@@ -488,7 +489,9 @@ export const usersService = {
       );
     }
 
-    const passwordHash = await bcrypt.hash('edunest26', BCRYPT_SALT_ROUNDS);
+    // Each account its own first password, told once to whoever creates it.
+    const password = temporaryPassword();
+    const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
     const user = await db.user.create({
       data: {
@@ -512,7 +515,7 @@ export const usersService = {
       },
     });
 
-    return user;
+    return { ...user, temporaryPassword: password };
   },
 
   /**

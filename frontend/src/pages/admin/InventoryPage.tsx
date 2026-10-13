@@ -382,7 +382,7 @@ export function InventoryPage() {
   const [tab, setTab] = useTabParam<InventoryTab>(INVENTORY_TABS, 'supplies');
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title={t('inventory.title')} />
+      <PageHeader title={t('inventory.title')} description={t('pageIntro.inventory')} />
       <Tabs
         value={tab}
         onChange={setTab}

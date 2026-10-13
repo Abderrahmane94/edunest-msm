@@ -194,6 +194,7 @@ export function UsersPage() {
       {confirmDialog}
       <PageHeader
         title={t('users.title')}
+        description={t('pageIntro.users')}
         actions={
           <>
             {!isSuperAdmin && (

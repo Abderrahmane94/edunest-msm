@@ -1250,7 +1250,7 @@ export function BillingPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title={t('billing.title')} />
+      <PageHeader title={t('billing.title')} description={t('pageIntro.billing')} />
 
       <Tabs
         value={activeTab}

@@ -47,7 +47,7 @@ export function SchoolSettingsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title={t('schoolSettings.title')} />
+      <PageHeader title={t('schoolSettings.title')} description={t('pageIntro.settings')} />
       <Tabs value={activeTab} onChange={setActiveTab} items={tabs} />
       {activeTab === 'school' && <SchoolTab />}
       {activeTab === 'years' && <AcademicYearsSection />}

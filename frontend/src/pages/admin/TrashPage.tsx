@@ -359,7 +359,7 @@ export function TrashPage({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {embedded ? <SectionHeader title={t('trash.title')} /> : <PageHeader title={t('trash.title')} />}
+      {embedded ? <SectionHeader title={t('trash.title')} /> : <PageHeader title={t('trash.title')} description={t('pageIntro.trash')} />}
 
       <Tabs
         value={activeTab}

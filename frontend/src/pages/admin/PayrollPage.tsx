@@ -1308,7 +1308,7 @@ export function PayrollPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title={t('payroll.title')} />
+      <PageHeader title={t('payroll.title')} description={t('pageIntro.payroll')} />
 
       <Tabs
         value={activeTab}

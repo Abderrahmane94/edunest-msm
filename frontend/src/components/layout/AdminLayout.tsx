@@ -14,15 +14,17 @@ interface AdminLayoutProps {
   navItems: NavItem[];
   sidebarHeader?: React.ReactNode;
   sidebarFooter?: React.ReactNode;
+  /** Under the sidebar's header: today at a glance. */
+  sidebarStatus?: React.ReactNode;
   /** School admins: the school-year picker in the top bar, and the notice above pages of another year. */
   yearSwitcher?: React.ReactNode;
   yearBanner?: React.ReactNode;
 }
 
-export function AdminLayout({ navItems, sidebarHeader, sidebarFooter, yearSwitcher, yearBanner }: AdminLayoutProps) {
+export function AdminLayout({ navItems, sidebarHeader, sidebarFooter, sidebarStatus, yearSwitcher, yearBanner }: AdminLayoutProps) {
   return (
     <div className="flex min-h-screen bg-page">
-      <Sidebar items={navItems} header={sidebarHeader} footer={sidebarFooter} />
+      <Sidebar items={navItems} header={sidebarHeader} status={sidebarStatus} footer={sidebarFooter} />
 
       {/* min-w-0: a wide table scrolls inside its own box instead of
           stretching the whole page past the screen. */}

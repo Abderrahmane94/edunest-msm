@@ -11,7 +11,7 @@ import { OfflineStatus } from '@/components/OfflineStatus';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { BottomTabBar } from './BottomTabBar';
 import { BrandMark } from './BrandMark';
-import type { NavItem } from './Sidebar';
+import { NavBadge, type NavItem } from './Sidebar';
 
 interface ParentLayoutProps {
   topBarContent?: React.ReactNode;
@@ -62,6 +62,7 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
                 >
                   <item.icon className="w-4 h-4" />
                   <span>{t(item.label, item.label)}</span>
+                  <NavBadge count={item.badge} />
                 </NavLink>
               ))}
             </nav>

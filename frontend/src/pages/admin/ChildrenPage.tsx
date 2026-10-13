@@ -335,6 +335,7 @@ export function ChildrenPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title={t('children.title')}
+        description={t('pageIntro.children')}
         actions={!closed && <CreateButton label={t('children.register')} onClick={() => setCreateDialogOpen(true)} />}
       />
 

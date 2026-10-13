@@ -19,7 +19,7 @@ export function TeacherAnnouncementsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title={t('teacherCommunication.title')} />
+      <PageHeader title={t('teacherCommunication.title')} description={t('pageIntro.teacherCommunication')} />
 
       <Tabs
         value={activeTab}

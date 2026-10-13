@@ -5,8 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { hoursLabel, usePlanningSummary } from '@/hooks/usePlanning';
 import { localToday } from '@/lib/period';
 import { Banknote, Pencil, Trash2, Download, Users } from 'lucide-react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { formatDate } from '@/lib/formatters';
 import { escapeHtml } from '@/lib/printDocument';
 import {
@@ -803,6 +801,8 @@ async function renderPDF(html: string, filename: string) {
 
   await document.fonts.ready;
   await new Promise<void>((r) => setTimeout(r, 250));
+
+  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')]);
 
   const canvas = await html2canvas(wrapper.firstElementChild as HTMLElement, {
     scale: 2,

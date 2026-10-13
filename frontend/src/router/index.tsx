@@ -11,38 +11,49 @@ import {
   ResetPasswordConfirmPage,
   ChangePasswordPage,
 } from '@/pages/auth';
-import {
-  DashboardPage,
-  SchoolSettingsPage,
-  SchoolsPage,
-  SchoolDetailPage,
-  BillingPage,
-  UsersPage,
-  UserDetailPage,
-  StaffListPage,
-  StaffProfilePage,
-  AcademicYearDetailPage,
-  YearRolloverPage,
-  InventoryPage,
-  DocumentsPage,
-  PlanningPage,
-  ClassroomsPage,
-  ClassroomDetailPage,
-  ChildrenPage,
-  ChildDetailPage,
-  AttendancePage,
-  CommunicationPage,
-  AnnouncementDetailPage,
-  EventDetailPage,
-  TrashPage,
-  PayrollPage,
-} from '@/pages/admin';
-import {
-  PaymentManagementPage,
-  EnrollmentDetailPage,
-} from '@/pages/admin/payments';
-import { TeacherAttendancePage, TeacherDailyReportPage, TeacherMessagesPage, TeacherAnnouncementsPage, TeacherChildrenPage, TeacherSuppliesPage, TeacherPlanningPage } from '@/pages/teacher';
-import { ParentFeedPage, ParentMessagesPage, ParentAttendancePage, ParentNotificationsPage, ParentAnnouncementsPage, ParentPaymentsPage, ParentDocumentsPage } from '@/pages/parent';
+import { lazyPage, usePreloadPages } from './lazyPage';
+
+// Each page is its own file, downloaded when first opened (see lazyPage).
+const DashboardPage = lazyPage('office', () => import('@/pages/admin/DashboardPage').then((m) => m.DashboardPage));
+const SchoolSettingsPage = lazyPage('office', () => import('@/pages/admin/SchoolSettingsPage').then((m) => m.SchoolSettingsPage));
+const UsersPage = lazyPage('office', () => import('@/pages/admin/UsersPage').then((m) => m.UsersPage));
+const UserDetailPage = lazyPage('office', () => import('@/pages/admin/UserDetailPage').then((m) => m.UserDetailPage));
+const StaffListPage = lazyPage('office', () => import('@/pages/admin/StaffListPage').then((m) => m.StaffListPage));
+const StaffProfilePage = lazyPage('office', () => import('@/pages/admin/StaffProfilePage').then((m) => m.StaffProfilePage));
+const AcademicYearDetailPage = lazyPage('office', () => import('@/pages/admin/AcademicYearDetailPage').then((m) => m.AcademicYearDetailPage));
+const YearRolloverPage = lazyPage('office', () => import('@/pages/admin/YearRolloverPage').then((m) => m.YearRolloverPage));
+const InventoryPage = lazyPage('office', () => import('@/pages/admin/InventoryPage').then((m) => m.InventoryPage));
+const DocumentsPage = lazyPage('office', () => import('@/pages/admin/DocumentsPage').then((m) => m.DocumentsPage));
+const PlanningPage = lazyPage('office', () => import('@/pages/admin/PlanningPage').then((m) => m.PlanningPage));
+const ClassroomsPage = lazyPage('office', () => import('@/pages/admin/ClassroomsPage').then((m) => m.ClassroomsPage));
+const ClassroomDetailPage = lazyPage('office', () => import('@/pages/admin/ClassroomDetailPage').then((m) => m.ClassroomDetailPage));
+const ChildrenPage = lazyPage('office', () => import('@/pages/admin/ChildrenPage').then((m) => m.ChildrenPage));
+const ChildDetailPage = lazyPage('office', () => import('@/pages/admin/ChildDetailPage').then((m) => m.ChildDetailPage));
+const AttendancePage = lazyPage('office', () => import('@/pages/admin/AttendancePage').then((m) => m.AttendancePage));
+const CommunicationPage = lazyPage('office', () => import('@/pages/admin/CommunicationPage').then((m) => m.CommunicationPage));
+const AnnouncementDetailPage = lazyPage('office', () => import('@/pages/admin/AnnouncementDetailPage').then((m) => m.AnnouncementDetailPage));
+const EventDetailPage = lazyPage('office', () => import('@/pages/admin/EventDetailPage').then((m) => m.EventDetailPage));
+const PayrollPage = lazyPage('office', () => import('@/pages/admin/PayrollPage').then((m) => m.PayrollPage));
+const TrashPage = lazyPage('platform', () => import('@/pages/admin/TrashPage').then((m) => m.TrashPage));
+const SchoolsPage = lazyPage('platform', () => import('@/pages/admin/SchoolsPage').then((m) => m.SchoolsPage));
+const SchoolDetailPage = lazyPage('platform', () => import('@/pages/admin/SchoolDetailPage').then((m) => m.SchoolDetailPage));
+const BillingPage = lazyPage('platform', () => import('@/pages/admin/BillingPage').then((m) => m.BillingPage));
+const PaymentManagementPage = lazyPage('office', () => import('@/pages/admin/payments/PaymentManagementPage').then((m) => m.PaymentManagementPage));
+const EnrollmentDetailPage = lazyPage('office', () => import('@/pages/admin/payments/EnrollmentDetailPage').then((m) => m.EnrollmentDetailPage));
+const TeacherAttendancePage = lazyPage('teacher', () => import('@/pages/teacher/TeacherAttendancePage').then((m) => m.TeacherAttendancePage));
+const TeacherDailyReportPage = lazyPage('teacher', () => import('@/pages/teacher/TeacherDailyReportPage').then((m) => m.TeacherDailyReportPage));
+const TeacherMessagesPage = lazyPage('teacher', () => import('@/pages/teacher/TeacherMessagesPage').then((m) => m.TeacherMessagesPage));
+const TeacherAnnouncementsPage = lazyPage('teacher', () => import('@/pages/teacher/TeacherAnnouncementsPage').then((m) => m.TeacherAnnouncementsPage));
+const TeacherChildrenPage = lazyPage('teacher', () => import('@/pages/teacher/TeacherChildrenPage').then((m) => m.TeacherChildrenPage));
+const TeacherSuppliesPage = lazyPage('teacher', () => import('@/pages/teacher/TeacherSuppliesPage').then((m) => m.TeacherSuppliesPage));
+const TeacherPlanningPage = lazyPage('teacher', () => import('@/pages/teacher/TeacherPlanningPage').then((m) => m.TeacherPlanningPage));
+const ParentFeedPage = lazyPage('parent', () => import('@/pages/parent/ParentFeedPage').then((m) => m.ParentFeedPage));
+const ParentMessagesPage = lazyPage('parent', () => import('@/pages/parent/ParentMessagesPage').then((m) => m.ParentMessagesPage));
+const ParentAttendancePage = lazyPage('parent', () => import('@/pages/parent/ParentAttendancePage').then((m) => m.ParentAttendancePage));
+const ParentNotificationsPage = lazyPage('parent', () => import('@/pages/parent/ParentNotificationsPage').then((m) => m.ParentNotificationsPage));
+const ParentAnnouncementsPage = lazyPage('parent', () => import('@/pages/parent/ParentAnnouncementsPage').then((m) => m.ParentAnnouncementsPage));
+const ParentPaymentsPage = lazyPage('parent', () => import('@/pages/parent/ParentPaymentsPage').then((m) => m.ParentPaymentsPage));
+const ParentDocumentsPage = lazyPage('parent', () => import('@/pages/parent/ParentDocumentsPage').then((m) => m.ParentDocumentsPage));
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { AdminLayout, ParentLayout } from '@/components/layout';
 import { YearBanner, YearSwitcher } from '@/components/layout/YearSwitcher';
@@ -346,6 +357,7 @@ function AdminLayoutWrapper() {
   const { can } = usePermissions();
   // The school's office: the director and the administrative staff (not super_admin).
   const isAdmin = user?.role === 'admin' || user?.role === 'administrative';
+  usePreloadPages(isAdmin ? 'office' : 'platform');
   const { counts, today } = useOfficeNavCounts(isAdmin);
   const navItems = getAdminNavItems(user?.role || 'admin', can).map((item) => ({ ...item, badge: counts[item.href] }));
 
@@ -374,6 +386,7 @@ function AdminLayoutWrapper() {
 }
 
 function TeacherLayoutWrapper() {
+  usePreloadPages('teacher');
   const counts = usePersonalNavCounts();
   return (
     <AdminLayout
@@ -392,6 +405,7 @@ function TeacherLayoutWrapper() {
 }
 
 function ParentLayoutWrapper() {
+  usePreloadPages('parent');
   const counts = usePersonalNavCounts();
   return <ParentLayout navItems={parentNavItems.map((item) => ({ ...item, badge: counts[item.href] }))} />;
 }

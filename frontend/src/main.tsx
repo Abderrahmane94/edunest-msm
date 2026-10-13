@@ -15,7 +15,10 @@ import './hooks/useOfflinePayments';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    {/* Waits for the reader's language when it is not the one that comes with the site. */}
+    <React.Suspense fallback={null}>
+      <App />
+    </React.Suspense>
   </React.StrictMode>,
 );
 

@@ -2,6 +2,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { hoursLabel, usePlanningSummary } from '@/hooks/usePlanning';
 import { localToday } from '@/lib/period';
 import { Banknote, Pencil, Trash2, Download, Users } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -248,7 +249,7 @@ function RecordPaymentDialog({
   onOpenChange: (v: boolean) => void;
   employees: EmployeeRecord[];
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const recordPayment = useRecordPayment();
   const now = new Date();
   const [form, setForm] = React.useState({
@@ -296,6 +297,9 @@ function RecordPaymentDialog({
     open && isPerStudent,
   );
   const { data: subDays } = useSubstitutionDays(form.userId, form.year, form.month, open);
+  // The month in the planning: hours due, hours worked, days away.
+  const { data: planned } = usePlanningSummary(`${form.year}-${String(form.month).padStart(2, '0')}`, form.userId, open && !!form.userId);
+  const hours = planned?.people[0]?.hasWeek || planned?.people[0]?.absentDaysTotal ? planned.people[0] : null;
   const basis: PerStudentBasis =
     days?.basis ?? selectedEmployee?.salary?.perStudentBasis ?? 'working_day';
 
@@ -409,6 +413,25 @@ function RecordPaymentDialog({
               </select>
             </FormField>
           </div>
+
+          {/* The month in the planning, to account for in the pay (not computed from it). */}
+          {hours && (
+            <div className="mb-4 rounded-md bg-subtle border border-border p-3 space-y-0.5">
+              {hours.hasWeek && (
+                <p className="text-caption text-foreground">
+                  {t('planning.payroll.line', { planned: hoursLabel(hours.plannedMinutes, i18n.language), worked: hoursLabel(hours.workedMinutes, i18n.language) })}
+                </p>
+              )}
+              {hours.absentDaysTotal > 0 && (
+                <p className="text-caption text-text-secondary">
+                  {t('planning.payroll.absent', {
+                    count: hours.absentDaysTotal,
+                    detail: Object.entries(hours.absentDays).map(([reason, n]) => `${t(`planning.reasons.${reason}`, { defaultValue: reason })} ${n}`).join(', '),
+                  })}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* The month's replacements, to account for in the pay (not computed from them). */}
           {subDays && (subDays.replacing.length > 0 || subDays.away.length > 0) && (

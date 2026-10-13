@@ -386,6 +386,95 @@
     "parentSubtitle": "Les documents que l'établissement met à votre disposition.",
     "parentEmpty": "L'établissement n'a partagé aucun document pour l'instant."
   },
+  "planning": {
+    "title": "Planning de l'équipe",
+    "tabs": {
+      "week": "Semaine",
+      "absences": "Absences",
+      "hours": "Heures du mois"
+    },
+    "person": "Personne",
+    "today": "aujourd'hui",
+    "thisWeek": "Cette semaine",
+    "previousWeek": "Semaine précédente",
+    "nextWeek": "Semaine suivante",
+    "previousMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
+    "week": {
+      "a": "Semaine A",
+      "b": "Semaine B"
+    },
+    "print": "Imprimer",
+    "empty": "Aucun membre de l'équipe à afficher.",
+    "noWeekYet": "Aucun horaire n'est encore saisi. Cliquez sur le crayon à côté d'une personne pour indiquer sa semaine habituelle.",
+    "hint": "Le crayon règle la semaine habituelle d'une personne. Un clic sur un jour enregistre ou modifie une absence.",
+    "replaces": "Remplace · {{classroom}}",
+    "reasons": {
+      "illness": "Maladie",
+      "leave": "Congé",
+      "unpaid": "Absence non payée",
+      "training": "Formation",
+      "other": "Autre"
+    },
+    "alerts": {
+      "class": "{{classroom}} : {{teacher}} est absent(e) et personne ne prend la classe.",
+      "openingLate": "L'ouverture de {{usual}} n'est pas assurée : première arrivée à {{actual}}.",
+      "openingNobody": "L'ouverture de {{usual}} n'est pas assurée : personne n'est présent.",
+      "closingLate": "La fermeture de {{usual}} n'est pas assurée : dernier départ à {{actual}}.",
+      "closingNobody": "La fermeture de {{usual}} n'est pas assurée : personne n'est présent."
+    },
+    "shifts": {
+      "title": "Semaine habituelle — {{name}}",
+      "description": "Les jours travaillés et leurs horaires. Ils se répètent chaque semaine jusqu'à ce que vous les changiez.",
+      "edit": "Régler les horaires de {{name}}",
+      "everyWeek": "Chaque semaine",
+      "thisWeek": "cette semaine",
+      "alternates": "Les horaires alternent une semaine sur deux",
+      "alternatesHint": "Par exemple le matin en semaine A, l'après-midi en semaine B.",
+      "start": "Arrivée",
+      "end": "Départ",
+      "off": "Repos",
+      "fill": "Appliquer le premier horaire du dimanche au jeudi"
+    },
+    "absence": {
+      "create": "Enregistrer une absence",
+      "createTitle": "Enregistrer une absence",
+      "editTitle": "Modifier l'absence",
+      "description": "Pour une journée ou une période. Les jours sont comptés dans les heures du mois.",
+      "person": "Personne",
+      "choosePerson": "Choisir une personne",
+      "personRequired": "Choisissez la personne absente.",
+      "from": "Du",
+      "to": "Au",
+      "reason": "Motif",
+      "note": "Remarque",
+      "days_one": "{{count}} jour",
+      "days_other": "{{count}} jours",
+      "empty": "Aucune absence enregistrée ce mois-ci.",
+      "deleteTitle": "Supprimer cette absence ?",
+      "deleteDescription": "Les jours seront de nouveau comptés comme travaillés.",
+      "substitutionsNote": "Les absences d'enseignants saisies avec un remplacement se gèrent depuis la fiche de la classe ; elles sont comptées dans les heures du mois."
+    },
+    "hours": {
+      "planned": "Heures prévues",
+      "absentDays": "Jours d'absence",
+      "absent": "Heures d'absence",
+      "worked": "Heures travaillées",
+      "noWeek": "Horaires non saisis",
+      "until": "Mois en cours : compté jusqu'au {{date}}.",
+      "note": "Heures travaillées = heures de la semaine habituelle moins les jours d'absence. Une absence compte un jour entier."
+    },
+    "mine": {
+      "title": "Mon planning",
+      "subtitle": "Vos horaires de la semaine, vos absences et les classes que vous remplacez.",
+      "noWeek": "Vos horaires n'ont pas encore été saisis par la direction."
+    },
+    "payroll": {
+      "line": "Planning du mois : {{planned}} prévues, {{worked}} travaillées",
+      "absent_one": "{{count}} jour d'absence ({{detail}})",
+      "absent_other": "{{count}} jours d'absence ({{detail}})"
+    }
+  },
   "navSection": {
     "daily": "Quotidien",
     "management": "Gestion",
@@ -401,6 +490,7 @@
     "children": "Les enfants inscrits cette année : leur fiche, leur classe, leurs parents et leurs frais.",
     "communication": "Ce que l'école dit aux familles et à l'équipe : annonces, événements, messages.",
     "documents": "Les fichiers que l'école imprime ou envoie souvent : dossier d'inscription, règlement, fiche sanitaire.",
+    "planning": "Qui travaille quand, qui est absent et qui remplace : la semaine de l'équipe et les heures du mois.",
     "inventory": "Ce que l'école consomme et ce qu'elle possède : fournitures à racheter, matériel salle par salle.",
     "payments": "L'argent des familles : encaisser, suivre les retards, les caisses et les dépenses.",
     "payroll": "Les salaires de l'équipe : ce qui est dû chaque mois et ce qui a été versé.",
@@ -432,6 +522,7 @@
     "timetable": "Jours de présence",
     "payroll": "Paie",
     "documents": "Documents",
+    "planning": "Planning",
     "inventory": "Inventaire",
     "supplies": "Fournitures",
     "announcements": "Annonces",
@@ -684,6 +775,14 @@
       "amountTooHigh": "Ce montant est trop élevé. Vérifiez la saisie.",
       "documentNotFound": "Document introuvable : il a peut-être été supprimé.",
       "documentNameTaken": "Un document porte déjà ce nom.",
+      "shiftEndsBeforeStart": "L'heure de départ doit être après l'heure d'arrivée.",
+      "shiftsOverlap": "Deux horaires d'une même journée se chevauchent.",
+      "shiftsTooMany": "Deux horaires par jour au maximum.",
+      "shiftsMixed": "La semaine est soit la même chaque semaine, soit en alternance, pas les deux.",
+      "timeInvalid": "Une heure s'écrit HH:MM.",
+      "absenceOverlap": "Cette personne est déjà enregistrée absente sur ces dates.",
+      "absenceTooLong": "Une absence ne peut pas durer plus d'un an.",
+      "absenceNotFound": "Absence introuvable : elle a peut-être été supprimée.",
       "futureDate": "La date ne peut pas être dans le futur.",
       "referenceRequired": "La référence est obligatoire pour un paiement CCP ou BaridiMob.",
       "reasonRequired": "Le motif est obligatoire pour une correction.",

@@ -171,6 +171,8 @@ model School {
   accessLogs       AccessLog[]
   cashHandovers    CashHandover[]
   documents        SchoolDocument[]
+  staffShifts      StaffShift[]
+  staffAbsences    StaffAbsence[]
   accessExceptions AccessException[]
   stockMovements StockMovement[]
   children       Child[]
@@ -212,6 +214,8 @@ model User {
   school                      School?              @relation(fields: [schoolId], references: [id])
   branch                      Branch?              @relation(fields: [branchId], references: [id])
   staffProfile                StaffProfile?
+  staffShifts                 StaffShift[]         @relation("StaffShifts")
+  staffAbsences               StaffAbsence[]       @relation("StaffAbsences")
   parentLinks                 ParentChildLink[]
   notifications               Notification[]
   sentMessages                Message[]
@@ -1378,4 +1382,49 @@ model SchoolDocument {
 
   @@index([schoolId, category])
   @@map("school_documents")
+}
+
+/// One shift of a staff member's usual week: the same every week ("all"), or
+/// of the weeks A or B when their week alternates (morning / afternoon).
+model StaffShift {
+  id        String   @id @default(uuid())
+  schoolId  String   @map("school_id")
+  userId    String   @map("user_id")
+  /// 0: Sunday … 6: Saturday
+  weekday   Int
+  /// all, a, b
+  week      String   @default("all")
+  /// HH:MM
+  startTime String   @map("start_time")
+  endTime   String   @map("end_time")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  school School @relation(fields: [schoolId], references: [id])
+  user   User   @relation("StaffShifts", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, userId])
+  @@map("staff_shifts")
+}
+
+/// Days a staff member is away (whole days), whatever their job. A teacher's
+/// replacement says the same for its own days, without a row here.
+model StaffAbsence {
+  id              String   @id @default(uuid())
+  schoolId        String   @map("school_id")
+  userId          String   @map("user_id")
+  startDate       DateTime @map("start_date") @db.Date
+  endDate         DateTime @map("end_date") @db.Date
+  /// illness, leave, unpaid, training, other
+  reason          String
+  note            String?
+  createdByUserId String?  @map("created_by_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  school School @relation(fields: [schoolId], references: [id])
+  user   User   @relation("StaffAbsences", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, startDate])
+  @@index([userId, startDate])
+  @@map("staff_absences")
 }

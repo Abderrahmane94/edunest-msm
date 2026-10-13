@@ -6,6 +6,7 @@ import branchFeePeriodRoutes from './branch-fee-period.routes';
 import branchFeeClassroomRoutes from './branch-fee-classroom.routes';
 import enrollmentRoutes from './enrollment.routes';
 import paymentsRoutes from './payments.routes';
+import statementRoutes from './statement.routes';
 import discountRoutes from './discount.routes';
 import expenseRoutes from './expense.routes';
 import parentPortalRoutes from './parent-portal.routes';
@@ -38,6 +39,7 @@ router.use(enrollmentRoutes);
 router.use(discountRoutes);
 
 // Payment recording, late dashboard, reconciliation
+router.use(statementRoutes);
 router.use(paymentsRoutes);
 
 // School expense tracking

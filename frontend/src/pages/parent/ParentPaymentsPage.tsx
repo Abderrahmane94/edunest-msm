@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Receipt, CalendarDays, Wallet, Eye, Users } from 'lucide-react';
+import { Receipt, CalendarDays, Wallet, Eye, Users, FileText } from 'lucide-react';
+import { StatementDialog } from '@/pages/admin/payments/StatementDialog';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/formatters';
 import { apiClient, apiError } from '@/lib/api-client';
@@ -82,7 +83,36 @@ function BillingPeriodsTab() {
   if (isLoading) return <SkeletonCards count={4} />;
   if (isError) return <p className="text-center py-16 text-body text-text-secondary">{t('parentPayments.error.periods')}</p>;
   if (!data || data.length === 0) return <NoBilling />;
-  return (<ul role="list" className="space-y-3">{data.map((p) => <PeriodCard key={p.id} period={p} />)}</ul>);
+  return (
+    <div className="space-y-3">
+      <StatementLinks />
+      <ul role="list" className="space-y-3">{data.map((p) => <PeriodCard key={p.id} period={p} />)}</ul>
+    </div>
+  );
+}
+
+/** The statement of account of each child, a tap away from the échéances. */
+function StatementLinks() {
+  const { t } = useTranslation();
+  const { data } = useParentBalances();
+  const [childId, setChildId] = React.useState<string | null>(null);
+  if (!data || data.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {data.map((b) => (
+        <button
+          key={b.childId}
+          type="button"
+          onClick={() => setChildId(b.childId)}
+          className="inline-flex items-center gap-1.5 min-h-[40px] rounded-full border border-border bg-card px-3 text-label font-medium text-primary hover:bg-subtle focus-visible:outline-none focus-visible:shadow-focus-ring"
+        >
+          <FileText className="w-4 h-4 shrink-0" />
+          {data.length > 1 ? `${t('statement.button')} · ${b.childName}` : t('statement.button')}
+        </button>
+      ))}
+      <StatementDialog childId={childId} scope="parent" open={childId !== null} onOpenChange={(o) => !o && setChildId(null)} />
+    </div>
+  );
 }
 
 function PeriodCard({ period }: { period: ParentBillingPeriod }) {
@@ -162,6 +192,7 @@ function BalanceCard({ balance }: { balance: ParentChildBalance }) {
   const amt = parseFloat(balance.outstanding);
   const isOverpaid = amt < 0;
   const isZero = amt === 0;
+  const [statementOpen, setStatementOpen] = React.useState(false);
   return (
     <li><article className="bg-card border border-border rounded-lg overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
       <div className="p-5"><div className="flex items-center justify-between gap-3">
@@ -172,7 +203,13 @@ function BalanceCard({ balance }: { balance: ParentChildBalance }) {
           {isZero && <p className="text-micro text-[var(--color-success)] mt-0.5">{t('parentPayments.allPaid')}</p>}
           {!isOverpaid && !isZero && <p className="text-micro text-text-secondary mt-0.5">{t('parentPayments.outstanding')}</p>}
         </div>
-      </div></div>
+      </div>
+      <button type="button" onClick={() => setStatementOpen(true)} className="mt-3 inline-flex items-center gap-1.5 text-label font-medium text-primary hover:underline focus-visible:outline-none focus-visible:shadow-focus-ring rounded">
+        <FileText className="w-4 h-4" />
+        {t('statement.button')}
+      </button>
+      <StatementDialog childId={balance.childId} scope="parent" open={statementOpen} onOpenChange={setStatementOpen} />
+      </div>
     </article></li>
   );
 }

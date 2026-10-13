@@ -56,7 +56,7 @@ function RecipientAvatar({ conversation, size = 'md' }: { conversation?: Convers
     return (
       <span
         className={cn(
-          'shrink-0 grid place-items-center rounded-full bg-[var(--color-accent-muted)] text-[var(--color-accent)]',
+          'shrink-0 grid place-items-center rounded-full bg-[var(--color-accent-muted)] text-[var(--color-accent-ink)]',
           size === 'md' ? 'w-10 h-10' : 'w-8 h-8',
         )}
         aria-hidden="true"
@@ -606,7 +606,7 @@ function NewMessageDialog({
                 onClick={() => open_(conversations.find((c) => c.with_office), contacts[0]?.childId, true)}
                 className={rowClass}
               >
-                <span className="shrink-0 grid place-items-center w-10 h-10 rounded-full bg-[var(--color-accent-muted)] text-[var(--color-accent)]">
+                <span className="shrink-0 grid place-items-center w-10 h-10 rounded-full bg-[var(--color-accent-muted)] text-[var(--color-accent-ink)]">
                   <Building2 className="w-5 h-5" />
                 </span>
                 <span className="flex-1 min-w-0">

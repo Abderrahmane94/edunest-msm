@@ -40,6 +40,8 @@ export const parentPortalController = {
           cancelledAt: null,
         },
         include: {
+          // What the charge is for (canteen, transport...): several can fall on the same dates.
+          branchFee: { select: { name: true } },
           enrollment: {
             include: {
               child: {
@@ -97,6 +99,7 @@ export const parentPortalController = {
           childId: period.enrollment.child.id,
           childName: `${period.enrollment.child.firstName} ${period.enrollment.child.lastName}`,
           branchName: period.enrollment.branch.name,
+          feeName: period.branchFee?.name ?? null,
           periodLabel,
           amountDue: period.amountDue,
           dueDate: period.dueDate,

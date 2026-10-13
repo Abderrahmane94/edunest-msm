@@ -95,7 +95,7 @@ export function ResetPasswordRequestPage() {
         <div className="mt-4 text-center">
           <Link
             to="/login"
-            className="text-body text-[var(--color-accent)] hover:underline"
+            className="inline-block py-2 text-body text-[var(--color-accent)] hover:underline rounded focus-visible:outline-none focus-visible:shadow-focus-ring"
           >
             {t('auth.resetPasswordRequest.backToLogin')}
           </Link>

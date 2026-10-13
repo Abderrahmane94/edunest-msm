@@ -85,7 +85,7 @@ export function OfflineStatus() {
         {/* On the narrowest phones the icon alone keeps the header on one line. */}
         <span className="hidden min-[380px]:inline">{t('offline.badge')}</span>
         {waiting > 0 && (
-          <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-warning text-[#1F2937] text-[10px] font-semibold flex items-center justify-center">
+          <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-warning text-[#1F2937] text-[11px] font-semibold flex items-center justify-center">
             {waiting > 99 ? '99+' : waiting}
           </span>
         )}

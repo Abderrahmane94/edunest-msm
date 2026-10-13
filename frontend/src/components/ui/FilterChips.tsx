@@ -41,7 +41,7 @@ export function FilterChips<T extends string>({ options, value, onChange, label,
             {o.dot && <span className={cn('w-2 h-2 rounded-full', o.dot)} aria-hidden="true" />}
             {o.label}
             {o.count !== undefined && (
-              <span className={cn('rounded-full px-1.5 text-micro tabular-nums', active ? 'bg-white/20' : 'bg-subtle')}>{o.count}</span>
+              <span className={cn('rounded-full px-1.5 text-micro tabular-nums', active ? 'bg-white/10' : 'bg-subtle')}>{o.count}</span>
             )}
           </button>
         );

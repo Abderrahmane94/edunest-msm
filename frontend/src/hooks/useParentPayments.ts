@@ -10,6 +10,8 @@ export interface ParentBillingPeriod {
   id: string;
   childName: string;
   branchName: string;
+  /** What the charge is for; null on older charges with no fee attached. */
+  feeName: string | null;
   periodLabel: string;
   periodStart: string;
   periodEnd: string;
@@ -115,6 +117,7 @@ function mapParentBillingPeriod(raw: Record<string, unknown>): ParentBillingPeri
     id: raw.id as string,
     childName: (raw.childName ?? raw.child_name) as string,
     branchName: (raw.branchName ?? raw.branch_name) as string,
+    feeName: (raw.feeName ?? raw.fee_name ?? null) as string | null,
     periodLabel: (raw.periodLabel ?? raw.period_label ?? raw.label) as string,
     periodStart: (raw.periodStart ?? raw.period_start) as string,
     periodEnd: (raw.periodEnd ?? raw.period_end) as string,

@@ -25,15 +25,15 @@ const ICONS: Record<NotificationType, ElementType> = {
 };
 
 const ICON_COLORS: Record<NotificationType, string> = {
-  absence_alert: 'bg-[var(--color-danger-muted)] text-[var(--color-danger)]',
-  payment_received: 'bg-[var(--color-success-muted)] text-[var(--color-success)]',
-  payment_overdue: 'bg-[var(--color-warning-muted)] text-[var(--color-warning)]',
-  invoice_sent: 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]',
-  daily_report: 'bg-[var(--color-success-muted)] text-[var(--color-success)]',
-  message_new: 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]',
-  announcement: 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]',
-  event_consent: 'bg-[var(--color-warning-muted)] text-[var(--color-warning)]',
-  substitution: 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]',
+  absence_alert: 'bg-[var(--color-danger-muted)] text-[var(--color-danger-ink)]',
+  payment_received: 'bg-[var(--color-success-muted)] text-[var(--color-success-ink)]',
+  payment_overdue: 'bg-[var(--color-warning-muted)] text-[var(--color-warning-ink)]',
+  invoice_sent: 'bg-[var(--color-accent-muted)] text-[var(--color-accent-ink)]',
+  daily_report: 'bg-[var(--color-success-muted)] text-[var(--color-success-ink)]',
+  message_new: 'bg-[var(--color-accent-muted)] text-[var(--color-accent-ink)]',
+  announcement: 'bg-[var(--color-accent-muted)] text-[var(--color-accent-ink)]',
+  event_consent: 'bg-[var(--color-warning-muted)] text-[var(--color-warning-ink)]',
+  substitution: 'bg-[var(--color-accent-muted)] text-[var(--color-accent-ink)]',
 };
 
 export function notificationIcon(type: NotificationType): ElementType {

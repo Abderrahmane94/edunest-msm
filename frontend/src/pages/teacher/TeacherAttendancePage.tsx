@@ -418,7 +418,7 @@ export function TeacherAttendancePage() {
         <button
           type="button"
           onClick={markAllPresent}
-          className="w-full flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg border border-[var(--color-success)] border-opacity-20 hover:bg-[var(--color-success)] hover:text-[var(--color-text-inverse)] transition-all duration-150 active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success-ink)] font-medium text-body rounded-lg border border-[var(--color-success)] border-opacity-20 hover:bg-[var(--color-success)] hover:text-[var(--color-text-inverse)] transition-all duration-150 active:scale-[0.98]"
           aria-label={t('teacherAttendance.markAllPresent')}
         >
           <CheckCheck className="w-5 h-5" />
@@ -495,7 +495,7 @@ export function TeacherAttendancePage() {
                     <span className={cn('w-2 h-2 rounded-full', STATUS_LOOK[f].bg)} aria-hidden="true" />
                   )}
                   {t(`teacherAttendance.list.filters.${f}`)}
-                  <span className={cn('rounded-full px-1.5 text-micro', active ? 'bg-white/20' : 'bg-subtle')}>
+                  <span className={cn('rounded-full px-1.5 text-micro', active ? 'bg-white/10' : 'bg-subtle')}>
                     {count}
                   </span>
                 </button>
@@ -603,7 +603,7 @@ export function TeacherAttendancePage() {
                         type="button"
                         onClick={() => setQuickChild(child)}
                         title={t('children.quick.open')}
-                        className="text-start text-body font-medium text-text-heading [overflow-wrap:anywhere] underline decoration-dotted decoration-[var(--color-border)] underline-offset-4 hover:text-primary focus-visible:outline-none focus-visible:shadow-focus-ring rounded"
+                        className="py-2 -my-2 text-start text-body font-medium text-text-heading [overflow-wrap:anywhere] underline decoration-dotted decoration-[var(--color-border)] underline-offset-4 hover:text-primary focus-visible:outline-none focus-visible:shadow-focus-ring rounded"
                       >
                         {child.first_name} {child.last_name}
                       </button>
@@ -625,7 +625,7 @@ export function TeacherAttendancePage() {
                         'flex items-center justify-center gap-2 min-h-[48px] px-3 py-3 rounded-lg font-medium text-label transition-all duration-150 active:scale-[0.98]',
                         currentStatus === 'present'
                           ? 'bg-[var(--color-success)] text-[var(--color-text-inverse)]'
-                          : 'bg-[var(--color-success-muted)] text-[var(--color-success)] hover:bg-[var(--color-success)] hover:text-[var(--color-text-inverse)]'
+                          : 'bg-[var(--color-success-muted)] text-[var(--color-success-ink)] hover:bg-[var(--color-success)] hover:text-[var(--color-text-inverse)]'
                       )}
                       aria-label={`${t('attendance.statuses.present')} - ${child.first_name} ${child.last_name}`}
                       aria-pressed={currentStatus === 'present'}
@@ -641,7 +641,7 @@ export function TeacherAttendancePage() {
                         'flex items-center justify-center gap-2 min-h-[48px] px-3 py-3 rounded-lg font-medium text-label transition-all duration-150 active:scale-[0.98]',
                         currentStatus === 'late'
                           ? 'bg-[var(--color-warning)] text-[var(--color-text-inverse)]'
-                          : 'bg-[var(--color-warning-muted)] text-[var(--color-warning)] hover:bg-[var(--color-warning)] hover:text-[var(--color-text-inverse)]'
+                          : 'bg-[var(--color-warning-muted)] text-[var(--color-warning-ink)] hover:bg-[var(--color-warning)] hover:text-[var(--color-text-inverse)]'
                       )}
                       aria-label={`${t('attendance.statuses.late')} - ${child.first_name} ${child.last_name}`}
                       aria-pressed={currentStatus === 'late'}
@@ -657,7 +657,7 @@ export function TeacherAttendancePage() {
                         'flex items-center justify-center gap-2 min-h-[48px] px-3 py-3 rounded-lg font-medium text-label transition-all duration-150 active:scale-[0.98]',
                         currentStatus === 'absent'
                           ? 'bg-[var(--color-danger)] text-[var(--color-text-inverse)]'
-                          : 'bg-[var(--color-danger-muted)] text-[var(--color-danger)] hover:bg-[var(--color-danger)] hover:text-[var(--color-text-inverse)]'
+                          : 'bg-[var(--color-danger-muted)] text-[var(--color-danger-ink)] hover:bg-[var(--color-danger)] hover:text-[var(--color-text-inverse)]'
                       )}
                       aria-label={`${t('attendance.statuses.absent')} - ${child.first_name} ${child.last_name}`}
                       aria-pressed={currentStatus === 'absent'}
@@ -726,7 +726,7 @@ export function TeacherAttendancePage() {
               {syncing ? t('teacherAttendance.sending') : t('teacherAttendance.savedOffline')}
             </div>
           ) : !hasChanges && submitted ? (
-            <div className="flex flex-wrap items-center justify-center text-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success)] font-medium text-body rounded-lg">
+            <div className="flex flex-wrap items-center justify-center text-center gap-2 min-h-[48px] px-4 py-3 bg-[var(--color-success-muted)] text-[var(--color-success-ink)] font-medium text-body rounded-lg">
               <Check className="w-5 h-5" />
               {t('teacherAttendance.submitSuccess')}
             </div>

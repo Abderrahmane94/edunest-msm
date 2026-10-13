@@ -1,5 +1,6 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
+import { ClassColorPicker, ClassTag, classColor, type ClassColor } from '@/components/ClassTag';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { UserCog } from 'lucide-react';
@@ -54,6 +55,7 @@ export function ClassroomDetailPage() {
     capacity: '',
     room_id: '',
     level: '',
+    color: null as ClassColor | null,
   });
   const [teacherId, setTeacherId] = React.useState('');
   const [saveSuccess, setSaveSuccess] = React.useState(false);
@@ -67,6 +69,7 @@ export function ClassroomDetailPage() {
       capacity: String(c.capacity),
       room_id: c.room_id ?? '',
       level: c.level ?? '',
+      color: c.color ? classColor(c.id, c.color) : null,
     }),
     [],
   );
@@ -95,6 +98,7 @@ export function ClassroomDetailPage() {
         capacity: Number(formData.capacity),
         room_id: formData.room_id || null,
         level: formData.level || null,
+        color: formData.color,
       });
       edit.finishEditing();
       setSaveSuccess(true);
@@ -144,6 +148,7 @@ export function ClassroomDetailPage() {
       <PageHeader
         back="/admin/classrooms"
         title={classroom.name}
+        badge={<ClassTag id={classroom.id} name={classroom.level || classroom.name} color={classColor(classroom.id, classroom.color)} />}
         description={
           <>
             {classroom.enrolled_count}/{classroom.capacity} {t('classrooms.columns.capacity').toLowerCase()}
@@ -177,6 +182,13 @@ export function ClassroomDetailPage() {
               academicYearId={classroom.academic_year_id}
               placed={{ id: classroom.id, capacity: Number(formData.capacity) || 0, working_days: classroom.working_days }}
             />
+            <FormField label={t('classrooms.form.color')} helperText={edit.editing ? t('classrooms.form.colorHint') : undefined}>
+              <ClassColorPicker
+                value={formData.color ?? (edit.editing ? null : classColor(classroom.id, classroom.color))}
+                onChange={(color) => setFormData((prev) => ({ ...prev, color }))}
+                disabled={!edit.editing}
+              />
+            </FormField>
           </div>
           </ReadOnlyFieldset>
         </div>

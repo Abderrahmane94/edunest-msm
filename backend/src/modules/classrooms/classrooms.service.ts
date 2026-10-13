@@ -56,6 +56,7 @@ class ClassroomsService {
         capacity: input.capacity,
         roomId: input.roomId || null,
         level: input.level || null,
+        color: input.color ?? null,
         teacherUserId: input.teacherUserId || null,
       },
       include: classroomInclude,
@@ -185,6 +186,7 @@ class ClassroomsService {
         ...(input.capacity !== undefined && { capacity: input.capacity }),
         ...(input.roomId !== undefined && { roomId: input.roomId }),
         ...(input.level !== undefined && { level: input.level }),
+        ...(input.color !== undefined && { color: input.color }),
       },
       include: classroomInclude,
     });

@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { uuidSchema } from '../../utils/validators';
 
+/** The palette a class's color is taken from (the app's own colors). */
+export const CLASS_COLORS = ['violet', 'sky', 'teal', 'green', 'sun', 'orange', 'pink', 'red'] as const;
+const color = z.enum(CLASS_COLORS).nullable().optional();
+
 export const createClassroomSchema = z.object({
   name: z
     .string()
@@ -17,6 +21,7 @@ export const createClassroomSchema = z.object({
     .optional(),
   academicYearId: uuidSchema,
   teacherUserId: uuidSchema.optional(),
+  color,
 });
 
 export const updateClassroomSchema = z.object({
@@ -36,6 +41,7 @@ export const updateClassroomSchema = z.object({
     .max(100, 'Level must not exceed 100 characters')
     .nullable()
     .optional(),
+  color,
 });
 
 export const assignTeacherSchema = z.object({

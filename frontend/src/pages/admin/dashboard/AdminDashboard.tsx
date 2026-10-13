@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { useLowStockCount } from '@/hooks/useInventory';
 import { useEquipmentToRepair } from '@/hooks/useEquipment';
 import { useCashSummary } from '@/hooks/useCashDesks';
+import { classDot, useClassColor } from '@/components/ClassTag';
 import { useIsDirector } from '@/lib/roles';
 import { today, useSubstitutions } from '@/hooks/useSubstitutions';
 import { ActionList, BarChart, BigNumber, Progress, Section, Tile, type ActionItem } from './parts';
@@ -404,6 +405,7 @@ function AttendanceChart({ data }: { data: Dashboard }) {
 }
 
 function EnrollmentSection({ data }: { data: Dashboard }) {
+  const colorOf = useClassColor();
   const { t } = useTranslation();
   const e = data.enrollment;
   return (
@@ -436,7 +438,10 @@ function EnrollmentSection({ data }: { data: Dashboard }) {
                     className="block rounded-md -mx-1 px-1 py-0.5 hover:bg-hover transition-colors focus-visible:outline-none focus-visible:bg-hover"
                   >
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="text-caption font-medium text-text-heading truncate">{c.name}</span>
+                      <span className="flex items-center gap-1.5 min-w-0">
+                        <span className={`w-2 h-2 shrink-0 rounded-full ${classDot(colorOf(c.id))}`} aria-hidden="true" />
+                        <span className="text-caption font-medium text-text-heading truncate">{c.name}</span>
+                      </span>
                       <span className="flex items-center gap-1.5 shrink-0">
                         {ratio >= 1 && (
                           <span className="text-micro font-semibold text-danger">

@@ -1,5 +1,6 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
+import { ClassColorPicker, ClassTag, classColor, type ClassColor } from '@/components/ClassTag';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserCog } from 'lucide-react';
@@ -52,10 +53,12 @@ function CreateClassroomDialog({
     level: '',
     teacher_id: '',
   });
+  const [color, setColor] = React.useState<ClassColor | null>(null);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   function resetForm() {
     setFormData({ name: '', capacity: '', room_id: '', level: '', teacher_id: '' });
+    setColor(null);
     setErrors({});
   }
 
@@ -97,6 +100,7 @@ function CreateClassroomDialog({
         capacity: Number(formData.capacity),
         room_id: formData.room_id || undefined,
         level: formData.level,
+        color,
         academic_year_id: academicYearId,
         teacher_id: formData.teacher_id || undefined,
       });
@@ -182,6 +186,10 @@ function CreateClassroomDialog({
               onChange={handleChange}
               placeholder={t('classrooms.form.levelPlaceholder')}
             />
+          </FormField>
+
+          <FormField label={t('classrooms.form.color')} helperText={t('classrooms.form.colorHint')}>
+            <ClassColorPicker value={color} onChange={setColor} />
           </FormField>
 
           <FormSelect
@@ -343,7 +351,7 @@ export function ClassroomsPage() {
       header: t('classrooms.columns.name'),
       sortable: true,
       render: (classroom) => (
-        <p className="text-body font-medium text-foreground">{classroom.name}</p>
+        <ClassTag id={classroom.id} name={classroom.name} color={classColor(classroom.id, classroom.color)} className="text-body" />
       ),
     },
     {

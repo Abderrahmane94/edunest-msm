@@ -108,6 +108,7 @@ describe('ClassroomsService', () => {
           capacity: 25,
           roomId: 'room-1',
           level: 'KG1',
+          color: null,
           teacherUserId: null,
         },
         include,

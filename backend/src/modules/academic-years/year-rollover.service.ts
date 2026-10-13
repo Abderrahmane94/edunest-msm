@@ -250,6 +250,7 @@ class YearRolloverService {
               name,
               capacity: c.capacity,
               level: c.level,
+              color: c.color,
               workingDays: c.workingDays ?? undefined,
               teacherUserId: c.teacher?.isActive && c.teacher.role === 'teacher' ? c.teacher.id : null,
               roomId: c.room?.isActive ? c.room.id : null,

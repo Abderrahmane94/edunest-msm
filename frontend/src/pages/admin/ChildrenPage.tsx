@@ -2,12 +2,15 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Link2, Phone, HeartPulse } from 'lucide-react';
+import { Link2, Phone, HeartPulse, LayoutGrid, List, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { ClassTag, classColor, classDot } from '@/components/ClassTag';
+import { ChildQuickView, childAge } from './ChildQuickView';
 import { formatDate } from '@/lib/formatters';
 import {
   ErrorAlert,
   Button,
   CreateButton,
+  EmptyState,
   DataTable,
   StatusBadge,
   Dialog,
@@ -21,7 +24,7 @@ import {
   ListSkeleton,
   PageHeader,
 } from '@/components/ui';
-import type { Column } from '@/components/ui';
+import type { Column } from '@/components/ui';
 import { avatarColor } from '@/components/ui/Avatar';
 import { FormSelect } from '@/components/forms';
 import {
@@ -208,6 +211,26 @@ export function ChildrenPage() {
   const [emergencyDialogOpen, setEmergencyDialogOpen] = React.useState(false);
   const [medicalDialogOpen, setMedicalDialogOpen] = React.useState(false);
   const [selectedChild, setSelectedChild] = React.useState<ChildRef | null>(null);
+  // The essentials of a child, opened over the list.
+  const [quickChild, setQuickChild] = React.useState<Child | null>(null);
+  // Cards read better on a phone, a table on a wide screen; the choice is kept.
+  const [view, setView] = React.useState<'cards' | 'table'>(() => {
+    try {
+      const kept = localStorage.getItem('children_view');
+      if (kept === 'cards' || kept === 'table') return kept;
+    } catch {
+      // Private window: the default is used.
+    }
+    return window.innerWidth < 768 ? 'cards' : 'table';
+  });
+  function chooseView(next: 'cards' | 'table') {
+    setView(next);
+    try {
+      localStorage.setItem('children_view', next);
+    } catch {
+      // Not kept: nothing else to do.
+    }
+  }
 
   function handleSearch(query: string) {
     setSearch(query);
@@ -270,7 +293,7 @@ export function ChildrenPage() {
       header: t('children.columns.classroom'),
       render: (child) =>
         child.classroom_name ? (
-          <span className="text-body text-foreground">{child.classroom_name}</span>
+          <ClassTag id={child.classroom_id} name={child.classroom_name} />
         ) : (
           <span className="text-body text-text-disabled">—</span>
         ),
@@ -302,6 +325,15 @@ export function ChildrenPage() {
           <Button
             variant="ghost"
             size="icon"
+            onClick={(e) => { e.stopPropagation(); setQuickChild(child); }}
+            aria-label={t('children.quick.open')}
+            title={t('children.quick.open')}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={(e) => { e.stopPropagation(); handleLinkParent(child); }}
             aria-label={t('children.linkParent.title')}
             title={t('children.linkParent.title')}
@@ -328,16 +360,36 @@ export function ChildrenPage() {
           </Button>
         </div>
       ),
-      className: 'w-32',
+      className: 'w-40',
     },
   ];
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title={t('children.title')}
         description={t('pageIntro.children')}
-        actions={!closed && <CreateButton label={t('children.register')} onClick={() => setCreateDialogOpen(true)} />}
+        actions={
+          <>
+            <div role="group" aria-label={t('children.view.label')} className="inline-flex rounded-full border border-border bg-card p-0.5">
+              {(['cards', 'table'] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  aria-pressed={view === v}
+                  aria-label={t(`children.view.${v}`)}
+                  title={t(`children.view.${v}`)}
+                  onClick={() => chooseView(v)}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${view === v ? 'bg-primary text-white' : 'text-text-secondary hover:bg-subtle'}`}
+                >
+                  {v === 'cards' ? <LayoutGrid className="w-4 h-4" /> : <List className="w-4 h-4" />}
+                </button>
+              ))}
+            </div>
+            {!closed && <CreateButton label={t('children.register')} onClick={() => setCreateDialogOpen(true)} />}
+          </>
+        }
       />
 
       <FilterBar
@@ -357,7 +409,7 @@ export function ChildrenPage() {
               }}
               options={[
                 { value: '', label: t('children.filters.allClassrooms') },
-                ...(classrooms ?? []).map((c) => ({ value: c.id, label: c.name, count: c.enrolled_count })),
+                ...(classrooms ?? []).map((c) => ({ value: c.id, label: c.name, count: c.enrolled_count, dot: classDot(classColor(c.id, c.color)) })),
               ]}
             />
           )
@@ -409,6 +461,62 @@ export function ChildrenPage() {
 
       {isLoading ? (
         <ListSkeleton />
+      ) : view === 'cards' ? (
+        children.length === 0 ? (
+          <EmptyState message={hasFilters || search ? t('children.filters.noMatch') : t('children.noChildren')} />
+        ) : (
+          <>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              {children.map((child) => (
+                <li key={child.id}>
+                  <button
+                    type="button"
+                    onClick={() => setQuickChild(child)}
+                    className="w-full h-full text-start bg-card border border-border rounded-xl p-4 space-y-3 transition-shadow hover:shadow-level-2 focus-visible:outline-none focus-visible:shadow-focus-ring"
+                  >
+                    <span className="flex items-center gap-3 min-w-0">
+                      <span className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-body font-semibold ${avatarColor(`${child.first_name} ${child.last_name}`)}`}>
+                        {child.first_name.charAt(0)}{child.last_name.charAt(0)}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-body-lg font-semibold text-text-heading [overflow-wrap:anywhere]">
+                          {child.first_name} {child.last_name}
+                        </span>
+                        <span className="block text-caption text-text-secondary">{childAge(child.date_of_birth, t)}</span>
+                      </span>
+                    </span>
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      {child.classroom_name ? (
+                        <ClassTag id={child.classroom_id} name={child.classroom_name} />
+                      ) : (
+                        <StatusBadge variant="neutral">{t('children.quick.noClass')}</StatusBadge>
+                      )}
+                      {!child.is_active && <StatusBadge variant="neutral">{t('children.inactive')}</StatusBadge>}
+                      <PickupContactWarning child={child} />
+                      <HighSeverityMedicalWarning childId={child.id} />
+                    </span>
+                    <span className="block text-caption text-text-secondary [overflow-wrap:anywhere]">
+                      {child.parent_names && child.parent_names.length > 0 ? child.parent_names.join(', ') : t('children.noParents')}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between">
+                <span className="text-caption text-text-secondary">{t('table.pagination', { page, totalPages, total })}</span>
+                <div className="flex items-center gap-1">
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setPage(page - 1)} disabled={page <= 1} aria-label={t('table.prevPage')}>
+                    <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setPage(page + 1)} disabled={page >= totalPages} aria-label={t('table.nextPage')}>
+                    <ChevronRight className="w-4 h-4 rtl:rotate-180" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )
       ) : (
       <DataTable<Child>
         columns={columns}
@@ -422,6 +530,8 @@ export function ChildrenPage() {
         emptyMessage={hasFilters || search ? t('children.filters.noMatch') : t('children.noChildren')}
       />
       )}
+
+      <ChildQuickView child={quickChild} onClose={() => setQuickChild(null)} />
 
       <CreateChildWizard
         open={createDialogOpen}

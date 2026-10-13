@@ -129,7 +129,7 @@ function SlipDocument({ id }: { id: string }) {
   return (
     <div className="receipt-document space-y-4 text-body text-foreground">
       <div className="text-center">
-        <p className="text-h3 font-semibold">{h.schoolName}</p>
+        <p className="text-subsection font-semibold">{h.schoolName}</p>
         <p className="font-medium">{t(h.kind === 'deposit' ? 'cashDesks.slip.depositTitle' : 'cashDesks.slip.title')}</p>
         <p className="text-caption text-text-secondary">{formatDateTime(h.createdAt)}</p>
       </div>
@@ -381,7 +381,7 @@ function Card({ title, action, children }: { title: string; action?: React.React
   return (
     <section className="bg-card border border-border rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h2 className="text-h3 font-semibold text-foreground">{title}</h2>
+        <h2 className="text-subsection font-semibold text-foreground">{title}</h2>
         {action}
       </div>
       {children}

@@ -1366,6 +1366,16 @@
     }
   },
   "classrooms": {
+    "colors": {
+      "violet": "Violet",
+      "sky": "Bleu",
+      "teal": "Turquoise",
+      "green": "Vert",
+      "sun": "Jaune",
+      "orange": "Orange",
+      "pink": "Rose",
+      "red": "Rouge"
+    },
     "filters": {
       "search": "Recherche",
       "searchPlaceholder": "Nom ou salle…",
@@ -1416,6 +1426,8 @@
       "level": "Niveau (groupe d'âge)",
       "levelPlaceholder": "Ex: 3-4 ans",
       "levelRequired": "Le niveau est requis",
+      "color": "Couleur",
+      "colorHint": "Reprise partout où la classe apparaît. Sans choix, EduNest en donne une.",
       "teacher": "Enseignant",
       "noTeacher": "Aucun enseignant"
     },
@@ -1461,6 +1473,31 @@
     }
   },
   "children": {
+    "age": {
+      "years_one": "1 an",
+      "years_many": "{{count}} ans",
+      "years_other": "{{count}} ans",
+      "months_one": "1 mois",
+      "months_many": "{{count}} mois",
+      "months_other": "{{count}} mois"
+    },
+    "view": {
+      "label": "Affichage",
+      "cards": "Cartes",
+      "table": "Tableau"
+    },
+    "quick": {
+      "open": "Fiche rapide",
+      "openFile": "Ouvrir la fiche complète",
+      "noClass": "Sans classe",
+      "noMedical": "Aucune note médicale.",
+      "noContacts": "Aucun contact d'urgence.",
+      "pickup": "peut récupérer",
+      "owed": "Reste à payer",
+      "upToDate": "À jour.",
+      "late": "Dont des échéances en retard.",
+      "notLate": "Échéances à venir, rien en retard."
+    },
     "filters": {
       "classroom": "Classe",
       "allClassrooms": "Toutes les classes",

@@ -1458,6 +1458,16 @@
     }
   },
   "classrooms": {
+    "colors": {
+      "violet": "بنفسجي",
+      "sky": "أزرق",
+      "teal": "فيروزي",
+      "green": "أخضر",
+      "sun": "أصفر",
+      "orange": "برتقالي",
+      "pink": "وردي",
+      "red": "أحمر"
+    },
     "filters": {
       "search": "بحث",
       "searchPlaceholder": "الاسم أو القاعة…",
@@ -1508,6 +1518,8 @@
       "level": "المستوى (الفئة العمرية)",
       "levelPlaceholder": "مثال: 3-4 سنوات",
       "levelRequired": "المستوى مطلوب",
+      "color": "اللون",
+      "colorHint": "يظهر في كل مكان يظهر فيه القسم. بدون اختيار، يمنحه EduNest لونًا.",
       "teacher": "المعلم",
       "noTeacher": "بدون معلم"
     },
@@ -1556,6 +1568,37 @@
     }
   },
   "children": {
+    "age": {
+      "years_zero": "أقل من سنة",
+      "years_one": "سنة",
+      "years_two": "سنتان",
+      "years_few": "{{count}} سنوات",
+      "years_many": "{{count}} سنة",
+      "years_other": "{{count}} سنة",
+      "months_zero": "أقل من شهر",
+      "months_one": "شهر",
+      "months_two": "شهران",
+      "months_few": "{{count}} أشهر",
+      "months_many": "{{count}} شهرًا",
+      "months_other": "{{count}} شهر"
+    },
+    "view": {
+      "label": "العرض",
+      "cards": "بطاقات",
+      "table": "جدول"
+    },
+    "quick": {
+      "open": "ملخّص سريع",
+      "openFile": "فتح الملف الكامل",
+      "noClass": "بدون قسم",
+      "noMedical": "لا توجد ملاحظات طبية.",
+      "noContacts": "لا توجد جهات اتصال للطوارئ.",
+      "pickup": "يمكنه الاستلام",
+      "owed": "المتبقّي للدفع",
+      "upToDate": "لا شيء مستحق.",
+      "late": "منها استحقاقات متأخرة.",
+      "notLate": "استحقاقات قادمة، لا شيء متأخر."
+    },
     "filters": {
       "classroom": "القسم",
       "allClassrooms": "كل الأقسام",

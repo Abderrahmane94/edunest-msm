@@ -5,6 +5,7 @@ import { AlertTriangle, Banknote, BellRing, Wallet } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
 import { Button, DataTable, FilterBar, FilterChips, SectionHeader, StatusBadge } from '@/components/ui';
 import { usePermissions } from '@/lib/roles';
+import { ClassTag } from '@/components/ClassTag';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
@@ -124,8 +125,10 @@ export function LateDashboardPage() {
         <div>
           <span className="text-body font-medium text-foreground">{entry.childName}</span>
           {entry.classrooms.length > 0 && (
-            <p className="text-caption text-text-secondary">
-              {entry.classrooms.map((c) => c.name).join(', ')}
+            <p className="flex flex-wrap gap-1 mt-0.5">
+              {entry.classrooms.map((c) => (
+                <ClassTag key={c.id} id={c.id} name={c.name} />
+              ))}
             </p>
           )}
         </div>

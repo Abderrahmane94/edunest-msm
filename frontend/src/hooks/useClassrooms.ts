@@ -8,6 +8,8 @@ export interface Classroom {
   room_id: string | null;
   room_name: string | null;
   level: string;
+  /** The color chosen for the class; null: the app picks one. */
+  color: string | null;
   academic_year_id: string;
   teacher_id?: string;
   teacher_name?: string;
@@ -27,6 +29,7 @@ function mapClassroom(raw: Record<string, unknown>): Classroom {
     room_id: (raw.roomId ?? null) as string | null,
     room_name: (room?.name ?? null) as string | null,
     level: raw.level as string,
+    color: (raw.color ?? null) as string | null,
     academic_year_id: (raw.academicYearId ?? raw.academic_year_id) as string,
     teacher_id: (raw.teacherUserId ?? raw.teacher_id) as string | undefined,
     teacher_name: teacher
@@ -71,12 +74,13 @@ export function useClassroom(id: string) {
 export function useUpdateClassroom() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name?: string; capacity?: number; room_id?: string | null; level?: string | null }) => {
+    mutationFn: async ({ id, ...data }: { id: string; name?: string; capacity?: number; room_id?: string | null; level?: string | null; color?: string | null }) => {
       const body: Record<string, unknown> = {};
       if (data.name !== undefined) body.name = data.name;
       if (data.capacity !== undefined) body.capacity = data.capacity;
       if (data.room_id !== undefined) body.roomId = data.room_id;
       if (data.level !== undefined) body.level = data.level;
+      if (data.color !== undefined) body.color = data.color;
       const res = await apiClient.put(`/classrooms/${id}`, body);
       if (!res.success) throw apiError(res.error, 'Failed to update classroom');
       return res.data;
@@ -106,12 +110,13 @@ export function useDeleteClassroom() {
 export function useCreateClassroom() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { name: string; capacity: number; room_id?: string; level: string; academic_year_id: string; teacher_id?: string }) => {
+    mutationFn: async (data: { name: string; capacity: number; room_id?: string; level: string; color?: string | null; academic_year_id: string; teacher_id?: string }) => {
       const res = await apiClient.post('/classrooms', {
         name: data.name,
         capacity: data.capacity,
         roomId: data.room_id || undefined,
         level: data.level,
+        color: data.color ?? null,
         academicYearId: data.academic_year_id,
         teacherUserId: data.teacher_id || undefined,
       });

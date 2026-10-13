@@ -34,9 +34,11 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 export interface DialogContentProps {
   children: React.ReactNode;
   className?: string;
+  /** A panel on the side of the screen (the whole screen on a phone): what is behind stays in view. */
+  side?: boolean;
 }
 
-export function DialogContent({ children, className }: DialogContentProps) {
+export function DialogContent({ children, className, side = false }: DialogContentProps) {
   const { open, onOpenChange } = useDialogContext();
   const { t } = useTranslation();
   const contentRef = React.useRef<HTMLDivElement>(null);
@@ -68,7 +70,8 @@ export function DialogContent({ children, className }: DialogContentProps) {
   return (
     // The layer scrolls when the panel (or a popup inside it, like a date
     // picker) is taller than the window, instead of running off-screen.
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    // No margin: a page's own spacing between blocks must not push the layer down.
+    <div className="fixed inset-0 z-50 overflow-y-auto !m-0">
       {/* Overlay */}
       <div
         className="fixed inset-0 bg-[var(--color-overlay)] backdrop-blur-[2px] animate-fade-in"
@@ -77,7 +80,7 @@ export function DialogContent({ children, className }: DialogContentProps) {
 
       {/* Clicks on the empty area around the panel close the dialog */}
       <div
-        className="relative flex min-h-full items-center justify-center p-4"
+        className={cn('relative flex min-h-full', side ? 'items-stretch justify-end' : 'items-center justify-center p-4')}
         onClick={(e) => {
           if (e.target === e.currentTarget) onOpenChange(false);
         }}
@@ -88,7 +91,8 @@ export function DialogContent({ children, className }: DialogContentProps) {
           role="dialog"
           aria-modal="true"
           className={cn(
-            'relative z-50 bg-card rounded-lg p-5 sm:p-6 w-full max-w-[480px] shadow-level-4 animate-scale-in',
+            'relative z-50 bg-card p-5 sm:p-6 w-full shadow-level-4',
+            side ? 'sm:max-w-[420px] animate-fade-in' : 'rounded-lg max-w-[480px] animate-scale-in',
             className
           )}
         >

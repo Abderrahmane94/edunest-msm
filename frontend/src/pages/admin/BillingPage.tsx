@@ -3,8 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { CreditCard, Building2, CheckCircle, AlertCircle, Plus, Pencil, Trash2, X, Save, Banknote, Clock, XCircle, Search, Calendar, Download } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import { escapeHtml } from '@/lib/printDocument';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import {
   Button, DataTable, StatusBadge, Dialog, DialogContent,
   DialogHeader, DialogTitle, DialogDescription, DialogFooter, Input,
@@ -902,6 +900,8 @@ function PaymentsTab() {
     await document.fonts.ready;
     await new Promise<void>((r) => setTimeout(r, 250));
 
+    const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')]);
+
     const canvas = await html2canvas(wrapper.firstElementChild as HTMLElement, {
       scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', windowWidth: 794,
     });
@@ -1079,6 +1079,8 @@ function PaymentsTab() {
     // Wait for fonts (Noto Sans Arabic loads async)
     await document.fonts.ready;
     await new Promise<void>((r) => setTimeout(r, 250));
+
+    const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')]);
 
     const canvas = await html2canvas(wrapper.firstElementChild as HTMLElement, {
       scale: 2,

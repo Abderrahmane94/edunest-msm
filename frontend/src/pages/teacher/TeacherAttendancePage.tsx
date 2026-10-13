@@ -5,7 +5,8 @@ import { Check, Clock, X, CheckCheck, Send, CloudOff, RefreshCw, AlertTriangle, 
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/formatters';
 import { Avatar, Input, useConfirm } from '@/components/ui';
-import { useTeacherClassroom, useClassroomChildren } from '@/hooks/useTeacherClassroom';
+import { useTeacherClassroom, useClassroomChildren, type ClassroomChild } from '@/hooks/useTeacherClassroom';
+import { ChildQuickView } from '@/pages/admin/ChildQuickView';
 import {
   useClassroomAttendance,
   ATTENDANCE_DAY,
@@ -161,6 +162,8 @@ export function TeacherAttendancePage() {
   // ─── Search, filter, sort ───
   const [query, setQuery] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('all');
+  // A child's health notes and who to call, opened from their name.
+  const [quickChild, setQuickChild] = React.useState<ClassroomChild | null>(null);
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('firstName');
   // Bumped to rebuild the list: after loading a day, or on "refresh".
   const [listVersion, setListVersion] = React.useState(0);
@@ -596,9 +599,14 @@ export function TeacherAttendancePage() {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-body font-medium text-text-heading [overflow-wrap:anywhere]">
+                      <button
+                        type="button"
+                        onClick={() => setQuickChild(child)}
+                        title={t('children.quick.open')}
+                        className="text-start text-body font-medium text-text-heading [overflow-wrap:anywhere] underline decoration-dotted decoration-[var(--color-border)] underline-offset-4 hover:text-primary focus-visible:outline-none focus-visible:shadow-focus-ring rounded"
+                      >
                         {child.first_name} {child.last_name}
-                      </p>
+                      </button>
                       {pendingChildIds.has(child.id) && (
                         <p className="inline-flex items-center gap-1 text-micro font-medium text-warning">
                           <CloudOff className="w-3 h-3" />
@@ -751,6 +759,11 @@ export function TeacherAttendancePage() {
           )}
         </div>
       </div>
+      <ChildQuickView
+        scope="class"
+        child={quickChild && { ...quickChild, classroom_id: classroom?.id, classroom_name: classroom?.name }}
+        onClose={() => setQuickChild(null)}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { School, UserRoundCog } from 'lucide-react';
+import { UserRoundCog } from 'lucide-react';
+import { classDot, useClassColor } from '@/components/ClassTag';
 import { formatDate } from '@/lib/formatters';
 import { setTeacherClassId, useCurrentTeacherClass } from '@/hooks/useSubstitutions';
 
@@ -7,11 +8,12 @@ import { setTeacherClassId, useCurrentTeacherClass } from '@/hooks/useSubstituti
 export function TeacherClassSwitcher() {
   const { t } = useTranslation();
   const { classes, current } = useCurrentTeacherClass();
+  const colorOf = useClassColor();
   if (classes.length < 2 || !current) return null;
 
   return (
     <label className="flex items-center gap-2 h-9 ps-3 pe-1 rounded-full border border-border bg-card text-caption text-text-secondary">
-      <School className="w-4 h-4 hidden sm:block" />
+      <span className={`w-2.5 h-2.5 shrink-0 rounded-full ${classDot(colorOf(current.id))}`} aria-hidden="true" />
       <span className="sr-only">{t('substitutions.teacher.switchLabel')}</span>
       <select
         value={current.id}

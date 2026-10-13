@@ -49,7 +49,7 @@ import { ReceiptView } from './ReceiptView';
 import { ProvisionalReceiptDialog } from './ProvisionalReceiptDialog';
 import { OfflinePaymentsPanel } from './OfflinePaymentsPanel';
 import { suggestAllocations as suggestAllocationsUtil } from '@/lib/paymentAllocation';
-import { FilterBar, SectionHeader, StatusBadge } from '@/components/ui';
+import { FilterBar, FilterChips, SectionHeader, StatusBadge } from '@/components/ui';
 import { usePermissions } from '@/lib/roles';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -888,10 +888,10 @@ function PaymentHistoryFilters({
     return () => clearTimeout(timer);
   }, [receiptInput]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const typeOptions = [
+  const typeOptions: { value: '' | 'payment' | 'correction'; label: string; dot?: string }[] = [
     { value: '', label: t('payments.filters.allTypes') },
-    { value: 'payment', label: t('payments.filters.typePayment') },
-    { value: 'correction', label: t('payments.filters.typeCorrection') },
+    { value: 'payment', label: t('payments.filters.typePayment'), dot: 'bg-success' },
+    { value: 'correction', label: t('payments.filters.typeCorrection'), dot: 'bg-danger' },
   ];
 
   const feeOptions = [
@@ -918,7 +918,18 @@ function PaymentHistoryFilters({
   ];
 
   return (
-    <FilterBar activeCount={Object.values(filters).filter(Boolean).length} onReset={onReset}>
+    <FilterBar
+      activeCount={Object.values(filters).filter(Boolean).length}
+      onReset={onReset}
+      chips={
+        <FilterChips
+          label={t('payments.filters.type')}
+          value={filters.type ?? ''}
+          onChange={(v) => onFiltersChange({ ...filters, type: (v || undefined) as PaymentRecordFilters['type'] })}
+          options={typeOptions}
+        />
+      }
+    >
         {/* Date start */}
         <div className="flex flex-col gap-1">
           <label
@@ -1024,29 +1035,6 @@ function PaymentHistoryFilters({
             className={selectClassName}
           >
             {feeOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        {/* Type */}
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-type" className="text-caption text-text-secondary">
-            {t('payments.filters.type')}
-          </label>
-          <select
-            id="filter-type"
-            value={filters.type ?? ''}
-            onChange={(e) =>
-              onFiltersChange({
-                ...filters,
-                type: (e.target.value || undefined) as PaymentRecordFilters['type'],
-              })
-            }
-            className={selectClassName}
-          >
-            {typeOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>

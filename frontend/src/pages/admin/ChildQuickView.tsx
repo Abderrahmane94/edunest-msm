@@ -88,10 +88,10 @@ function Body({ child, scope }: { child: QuickChild; scope: Scope }) {
               <li key={n.id} className={n.severity === 'high' ? 'rounded-lg bg-danger-muted text-danger px-3 py-2' : 'px-1'}>
                 <p className="flex items-center gap-1.5 flex-wrap text-body font-medium">
                   {n.severity === 'high' && <AlertTriangle className="w-4 h-4 shrink-0" />}
-                  <span className="[overflow-wrap:anywhere]">{n.title}</span>
+                  <span className="[overflow-wrap:anywhere]" dir="auto">{n.title}</span>
                   <StatusBadge variant={SEVERITY[n.severity]}>{t(`children.medicalNotes.types.${n.type}`)}</StatusBadge>
                 </p>
-                {n.details && <p className="text-caption [overflow-wrap:anywhere]">{n.details}</p>}
+                {n.details && <p className="text-caption [overflow-wrap:anywhere]" dir="auto">{n.details}</p>}
               </li>
             ))}
           </ul>
@@ -112,7 +112,7 @@ function Body({ child, scope }: { child: QuickChild; scope: Scope }) {
                 <li key={link.id as string} className="flex items-center justify-between gap-2 flex-wrap">
                   <span className="text-body text-foreground">
                     {parent.firstName} {parent.lastName}
-                    <span className="text-caption text-text-secondary"> · {link.relationship as string}</span>
+                    <span className="text-caption text-text-secondary"> · {t(`children.linkParent.${link.relationship as string}`, { defaultValue: link.relationship as string })}</span>
                   </span>
                   {parent.phone && call(parent.phone)}
                 </li>
@@ -134,7 +134,7 @@ function Body({ child, scope }: { child: QuickChild; scope: Scope }) {
               <li key={c.id} className="flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-body text-foreground">
                   {c.name}
-                  <span className="text-caption text-text-secondary"> · {c.relationship}</span>
+                  <span className="text-caption text-text-secondary"> · {t(`children.emergencyContacts.relationships.${c.relationship}`, { defaultValue: c.relationship })}</span>
                   {c.is_authorized_pickup && (
                     <span className="ms-1.5 inline-flex items-center gap-1 text-micro font-medium text-success">
                       <ShieldCheck className="w-3.5 h-3.5" />

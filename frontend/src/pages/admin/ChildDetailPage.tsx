@@ -703,14 +703,14 @@ export function ChildDetailPage() {
               <div key={n.id} className="flex items-center justify-between bg-subtle rounded-lg px-3 py-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-body font-medium text-foreground">{n.title}</span>
+                    <span className="text-body font-medium text-foreground" dir="auto">{n.title}</span>
                     <StatusBadge variant={severityBadgeVariant(n.severity)}>
                       {t(`children.medicalNotes.severities.${n.severity}`)}
                     </StatusBadge>
                   </div>
                   <p className="text-caption text-text-secondary">
                     {t(`children.medicalNotes.types.${n.type}`)}
-                    {n.details && <span> • {n.details}</span>}
+                    {n.details && <span> • <bdi>{n.details}</bdi></span>}
                   </p>
                 </div>
               </div>

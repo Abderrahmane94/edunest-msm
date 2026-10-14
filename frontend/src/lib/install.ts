@@ -7,7 +7,8 @@ import * as React from 'react';
  * the event is kept so a button can open the install prompt later. It can fire
  * before React mounts, so this module listens from startup (imported by
  * main.tsx). iOS Safari has no prompt: users add the app from the Share menu,
- * so the button shows instructions there instead.
+ * so the button shows instructions there instead. The button is offered on
+ * phones and tablets, not on computers.
  */
 
 interface BeforeInstallPromptEvent extends Event {
@@ -42,6 +43,14 @@ export function isStandalone(): boolean {
   );
 }
 
+/**
+ * A phone or a tablet: a finger is the main pointer. On a computer the app
+ * works as well in a tab, and the button would only crowd the menu.
+ */
+export function isTouchDevice(): boolean {
+  return window.matchMedia?.('(pointer: coarse)').matches ?? false;
+}
+
 /** iPhone/iPad (iPadOS reports itself as a Mac with touch). */
 export function isIos(): boolean {
   const ua = navigator.userAgent;
@@ -62,6 +71,8 @@ export function useInstallMode(): 'prompt' | 'ios' | null {
   const hasPrompt = React.useSyncExternalStore(subscribe, () => deferredPrompt !== null);
   const done = React.useSyncExternalStore(subscribe, () => installed);
   if (done || isStandalone()) return null;
+  // Offered on phones and tablets only.
+  if (!isTouchDevice() && !isIos()) return null;
   if (hasPrompt) return 'prompt';
   if (isIos()) return 'ios';
   return null;

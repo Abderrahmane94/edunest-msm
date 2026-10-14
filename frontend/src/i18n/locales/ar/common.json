@@ -3979,6 +3979,12 @@
       "history": "السجل",
       "balances": "الرصيد"
     },
+    "groups": {
+      "now": "للدفع الآن",
+      "nothingNow": "لا شيء للدفع حاليًا.",
+      "upcoming": "القادمة",
+      "paid": "المدفوعة"
+    },
     "dueDate": "الاستحقاق",
     "receipt": "الوصل",
     "correction": "تصحيح",

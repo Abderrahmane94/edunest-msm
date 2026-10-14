@@ -3,7 +3,7 @@ import { formatDZD as formatAmount } from '@/lib/formatters';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Receipt, CalendarDays, Wallet, Eye, Users, FileText } from 'lucide-react';
+import { Receipt, CalendarDays, Wallet, Eye, Users, FileText, ChevronDown } from 'lucide-react';
 import { StatementDialog } from '@/pages/admin/payments/StatementDialog';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/formatters';
@@ -85,11 +85,53 @@ function BillingPeriodsTab() {
   if (isLoading) return <SkeletonCards count={4} />;
   if (isError) return <p className="text-center py-16 text-body text-text-secondary">{t('parentPayments.error.periods')}</p>;
   if (!data || data.length === 0) return <NoBilling />;
+  const { now, upcoming, paid } = groupPeriods(data);
   return (
     <div className="space-y-3">
       <StatementLinks />
-      <ul role="list" className="space-y-3">{data.map((p) => <PeriodCard key={p.id} period={p} />)}</ul>
+      {/* What to pay now first; the months to come and what is settled a tap away. */}
+      <section aria-labelledby="periods-now" className="space-y-3">
+        <h2 id="periods-now" className="text-label font-semibold text-text-heading">{t('parentPayments.groups.now')} <span className="text-text-secondary font-normal">({now.length})</span></h2>
+        {now.length === 0 ? (
+          <p className="text-body text-text-secondary bg-card border border-border rounded-lg p-4">{t('parentPayments.groups.nothingNow')}</p>
+        ) : (
+          <ul role="list" className="space-y-3">{now.map((p) => <PeriodCard key={p.id} period={p} />)}</ul>
+        )}
+      </section>
+      <PeriodGroup title={t('parentPayments.groups.upcoming')} periods={upcoming} />
+      <PeriodGroup title={t('parentPayments.groups.paid')} periods={paid} />
     </div>
+  );
+}
+
+/**
+ * Sorts the charges for a parent: due now (late, or due by the end of the
+ * month), still to come, and settled.
+ */
+function groupPeriods(periods: ParentBillingPeriod[]): { now: ParentBillingPeriod[]; upcoming: ParentBillingPeriod[]; paid: ParentBillingPeriod[] } {
+  const today = new Date();
+  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().slice(0, 10);
+  const due = (p: ParentBillingPeriod) => p.dueDate.slice(0, 10);
+  const byDue = (a: ParentBillingPeriod, b: ParentBillingPeriod) => due(a).localeCompare(due(b));
+  const open = periods.filter((p) => p.status !== 'paid');
+  return {
+    now: open.filter((p) => p.isLate || due(p) <= monthEnd).sort((a, b) => Number(b.isLate) - Number(a.isLate) || byDue(a, b)),
+    upcoming: open.filter((p) => !p.isLate && due(p) > monthEnd).sort(byDue),
+    paid: periods.filter((p) => p.status === 'paid').sort((a, b) => byDue(b, a)),
+  };
+}
+
+/** A folded group of charges: its name and how many, opened on a tap. */
+function PeriodGroup({ title, periods }: { title: string; periods: ParentBillingPeriod[] }) {
+  if (periods.length === 0) return null;
+  return (
+    <details className="group">
+      <summary className="flex items-center justify-between gap-2 cursor-pointer select-none list-none bg-card border border-border rounded-lg px-4 py-3 min-h-11 text-label font-semibold text-text-heading focus-visible:outline-none focus-visible:shadow-focus-ring [&::-webkit-details-marker]:hidden">
+        <span>{title} <span className="text-text-secondary font-normal">({periods.length})</span></span>
+        <ChevronDown className="w-4 h-4 text-text-secondary transition-transform group-open:rotate-180" aria-hidden="true" />
+      </summary>
+      <ul role="list" className="space-y-3 mt-3">{periods.map((p) => <PeriodCard key={p.id} period={p} />)}</ul>
+    </details>
   );
 }
 

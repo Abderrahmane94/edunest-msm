@@ -3816,6 +3816,12 @@
       "history": "Historique",
       "balances": "Solde"
     },
+    "groups": {
+      "now": "À régler",
+      "nothingNow": "Rien à régler pour le moment.",
+      "upcoming": "À venir",
+      "paid": "Réglées"
+    },
     "dueDate": "Échéance",
     "receipt": "Reçu",
     "correction": "Correction",

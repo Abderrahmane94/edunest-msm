@@ -2,7 +2,7 @@
 
 ## Overview
 
-This plan implements the Payment Management module for the EduNest kindergarten school management system. The module introduces branch-level billing configuration, enrollment-driven billing period generation, an append-only payment ledger, corrections/refunds, a parent read-only portal, receipt generation, and reconciliation reporting. All amounts are in DZD with 2 decimal places. The backend uses Node.js/Express with Prisma ORM and PostgreSQL; the frontend uses React/TypeScript with shadcn/ui and TailwindCSS with RTL Arabic support.
+This plan implements the Payment Management module for the Kiddoo kindergarten school management system. The module introduces branch-level billing configuration, enrollment-driven billing period generation, an append-only payment ledger, corrections/refunds, a parent read-only portal, receipt generation, and reconciliation reporting. All amounts are in DZD with 2 decimal places. The backend uses Node.js/Express with Prisma ORM and PostgreSQL; the frontend uses React/TypeScript with shadcn/ui and TailwindCSS with RTL Arabic support.
 
 ## Tasks
 

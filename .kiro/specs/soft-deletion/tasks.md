@@ -125,7 +125,7 @@ Implement soft-deletion across core entities (School, User, Child, Classroom) by
     - Show display-relevant fields per entity type (name, email, etc.)
     - Add restore action button per row
     - Add permanent delete action button per row with confirmation dialog
-    - Apply EduNest design system tokens, RTL support, dense admin layout
+    - Apply Kiddoo design system tokens, RTL support, dense admin layout
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
   - [x] 7.3 Register TrashPage in router and admin navigation

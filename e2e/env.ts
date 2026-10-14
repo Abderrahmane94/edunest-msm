@@ -8,10 +8,10 @@ export const FRONTEND_PORT = 5180;
 export const BACKEND_URL = `http://localhost:${BACKEND_PORT}`;
 export const FRONTEND_URL = `http://localhost:${FRONTEND_PORT}`;
 
-export const TEST_DB_NAME = 'edunest_e2e';
+export const TEST_DB_NAME = 'kiddoo_e2e';
 const DB_HOST = 'localhost:5435';
-const DB_USER = 'edunest';
-const DB_PASSWORD = 'edunest_secret';
+const DB_USER = 'kiddoo';
+const DB_PASSWORD = 'kiddoo_secret';
 
 export const TEST_DB_ADMIN_URL = `postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/postgres`;
 export const TEST_DATABASE_URL = `postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${TEST_DB_NAME}?schema=public`;

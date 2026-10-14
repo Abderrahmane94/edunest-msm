@@ -879,7 +879,7 @@ function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean, 
   <table style="width:100%;border-collapse:collapse;background:#6366f1;">
     <tr>
       <td style="padding:22px 32px;vertical-align:middle;">
-        <div style="color:#fff;font-size:22px;font-weight:700;margin-bottom:4px;">EduNest</div>
+        <div style="color:#fff;font-size:22px;font-weight:700;margin-bottom:4px;">Kiddoo</div>
         <div style="color:#c7d2fe;font-size:11px;">${t('payroll.pdf.payslipTitle')}</div>
       </td>
       <td dir="ltr" style="padding:22px 32px;vertical-align:middle;text-align:${endAlign};color:#e0e7ff;font-size:10px;unicode-bidi:embed;">
@@ -921,7 +921,7 @@ function buildPayslipHTML(p: SalaryPayment, monthLabel: string, isRTL: boolean, 
 
   <table style="width:100%;border-collapse:collapse;background:#6366f1;margin-top:28px;">
     <tr>
-      <td style="padding:8px 32px;color:#fff;font-size:9px;font-weight:600;text-align:${startAlign};">EduNest</td>
+      <td style="padding:8px 32px;color:#fff;font-size:9px;font-weight:600;text-align:${startAlign};">Kiddoo</td>
       <td dir="ltr" style="padding:8px 32px;color:#c7d2fe;font-size:9px;text-align:${endAlign};unicode-bidi:embed;">${t('payroll.pdf.generatedOn')}: ${today}</td>
     </tr>
   </table>
@@ -961,7 +961,7 @@ function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName:
   <table style="width:100%;border-collapse:collapse;background:#6366f1;">
     <tr>
       <td style="padding:22px 32px;vertical-align:middle;">
-        <div style="color:#fff;font-size:22px;font-weight:700;margin-bottom:4px;">EduNest</div>
+        <div style="color:#fff;font-size:22px;font-weight:700;margin-bottom:4px;">Kiddoo</div>
         <div style="color:#c7d2fe;font-size:11px;">${t('payroll.pdf.reportTitle')}</div>
       </td>
       <td dir="ltr" style="padding:22px 32px;vertical-align:middle;text-align:${endAlign};color:#e0e7ff;font-size:10px;unicode-bidi:embed;">${today}</td>
@@ -1011,7 +1011,7 @@ function buildPayrollListHTML(items: SalaryPayment[], isRTL: boolean, monthName:
 
   <table style="width:100%;border-collapse:collapse;background:#6366f1;margin-top:28px;">
     <tr>
-      <td style="padding:8px 32px;color:#fff;font-size:9px;font-weight:600;text-align:${startAlign};">EduNest</td>
+      <td style="padding:8px 32px;color:#fff;font-size:9px;font-weight:600;text-align:${startAlign};">Kiddoo</td>
       <td dir="ltr" style="padding:8px 32px;color:#c7d2fe;font-size:9px;text-align:${endAlign};unicode-bidi:embed;">${t('payroll.pdf.generatedOn')}: ${today}</td>
     </tr>
   </table>

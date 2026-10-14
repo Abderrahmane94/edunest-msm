@@ -31,7 +31,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── EduNest Design System — Semantic Color Tokens ─── */
+/* ─── Kiddoo Design System — Semantic Color Tokens ─── */
 @layer base {
   :root {
     /* Mobile bottom tab bar height, plus the iPhone home-bar inset when the

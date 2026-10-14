@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Parent portal', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.locator('input[name="email"]').fill('parent@edunest.dz');
+    await page.locator('input[name="email"]').fill('parent@kiddoo.dz');
     await page.locator('input[name="password"]').fill('parent123');
     await page.getByRole('button', { name: 'Se connecter' }).click();
     await expect(page).toHaveURL(/\/parent/);

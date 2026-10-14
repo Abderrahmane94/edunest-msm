@@ -862,7 +862,7 @@ function PaymentsTab() {
   <table dir="${dir}" style="width:100%; border-collapse:collapse; background:#6366f1;">
     <tr>
       <td style="padding:22px 32px; vertical-align:middle;">
-        <div style="color:#fff; font-size:22px; font-weight:700; margin-bottom:4px;">EduNest</div>
+        <div style="color:#fff; font-size:22px; font-weight:700; margin-bottom:4px;">Kiddoo</div>
         <div style="color:#c7d2fe; font-size:11px;">${t('billingPayments.receiptTitle')}</div>
       </td>
       <td dir="ltr" style="padding:22px 32px; vertical-align:middle; text-align:${endAlign}; color:#e0e7ff; font-size:10px; unicode-bidi:embed;">
@@ -887,7 +887,7 @@ function PaymentsTab() {
   </div>
   <table dir="${dir}" style="width:100%; border-collapse:collapse; background:#6366f1; margin-top:28px;">
     <tr>
-      <td style="padding:8px 32px; color:#fff; font-size:9px; font-weight:600; text-align:${startAlign};">EduNest</td>
+      <td style="padding:8px 32px; color:#fff; font-size:9px; font-weight:600; text-align:${startAlign};">Kiddoo</td>
       <td dir="ltr" style="padding:8px 32px; color:#c7d2fe; font-size:9px; text-align:${endAlign}; unicode-bidi:embed;">${t('billingPayments.generatedOn')}: ${new Date().toLocaleDateString('fr-FR')}</td>
     </tr>
   </table>
@@ -1009,7 +1009,7 @@ function PaymentsTab() {
   <table dir="${dir}" style="width:100%; border-collapse:collapse; background:#6366f1; padding:0;">
     <tr>
       <td style="padding:22px 32px; vertical-align:middle;">
-        <div style="color:#fff; font-size:22px; font-weight:700; letter-spacing:-0.5px; margin-bottom:4px;">EduNest</div>
+        <div style="color:#fff; font-size:22px; font-weight:700; letter-spacing:-0.5px; margin-bottom:4px;">Kiddoo</div>
         <div style="color:#c7d2fe; font-size:11px;">${t('billingPayments.pdfTitle')}</div>
       </td>
       <td dir="ltr" style="padding:22px 32px; vertical-align:middle; text-align:${endAlign}; color:#e0e7ff; font-size:10px; unicode-bidi:embed;">
@@ -1066,7 +1066,7 @@ function PaymentsTab() {
   <!-- Footer -->
   <table dir="${dir}" style="width:100%; border-collapse:collapse; background:#6366f1; margin-top:28px;">
     <tr>
-      <td style="padding:8px 32px; color:#fff; font-size:9px; font-weight:600; text-align:${startAlign};">EduNest</td>
+      <td style="padding:8px 32px; color:#fff; font-size:9px; font-weight:600; text-align:${startAlign};">Kiddoo</td>
       <td dir="ltr" style="padding:8px 32px; color:#c7d2fe; font-size:9px; text-align:${endAlign}; unicode-bidi:embed;">${t('billingPayments.generatedOn')}: ${new Date().toLocaleDateString('fr-FR')}</td>
     </tr>
   </table>

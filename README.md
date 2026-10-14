@@ -1,4 +1,4 @@
-# EduNest — Kindergarten School Management System
+# Kiddoo — Kindergarten School Management System
 
 A multi-tenant fullstack web application for managing kindergartens in the Algerian market. Built with Node.js/Express backend, React/Vite frontend, PostgreSQL database, and bilingual support (Arabic RTL + French LTR).
 
@@ -19,7 +19,7 @@ A multi-tenant fullstack web application for managing kindergartens in the Alger
 ## Project Structure
 
 ```
-edunest/
+edunest-msm/
 ├── backend/               # Express API server
 │   ├── prisma/            # Database schema & migrations
 │   ├── src/
@@ -53,7 +53,7 @@ edunest/
 
 ```bash
 git clone <repo-url>
-cd edunest
+cd edunest-msm
 ```
 
 ### 2. Install dependencies
@@ -80,7 +80,7 @@ cp .env.example backend/.env
 
 The key variables for local dev:
 ```
-DATABASE_URL=postgresql://edunest:edunest_secret@localhost:5432/edunest?schema=public
+DATABASE_URL=postgresql://kiddoo:kiddoo_secret@localhost:5432/kiddoo?schema=public
 JWT_ACCESS_SECRET=dev-access-secret-change-in-production
 JWT_REFRESH_SECRET=dev-refresh-secret-change-in-production
 ```
@@ -92,9 +92,9 @@ docker compose up postgres -d
 ```
 
 This starts a PostgreSQL 15 container on port 5432 with:
-- User: `edunest`
-- Password: `edunest_secret`
-- Database: `edunest`
+- User: `kiddoo`
+- Password: `kiddoo_secret`
+- Database: `kiddoo`
 
 ### 5. Run database migrations
 
@@ -115,10 +115,10 @@ This creates test users and sample data:
 
 | Role | Email | Password |
 |------|-------|----------|
-| Super Admin | super@edunest.dz | super123 |
-| Admin | admin@edunest.dz | admin123 |
-| Teacher | teacher@edunest.dz | teacher123 |
-| Parent | parent@edunest.dz | parent123 |
+| Super Admin | super@kiddoo.dz | super123 |
+| Admin | admin@kiddoo.dz | admin123 |
+| Teacher | teacher@kiddoo.dz | teacher123 |
+| Parent | parent@kiddoo.dz | parent123 |
 
 To create the super admin separately:
 ```bash
@@ -207,7 +207,7 @@ npm run test:e2e                # headless run
 npm run test:e2e:ui             # interactive UI mode
 ```
 
-Each run resets a dedicated `edunest_e2e` database (drop, recreate, migrate, seed) and starts the backend/frontend on separate ports (`3100`/`5180`) from your normal dev servers, so it's safe to run alongside `npm run dev` without touching your local data.
+Each run resets a dedicated `kiddoo_e2e` database (drop, recreate, migrate, seed) and starts the backend/frontend on separate ports (`3100`/`5180`) from your normal dev servers, so it's safe to run alongside `npm run dev` without touching your local data.
 
 ## API Documentation
 

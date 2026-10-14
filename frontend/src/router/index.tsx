@@ -301,7 +301,7 @@ function SchoolSidebarHeader() {
         <BrandMark size={34} className="shrink-0" />
       )}
       <span className="font-playful text-body-lg font-bold leading-tight text-text-heading truncate">
-        {school?.name || 'EduNest'}
+        {school?.name || 'Kiddoo'}
       </span>
     </div>
   );

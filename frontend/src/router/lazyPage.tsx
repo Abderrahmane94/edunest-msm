@@ -6,7 +6,7 @@ export type PageGroup = 'office' | 'platform' | 'teacher' | 'parent';
 type Loader = () => Promise<unknown>;
 const loaders: Record<PageGroup, Loader[]> = { office: [], platform: [], teacher: [], parent: [] };
 
-const RELOADED_KEY = 'edunest:page-reloaded';
+const RELOADED_KEY = 'kiddoo:page-reloaded';
 
 /**
  * A page's file that will not load is, most of the time, one a new version

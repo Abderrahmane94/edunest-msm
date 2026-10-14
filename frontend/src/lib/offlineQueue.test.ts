@@ -7,6 +7,9 @@ vi.mock('idb-keyval', () => ({
   set: vi.fn(async (key: string, value: unknown) => {
     store.set(key, value);
   }),
+  del: vi.fn(async (key: string) => {
+    store.delete(key);
+  }),
 }));
 
 let online = true;
@@ -44,7 +47,7 @@ async function setup(send: (p: Payload) => Promise<unknown>) {
   return queue;
 }
 
-const saved = () => (store.get('edunest-offline-queue') as { payload: Payload; error?: string }[]) ?? [];
+const saved = () => (store.get('kiddoo-offline-queue') as { payload: Payload; error?: string }[]) ?? [];
 const flushMicrotasks = () => new Promise((r) => setTimeout(r, 0));
 
 describe('offlineQueue', () => {
@@ -57,6 +60,18 @@ describe('offlineQueue', () => {
 
     expect(send).toHaveBeenCalledTimes(1);
     expect(saved()).toEqual([]);
+  });
+
+  it('sends an action saved under the former name (EduNest) and moves it to the new one', async () => {
+    online = false;
+    store.set('edunest-offline-queue', [
+      { id: 'old-1', kind: 'attendance-day', key: 'attendance:c1:2026-10-05', payload: { records: [{ childId: 'a', status: 'present' }] }, userId: 'teacher-1', queuedAt: '2026-10-05T08:00:00.000Z' },
+    ]);
+    const send = vi.fn().mockResolvedValue(undefined);
+    await setup(send);
+
+    expect(saved()).toHaveLength(1);
+    expect(store.has('edunest-offline-queue')).toBe(false);
   });
 
   it('keeps actions while offline and merges saves for the same day', async () => {
@@ -109,7 +124,7 @@ describe('offlineQueue', () => {
     expect(send).toHaveBeenCalledTimes(1);
 
     send.mockResolvedValue(undefined);
-    queue.retryAction((store.get('edunest-offline-queue') as { id: string }[])[0].id);
+    queue.retryAction((store.get('kiddoo-offline-queue') as { id: string }[])[0].id);
     await flushMicrotasks();
     await flushMicrotasks();
     expect(send).toHaveBeenCalledTimes(2);
@@ -139,7 +154,7 @@ describe('offlineQueue', () => {
     await queue.enqueue('attendance-day', 'k', { records: [{ childId: 'b', status: 'present' }] });
     await flushMicrotasks();
 
-    expect(store.get('edunest-offline-notices')).toEqual([
+    expect(store.get('kiddoo-offline-notices')).toEqual([
       expect.objectContaining({ key: 'k', userId: 'teacher-1', data: { skipped: ['b'] } }),
     ]);
   });

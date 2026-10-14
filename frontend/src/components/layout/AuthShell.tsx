@@ -75,7 +75,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           </ul>
         </div>
 
-        <p className="absolute bottom-4 start-12 z-10 text-[#2F6B32]/60 text-caption">© {new Date().getFullYear()} EduNest</p>
+        <p className="absolute bottom-4 start-12 z-10 text-[#2F6B32]/60 text-caption">© {new Date().getFullYear()} Kiddoo</p>
       </div>
 
       {/* Form column */}

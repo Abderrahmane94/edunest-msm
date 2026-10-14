@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Payment Management module extends the EduNest school management platform with a branch-level billing and payment collection system for Algerian kindergartens. It replaces the existing school-level `invoices`/`cash_payments` model with a per-enrollment, period-based billing system that:
+The Payment Management module extends the Kiddoo school management platform with a branch-level billing and payment collection system for Algerian kindergartens. It replaces the existing school-level `invoices`/`cash_payments` model with a per-enrollment, period-based billing system that:
 
 - Generates billing periods automatically at enrollment creation (no batch jobs)
 - Records payments through an append-only ledger (no updates/deletes)
@@ -633,7 +633,7 @@ function derivePeriodStatus(
 
 ### Validation Errors (HTTP 400)
 
-All validation errors follow the existing EduNest pattern using Zod schemas:
+All validation errors follow the existing Kiddoo pattern using Zod schemas:
 
 ```json
 {

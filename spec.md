@@ -20,7 +20,7 @@ with minimal structural changes.
 - Deployment: Docker-ready, environment-based config
 
 ## Design system
-See DESIGN.md in the project root. All UI must follow the EduNest design
+See DESIGN.md in the project root. All UI must follow the Kiddoo design
 system defined in that file. Key points:
 - Light-first warm UI using Inter Variable font
 - Indigo (#4F46E5) primary accent

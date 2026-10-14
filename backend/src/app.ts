@@ -48,7 +48,7 @@ app.use((req, _res, next) => {
   if (!proxyChainSaid && req.headers['x-forwarded-for']) {
     proxyChainSaid = true;
     const chain = String(req.headers['x-forwarded-for']).split(',').length;
-    console.log(`[EduNest] X-Forwarded-For carries ${chain} address(es); trusting ${proxyHops} proxy hop(s)`);
+    console.log(`[Kiddoo] X-Forwarded-For carries ${chain} address(es); trusting ${proxyHops} proxy hop(s)`);
   }
   next();
 });

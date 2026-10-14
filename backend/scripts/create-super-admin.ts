@@ -9,7 +9,7 @@ async function main() {
   const adapter = new PrismaPg(pool);
   const prisma = new PrismaClient({ adapter });
 
-  const existing = await prisma.user.findUnique({ where: { email: 'super@edunest.dz' } });
+  const existing = await prisma.user.findUnique({ where: { email: 'super@kiddoo.dz' } });
   if (existing) {
     console.log('super_admin already exists:', existing.email);
     await prisma.$disconnect();
@@ -23,7 +23,7 @@ async function main() {
       schoolId: null,           // super_admin has no school
       firstName: 'Super',
       lastName: 'Admin',
-      email: 'super@edunest.dz',
+      email: 'super@kiddoo.dz',
       passwordHash: hash,
       role: 'super_admin',
       isActive: true,

@@ -1,8 +1,8 @@
 {
-  "name": "@edunest/e2e",
+  "name": "@kiddoo/e2e",
   "version": "1.0.0",
   "private": true,
-  "description": "EduNest — Playwright end-to-end tests",
+  "description": "Kiddoo — Playwright end-to-end tests",
   "scripts": {
     "test": "playwright test",
     "test:ui": "playwright test --ui",

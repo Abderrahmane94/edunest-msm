@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "EduNest",
+    "name": "Kiddoo",
     "tagline": "Système de gestion de maternelle"
   },
   "dashboard": {
@@ -212,7 +212,7 @@
     "userDeactivated": "Votre compte a été désactivé.",
     "userDeactivatedHint": "Contactez la direction de votre établissement pour le réactiver.",
     "schoolInactive": "Ce compte école est désactivé.",
-    "schoolInactiveHint": "Veuillez contacter l'équipe EduNest pour plus d'informations.",
+    "schoolInactiveHint": "Veuillez contacter l'équipe Kiddoo pour plus d'informations.",
     "tooManyAttempts": "Trop de tentatives de connexion.",
     "tooManyAttemptsHint": "Pour votre sécurité, patientez 15 minutes avant de réessayer.",
     "serverUnreachable": "Impossible de joindre le serveur.",
@@ -547,7 +547,7 @@
     "payroll": "Les salaires de l'équipe : ce qui est dû chaque mois et ce qui a été versé.",
     "settings": "L'école elle-même : ses informations, ses années, ses salles et les droits de chacun.",
     "staff": "Les personnes qui travaillent à l'école : contrat, salaire et dossier.",
-    "users": "Les comptes qui se connectent à EduNest : équipe et parents.",
+    "users": "Les comptes qui se connectent à Kiddoo : équipe et parents.",
     "trash": "Ce qui a été supprimé reste ici un temps : vous pouvez le restaurer.",
     "billing": "Les plans, les abonnements des écoles et leurs paiements.",
     "teacherCommunication": "Les annonces de l'école et les événements de votre classe."
@@ -661,12 +661,12 @@
   },
   "install": {
     "button": "Installer l'application",
-    "iosTitle": "Installer EduNest sur votre iPhone",
-    "iosIntro": "Ajoutez EduNest à votre écran d'accueil pour l'ouvrir comme une application et recevoir les notifications.",
+    "iosTitle": "Installer Kiddoo sur votre iPhone",
+    "iosIntro": "Ajoutez Kiddoo à votre écran d'accueil pour l'ouvrir comme une application et recevoir les notifications.",
     "iosStep1": "Touchez le bouton Partager",
     "iosStep2": "Choisissez « Sur l'écran d'accueil »",
     "iosStep3": "Touchez « Ajouter » en haut à droite",
-    "iosSafariOnly": "Ces étapes se font dans Safari. Si vous utilisez un autre navigateur, ouvrez d'abord EduNest dans Safari."
+    "iosSafariOnly": "Ces étapes se font dans Safari. Si vous utilisez un autre navigateur, ouvrez d'abord Kiddoo dans Safari."
   },
   "errors": {
     "loadFailed": "Certaines informations de cette page n'ont pas pu être chargées.",
@@ -868,11 +868,11 @@
     },
     "subscription": {
       "suspendTitle": "Suspendre l'abonnement de « ⁨{{name}}⁩ » ?",
-      "suspendDescription": "L'école ne pourra plus utiliser EduNest tant que l'abonnement n'est pas réactivé.",
+      "suspendDescription": "L'école ne pourra plus utiliser Kiddoo tant que l'abonnement n'est pas réactivé.",
       "cancelTitle": "Annuler l'abonnement de « ⁨{{name}}⁩ » ?",
       "cancelDescription": "L'annulation est définitive : il faudra attribuer un nouveau plan pour rétablir l'accès de l'école.",
       "reactivateTitle": "Réactiver l'abonnement de « ⁨{{name}}⁩ » ?",
-      "reactivateDescription": "L'école retrouve l'accès à EduNest.",
+      "reactivateDescription": "L'école retrouve l'accès à Kiddoo.",
       "keep": "Garder l'abonnement"
     },
     "year": {
@@ -1673,7 +1673,7 @@
       "levelPlaceholder": "Ex: 3-4 ans",
       "levelRequired": "Le niveau est requis",
       "color": "Couleur",
-      "colorHint": "Reprise partout où la classe apparaît. Sans choix, EduNest en donne une.",
+      "colorHint": "Reprise partout où la classe apparaît. Sans choix, Kiddoo en donne une.",
       "teacher": "Enseignant",
       "noTeacher": "Aucun enseignant"
     },

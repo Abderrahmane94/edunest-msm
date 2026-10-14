@@ -1,8 +1,8 @@
-# Design Document: EduNest — Kindergarten School Management System
+# Design Document: Kiddoo — Kindergarten School Management System
 
 ## Overview
 
-EduNest is a multi-tenant fullstack web application for managing kindergartens in the Algerian market. The system provides three distinct portal experiences (Admin, Teacher, Parent) built on a shared backend architecture with Node.js/Express, React/Vite frontend, PostgreSQL database with Prisma ORM, and integrations with Chargily Pay (payments), Cloudinary (file storage), Firebase Cloud Messaging (push notifications), and Socket.io (real-time communication).
+Kiddoo is a multi-tenant fullstack web application for managing kindergartens in the Algerian market. The system provides three distinct portal experiences (Admin, Teacher, Parent) built on a shared backend architecture with Node.js/Express, React/Vite frontend, PostgreSQL database with Prisma ORM, and integrations with Chargily Pay (payments), Cloudinary (file storage), Firebase Cloud Messaging (push notifications), and Socket.io (real-time communication).
 
 The architecture follows a modular monolith pattern organized into five core modules:
 1. **School & User Management** — Authentication, RBAC, multi-tenancy, school/user/staff CRUD
@@ -24,7 +24,7 @@ The architecture follows a modular monolith pattern organized into five core mod
 | File storage | Cloudinary (authenticated) | Signed URLs with expiry for security; no self-hosted storage needed |
 | Notifications | Firebase (push) + Resend (email) + Twilio (SMS) | Multi-channel coverage; FCM for mobile, email for formal, SMS for critical |
 | Frontend state | React Query | Server-state caching, automatic refetching, optimistic updates |
-| Styling | TailwindCSS + shadcn/ui | Matches EduNest design system; utility-first with accessible components |
+| Styling | TailwindCSS + shadcn/ui | Matches Kiddoo design system; utility-first with accessible components |
 | Validation | Zod (shared schemas) | Runtime validation on backend; can share types with frontend |
 | i18n | react-i18next | Mature, supports RTL, namespace-based translation loading |
 

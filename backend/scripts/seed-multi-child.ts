@@ -19,7 +19,7 @@ async function main() {
   if (!academicYear) { console.error('No active academic year'); process.exit(1); }
 
   // Get existing parent (Karim)
-  const parent = await prisma.user.findFirst({ where: { email: 'parent@edunest.dz' } });
+  const parent = await prisma.user.findFirst({ where: { email: 'parent@kiddoo.dz' } });
   if (!parent) { console.error('Parent not found'); process.exit(1); }
 
   // 1. Create a second teacher
@@ -29,7 +29,7 @@ async function main() {
       schoolId: school.id,
       firstName: 'Omar',
       lastName: 'Professeur',
-      email: 'teacher2@edunest.dz',
+      email: 'teacher2@kiddoo.dz',
       passwordHash: teacher2Hash,
       role: 'teacher',
       isActive: true,
@@ -149,7 +149,7 @@ async function main() {
   console.log('    - Yasmine (Les Papillons, teacher: Fatima)');
   console.log('    - Ahmed (Les Étoiles, teacher: Omar)');
   console.log('');
-  console.log('  New teacher: teacher2@edunest.dz / teacher2pass');
+  console.log('  New teacher: teacher2@kiddoo.dz / teacher2pass');
   console.log('─────────────────────────────────────────');
 
   await prisma.$disconnect();

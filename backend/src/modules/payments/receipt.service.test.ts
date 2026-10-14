@@ -75,7 +75,7 @@ function buildMockPaymentRecord(overrides: Partial<{
       id: 'branch-1',
       name: overrides.branchName ?? 'Main Branch',
       school: {
-        name: overrides.schoolName ?? 'EduNest Kindergarten',
+        name: overrides.schoolName ?? 'Kiddoo Kindergarten',
       },
     },
     child: {
@@ -138,7 +138,7 @@ describe('ReceiptService', () => {
         expect(receipt.language).toBe('fr');
         expect(receipt.direction).toBe('ltr');
         expect(receipt.title).toBe('Reçu de paiement');
-        expect(receipt.schoolName).toBe('EduNest Kindergarten');
+        expect(receipt.schoolName).toBe('Kiddoo Kindergarten');
         expect(receipt.branchName).toBe('Main Branch');
         expect(receipt.receiptNumber).toBe('MAI-2024-000001');
         expect(receipt.childName).toBe('Ahmed Benali');
@@ -350,7 +350,7 @@ describe('ReceiptService', () => {
         expect(receipt.language).toBe('ar');
         expect(receipt.direction).toBe('rtl');
         expect(receipt.title).toBe('إيصال دفع');
-        expect(receipt.schoolName).toBe('EduNest Kindergarten');
+        expect(receipt.schoolName).toBe('Kiddoo Kindergarten');
         expect(receipt.branchName).toBe('Main Branch');
         expect(receipt.receiptNumber).toBe('MAI-2024-000001');
         expect(receipt.childName).toBe('Ahmed Benali');

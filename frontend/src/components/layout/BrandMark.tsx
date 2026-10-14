@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 /**
- * The EduNest logo: a house where an adult holds a child, on two leaves.
+ * The Kiddoo logo: a house where an adult holds a child, on two leaves.
  * Drawn inline (no file to fetch, so it shows offline too). Below 48 px the
  * simplified mark is used: rays, faces and other small details disappear at
  * that size. Source files: public/brand/logo.svg and logo-small.svg.

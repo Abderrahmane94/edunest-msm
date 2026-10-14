@@ -219,7 +219,7 @@ export function ReceiptDocument({ receipt, compact = false }: { receipt: Receipt
           <div className="text-caption text-text-secondary space-y-0.5">
             <p>{tr('thanks')}</p>
             <p>
-              {tr('issuedOn')} <bdi dir="ltr">{issuedOn}</bdi> · EduNest
+              {tr('issuedOn')} <bdi dir="ltr">{issuedOn}</bdi> · Kiddoo
             </p>
           </div>
           <div className="text-center">

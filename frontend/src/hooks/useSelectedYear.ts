@@ -1,5 +1,6 @@
 import { useMemo, useSyncExternalStore } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { readRemembered } from '@/lib/formerName';
 import { useAcademicYears, type AcademicYear } from './useAcademicYears';
 
 /**
@@ -9,15 +10,11 @@ import { useAcademicYears, type AcademicYear } from './useAcademicYears';
  * device; teachers and parents always see the current year.
  */
 
-const STORAGE_KEY = 'edunest.selectedYear';
+const STORAGE_KEY = 'kiddoo.selectedYear';
 const listeners = new Set<() => void>();
 
 function readStored(): string | null {
-  try {
-    return localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
-  }
+  return readRemembered(STORAGE_KEY, 'edunest.selectedYear');
 }
 
 let storedYearId = readStored();

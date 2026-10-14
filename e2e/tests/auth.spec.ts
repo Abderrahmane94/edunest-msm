@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Authentication', () => {
   test('admin can log in and reach the admin portal', async ({ page }) => {
     await page.goto('/login');
-    await page.locator('input[name="email"]').fill('admin@edunest.dz');
+    await page.locator('input[name="email"]').fill('admin@kiddoo.dz');
     await page.locator('input[name="password"]').fill('admin123');
     await page.getByRole('button', { name: 'Se connecter' }).click();
     await expect(page).toHaveURL(/\/admin/);
@@ -11,7 +11,7 @@ test.describe('Authentication', () => {
 
   test('teacher can log in and reach the attendance page', async ({ page }) => {
     await page.goto('/login');
-    await page.locator('input[name="email"]').fill('teacher@edunest.dz');
+    await page.locator('input[name="email"]').fill('teacher@kiddoo.dz');
     await page.locator('input[name="password"]').fill('teacher123');
     await page.getByRole('button', { name: 'Se connecter' }).click();
     await expect(page).toHaveURL(/\/teacher/);
@@ -20,7 +20,7 @@ test.describe('Authentication', () => {
 
   test('parent can log in and reach the parent portal', async ({ page }) => {
     await page.goto('/login');
-    await page.locator('input[name="email"]').fill('parent@edunest.dz');
+    await page.locator('input[name="email"]').fill('parent@kiddoo.dz');
     await page.locator('input[name="password"]').fill('parent123');
     await page.getByRole('button', { name: 'Se connecter' }).click();
     await expect(page).toHaveURL(/\/parent/);
@@ -28,7 +28,7 @@ test.describe('Authentication', () => {
 
   test('super admin can log in and reach the platform admin portal', async ({ page }) => {
     await page.goto('/login');
-    await page.locator('input[name="email"]').fill('superadmin@edunest.dz');
+    await page.locator('input[name="email"]').fill('superadmin@kiddoo.dz');
     await page.locator('input[name="password"]').fill('superadmin123');
     await page.getByRole('button', { name: 'Se connecter' }).click();
     await expect(page).toHaveURL(/\/admin/);
@@ -36,7 +36,7 @@ test.describe('Authentication', () => {
 
   test('wrong password shows an error and stays on the login page', async ({ page }) => {
     await page.goto('/login');
-    await page.locator('input[name="email"]').fill('admin@edunest.dz');
+    await page.locator('input[name="email"]').fill('admin@kiddoo.dz');
     await page.locator('input[name="password"]').fill('wrong-password');
     await page.getByRole('button', { name: 'Se connecter' }).click();
     await expect(page.getByText('Identifiants incorrects. Veuillez réessayer.')).toBeVisible();
@@ -45,7 +45,7 @@ test.describe('Authentication', () => {
 
   test('unknown email shows the same generic error (no user enumeration)', async ({ page }) => {
     await page.goto('/login');
-    await page.locator('input[name="email"]').fill('nobody@edunest.dz');
+    await page.locator('input[name="email"]').fill('nobody@kiddoo.dz');
     await page.locator('input[name="password"]').fill('whatever123');
     await page.getByRole('button', { name: 'Se connecter' }).click();
     await expect(page.getByText('Identifiants incorrects. Veuillez réessayer.')).toBeVisible();
@@ -53,7 +53,7 @@ test.describe('Authentication', () => {
 
   test('logout returns to the login page', async ({ page }) => {
     await page.goto('/login');
-    await page.locator('input[name="email"]').fill('admin@edunest.dz');
+    await page.locator('input[name="email"]').fill('admin@kiddoo.dz');
     await page.locator('input[name="password"]').fill('admin123');
     await page.getByRole('button', { name: 'Se connecter' }).click();
     await expect(page).toHaveURL(/\/admin/);

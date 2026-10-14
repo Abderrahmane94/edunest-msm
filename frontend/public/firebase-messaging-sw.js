@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 /**
  * The app's service worker: Firebase Cloud Messaging push, plus what makes
- * EduNest an installable app (PWA) that opens without a network.
+ * Kiddoo an installable app (PWA) that opens without a network.
  * It is the only service worker: a second one at the same scope would replace
  * this registration and break push.
  *
@@ -22,9 +22,9 @@
 // - Google Fonts: cache first, so text keeps its fonts offline.
 // API calls aren't touched: data offline comes from the app's own cache.
 
-const SHELL_CACHE = 'edunest-shell-v2';
-const ASSET_CACHE = 'edunest-assets-v1';
-const FONT_CACHE = 'edunest-fonts-v1';
+const SHELL_CACHE = 'kiddoo-shell-v1';
+const ASSET_CACHE = 'kiddoo-assets-v1';
+const FONT_CACHE = 'kiddoo-fonts-v1';
 const KEEP = [SHELL_CACHE, ASSET_CACHE, FONT_CACHE];
 const OFFLINE_URL = '/offline.html';
 const SHELL_URL = '/';
@@ -68,7 +68,9 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('edunest-') && !KEEP.includes(k)).map((k) => caches.delete(k))))
+      // Old caches, also those of the app's former name (EduNest).
+      .then((keys) => keys.filter((k) => (k.startsWith('kiddoo-') || k.startsWith('edunest-')) && !KEEP.includes(k)))
+      .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
@@ -142,7 +144,7 @@ if (params.get('apiKey')) {
 
 // Background message handler — show the OS notification.
 messaging?.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || 'EduNest';
+  const title = payload.notification?.title || 'Kiddoo';
   const options = {
     body: payload.notification?.body || '',
     icon: '/icon-192.png',

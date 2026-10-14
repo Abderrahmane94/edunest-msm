@@ -1,7 +1,7 @@
 # Test Execution Report
 
 **Date:** August 4, 2026  
-**Project:** EduNest — Payment Management & Auto-Enrollment  
+**Project:** Kiddoo — Payment Management & Auto-Enrollment  
 **Environment:** Windows, Node.js 20+, PostgreSQL, Backend on :3000, Frontend on :5174  
 
 ---
@@ -316,4 +316,4 @@ npx tsx payment-management.test.ts
 
 ---
 
-*Report generated automatically by EduNest test runner.*
+*Report generated automatically by Kiddoo test runner.*

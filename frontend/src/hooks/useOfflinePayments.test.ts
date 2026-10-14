@@ -58,8 +58,8 @@ async function setup() {
   return { queue, payments };
 }
 
-const saved = () => (store.get('edunest-offline-queue') as { payload: unknown; error?: string }[]) ?? [];
-const notices = () => (store.get('edunest-offline-notices') as { data: Record<string, unknown> }[]) ?? [];
+const saved = () => (store.get('kiddoo-offline-queue') as { payload: unknown; error?: string }[]) ?? [];
+const notices = () => (store.get('kiddoo-offline-notices') as { data: Record<string, unknown> }[]) ?? [];
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
 describe('offline payments', () => {

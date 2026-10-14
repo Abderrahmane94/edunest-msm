@@ -6,7 +6,7 @@ import { TEST_DATABASE_URL, TEST_DB_NAME, TEST_DB_ADMIN_URL } from './env';
 const BACKEND_DIR = path.resolve(__dirname, '..', 'backend');
 
 /**
- * Resets a dedicated `edunest_e2e` database (drop + recreate), applies all
+ * Resets a dedicated `kiddoo_e2e` database (drop + recreate), applies all
  * migrations, and seeds it — so every test run starts from the same known
  * state without touching the developer's normal local database.
  */

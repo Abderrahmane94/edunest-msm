@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient, apiError } from '@/lib/api-client';
+import { readRemembered } from '@/lib/formerName';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const SUBSTITUTION_REASONS = ['illness', 'leave', 'training', 'other'] as const;
@@ -149,15 +150,9 @@ export function useMyClasses() {
   });
 }
 
-const STORAGE_KEY = 'edunest.teacherClass';
+const STORAGE_KEY = 'kiddoo.teacherClass';
 const listeners = new Set<() => void>();
-let chosenClassId: string | null = (() => {
-  try {
-    return localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
-  }
-})();
+let chosenClassId: string | null = readRemembered(STORAGE_KEY, 'edunest.teacherClass');
 
 export function setTeacherClassId(id: string) {
   chosenClassId = id;

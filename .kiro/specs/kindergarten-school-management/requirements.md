@@ -2,13 +2,13 @@
 
 ## Introduction
 
-EduNest is a responsive, multi-tenant fullstack web application for managing kindergartens. Built with Node.js (Express) backend and React (Vite) frontend, the system targets kindergartens as the primary market but is architected to scale to primary and secondary schools in future versions. The application serves the Algerian market with Arabic (RTL) and French (LTR) language support, DZD currency, and local payment integration via Chargily Pay.
+Kiddoo is a responsive, multi-tenant fullstack web application for managing kindergartens. Built with Node.js (Express) backend and React (Vite) frontend, the system targets kindergartens as the primary market but is architected to scale to primary and secondary schools in future versions. The application serves the Algerian market with Arabic (RTL) and French (LTR) language support, DZD currency, and local payment integration via Chargily Pay.
 
 The system comprises five core modules: School & User Management, Children & Classrooms, Attendance, Communication & Portal, and Finance & Fees. Three distinct portal experiences serve administrators (data-dense), teachers (task-focused), and parents (warm, feed-like).
 
 ## Glossary
 
-- **System**: The EduNest kindergarten school management application as a whole
+- **System**: The Kiddoo kindergarten school management application as a whole
 - **Auth_Service**: The authentication subsystem handling JWT-based login, registration, token refresh, and password reset
 - **Tenancy_Middleware**: The middleware layer that extracts and enforces school_id from verified JWT on every request
 - **RBAC_Middleware**: The role-based access control middleware that restricts endpoint access based on user roles
@@ -470,7 +470,7 @@ the school's financial records remain accurate and complete.
 2. THE Admin_Portal SHALL provide data tables with sortable columns, pagination, and search for all entity lists
 3. THE Admin_Portal SHALL use a fixed sidebar navigation on desktop viewports (1024px and above)
 4. THE Admin_Portal SHALL collapse the sidebar to a bottom tab bar on mobile viewports (below 1024px)
-5. THE Admin_Portal SHALL follow the EduNest design system with dense, information-rich layouts
+5. THE Admin_Portal SHALL follow the Kiddoo design system with dense, information-rich layouts
 
 ### Requirement 31: Teacher Portal
 
@@ -482,7 +482,7 @@ the school's financial records remain accurate and complete.
 2. THE Teacher_Portal SHALL provide a daily report form with large tap targets (minimum 48px) for mobile use
 3. THE Teacher_Portal SHALL display a messaging inbox with a 2-column layout: conversation list and active chat
 4. THE Teacher_Portal SHALL provide prominent quick-action buttons for common tasks (mark all present, send report)
-5. THE Teacher_Portal SHALL follow the EduNest design system with task-efficient layouts
+5. THE Teacher_Portal SHALL follow the Kiddoo design system with task-efficient layouts
 
 ### Requirement 32: Parent Portal
 
@@ -495,7 +495,7 @@ the school's financial records remain accurate and complete.
 3. THE Parent_Portal SHALL display the child's photo prominently in the header
 4. THE Parent_Portal SHALL provide access to messaging, attendance history, invoices, consent forms, announcements, and notifications
 5. THE Parent_Portal SHALL use amber (not red) for invoice notifications to maintain a non-alarming tone
-6. THE Parent_Portal SHALL follow the EduNest design system with warm, emotionally reassuring layouts
+6. THE Parent_Portal SHALL follow the Kiddoo design system with warm, emotionally reassuring layouts
 
 ### Requirement 33: Real-Time Socket Communication
 

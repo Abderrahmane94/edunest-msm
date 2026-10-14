@@ -126,7 +126,7 @@ Add a reusable `EntityDeleteButton` component to the admin panel that encapsulat
 - Unit tests validate specific examples and edge cases
 - The backend soft-delete endpoints already exist — no backend changes needed
 - The existing `Dialog` component set is reused (no new modal primitive)
-- All styling uses semantic color tokens and TailwindCSS utility classes per the EduNest design system
+- All styling uses semantic color tokens and TailwindCSS utility classes per the Kiddoo design system
 
 ## Task Dependency Graph
 

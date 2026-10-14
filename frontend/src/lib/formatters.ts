@@ -1,5 +1,5 @@
 /**
- * Shared formatting utilities for EduNest.
+ * Shared formatting utilities for Kiddoo.
  * Handles DZD currency formatting and DD/MM/YYYY date formatting
  * for both French and Arabic locales.
  */

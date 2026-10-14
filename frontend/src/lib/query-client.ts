@@ -30,9 +30,16 @@ export const queryPersister = createAsyncStoragePersister({
     setItem: (key, value) => set(key, value),
     removeItem: (key) => del(key),
   },
-  key: 'edunest-query-cache',
+  key: 'kiddoo-query-cache',
   throttleTime: 1000,
 });
+
+// The cache saved under the app's former name (EduNest) is dropped: it fills again from the server.
+try {
+  void del('edunest-query-cache').catch(() => undefined);
+} catch {
+  // No device storage here: nothing to drop.
+}
 
 /**
  * Wipes all cached server data, in memory and on the device, so the next

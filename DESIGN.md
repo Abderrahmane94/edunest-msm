@@ -1,8 +1,8 @@
-# Design System: EduNest — Kindergarten & School Management App
+# Design System: Kiddoo — Kindergarten & School Management App
 
 ## 1. Visual Theme & Atmosphere
 
-EduNest is a warm, trustworthy, and approachable platform built for parents,
+Kiddoo is a warm, trustworthy, and approachable platform built for parents,
 teachers, and school administrators. The visual language draws from the calm
 confidence of modern SaaS tools (Linear, Notion) but softens them with warm
 tones that feel safe and human — appropriate for an app handling children's

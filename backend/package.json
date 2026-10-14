@@ -1,8 +1,8 @@
 {
-  "name": "@edunest/backend",
+  "name": "@kiddoo/backend",
   "version": "1.0.0",
   "private": true,
-  "description": "EduNest Backend — Express + TypeScript API",
+  "description": "Kiddoo Backend — Express + TypeScript API",
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only --exit-child src/server.ts",

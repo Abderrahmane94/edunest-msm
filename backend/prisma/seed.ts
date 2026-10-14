@@ -57,7 +57,7 @@ async function main() {
             schoolId: null,
             firstName: 'Samir',
             lastName: 'Hamidi',
-            email: 'superadmin@edunest.dz',
+            email: 'superadmin@kiddoo.dz',
             passwordHash: superAdminHash,
             role: 'super_admin',
             phone: '+213 550 10 20 30',
@@ -90,7 +90,7 @@ async function main() {
             schoolId: school.id,
             firstName: 'Nadia',
             lastName: 'Benmansour',
-            email: 'admin@edunest.dz',
+            email: 'admin@kiddoo.dz',
             passwordHash: adminHash,
             role: 'admin',
             phone: '+213 550 12 34 56',
@@ -103,7 +103,7 @@ async function main() {
             schoolId: school.id,
             firstName: 'Fatima Zohra',
             lastName: 'Haddad',
-            email: 'teacher@edunest.dz',
+            email: 'teacher@kiddoo.dz',
             passwordHash: teacherHash,
             role: 'teacher',
             phone: '+213 661 23 45 67',
@@ -116,7 +116,7 @@ async function main() {
             schoolId: school.id,
             firstName: 'Khadidja',
             lastName: 'Meziane',
-            email: 'teacher2@edunest.dz',
+            email: 'teacher2@kiddoo.dz',
             passwordHash: teacherHash,
             role: 'teacher',
             phone: '+213 698 45 12 30',
@@ -130,7 +130,7 @@ async function main() {
             schoolId: school.id,
             firstName: 'Karim',
             lastName: 'Boudiaf',
-            email: 'parent@edunest.dz',
+            email: 'parent@kiddoo.dz',
             passwordHash: parentHash,
             role: 'parent',
             phone: '+213 770 98 76 54',
@@ -144,7 +144,7 @@ async function main() {
             schoolId: school.id,
             firstName: 'Samira',
             lastName: 'Lounis',
-            email: 'parent2@edunest.dz',
+            email: 'parent2@kiddoo.dz',
             passwordHash: parentHash,
             role: 'parent',
             phone: '+213 555 67 89 01',
@@ -366,12 +366,12 @@ async function main() {
     const shown = (role: string) => (customPassword ? '(SEED_PASSWORD)' : passwordFor(role));
     console.log('\n🎉 Seed complete! You can now sign in with:');
     console.log('──────────────────────────────────────────────────────────────');
-    console.log(`  Super admin  Samir Hamidi         superadmin@edunest.dz / ${shown('superadmin')}`);
-    console.log(`  Admin        Nadia Benmansour     admin@edunest.dz      / ${shown('admin')}`);
-    console.log(`  Teacher      Fatima Zohra Haddad  teacher@edunest.dz    / ${shown('teacher')}`);
-    console.log(`  Teacher      Khadidja Meziane     teacher2@edunest.dz   / ${shown('teacher')}`);
-    console.log(`  Parent       Karim Boudiaf        parent@edunest.dz     / ${shown('parent')}`);
-    console.log(`  Parent       Samira Lounis        parent2@edunest.dz    / ${shown('parent')}`);
+    console.log(`  Super admin  Samir Hamidi         superadmin@kiddoo.dz / ${shown('superadmin')}`);
+    console.log(`  Admin        Nadia Benmansour     admin@kiddoo.dz      / ${shown('admin')}`);
+    console.log(`  Teacher      Fatima Zohra Haddad  teacher@kiddoo.dz    / ${shown('teacher')}`);
+    console.log(`  Teacher      Khadidja Meziane     teacher2@kiddoo.dz   / ${shown('teacher')}`);
+    console.log(`  Parent       Karim Boudiaf        parent@kiddoo.dz     / ${shown('parent')}`);
+    console.log(`  Parent       Samira Lounis        parent2@kiddoo.dz    / ${shown('parent')}`);
     console.log('──────────────────────────────────────────────────────────────');
   } finally {
     await prisma.$disconnect();

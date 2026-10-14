@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document covers the manual and automated test plan for the two new features implemented in EduNest:
+This document covers the manual and automated test plan for the two new features implemented in Kiddoo:
 
 1. **Payment Management Module** — Branch billing configuration, enrollment-driven billing period generation, append-only payment ledger, corrections/refunds, parent read-only portal, receipt generation, and reconciliation reporting.
 2. **Auto-Enrollment at Child Creation** — Optional enrollment payload in the child creation endpoint that atomically creates a child record + enrollment + billing periods in a single transaction.

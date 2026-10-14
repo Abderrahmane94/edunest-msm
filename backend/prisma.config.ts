@@ -10,6 +10,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"] ?? "postgresql://edunest:edunest_secret@localhost:5435/edunest?schema=public",
+    url: process.env["DATABASE_URL"] ?? "postgresql://kiddoo:kiddoo_secret@localhost:5435/kiddoo?schema=public",
   },
 });

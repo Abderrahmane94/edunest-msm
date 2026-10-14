@@ -14,7 +14,7 @@ const server = http.createServer(app);
 socketService.initialize(server);
 
 server.listen(PORT, () => {
-  console.log(`[EduNest] Server running at http://localhost:${PORT}`);
-  console.log(`[EduNest] Health check: http://localhost:${PORT}/health`);
-  console.log(`[EduNest] Socket.io ready for connections`);
+  console.log(`[Kiddoo] Server running at http://localhost:${PORT}`);
+  console.log(`[Kiddoo] Health check: http://localhost:${PORT}/health`);
+  console.log(`[Kiddoo] Socket.io ready for connections`);
 });

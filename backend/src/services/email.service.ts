@@ -58,7 +58,7 @@ class EmailService {
         // domain, but can only deliver to the Resend account's own signup
         // email until a real domain is verified. Switch this to a verified
         // domain address once one is available.
-        from: 'EduNest <onboarding@resend.dev>',
+        from: 'Kiddoo <onboarding@resend.dev>',
         to: options.to,
         subject: options.subject,
         html: options.html,
@@ -97,15 +97,15 @@ class EmailService {
         title: 'إعادة تعيين كلمة المرور',
         hello: `مرحبًا ${e(options.firstName)}،`,
         intro: school
-          ? `طلبت إعادة تعيين كلمة مرور حسابك في EduNest لدى <strong>${school}</strong>.`
-          : 'طلبت إعادة تعيين كلمة مرور حسابك في EduNest.',
+          ? `طلبت إعادة تعيين كلمة مرور حسابك في Kiddoo لدى <strong>${school}</strong>.`
+          : 'طلبت إعادة تعيين كلمة مرور حسابك في Kiddoo.',
         action: 'اختيار كلمة مرور جديدة',
         expiry:
           hours === 1
             ? 'هذا الرابط صالح لمدة ساعة واحدة ولا يُستعمل إلا مرة واحدة.'
             : `هذا الرابط صالح لمدة ${hours} ساعات ولا يُستعمل إلا مرة واحدة.`,
         ignore: 'إذا لم تطلب ذلك، تجاهل هذه الرسالة: كلمة مرورك لن تتغير.',
-        team: '— فريق EduNest',
+        team: '— فريق Kiddoo',
       },
       {
         dir: 'ltr',
@@ -114,12 +114,12 @@ class EmailService {
         title: 'Réinitialisation du mot de passe',
         hello: `Bonjour ${e(options.firstName)},`,
         intro: school
-          ? `Vous avez demandé à réinitialiser le mot de passe de votre compte EduNest chez <strong>${school}</strong>.`
-          : 'Vous avez demandé à réinitialiser le mot de passe de votre compte EduNest.',
+          ? `Vous avez demandé à réinitialiser le mot de passe de votre compte Kiddoo chez <strong>${school}</strong>.`
+          : 'Vous avez demandé à réinitialiser le mot de passe de votre compte Kiddoo.',
         action: 'Choisir un nouveau mot de passe',
         expiry: `Ce lien est valable ${hours} heure${hours > 1 ? 's' : ''} et ne peut servir qu'une fois.`,
         ignore: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : votre mot de passe ne changera pas.",
-        team: "— L'équipe EduNest",
+        team: "— L'équipe Kiddoo",
       },
     ];
 
@@ -142,7 +142,7 @@ class EmailService {
 
     await this.send({
       to,
-      subject: 'EduNest - إعادة تعيين كلمة المرور / Réinitialisation du mot de passe',
+      subject: 'Kiddoo - إعادة تعيين كلمة المرور / Réinitialisation du mot de passe',
       html: `<div style="font-family:Arial,Helvetica,sans-serif;color:#111827;max-width:520px;">${html}</div>`,
     });
   }
@@ -155,14 +155,14 @@ class EmailService {
   ): Promise<void> {
     await this.send({
       to,
-      subject: `EduNest - You've been invited to ${schoolName}`,
+      subject: `Kiddoo - You've been invited to ${schoolName}`,
       html: `
-        <h2>Welcome to EduNest</h2>
+        <h2>Welcome to Kiddoo</h2>
         <p>You have been invited to join <strong>${schoolName}</strong> as a <strong>${role}</strong>.</p>
         <p>Click the link below to complete your registration:</p>
         <p><a href="${invitationUrl}">Accept Invitation</a></p>
         <br/>
-        <p>— The EduNest Team</p>
+        <p>— The Kiddoo Team</p>
       `,
     });
   }
@@ -229,7 +229,7 @@ class EmailService {
             ${field(labels.recordedBy, receipt.recordedBy)}
           </table>
           ${feesTable}
-          <p style="margin-top:24px;color:#6b7280;font-size:12px;">— ${e(receipt.schoolName)} · EduNest</p>
+          <p style="margin-top:24px;color:#6b7280;font-size:12px;">— ${e(receipt.schoolName)} · Kiddoo</p>
         </div>
       `,
       attachments: pdf ? [pdf] : undefined,
@@ -269,7 +269,7 @@ class EmailService {
             ${Number(document.totals.late) > 0 ? field(L.late, amount(document.totals.late)) : ''}
           </table>
           <p style="margin-top:16px;">${e(L.attached)}</p>
-          <p style="margin-top:24px;color:#6b7280;font-size:12px;">— ${e(document.school.name)} · EduNest</p>
+          <p style="margin-top:24px;color:#6b7280;font-size:12px;">— ${e(document.school.name)} · Kiddoo</p>
         </div>
       `,
       attachments: [pdf],
@@ -283,12 +283,12 @@ class EmailService {
   ): Promise<void> {
     await this.send({
       to,
-      subject: `EduNest - ${subject}`,
+      subject: `Kiddoo - ${subject}`,
       html: `
         <h2>${subject}</h2>
         <p>${body}</p>
         <br/>
-        <p>— The EduNest Team</p>
+        <p>— The Kiddoo Team</p>
       `,
     });
   }

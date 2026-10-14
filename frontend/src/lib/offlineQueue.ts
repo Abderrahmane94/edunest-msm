@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { get, set } from 'idb-keyval';
+import { get, set, del } from 'idb-keyval';
 
 /**
  * Actions saved while offline (or when sending failed for lack of network),
@@ -51,8 +51,8 @@ export interface QueueHandler<P> {
 /** The server refused the action: retrying as is won't help. */
 export class QueueRejectedError extends Error {}
 
-const STORAGE_KEY = 'edunest-offline-queue';
-const NOTICES_KEY = 'edunest-offline-notices';
+const STORAGE_KEY = 'kiddoo-offline-queue';
+const NOTICES_KEY = 'kiddoo-offline-notices';
 
 const handlers = new Map<string, QueueHandler<unknown>>();
 let actions: QueuedAction[] = [];
@@ -89,13 +89,28 @@ export function registerQueueHandler<P>(kind: string, handler: QueueHandler<P>):
   handlers.set(kind, handler as QueueHandler<unknown>);
 }
 
+/**
+ * What was saved on the device, also under the app's former name (EduNest):
+ * moved to the new name so no action waiting to be sent is lost.
+ */
+async function readSaved<T>(key: string, formerKey: string): Promise<T | undefined> {
+  const saved = await get<T>(key);
+  if (saved !== undefined) return saved;
+  const former = await get<T>(formerKey);
+  if (former !== undefined) {
+    await set(key, former);
+    await del(formerKey);
+  }
+  return former;
+}
+
 /** Loads the saved queue and sends what can be sent; resends when back online. */
 export function startOfflineQueue(): Promise<void> {
   if (!loaded) {
     loaded = (async () => {
       try {
-        actions = ((await get<QueuedAction[]>(STORAGE_KEY)) ?? []).concat(actions);
-        notices = ((await get<SyncNotice[]>(NOTICES_KEY)) ?? []).concat(notices);
+        actions = ((await readSaved<QueuedAction[]>(STORAGE_KEY, 'edunest-offline-queue')) ?? []).concat(actions);
+        notices = ((await readSaved<SyncNotice[]>(NOTICES_KEY, 'edunest-offline-notices')) ?? []).concat(notices);
       } catch {
         // Nothing saved, or storage unavailable.
       }

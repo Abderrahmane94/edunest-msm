@@ -83,7 +83,7 @@ async function run() {
   {
     // Login as admin
     const loginRes = await req('POST', '/auth/login', {
-      email: 'admin@edunest.dz',
+      email: 'admin@kiddoo.dz',
       password: 'admin123',
     });
     assert('Admin login succeeds', loginRes.success === true, JSON.stringify(loginRes.error));
@@ -93,7 +93,7 @@ async function run() {
 
     // Login as parent
     const parentLogin = await req('POST', '/auth/login', {
-      email: 'parent@edunest.dz',
+      email: 'parent@kiddoo.dz',
       password: 'parent123',
     });
     assert('Parent login succeeds', parentLogin.success === true);
@@ -102,7 +102,7 @@ async function run() {
 
     // Login as teacher
     const teacherLogin = await req('POST', '/auth/login', {
-      email: 'teacher@edunest.dz',
+      email: 'teacher@kiddoo.dz',
       password: 'teacher123',
     });
     assert('Teacher login succeeds', teacherLogin.success === true);

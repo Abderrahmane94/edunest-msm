@@ -1,29 +1,29 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: edunest-postgres
+    container_name: kiddoo-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-edunest}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-edunest_secret}
-      POSTGRES_DB: ${POSTGRES_DB:-edunest}
+      POSTGRES_USER: ${POSTGRES_USER:-kiddoo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kiddoo_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-kiddoo}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edunest}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kiddoo}"]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
-      - edunest-network
+      - kiddoo-network
 
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: edunest-backend
+    container_name: kiddoo-backend
     restart: unless-stopped
     depends_on:
       postgres:
@@ -31,7 +31,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 4000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-edunest}:${POSTGRES_PASSWORD:-edunest_secret}@postgres:5432/${POSTGRES_DB:-edunest}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kiddoo}:${POSTGRES_PASSWORD:-kiddoo_secret}@postgres:5432/${POSTGRES_DB:-kiddoo}?schema=public
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       CHARGILY_API_KEY: ${CHARGILY_API_KEY}
@@ -47,7 +47,7 @@ services:
     ports:
       - "${BACKEND_PORT:-4000}:4000"
     networks:
-      - edunest-network
+      - kiddoo-network
 
   frontend:
     build:
@@ -56,19 +56,19 @@ services:
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000/api}
         VITE_SOCKET_URL: ${VITE_SOCKET_URL:-http://localhost:4000}
-    container_name: edunest-frontend
+    container_name: kiddoo-frontend
     restart: unless-stopped
     depends_on:
       - backend
     ports:
       - "${FRONTEND_PORT:-3000}:80"
     networks:
-      - edunest-network
+      - kiddoo-network
 
 volumes:
   postgres_data:
     driver: local
 
 networks:
-  edunest-network:
+  kiddoo-network:
     driver: bridge

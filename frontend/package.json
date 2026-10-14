@@ -1,9 +1,9 @@
 {
-  "name": "@edunest/frontend",
+  "name": "@kiddoo/frontend",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "EduNest Frontend — React + Vite + TypeScript",
+  "description": "Kiddoo Frontend — React + Vite + TypeScript",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

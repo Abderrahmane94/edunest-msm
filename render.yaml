@@ -1,6 +1,8 @@
 services:
   - type: web
-    name: edunest-backend
+    name: edunest-msm
+    # Next to the Neon database (eu-central-1): every query is a round trip.
+    region: frankfurt
     runtime: docker
     branch: production
     dockerfilePath: ./backend/Dockerfile
@@ -12,6 +14,9 @@ services:
         value: production
       - key: PORT
         value: 4000
+      # Proxies in front of the service (Cloudflare and Render): the rate limits count per visitor.
+      - key: TRUST_PROXY_HOPS
+        value: 3
       - key: DATABASE_URL
         sync: false
       - key: JWT_ACCESS_SECRET

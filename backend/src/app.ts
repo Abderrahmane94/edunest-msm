@@ -8,6 +8,7 @@ import { authMiddleware } from './middleware/auth.middleware';
 import { tenancyMiddleware } from './middleware/tenancy.middleware';
 import { errorResponse } from './utils/response';
 import { verifyUploadPath } from './services/cloudinary.service';
+import { checkDatabase } from './lib/db-health';
 import authRoutes from './modules/auth/auth.routes';
 import schoolRoutes from './modules/schools/schools.routes';
 import userRoutes from './modules/users/users.routes';
@@ -86,9 +87,16 @@ function verifyUploadsAccess(req: Request, res: Response, next: NextFunction): v
 
 app.use('/uploads', verifyUploadsAccess, express.static(path.join(__dirname, '..', 'uploads')));
 
-// Health check (no auth required)
+// Health check (no auth required). The host restarts the service on it, so it
+// leaves the database out: a database outage is not cured by a restart.
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// For an outside monitor: whether the database answers (503 when it does not).
+app.get('/health/db', async (_req, res) => {
+  const db = await checkDatabase();
+  res.status(db.ok ? 200 : 503).json({ status: db.ok ? 'ok' : 'down', ...db });
 });
 
 // Rate limiter: 100 requests per minute per IP

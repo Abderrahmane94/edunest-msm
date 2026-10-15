@@ -48,7 +48,7 @@ jobs:
           echo "name=$name" >> "$GITHUB_OUTPUT"
 
       - name: Keep it 30 days
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.encrypt.outputs.name }}
           path: ${{ steps.encrypt.outputs.name }}.dump.gpg

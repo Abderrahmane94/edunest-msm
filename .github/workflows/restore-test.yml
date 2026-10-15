@@ -1,0 +1,111 @@
+# Every Saturday, proof that the backups restore: the latest nightly backup is
+# decrypted, restored into a throwaway database, and its tables compared with
+# production (read only). Red when the backup is missing, too old, does not
+# restore, or lost a table's rows. Nothing leaves GitHub.
+#
+# Uses the same secrets as backup-db.yml.
+name: Restore test
+
+on:
+  schedule:
+    - cron: '0 2 * * 6' # Saturdays, 03:00 in Algiers, an hour after the night's backup
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: restore-test
+
+jobs:
+  restore:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: restore-test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      RESTORED_URL: postgresql://postgres:restore-test@localhost:5432/postgres
+    steps:
+      - name: Fetch the latest backup
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" --jq '
+            [.artifacts[] | select(.expired | not) | select(.name | startswith("kiddoo-"))]
+            | sort_by(.created_at) | last | "\(.id) \(.created_at) \(.name)"')
+          read -r id created name <<< "$latest"
+          if [ -z "$id" ] || [ "$id" = null ]; then
+            echo "::error::No backup found."; exit 1
+          fi
+          age=$(( ($(date -u +%s) - $(date -u -d "$created" +%s)) / 3600 ))
+          echo "Latest backup: $name, $age hours old"
+          if [ "$age" -gt 48 ]; then
+            echo "::error::The latest backup is $age hours old: the nightly backup has stopped."; exit 1
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" > backup.zip
+          unzip -q backup.zip && rm backup.zip
+          echo "BACKUP_NAME=$name" >> "$GITHUB_ENV"
+
+      - name: Decrypt it
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          : "${PASSPHRASE:?BACKUP_PASSPHRASE is not set}"
+          printf '%s' "$PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+            --decrypt --output kiddoo.dump "$BACKUP_NAME.dump.gpg"
+          rm "$BACKUP_NAME.dump.gpg"
+
+      - name: Restore it into a throwaway database
+        run: |
+          # The same options as scripts/restore-db.sh.
+          docker run --rm --network host -v "$PWD:/w" postgres:18-alpine \
+            pg_restore --no-owner --no-privileges --exit-on-error --single-transaction \
+              --dbname="$RESTORED_URL" /w/kiddoo.dump
+          shred -u kiddoo.dump
+
+      - name: Compare with production
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          # Rows in every table, one "table count" line each; production is only read.
+          cat > counts.sql <<'SQL'
+          BEGIN TRANSACTION READ ONLY;
+          SELECT table_name || ' ' || (xpath('/row/c/text()',
+                   query_to_xml(format('SELECT count(*) AS c FROM public.%I', table_name), false, true, '')))[1]::text
+          FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_type = 'BASE TABLE';
+          ROLLBACK;
+          SQL
+          counts() {
+            docker run --rm -i --network host -e URL="$1" postgres:18-alpine \
+              sh -c 'psql "$URL" -qtA -v ON_ERROR_STOP=1' < counts.sql | LC_ALL=C sort
+          }
+          counts "$DATABASE_URL" > production.txt
+          counts "$RESTORED_URL" > restored.txt
+          LC_ALL=C join -a 1 -e missing -o 0,1.2,2.2 production.txt restored.txt > both.txt
+
+          {
+            echo "### Restore test: $BACKUP_NAME"
+            echo
+            echo "| Table | Production now | Restored backup |"
+            echo "|---|---:|---:|"
+            awk '{ printf "| %s | %s | %s |\n", $1, $2, $3 }' both.txt
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Rows added since the night are expected; a table that has rows in
+          # production but none (or is absent) in the backup is not.
+          lost=$(awk '$2 > 0 && ($3 == "missing" || $3 == 0) { print $1 }' both.txt)
+          tables=$(wc -l < restored.txt)
+          echo "$tables tables restored."
+          if [ "$tables" -eq 0 ] || [ -n "$lost" ]; then
+            echo "::error::Restored backup has no rows in: ${lost:-every table}"; exit 1
+          fi
+          echo "Restore test passed."

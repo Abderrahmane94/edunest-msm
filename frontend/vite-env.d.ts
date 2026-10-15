@@ -12,6 +12,8 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_APP_ID?: string;
   // Web Push certificate key pair — "Web Push certificates" in FCM settings.
   readonly VITE_FIREBASE_VAPID_KEY?: string;
+  // Sentry project of the site (crash reports); unset, nothing is sent.
+  readonly VITE_SENTRY_DSN?: string;
 }
 
 /** The deployed build (see vite.config.ts `define`). */

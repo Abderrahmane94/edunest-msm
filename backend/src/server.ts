@@ -1,6 +1,10 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Before anything else is loaded, so that Sentry sees every failure.
+import { initSentry } from './lib/sentry';
+initSentry();
+
 import http from 'http';
 import app from './app';
 import { socketService } from './services/socket.service';

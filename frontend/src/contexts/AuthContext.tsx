@@ -1,6 +1,7 @@
 import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { apiClient, ApiRequestError } from '@/lib/api-client';
 import { clearQueryCache } from '@/lib/query-client';
+import { setMonitoredUser } from '@/lib/monitoring';
 
 interface User {
   id: string;
@@ -76,6 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: false,
     isLoading: true,
   });
+
+  // Crash reports say who was hit (id, role, school only).
+  useEffect(() => {
+    const u = state.user;
+    setMonitoredUser(u ? { id: u.id, role: u.role, schoolId: u.schoolId } : null);
+  }, [state.user]);
 
   // Initialize auth state from stored token
   useEffect(() => {

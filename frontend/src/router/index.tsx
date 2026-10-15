@@ -58,6 +58,7 @@ import { InstallAppButton } from '@/components/InstallAppButton';
 import { AdminLayout, ParentLayout } from '@/components/layout';
 import { YearBanner, YearSwitcher } from '@/components/layout/YearSwitcher';
 import { BrandMark, Wordmark } from '@/components/layout/BrandMark';
+import { SchoolHeaderName } from '@/components/layout/SchoolHeaderName';
 import { Avatar } from '@/components/ui';
 import type { NavItem } from '@/components/layout';
 import { useSchool } from '@/hooks/useSchool';
@@ -392,10 +393,9 @@ function TeacherLayoutWrapper() {
     <AdminLayout
       navItems={teacherNavItems.map((item) => ({ ...item, badge: counts[item.href] }))}
       sidebarHeader={
-        <div className="flex items-center gap-2 px-1">
-          <BrandMark size={34} className="shrink-0" />
-          {/* On a narrow phone the class picker needs the room: the mark alone says whose app this is. */}
-          <Wordmark className="max-[479px]:hidden" />
+        <div className="px-1 min-w-0">
+          {/* On a narrow phone the class picker needs the room: the logo alone says whose app this is. */}
+          <SchoolHeaderName nameClassName="max-[479px]:hidden" />
         </div>
       }
       sidebarFooter={<SidebarFooterContent />}

@@ -93,3 +93,19 @@ export function useUpdateSchool() {
     },
   });
 }
+
+export interface SchoolBrand {
+  name: string;
+  logoUrl: string | null;
+}
+
+/** The name and logo of the user's own school, shown in every member's header. */
+export function useSchoolBrand() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['school-brand', user?.schoolId],
+    queryFn: async () => (await apiClient.get<SchoolBrand>('/schools/mine/brand')).data,
+    enabled: !!user?.schoolId,
+    staleTime: 30 * 60 * 1000,
+  });
+}

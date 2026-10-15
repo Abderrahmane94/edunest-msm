@@ -45,6 +45,27 @@ export const schoolsController = {
   /**
    * GET /api/schools/:id — Get school by ID (admin, super_admin)
    */
+  /**
+   * GET /api/schools/mine/brand — The name and logo of the user's own school
+   * (any member: staff, teachers, parents).
+   */
+  async brand(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const schoolId = req.user!.schoolId;
+      if (!schoolId) {
+        res.status(404).json(errorResponse('NOT_FOUND', 'No school for this account'));
+        return;
+      }
+      res.status(200).json(successResponse(await schoolsService.getBrand(schoolId)));
+    } catch (error) {
+      if (error instanceof SchoolServiceError) {
+        res.status(error.statusCode).json(errorResponse('SCHOOL_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;

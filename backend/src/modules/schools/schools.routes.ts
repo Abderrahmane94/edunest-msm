@@ -27,6 +27,9 @@ router.post('/', requireSuperAdmin, validate(createSchoolSchema), schoolsControl
 // GET /api/schools — List all schools (super_admin only)
 router.get('/', requireSuperAdmin, schoolsController.list);
 
+// GET /api/schools/mine/brand — Name and logo of the user's own school (any member)
+router.get('/mine/brand', schoolsController.brand);
+
 // GET /api/schools/:id — Get school by ID (admin, super_admin)
 router.get('/:id', requireAnyOffice(), validateParams(idParamSchema), schoolsController.getById);
 

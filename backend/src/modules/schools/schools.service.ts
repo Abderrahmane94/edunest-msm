@@ -105,6 +105,26 @@ class SchoolsService {
   }
 
   /**
+   * What every member of a school sees of it in their header: its name and
+   * logo, nothing else (contacts and subscription stay with the office).
+   */
+  async getBrand(id: string): Promise<{ name: string; logoUrl: string | null }> {
+    const school = await prisma.school.findUnique({
+      where: { id },
+      select: { name: true, logoPublicId: true },
+    });
+
+    if (!school) {
+      throw new SchoolServiceError('School not found', 404);
+    }
+
+    return {
+      name: school.name,
+      logoUrl: school.logoPublicId ? cloudinaryService.generateSignedUrl(school.logoPublicId, 'photo') : null,
+    };
+  }
+
+  /**
    * Update a school (admin can update their own school).
    */
   async update(id: string, input: UpdateSchoolInput): Promise<SchoolResponse> {

@@ -10,7 +10,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { OfflineStatus } from '@/components/OfflineStatus';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { BottomTabBar } from './BottomTabBar';
-import { BrandMark, Wordmark } from './BrandMark';
+import { SchoolHeaderName } from './SchoolHeaderName';
 import { NavBadge, type NavItem } from './Sidebar';
 
 interface ParentLayoutProps {
@@ -34,10 +34,9 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
       {/* Top bar with branding, desktop nav, and actions */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-border">
         <div className="max-w-[900px] mx-auto px-4 h-14 flex items-center justify-between">
-          {/* Left: Logo */}
-          <div className="flex items-center gap-2">
-            <BrandMark size={30} className="shrink-0" />
-            <Wordmark />
+          {/* Left: the school's logo and name */}
+          <div className="min-w-0 me-3">
+            <SchoolHeaderName />
           </div>
 
           {/* Center: Desktop navigation */}

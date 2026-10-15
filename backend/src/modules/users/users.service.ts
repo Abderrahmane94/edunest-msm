@@ -7,6 +7,7 @@ import { emailService } from '../../services/email.service';
 import type { UserRole, Language } from '@prisma/client';
 import type { CreateUserDirectlyInput } from './users.schema';
 import { authService } from '../auth/auth.service';
+import { getFrontendUrl } from '../../lib/frontend-url';
 
 const INVITATION_EXPIRY_HOURS = 48;
 const BCRYPT_SALT_ROUNDS = 10;
@@ -25,10 +26,6 @@ export function temporaryPassword(): string {
 interface ResetActor {
   userId: string;
   schoolId: string | null;
-}
-
-function getFrontendUrl(): string {
-  return process.env.FRONTEND_URL || 'http://localhost:5173';
 }
 
 export class UserServiceError extends Error {

@@ -7,7 +7,7 @@ services:
     branch: production
     dockerfilePath: ./backend/Dockerfile
     dockerContext: .
-    plan: free
+    plan: starter
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -32,6 +32,8 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
       - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
         sync: false
       - key: TWILIO_ACCOUNT_SID
         sync: false

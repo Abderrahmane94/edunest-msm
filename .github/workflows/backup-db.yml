@@ -1,0 +1,57 @@
+# Every night, a copy of the production database, encrypted, kept 30 days as a
+# workflow artifact. Restore one with scripts/restore-db.sh.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   BACKUP_DATABASE_URL  the production database URL (Neon, direct host, not -pooler)
+#   BACKUP_PASSPHRASE    the encryption passphrase; keep a copy outside GitHub,
+#                        without it the backups cannot be read
+name: Database backup
+
+on:
+  schedule:
+    - cron: '0 1 * * *' # 02:00 in Algiers
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: database-backup
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Dump the database
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          : "${DATABASE_URL:?BACKUP_DATABASE_URL is not set}"
+          # The client tools match the server (Postgres 18).
+          docker run --rm -e DATABASE_URL postgres:18-alpine \
+            sh -c 'pg_dump --format=custom --no-owner --no-privileges "$DATABASE_URL"' > kiddoo.dump
+          # A dump that cannot be listed would not restore either.
+          docker run --rm -v "$PWD:/w" postgres:18-alpine pg_restore --list /w/kiddoo.dump > /dev/null
+          echo "Dump: $(du -h kiddoo.dump | cut -f1)"
+
+      - name: Encrypt it
+        id: encrypt
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          : "${PASSPHRASE:?BACKUP_PASSPHRASE is not set}"
+          name="kiddoo-$(date -u +%Y-%m-%dT%H%M)Z"
+          printf '%s' "$PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+            --symmetric --cipher-algo AES256 --output "$name.dump.gpg" kiddoo.dump
+          shred -u kiddoo.dump
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Keep it 30 days
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.encrypt.outputs.name }}
+          path: ${{ steps.encrypt.outputs.name }}.dump.gpg
+          retention-days: 30
+          if-no-files-found: error
+          compression-level: 0

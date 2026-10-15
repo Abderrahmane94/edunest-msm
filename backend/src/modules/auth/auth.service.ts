@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import prisma from '../../lib/prisma';
 import { emailService } from '../../services/email.service';
 import { cutSessions, keepToken } from '../../lib/session-cutoff';
+import { getFrontendUrl } from '../../lib/frontend-url';
 import type {
   TokenPayload,
   LoginResponse,
@@ -49,10 +50,6 @@ function getRefreshSecret(): string {
 /** Reset links are stored hashed: a leaked database holds no usable link. */
 function hashResetToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
-}
-
-function getFrontendUrl(): string {
-  return process.env.FRONTEND_URL || 'http://localhost:5173';
 }
 
 function generateAccessToken(payload: TokenPayload): string {

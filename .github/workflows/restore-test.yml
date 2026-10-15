@@ -1,9 +1,10 @@
 # Every Saturday, proof that the backups restore: the latest nightly backup is
 # decrypted, restored into a throwaway database, and its tables compared with
 # production (read only). Red when the backup is missing, too old, does not
-# restore, or lost a table's rows. Nothing leaves GitHub.
+# restore, or lost a table's rows. Nothing leaves GitHub. A second job checks
+# the files copy the same way (files-backup.yml).
 #
-# Uses the same secrets as backup-db.yml.
+# Uses the secrets of backup-db.yml and files-backup.yml.
 name: Restore test
 
 on:
@@ -109,3 +110,70 @@ jobs:
             echo "::error::Restored backup has no rows in: ${lost:-every table}"; exit 1
           fi
           echo "Restore test passed."
+
+  files:
+    # Five files of the copy at random: they decrypt, and match Cloudinary's
+    # size where Cloudinary still has them.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install the Cloudinary client
+        run: npm install --silent --no-save --no-package-lock --prefix "$RUNNER_TEMP/deps" cloudinary@2.10.0
+
+      - name: Decrypt five files of the copy
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          : "${R2_ENDPOINT:?R2_ENDPOINT is not set}" "${R2_BUCKET:?R2_BUCKET is not set}" "${PASSPHRASE:?BACKUP_PASSPHRASE is not set}"
+          aws s3api list-objects-v2 --endpoint-url "$R2_ENDPOINT" --bucket "$R2_BUCKET" --prefix files/ \
+            --query 'Contents[].Key' --output text > keys.raw
+          tr '\t' '\n' < keys.raw | { grep -v -e '^None$' -e '^$' || true; } | sed 's#^files/##; s#\.gpg$##' > all.txt
+          echo "$(wc -l < all.txt) files in the copy."
+          if [ ! -s all.txt ]; then
+            echo "::error::The files copy is empty."; exit 1
+          fi
+          shuf -n 5 all.txt > sample.txt
+          mkdir -p "$RUNNER_TEMP/check"
+          while IFS= read -r key; do
+            aws s3 cp "s3://$R2_BUCKET/files/$key.gpg" "$RUNNER_TEMP/check/file.gpg" --endpoint-url "$R2_ENDPOINT" --only-show-errors
+            printf '%s' "$PASSPHRASE" | gpg --batch --yes --quiet --pinentry-mode loopback --passphrase-fd 0 \
+              --decrypt --output "$RUNNER_TEMP/check/file" "$RUNNER_TEMP/check/file.gpg"
+            echo "$key $(stat -c %s "$RUNNER_TEMP/check/file")" >> copy.txt
+            shred -u "$RUNNER_TEMP/check/file" "$RUNNER_TEMP/check/file.gpg"
+          done < sample.txt
+
+      - name: Compare with Cloudinary
+        env:
+          CLOUDINARY_MODULE_DIR: ${{ runner.temp }}/deps
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+        run: |
+          node scripts/files-backup.mjs sizes sample.txt > cloudinary.txt
+          LC_ALL=C join <(LC_ALL=C sort copy.txt) <(LC_ALL=C sort cloudinary.txt) > both.txt
+          {
+            echo "### Files copy: five at random"
+            echo
+            echo "| File | Decrypted copy (bytes) | Cloudinary now |"
+            echo "|---|---:|---:|"
+            awk '{ printf "| %s | %s | %s |\n", $1, $2, $3 }' both.txt
+          } >> "$GITHUB_STEP_SUMMARY"
+          bad=$(awk '$2 == 0 || ($3 != "missing" && $2 != $3) { print $1 }' both.txt)
+          if [ -n "$bad" ] || [ "$(wc -l < both.txt)" -ne "$(wc -l < sample.txt)" ]; then
+            echo "::error::Copy does not match Cloudinary for: ${bad:-some files}"; exit 1
+          fi
+          echo "Files check passed."

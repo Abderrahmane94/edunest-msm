@@ -54,11 +54,10 @@ class EmailService {
         Authorization: `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify({
-        // Resend's shared sandbox sender — works without owning/verifying a
-        // domain, but can only deliver to the Resend account's own signup
-        // email until a real domain is verified. Switch this to a verified
-        // domain address once one is available.
-        from: 'Kiddoo <onboarding@resend.dev>',
+        // EMAIL_FROM is an address on a domain verified in Resend. Without it,
+        // Resend's shared sandbox sender, which only delivers to the Resend
+        // account's own signup email.
+        from: process.env.EMAIL_FROM || 'Kiddoo <onboarding@resend.dev>',
         to: options.to,
         subject: options.subject,
         html: options.html,

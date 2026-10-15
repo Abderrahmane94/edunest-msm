@@ -1,0 +1,92 @@
+# Every night, the files kept at Cloudinary (photos, documents, attachments,
+# logos) copied to a separate bucket (Cloudflare R2), each one encrypted.
+# Only new files are copied; nothing is ever deleted from the copy, so a file
+# deleted at Cloudinary by mistake can still be brought back.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET  as in Render
+#   R2_ENDPOINT           https://<account id>.r2.cloudflarestorage.com
+#                         (…<account id>.eu.r2.cloudflarestorage.com for an EU bucket)
+#   R2_BUCKET             the bucket's name
+#   R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY  an R2 API token limited to that bucket
+#   BACKUP_PASSPHRASE     the same as the database backups'
+name: Files backup
+
+on:
+  schedule:
+    - cron: '30 1 * * *' # 02:30 in Algiers, after the database backup
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: files-backup
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: auto
+  # R2 does not take the checksums newer AWS CLIs add by default.
+  AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+  AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+  R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+  R2_BUCKET: ${{ secrets.R2_BUCKET }}
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install the Cloudinary client
+        run: npm install --silent --no-save --no-package-lock --prefix "$RUNNER_TEMP/deps" cloudinary@2.10.0
+
+      - name: List what the bucket already has
+        run: |
+          : "${R2_ENDPOINT:?R2_ENDPOINT is not set}" "${R2_BUCKET:?R2_BUCKET is not set}"
+          aws s3api list-objects-v2 --endpoint-url "$R2_ENDPOINT" --bucket "$R2_BUCKET" --prefix files/ \
+            --query 'Contents[].Key' --output text > keys.raw
+          tr '\t' '\n' < keys.raw | { grep -v -e '^None$' -e '^$' || true; } | sed 's#^files/##; s#\.gpg$##' > existing.txt
+          echo "$(wc -l < existing.txt) files already in the bucket."
+
+      - name: Download the new files
+        id: download
+        continue-on-error: true
+        env:
+          CLOUDINARY_MODULE_DIR: ${{ runner.temp }}/deps
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/new"
+          node scripts/files-backup.mjs download existing.txt "$RUNNER_TEMP/new"
+
+      - name: Encrypt and copy them to the bucket
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          : "${PASSPHRASE:?BACKUP_PASSPHRASE is not set}"
+          cd "$RUNNER_TEMP/new"
+          count=0
+          while IFS= read -r -d '' f; do
+            printf '%s' "$PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+              --symmetric --cipher-algo AES256 --output "$f.gpg" "$f"
+            rm "$f"
+            count=$((count + 1))
+          done < <(find . -type f -print0)
+          if [ "$count" -gt 0 ]; then
+            aws s3 cp . "s3://$R2_BUCKET/files/" --recursive --endpoint-url "$R2_ENDPOINT" --only-show-errors
+          fi
+          echo "$count files encrypted and copied."
+
+      - name: Fail if some files could not be downloaded
+        if: steps.download.outcome == 'failure'
+        run: |
+          echo "::error::Some files could not be downloaded from Cloudinary; see the download step. The others were copied."
+          exit 1

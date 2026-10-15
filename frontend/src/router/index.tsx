@@ -59,6 +59,7 @@ import { AdminLayout, ParentLayout } from '@/components/layout';
 import { YearBanner, YearSwitcher } from '@/components/layout/YearSwitcher';
 import { BrandMark, Wordmark } from '@/components/layout/BrandMark';
 import { SchoolHeaderName } from '@/components/layout/SchoolHeaderName';
+import { useCurrentTeacherClass } from '@/hooks/useSubstitutions';
 import { Avatar } from '@/components/ui';
 import type { NavItem } from '@/components/layout';
 import { useSchool } from '@/hooks/useSchool';
@@ -389,13 +390,15 @@ function AdminLayoutWrapper() {
 function TeacherLayoutWrapper() {
   usePreloadPages('teacher');
   const counts = usePersonalNavCounts();
+  // The class picker shows when the teacher has several classes.
+  const hasClassPicker = useCurrentTeacherClass().classes.length > 1;
   return (
     <AdminLayout
       navItems={teacherNavItems.map((item) => ({ ...item, badge: counts[item.href] }))}
       sidebarHeader={
         <div className="px-1 min-w-0">
-          {/* On a narrow phone the class picker needs the room: the logo alone says whose app this is. */}
-          <SchoolHeaderName nameClassName="max-[479px]:hidden" />
+          {/* On a narrow phone the class picker needs the room: the logo alone then says whose app this is. */}
+          <SchoolHeaderName nameClassName={hasClassPicker ? 'max-[479px]:hidden' : undefined} />
         </div>
       }
       sidebarFooter={<SidebarFooterContent />}

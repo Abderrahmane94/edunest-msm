@@ -6,6 +6,7 @@ import { registerServiceWorker } from './lib/push';
 // Listens for the browser's install prompt from startup.
 import './lib/install';
 import { startOfflineQueue } from './lib/offlineQueue';
+import { startMonitoring } from './lib/monitoring';
 // Registers how attendance, daily reports, messages and consent answers saved offline are sent.
 import './hooks/useAttendance';
 import './hooks/useDailyReportSync';
@@ -21,6 +22,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </React.Suspense>
   </React.StrictMode>,
 );
+
+// Crash reports (deployed site only).
+startMonitoring();
 
 // Sends what was saved offline (now, and whenever the connection returns).
 void startOfflineQueue();

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 import { AlertTriangle, RotateCw, Home } from 'lucide-react';
 import i18n from '@/i18n';
+import { reportError } from '@/lib/monitoring';
 
 interface Props {
   children: React.ReactNode;
@@ -33,6 +34,7 @@ class Boundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('[ErrorBoundary]', error, info.componentStack);
+    reportError(error);
     // Stale code after a deployment: reload once, quietly.
     if (isStaleBuild(error)) {
       try {

@@ -3,6 +3,7 @@ import multer from 'multer';
 import { Prisma } from '@prisma/client';
 import { ZodError } from 'zod';
 import { errorResponse } from '../utils/response';
+import { reportError } from '../lib/sentry';
 
 /** Messages of the upload filters (multer fileFilter) that refuse a file type. */
 const FILE_TYPE_MESSAGES = ['File type not allowed', 'Only JPEG, PNG and WebP images are allowed'];
@@ -56,10 +57,13 @@ export function describeKnownError(err: unknown): KnownError | null {
 }
 
 /** Last error handler: known errors get their answer, anything else is a 500 (logged). */
-export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction): void {
+export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction): void {
   const known = describeKnownError(err);
   if (known) {
-    if (known.status >= 500) console.error('[Error]', err);
+    if (known.status >= 500) {
+      console.error('[Error]', err);
+      reportError(err, req);
+    }
     res.status(known.status).json(errorResponse(known.code, known.message));
     return;
   }
@@ -69,6 +73,7 @@ export function errorHandler(err: Error, _req: Request, res: Response, _next: Ne
     process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message || 'Internal server error';
 
   console.error('[Error]', err);
+  if (statusCode >= 500) reportError(err, req);
 
   res.status(statusCode).json(errorResponse('INTERNAL_ERROR', message));
 }

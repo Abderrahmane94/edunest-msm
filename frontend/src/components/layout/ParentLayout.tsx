@@ -10,7 +10,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { OfflineStatus } from '@/components/OfflineStatus';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { BottomTabBar } from './BottomTabBar';
-import { BrandMark } from './BrandMark';
+import { BrandMark, Wordmark } from './BrandMark';
 import { NavBadge, type NavItem } from './Sidebar';
 
 interface ParentLayoutProps {
@@ -37,10 +37,7 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
           {/* Left: Logo */}
           <div className="flex items-center gap-2">
             <BrandMark size={30} className="shrink-0" />
-            <span className="font-playful text-[19px] font-extrabold leading-none" dir="ltr">
-              <span className="text-text-heading">Edu</span>
-              <span className="text-primary">Nest</span>
-            </span>
+            <Wordmark />
           </div>
 
           {/* Center: Desktop navigation */}

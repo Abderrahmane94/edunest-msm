@@ -100,3 +100,13 @@ export function BrandMark({
     </svg>
   );
 }
+
+/** The written name next to the logo, in its two colours. */
+export function Wordmark({ className }: { className?: string }) {
+  return (
+    <span className={`font-playful text-[19px] font-extrabold leading-none ${className ?? ''}`} dir="ltr">
+      <span className="text-text-heading">Kid</span>
+      <span className="text-primary">doo</span>
+    </span>
+  );
+}

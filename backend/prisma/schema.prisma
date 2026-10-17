@@ -203,6 +203,8 @@ model User {
   mustChangePassword Boolean   @default(false) @map("must_change_password")
   fcmToken           String?   @map("fcm_token")
   phone              String?   @map("phone")
+  /// Their own photo (Cloudinary, private), set from "Mon profil".
+  avatarPublicId     String?   @map("avatar_public_id")
   address            String?
   nationalId         String?   @map("national_id")
   preferredLanguage  Language  @default(fr) @map("preferred_language")

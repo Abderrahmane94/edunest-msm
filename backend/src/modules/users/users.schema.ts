@@ -40,6 +40,13 @@ export const updateUserSchema = z.object({
   nationalId: z.string().trim().min(1).max(50).optional(),
 });
 
+/** "Mon profil": names and phone; an empty phone clears it. */
+export const updateMyProfileSchema = z.object({
+  firstName: personNameSchema(100).optional(),
+  lastName: personNameSchema(100).optional(),
+  phone: phoneSchema(20).nullable().optional(),
+});
+
 export const createUserDirectlySchema = z.object({
   firstName: personNameSchema(100),
   lastName: personNameSchema(100),
@@ -60,3 +67,4 @@ export type RegisterUserInput = z.infer<typeof registerUserSchema>;
 export type UpdateFcmTokenInput = z.infer<typeof updateFcmTokenSchema>;
 export type UpdateLanguageInput = z.infer<typeof updateLanguageSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type UpdateMyProfileInput = z.infer<typeof updateMyProfileSchema>;

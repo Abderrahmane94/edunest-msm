@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { protectDirectors } from './users.guards';
 import { usersController } from './users.controller';
 import { requireActiveRole } from '../../middleware/rbac.middleware';
@@ -11,12 +12,32 @@ import {
   updateLanguageSchema,
   updateUserSchema,
   createUserDirectlySchema,
+  updateMyProfileSchema,
 } from './users.schema';
+import { profileController } from './profile.controller';
 import { authController } from '../auth/auth.controller';
 import { changePasswordSchema } from '../auth/auth.schema';
 import { idParamSchema } from '../../utils/validators';
 
+const avatarUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (_req, file, cb) => {
+    if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPEG, PNG and WebP images are allowed'));
+    }
+  },
+});
+
 const router = Router();
+
+// "Mon profil" — every account, on itself only (before /:id, which would take "me").
+router.get('/me/profile', requireActiveRole, profileController.get);
+router.patch('/me/profile', requireActiveRole, validate(updateMyProfileSchema), profileController.update);
+router.post('/me/avatar', requireActiveRole, avatarUpload.single('avatar'), profileController.setAvatar);
+router.delete('/me/avatar', requireActiveRole, profileController.removeAvatar);
 
 // POST /api/users/change-password — Change own password (authenticated, first-login forced change)
 router.post('/change-password', requireActiveRole, validate(changePasswordSchema), authController.changePassword);

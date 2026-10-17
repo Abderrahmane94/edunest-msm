@@ -8,8 +8,11 @@ const ROLE_STYLES: Record<string, string> = {
   parent: 'bg-[var(--color-role-parent-bg,#FCE7F3)] text-[var(--color-role-parent,#9D174D)]',
 };
 
-/** A user's role, in the same colours everywhere. */
-export function RoleBadge({ role, className }: { role: string; className?: string }) {
+/**
+ * A user's role, in the same colours everywhere; office staff with their
+ * administrative role after it ("Administratif · Comptable").
+ */
+export function RoleBadge({ role, detail, className }: { role: string; detail?: string | null; className?: string }) {
   const { t } = useTranslation();
   return (
     <span
@@ -20,6 +23,7 @@ export function RoleBadge({ role, className }: { role: string; className?: strin
       )}
     >
       {t(`users.roles.${role}`)}
+      {detail && <span className="font-normal">&nbsp;· {detail}</span>}
     </span>
   );
 }

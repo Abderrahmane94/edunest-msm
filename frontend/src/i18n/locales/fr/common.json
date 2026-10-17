@@ -3902,5 +3902,9 @@
     "hint": "Un email ou un numéro de téléphone : sans email, la personne se connecte avec son numéro.",
     "resetNoEmail": "Vous vous connectez avec votre numéro de téléphone ? Demandez un nouveau mot de passe à la direction de votre école.",
     "noEmail": "Pas d'email : connexion avec le numéro de téléphone."
+  },
+  "whatsapp": {
+    "send": "Envoyer par WhatsApp",
+    "access": "Bonjour{{name}}, voici votre accès à Kiddoo :\n{{url}}\nIdentifiant : {{login}}\nMot de passe temporaire : {{password}}\nVous choisirez votre propre mot de passe à la première connexion."
   }
 }

@@ -3881,6 +3881,12 @@
     "save": "Enregistrer",
     "saving": "Enregistrement…",
     "saved": "Profil enregistré",
-    "emailHint": "L'adresse e-mail sert à vous connecter : seule la direction de l'école peut la changer."
+    "emailHint": "L'adresse e-mail sert à vous connecter : seule la direction de l'école peut la changer.",
+    "passwordTitle": "Mot de passe",
+    "passwordHint": "Vos autres appareils seront déconnectés ; celui-ci reste connecté.",
+    "currentPassword": "Mot de passe actuel",
+    "wrongCurrentPassword": "Le mot de passe actuel est incorrect.",
+    "changePassword": "Changer le mot de passe",
+    "passwordChanged": "Mot de passe changé"
   }
 }

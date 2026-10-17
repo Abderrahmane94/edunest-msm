@@ -92,8 +92,8 @@ export const authController = {
     try {
       const userId = req.user!.userId;
       const { newPassword, currentPassword } = req.body as ChangePasswordInput;
-      const { accessToken } = await authService.changePassword(userId, newPassword, currentPassword);
-      res.status(200).json({ success: true, data: { message: 'Password changed successfully', accessToken } });
+      const { accessToken, refreshToken } = await authService.changePassword(userId, newPassword, currentPassword);
+      res.status(200).json({ success: true, data: { message: 'Password changed successfully', accessToken, refreshToken } });
     } catch (error) {
       if (error instanceof AuthError) {
         res.status(error.statusCode).json({

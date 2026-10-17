@@ -36,10 +36,14 @@ export function ChangePasswordPage() {
 
     setLoading(true);
     try {
-      const res = await apiClient.post<{ message: string; accessToken: string }>('/users/change-password', { newPassword });
+      const res = await apiClient.post<{ message: string; accessToken: string; refreshToken?: string }>('/users/change-password', { newPassword });
       if (!res.success) throw apiError(res.error, t('common.error'));
       if (res.data?.accessToken) {
         localStorage.setItem('access_token', res.data.accessToken);
+      }
+      // The new session of this device: the old ones all ended with the change.
+      if (res.data?.refreshToken) {
+        localStorage.setItem('refresh_token', res.data.refreshToken);
       }
       clearMustChangePassword();
     } catch (err) {

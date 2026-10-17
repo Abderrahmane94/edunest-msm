@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DatePickerInput } from './DatePicker';
 
@@ -60,6 +62,16 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
+        {type === 'password' ? (
+          <PasswordField
+            id={inputId}
+            ref={ref}
+            className={className}
+            error={error}
+            describedBy={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
+            {...props}
+          />
+        ) : (
         <input
           type={type}
           id={inputId}
@@ -75,6 +87,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
           {...props}
         />
+        )}
         {error && (
           <p id={`${inputId}-error`} className="text-caption text-danger" role="alert">
             {error}
@@ -90,5 +103,42 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   }
 );
 Input.displayName = 'Input';
+
+/** A password, with the eye that shows what was typed (to check it before saving). */
+const PasswordField = React.forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement> & { error?: string; describedBy?: string }
+>(({ className, error, describedBy, ...props }, ref) => {
+  const { t } = useTranslation();
+  const [shown, setShown] = React.useState(false);
+  return (
+    <div className="relative">
+      <input
+        {...props}
+        type={shown ? 'text' : 'password'}
+        ref={ref}
+        className={cn(
+          'w-full bg-card border border-border rounded-md ps-3 pe-10 py-2 text-body text-foreground placeholder:text-text-disabled',
+          'transition-all duration-150',
+          'focus:outline-none focus:border-primary focus:shadow-focus-ring',
+          error && 'border-danger focus:border-danger focus:shadow-focus-danger',
+          className
+        )}
+        aria-invalid={!!error}
+        aria-describedby={describedBy}
+      />
+      <button
+        type="button"
+        onClick={() => setShown((v) => !v)}
+        className="absolute end-1 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-md text-text-disabled hover:text-text-secondary transition focus-visible:outline-none focus-visible:shadow-focus-ring"
+        aria-label={shown ? t('auth.hidePassword') : t('auth.showPassword')}
+        aria-pressed={shown}
+      >
+        {shown ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
+    </div>
+  );
+});
+PasswordField.displayName = 'PasswordField';
 
 export { Input };

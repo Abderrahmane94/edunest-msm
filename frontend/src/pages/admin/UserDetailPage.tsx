@@ -155,7 +155,7 @@ export function UserDetailPage() {
         back="/admin/users"
         leading={<Avatar name={`${user.first_name} ${user.last_name}`} size="lg" className="ring-4 ring-white shadow-level-2" />}
         title={`${user.first_name} ${user.last_name}`}
-        description={user.email}
+        description={user.email || user.phone || undefined}
         badge={
           <StatusBadge variant={user.is_active ? 'success' : 'neutral'}>
             {user.is_active ? t('users.active') : t('users.inactive')}
@@ -215,7 +215,7 @@ export function UserDetailPage() {
           </div>
 
           <FormField label={t('users.detail.email')} htmlFor="u-email">
-            <Input id="u-email" value={user.email} disabled className="opacity-60 cursor-not-allowed" />
+            <Input id="u-email" value={user.email ?? t('loginId.noEmail')} disabled dir={user.email ? 'ltr' : undefined} className="opacity-60 cursor-not-allowed" />
           </FormField>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">

@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 /** "Mon profil": the signed-in account's own names, phone and photo. */
 export interface MyProfile {
   id: string;
-  email: string;
+  email: string | null;
   firstName: string;
   lastName: string;
   phone: string | null;

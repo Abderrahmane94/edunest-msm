@@ -1,12 +1,14 @@
 import { z } from 'zod';
-import { personNameSchema, phoneSchema } from '../../utils/validators';
+import { personNameSchema, phoneSchema, optionalEmailSchema, optionalPhoneSchema, EMAIL_OR_PHONE } from '../../utils/validators';
 
+// Signs in with the email, or with the phone number when there is none.
 const directorSchema = z.object({
   firstName: personNameSchema(100),
   lastName: personNameSchema(100),
-  email: z.string().email('Invalid director email address'),
+  email: optionalEmailSchema(),
+  phone: optionalPhoneSchema(20),
   preferredLanguage: z.enum(['ar', 'fr']).optional().default('fr'),
-});
+}).refine(EMAIL_OR_PHONE.check, EMAIL_OR_PHONE.message);
 
 export const createSchoolSchema = z.object({
   name: z.string().trim().min(1, 'School name is required').max(255, 'School name must not exceed 255 characters'),

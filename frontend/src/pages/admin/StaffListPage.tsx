@@ -47,7 +47,7 @@ export function StaffListPage() {
       if (
         q &&
         !`${row.user.first_name} ${row.user.last_name}`.toLowerCase().includes(q) &&
-        !row.user.email.toLowerCase().includes(q)
+        !(row.user.email ?? row.user.phone ?? '').toLowerCase().includes(q)
       ) {
         return false;
       }
@@ -102,7 +102,7 @@ export function StaffListPage() {
             <p className="text-body font-medium text-foreground">
               {row.user.first_name} {row.user.last_name}
             </p>
-            <p className="text-caption text-text-secondary">{row.user.email}</p>
+            <p className="text-caption text-text-secondary" dir="ltr">{row.user.email || row.user.phone}</p>
           </div>
         </div>
       ),

@@ -1,6 +1,7 @@
 import prisma from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { UserServiceError } from './users.service';
+import { accountIdsWithPhone } from '../../lib/phone-accounts';
 
 /**
  * "Mon profil": what every account changes about itself — its names, its
@@ -8,7 +9,7 @@ import { UserServiceError } from './users.service';
  */
 export interface MyProfile {
   id: string;
-  email: string;
+  email: string | null;
   firstName: string;
   lastName: string;
   phone: string | null;
@@ -17,11 +18,11 @@ export interface MyProfile {
 }
 
 const profileSelect = {
-  id: true, email: true, firstName: true, lastName: true, phone: true, role: true, avatarPublicId: true,
+  id: true, email: true, firstName: true, lastName: true, phone: true, role: true, avatarPublicId: true, schoolId: true,
 } as const;
 
-function toProfile(user: { avatarPublicId: string | null } & Omit<MyProfile, 'avatarUrl'>): MyProfile {
-  const { avatarPublicId, ...rest } = user;
+function toProfile(user: { avatarPublicId: string | null; schoolId: string | null } & Omit<MyProfile, 'avatarUrl'>): MyProfile {
+  const { avatarPublicId, schoolId: _schoolId, ...rest } = user;
   return { ...rest, avatarUrl: avatarPublicId ? cloudinaryService.generateSignedUrl(avatarPublicId, 'photo') : null };
 }
 
@@ -46,7 +47,14 @@ export const profileService = {
   },
 
   async update(userId: string, input: { firstName?: string; lastName?: string; phone?: string | null }): Promise<MyProfile> {
-    await findSelf(userId);
+    const me = await findSelf(userId);
+    // Without an email the phone number is how one signs in: it can change, not go,
+    // and must stay this account's alone in its school.
+    if (!me.email && input.phone !== undefined) {
+      if (!input.phone) throw new UserServiceError('Your phone number is how you sign in: it cannot be removed', 400);
+      const others = (await accountIdsWithPhone(input.phone, me.schoolId ?? undefined)).filter((id) => id !== userId);
+      if (others.length > 0) throw new UserServiceError('Another account already uses this phone number', 409);
+    }
     const updated = await prisma.user.update({
       where: { id: userId },
       data: {

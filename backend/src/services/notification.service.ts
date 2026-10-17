@@ -272,12 +272,14 @@ class NotificationService implements INotificationService {
           });
       }
 
-      // Email notification
-      emailService
-        .sendNotificationEmail(parent.email, localized.title, localized.body)
-        .catch((err) => {
-          console.error(`[NotificationService] Email failed for user ${parent.id}:`, err);
-        });
+      // Email notification (not to a parent who signs in with a phone number)
+      if (parent.email) {
+        emailService
+          .sendNotificationEmail(parent.email, localized.title, localized.body)
+          .catch((err) => {
+            console.error(`[NotificationService] Email failed for user ${parent.id}:`, err);
+          });
+      }
 
       // SMS only to primary parent
       if (link.isPrimary) {

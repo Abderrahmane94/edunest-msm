@@ -12,15 +12,17 @@ vi.mock('../../services/cloudinary.service', () => ({
 }));
 vi.mock('../../services/email.service', () => ({ emailService: {} }));
 vi.mock('../auth/auth.service', () => ({ authService: {} }));
+vi.mock('../../lib/phone-accounts', () => ({ accountIdsWithPhone: vi.fn().mockResolvedValue([]) }));
 
 import prisma from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { profileService, avatarFolder } from './profile.service';
+import { accountIdsWithPhone } from '../../lib/phone-accounts';
 
 const db = prisma as unknown as { user: { findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> } };
 const files = cloudinaryService as unknown as Record<'uploadFile' | 'deleteFile', ReturnType<typeof vi.fn>>;
 
-const me = { id: 'u1', email: 'samia@example.dz', firstName: 'Samia', lastName: 'B', phone: null, role: 'teacher', avatarPublicId: null as string | null };
+const me = { id: 'u1', email: 'samia@example.dz' as string | null, firstName: 'Samia', lastName: 'B', phone: null as string | null, role: 'teacher', avatarPublicId: null as string | null, schoolId: 's1' };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -81,5 +83,19 @@ describe('profileService', () => {
     files.deleteFile.mockRejectedValue(new Error('down'));
     const profile = await profileService.removeAvatar('u1');
     expect(profile.avatarUrl).toBeNull();
+  });
+
+  it('a phone-only account keeps a number, its own in the school', async () => {
+    db.user.findUnique.mockResolvedValue({ ...me, email: null, phone: '0555123456' });
+    await expect(profileService.update('u1', { phone: null })).rejects.toMatchObject({ statusCode: 400 });
+    vi.mocked(accountIdsWithPhone).mockResolvedValueOnce(['someone-else']);
+    await expect(profileService.update('u1', { phone: '0661 00 00 00' })).rejects.toMatchObject({ statusCode: 409 });
+    vi.mocked(accountIdsWithPhone).mockResolvedValueOnce(['u1']);
+    await expect(profileService.update('u1', { phone: '0555 12 34 56' })).resolves.toMatchObject({ phone: '0555 12 34 56' });
+    expect(db.user.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('never gives out the school id', async () => {
+    expect(await profileService.get('u1')).not.toHaveProperty('schoolId');
   });
 });

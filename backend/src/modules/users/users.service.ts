@@ -8,6 +8,7 @@ import type { UserRole, Language } from '@prisma/client';
 import type { CreateUserDirectlyInput } from './users.schema';
 import { authService } from '../auth/auth.service';
 import { getFrontendUrl } from '../../lib/frontend-url';
+import { accountIdsWithPhone } from '../../lib/phone-accounts';
 
 const INVITATION_EXPIRY_HOURS = 48;
 const BCRYPT_SALT_ROUNDS = 10;
@@ -451,7 +452,8 @@ export const usersService = {
   /** An admin emails a user a reset link instead: the admin never sees the password. */
   async sendResetLink(id: string, actor: ResetActor): Promise<{ email: string }> {
     const user = await this.findResettable(id, actor);
-    const sent = await authService.sendPasswordResetLink(user);
+    if (!user.email) throw new UserServiceError('This account has no email: give it a temporary password instead', 400);
+    const sent = await authService.sendPasswordResetLink({ ...user, email: user.email });
     if (!sent) throw new UserServiceError('The reset email could not be sent', 502);
     return { email: user.email };
   },
@@ -473,19 +475,24 @@ export const usersService = {
    * Used by super_admin (any school) and admin (their own school).
    */
   async createDirectly(schoolId: string, input: CreateUserDirectlyInput, db: DbClient = prisma) {
-    // Scoped to this school — the same email can already exist in a different school.
-    const existing = await db.user.findFirst({ where: { email: input.email, schoolId } });
-    if (existing) {
-      throw new UserServiceError('A user with this email already exists', 409);
-    }
+    if (input.email) {
+      // Scoped to this school — the same email can already exist in a different school.
+      const existing = await db.user.findFirst({ where: { email: input.email, schoolId } });
+      if (existing) {
+        throw new UserServiceError('A user with this email already exists', 409);
+      }
 
-    const deletedUser = await findRestorableUser(input.email, schoolId);
-    if (deletedUser) {
-      throw new UserServiceError(
-        'A previously removed user with this email exists in this school',
-        409,
-        { restorable: true, deletedUserId: deletedUser.id },
-      );
+      const deletedUser = await findRestorableUser(input.email, schoolId);
+      if (deletedUser) {
+        throw new UserServiceError(
+          'A previously removed user with this email exists in this school',
+          409,
+          { restorable: true, deletedUserId: deletedUser.id },
+        );
+      }
+    } else if (input.phone && (await accountIdsWithPhone(input.phone, schoolId, db)).length > 0) {
+      // Without an email the number is how this account signs in: it must point to it alone.
+      throw new UserServiceError('A user with this phone number already exists', 409);
     }
 
     // Each account its own first password, told once to whoever creates it.
@@ -497,7 +504,7 @@ export const usersService = {
         schoolId,
         firstName: input.firstName,
         lastName: input.lastName,
-        email: input.email,
+        email: input.email ?? null,
         passwordHash,
         role: input.role as UserRole,
         preferredLanguage: (input.preferredLanguage ?? 'fr') as Language,
@@ -525,6 +532,12 @@ export const usersService = {
 
     if (!user) {
       throw new UserServiceError('User not found', 404);
+    }
+
+    // Without an email the phone number is how this account signs in: it must stay its own.
+    if (!user.email && input.phone !== undefined) {
+      const others = (await accountIdsWithPhone(input.phone, user.schoolId ?? undefined)).filter((other) => other !== id);
+      if (others.length > 0) throw new UserServiceError('A user with this phone number already exists', 409);
     }
 
     const updated = await prisma.user.update({

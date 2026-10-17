@@ -164,7 +164,7 @@ export function StatementDocument({ data, language, compact = false }: { data: S
           <div className="text-[13px]">
             <p className="text-[12px] font-semibold uppercase tracking-wide text-[#6b7280] mb-1">{tr('family')}</p>
             {data.parents.map((p) => (
-              <p key={p.email}>
+              <p key={`${p.firstName} ${p.lastName} ${p.relationship}`}>
                 {p.firstName} {p.lastName}
                 {p.phone && <> · <bdi dir="ltr">{p.phone}</bdi></>}
               </p>

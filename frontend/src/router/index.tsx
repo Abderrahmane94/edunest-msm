@@ -280,7 +280,7 @@ function SidebarFooterContent() {
             <p className="text-caption font-medium text-text-primary truncate">
               {user.firstName} {user.lastName}
             </p>
-            <p className="text-micro text-text-secondary truncate">{user.email}</p>
+            <p className="text-micro text-text-secondary truncate" dir="ltr">{user.email || profile?.phone}</p>
           </div>
         </Link>
       )}

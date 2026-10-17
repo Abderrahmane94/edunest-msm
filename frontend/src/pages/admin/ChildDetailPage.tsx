@@ -211,7 +211,7 @@ export function ChildDetailPage() {
   const classroomOptions = (classrooms ?? []).map((c) => ({ value: c.id, label: c.name }));
   const parentOptions = parents
     .filter((p) => !(parentLinks ?? []).some((l: Record<string, unknown>) => l.parentUserId === p.id))
-    .map((p) => ({ value: p.id, label: `${p.first_name} ${p.last_name} (${p.email})` }));
+    .map((p) => ({ value: p.id, label: `${p.first_name} ${p.last_name} (${p.email || p.phone || '—'})` }));
 
   const hasAuthorizedPickup =
     (parentLinks ?? []).some((l: Record<string, unknown>) => l.canPickup !== false) ||

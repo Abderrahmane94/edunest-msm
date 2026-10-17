@@ -19,7 +19,7 @@ export interface EmployeeRecord {
   id: string;
   firstName: string;
   lastName: string;
-  email: string;
+  email: string | null;
   role: string;
   salary: EmployeeSalary | null;
   lastPayment: {

@@ -80,6 +80,10 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^Account is deactivated$/, 'accountDeactivated'],
   [/^School account is inactive$/, 'schoolInactive'],
   [/^A user with this email already exists$/, 'emailTaken'],
+  [/^A user with this phone number already exists$|^Another account already uses this phone number$/, 'phoneTaken'],
+  [/^An email or a phone number is required$/, 'emailOrPhoneRequired'],
+  [/^Your phone number is how you sign in/, 'phoneIsLogin'],
+  [/^This account has no email/, 'noEmailForLink'],
   [/^A previously removed user with this email exists in this school$/, 'emailTakenDeleted'],
   [/^Invalid email address$/, 'invalidEmail'],
 

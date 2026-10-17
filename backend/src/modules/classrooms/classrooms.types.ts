@@ -15,7 +15,7 @@ export interface ClassroomWithTeacher extends ClassroomResponse {
     id: string;
     firstName: string;
     lastName: string;
-    email: string;
+    email: string | null;
   } | null;
   room: {
     id: string;

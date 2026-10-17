@@ -150,7 +150,7 @@ export function ProfilePage() {
                   <Input id="phone" name="phone" type="tel" dir="ltr" value={form.phone} onChange={handleChange} maxLength={20} autoComplete="tel" />
                 </FormField>
                 <FormField label={t('myProfile.email')} htmlFor="email">
-                  <Input id="email" value={profile.email} readOnly disabled dir="ltr" />
+                  <Input id="email" value={profile.email ?? t('loginId.noEmail')} readOnly disabled dir={profile.email ? 'ltr' : undefined} />
                 </FormField>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-3 mt-2">

@@ -27,7 +27,7 @@ export function ResetPasswordDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: { id: string; first_name: string; last_name: string; email: string };
+  user: { id: string; first_name: string; last_name: string; email: string | null };
 }) {
   const { t } = useTranslation();
   const resetPassword = useResetUserPassword();
@@ -103,6 +103,8 @@ export function ResetPasswordDialog({
               </Button>
             </div>
 
+            {/* An account without an email signs in with its phone: no link to send. */}
+            {user.email && (
             <div className="border border-border rounded-lg p-4 space-y-2">
               <p className="text-body font-medium text-foreground flex items-center gap-2">
                 <Mail className="w-4 h-4 text-primary" />
@@ -115,6 +117,7 @@ export function ResetPasswordDialog({
                 {sendLink.isPending ? t('common.loading') : t('users.resetPassword.email.action')}
               </Button>
             </div>
+            )}
 
             <ErrorAlert message={error} />
           </div>

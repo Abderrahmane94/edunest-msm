@@ -40,7 +40,7 @@ export function NewAccountDialog() {
         <DialogHeader>
           <DialogTitle>{t('users.newAccount.title')}</DialogTitle>
           <DialogDescription>
-            {t('users.newAccount.description')} <span dir="ltr" className="font-medium">{account?.email}</span>
+            {t('users.newAccount.description')} <span dir="ltr" className="font-medium">{account?.login}</span>
           </DialogDescription>
         </DialogHeader>
         {account && (

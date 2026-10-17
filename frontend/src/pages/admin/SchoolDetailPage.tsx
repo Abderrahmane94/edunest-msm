@@ -1,4 +1,4 @@
-import { announceNewAccount, type NewAccount } from '@/lib/newAccount';
+import { announceNewAccount, type CreatedAccount } from '@/lib/newAccount';
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -51,7 +51,8 @@ interface SchoolUser {
   id: string;
   firstName: string;
   lastName: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   role: string;
   isActive: boolean;
   preferredLanguage: string;
@@ -73,8 +74,8 @@ function useSchoolUsers(schoolId: string) {
 function useCreateUserInSchool(schoolId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string }) => {
-      const res = await apiClient.post<NewAccount>(`/schools/${schoolId}/users`, data);
+    mutationFn: async (data: { firstName: string; lastName: string; email: string; phone: string; role: string; preferredLanguage: string }) => {
+      const res = await apiClient.post<CreatedAccount>(`/schools/${schoolId}/users`, data);
       if (!res.success) throw apiError(res.error, 'Failed to create user');
       announceNewAccount(res.data);
       return res.data;
@@ -277,7 +278,7 @@ function UsersTab({ schoolId }: { schoolId: string }) {
           </div>
           <div>
             <p className="text-body font-medium text-foreground">{u.firstName} {u.lastName}</p>
-            <p className="text-caption text-text-secondary">{u.email}</p>
+            <p className="text-caption text-text-secondary" dir="ltr">{u.email || u.phone}</p>
           </div>
         </div>
       ),
@@ -352,7 +353,7 @@ function CreateUserDialog({
 }: { open: boolean; onOpenChange: (v: boolean) => void; schoolId: string }) {
   const { t } = useTranslation();
   const createUser = useCreateUserInSchool(schoolId);
-  const emptyForm = { firstName: '', lastName: '', email: '', role: 'teacher', preferredLanguage: 'fr' };
+  const emptyForm = { firstName: '', lastName: '', email: '', phone: '', role: 'teacher', preferredLanguage: 'fr' };
   const [form, setForm] = React.useState(emptyForm);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
@@ -378,8 +379,13 @@ function CreateUserDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!form.firstName || !form.lastName || !form.email) {
+    if (!form.firstName || !form.lastName) {
       setError(t('schools.users.allFieldsRequired'));
+      return;
+    }
+    // One of the two: without an email, the person signs in with the phone number.
+    if (!form.email.trim() && !form.phone.trim()) {
+      setError(t('loginId.required'));
       return;
     }
     try {
@@ -408,9 +414,15 @@ function CreateUserDialog({
               <Input id="cu-last" name="lastName" value={form.lastName} onChange={handleChange} />
             </FormField>
           </div>
-          <FormField label={t('users.detail.email')} htmlFor="cu-email" required>
-            <Input id="cu-email" name="email" type="email" value={form.email} onChange={handleChange} placeholder="user@example.dz" />
-          </FormField>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+            <FormField label={t('users.detail.email')} htmlFor="cu-email">
+              <Input id="cu-email" name="email" type="email" dir="ltr" value={form.email} onChange={handleChange} placeholder="user@example.dz" />
+            </FormField>
+            <FormField label={t('loginId.phone')} htmlFor="cu-phone">
+              <Input id="cu-phone" name="phone" type="tel" dir="ltr" value={form.phone} onChange={handleChange} placeholder="0555 12 34 56" />
+            </FormField>
+          </div>
+          <p className="text-caption text-text-secondary mb-2">{t('loginId.hint')}</p>
           <p className="text-caption text-text-secondary mb-2">{t('users.create_form.defaultPasswordHint')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormSelect label={t('users.columns.role')} name="role" value={form.role} onChange={handleSelect} options={roleOptions} />

@@ -95,7 +95,7 @@ function parentPayload(p: ParentChoice): RegisterChildInput['parent'] {
     newParent: {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      email: email.trim(),
+      email: email.trim() || undefined,
       phone: phone.trim() || undefined,
     },
   };
@@ -307,11 +307,16 @@ function ParentStep({
 
   function handleNext() {
     if (newParentStarted(value)) {
-      if (!newParent.firstName.trim() || !newParent.lastName.trim() || !newParent.email.trim()) {
+      if (!newParent.firstName.trim() || !newParent.lastName.trim()) {
         setError(t('children.wizard.parent.newParentIncomplete'));
         return;
       }
-      if (!EMAIL_PATTERN.test(newParent.email.trim())) {
+      // One of the two: without an email, the parent signs in with the phone number.
+      if (!newParent.email.trim() && !newParent.phone.trim()) {
+        setError(t('loginId.required'));
+        return;
+      }
+      if (newParent.email.trim() && !EMAIL_PATTERN.test(newParent.email.trim())) {
         setError(t('children.wizard.parent.invalidEmail'));
         return;
       }
@@ -392,6 +397,7 @@ function ParentStep({
             <Input
               id="wz-parent-email"
               type="email"
+              dir="ltr"
               value={newParent.email}
               onChange={(e) => setNewParent('email', e.target.value)}
             />
@@ -400,10 +406,12 @@ function ParentStep({
             <Input
               id="wz-parent-phone"
               type="tel"
+              dir="ltr"
               value={newParent.phone}
               onChange={(e) => setNewParent('phone', e.target.value)}
             />
           </FormField>
+          <p className="text-caption text-text-secondary -mt-2 mb-3">{t('loginId.hint')}</p>
           <FormSelect
             label={t('children.linkParent.relationship')}
             name="relationship-new"
@@ -616,7 +624,7 @@ function SummaryStep({
           ) : 'newParent' in chosenParent ? (
             <p>
               {chosenParent.newParent.firstName} {chosenParent.newParent.lastName} ({relationshipLabel}) •{' '}
-              <span dir="ltr">{chosenParent.newParent.email}</span>{' '}
+              <span dir="ltr">{chosenParent.newParent.email || chosenParent.newParent.phone}</span>{' '}
               <span className="text-caption text-primary font-medium">{t('children.wizard.summary.newAccount')}</span>
             </p>
           ) : (

@@ -30,7 +30,7 @@ class SchoolsService {
   /**
    * Create a new school (super_admin only).
    */
-  async create(input: CreateSchoolInput): Promise<SchoolResponse & { director: { id: string; email: string; firstName: string; lastName: string; temporaryPassword: string } }> {
+  async create(input: CreateSchoolInput): Promise<SchoolResponse & { director: { id: string; email: string | null; phone: string | null; firstName: string; lastName: string; temporaryPassword: string } }> {
     // No pre-check needed: email is only unique per-school (see migration
     // 0011/0012), and this school doesn't exist yet, so the director's email
     // can't already be taken within it — the same person can direct multiple schools.
@@ -55,14 +55,15 @@ class SchoolsService {
           schoolId: newSchool.id,
           firstName: input.director.firstName,
           lastName: input.director.lastName,
-          email: input.director.email,
+          email: input.director.email ?? null,
+          phone: input.director.phone ?? null,
           passwordHash,
           role: 'admin',
           preferredLanguage: (input.director.preferredLanguage ?? 'fr') as any,
           isActive: true,
           mustChangePassword: true,
         },
-        select: { id: true, email: true, firstName: true, lastName: true },
+        select: { id: true, email: true, phone: true, firstName: true, lastName: true },
       });
 
       // Its office staff's default rights.

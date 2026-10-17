@@ -620,7 +620,7 @@ function EmployeesTab() {
 
   const filteredEmployees = (employees ?? []).filter((emp) => {
     const needle = search.trim().toLowerCase();
-    if (needle && !`${emp.firstName} ${emp.lastName} ${emp.email}`.toLowerCase().includes(needle)) return false;
+    if (needle && !`${emp.firstName} ${emp.lastName} ${emp.email ?? ''}`.toLowerCase().includes(needle)) return false;
     if (roleFilter && emp.role !== roleFilter) return false;
     if (salaryFilter === 'none' && emp.salary) return false;
     if (salaryFilter && salaryFilter !== 'none' && emp.salary?.salaryType !== salaryFilter) return false;

@@ -26,7 +26,7 @@ export class PlanningServiceError extends Error {
   }
 }
 
-const STAFF_ROLES = ['admin', 'administrative', 'teacher'] as const;
+const STAFF_ROLES = ['admin', 'administrative', 'teacher', 'staff'] as const;
 const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const day = (date: Date) => date.toISOString().slice(0, 10);
 const asDate = (value: string) => new Date(`${value}T00:00:00.000Z`);

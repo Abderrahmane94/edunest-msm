@@ -364,6 +364,7 @@ function CreateUserDialog({
     { value: 'administrative', label: t('users.roles.administrative') },
     { value: 'teacher', label: t('users.roles.teacher') },
     { value: 'parent', label: t('users.roles.parent') },
+    { value: 'staff', label: t('users.roles.staff') },
   ];
   const langOptions = [
     { value: 'fr', label: 'Français' },
@@ -385,12 +386,13 @@ function CreateUserDialog({
       return;
     }
     // One of the two: without an email, the person signs in with the phone number.
-    if (!form.email.trim() && !form.phone.trim()) {
+    if (form.role !== 'staff' && !form.email.trim() && !form.phone.trim()) {
       setError(t('loginId.required'));
       return;
     }
     try {
-      await createUser.mutateAsync(form);
+      // An employee without access to the app has no email to sign in with.
+      await createUser.mutateAsync(form.role === 'staff' ? { ...form, email: '' } : form);
       setSuccess(true);
       setForm(emptyForm);
       setTimeout(() => { setSuccess(false); onOpenChange(false); }, 2000);
@@ -423,7 +425,7 @@ function CreateUserDialog({
               <Input id="cu-phone" name="phone" type="tel" dir="ltr" value={form.phone} onChange={handleChange} placeholder="0555 12 34 56" />
             </FormField>
           </div>
-          <p className="text-caption text-text-secondary mb-2">{t('loginId.hint')}</p>
+          <p className="text-caption text-text-secondary mb-2">{t(form.role === 'staff' ? 'users.staffRoleHint' : 'loginId.hint')}</p>
           <p className="text-caption text-text-secondary mb-2">{t('users.create_form.defaultPasswordHint')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormSelect label={t('users.columns.role')} name="role" value={form.role} onChange={handleSelect} options={roleOptions} />

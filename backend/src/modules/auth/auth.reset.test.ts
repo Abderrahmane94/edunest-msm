@@ -156,7 +156,7 @@ describe('password reset', () => {
       await expect(authService.login({ email: 'FATIMA@school.dz', password: 'x' })).rejects.toThrow(AuthError);
 
       expect(mockPrisma.user.findMany).toHaveBeenCalledWith({
-        where: { email: { equals: 'FATIMA@school.dz', mode: 'insensitive' }, deletedAt: null },
+        where: { email: { equals: 'FATIMA@school.dz', mode: 'insensitive' }, deletedAt: null, role: { not: 'staff' } },
       });
     });
   });

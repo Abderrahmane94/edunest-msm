@@ -198,7 +198,8 @@ export const platformDashboardService = {
       prisma.child.groupBy({ by: ['schoolId'], where: { ...live, isActive: true }, _count: { _all: true } }),
       prisma.user.groupBy({
         by: ['schoolId'],
-        where: { ...live, isActive: true, role: { not: 'super_admin' } },
+        // The app's users: not the platform's, nor employees who never sign in.
+        where: { ...live, isActive: true, role: { notIn: ['super_admin', 'staff'] } },
         _count: { _all: true },
       }),
       prisma.user.groupBy({ by: ['schoolId'], where: { ...live }, _max: { lastActiveAt: true } }),

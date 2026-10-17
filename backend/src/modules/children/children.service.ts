@@ -64,7 +64,7 @@ class ChildrenService {
               tx,
             );
             parentUserId = user.id;
-            newParentAccount = { email: user.email, phone: user.phone, temporaryPassword: user.temporaryPassword };
+            newParentAccount = { email: user.email, phone: user.phone, temporaryPassword: user.temporaryPassword! }; // a parent: always one
           }
           await this.createParentLink(child.id, schoolId, { parentUserId: parentUserId!, relationship }, tx);
         }

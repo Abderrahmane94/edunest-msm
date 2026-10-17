@@ -19,7 +19,7 @@ export function StaffListPage() {
   const navigate = useNavigate();
   const [page, setPage] = React.useState(1);
   const [search, setSearch] = React.useState('');
-  const [roleFilter, setRoleFilter] = React.useState<'' | 'teacher' | 'admin' | 'administrative'>('');
+  const [roleFilter, setRoleFilter] = React.useState<'' | 'teacher' | 'admin' | 'administrative' | 'staff'>('');
   const [statusFilter, setStatusFilter] = React.useState<'' | 'active' | 'inactive'>('');
   const [contractFilter, setContractFilter] = React.useState<'' | ContractType>('');
   const [profileFilter, setProfileFilter] = React.useState<'' | 'with' | 'without'>('');
@@ -35,7 +35,7 @@ export function StaffListPage() {
 
   const rows = React.useMemo(() => {
     const profileByUserId = new Map((staffData?.profiles ?? []).map((p) => [p.user_id, p]));
-    const staffUsers = (usersData?.users ?? []).filter((u) => u.role === 'teacher' || u.role === 'admin' || u.role === 'administrative');
+    const staffUsers = (usersData?.users ?? []).filter((u) => u.role === 'teacher' || u.role === 'admin' || u.role === 'administrative' || u.role === 'staff');
     const combined: StaffRow[] = staffUsers.map((user) => ({ user, profile: profileByUserId.get(user.id) }));
 
     const q = search.trim().toLowerCase();
@@ -178,12 +178,13 @@ export function StaffListPage() {
           label={t('users.filters.role')}
           name="staff-filter-role"
           value={roleFilter}
-          onChange={(e) => filterSetter(setRoleFilter)(e.target.value as '' | 'teacher' | 'admin' | 'administrative')}
+          onChange={(e) => filterSetter(setRoleFilter)(e.target.value as '' | 'teacher' | 'admin' | 'administrative' | 'staff')}
           options={[
             { value: '', label: t('users.filters.allRoles') },
             { value: 'teacher', label: t('users.roles.teacher') },
             { value: 'admin', label: t('users.roles.admin') },
             { value: 'administrative', label: t('users.roles.administrative') },
+            { value: 'staff', label: t('users.roles.staff') },
           ]}
         />
         <FormSelect

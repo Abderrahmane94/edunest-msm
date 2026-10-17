@@ -93,12 +93,13 @@ function verifyRefreshToken(token: string): TokenPayload {
  */
 async function findAccounts(identifier: string) {
   const value = identifier.trim();
+  // Employees without access to the app (role staff) never sign in.
   if (isEmailIdentifier(value)) {
-    return prisma.user.findMany({ where: { email: { equals: value, mode: 'insensitive' }, deletedAt: null } });
+    return prisma.user.findMany({ where: { email: { equals: value, mode: 'insensitive' }, deletedAt: null, role: { not: 'staff' } } });
   }
   const ids = await accountIdsWithPhone(value);
   if (ids.length === 0) return [];
-  return prisma.user.findMany({ where: { id: { in: ids }, deletedAt: null } });
+  return prisma.user.findMany({ where: { id: { in: ids }, deletedAt: null, role: { not: 'staff' } } });
 }
 
 export const authService = {

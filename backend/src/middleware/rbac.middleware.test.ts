@@ -243,14 +243,15 @@ describe('rbac middleware', () => {
       expect(ROLE_HIERARCHY.parent).toBeGreaterThan(ROLE_HIERARCHY.student);
     });
 
-    it('should include all six roles', () => {
-      expect(Object.keys(ROLE_HIERARCHY)).toHaveLength(6);
+    it('should include all seven roles', () => {
+      expect(Object.keys(ROLE_HIERARCHY)).toHaveLength(7);
       expect(ROLE_HIERARCHY).toHaveProperty('super_admin');
       expect(ROLE_HIERARCHY).toHaveProperty('admin');
       expect(ROLE_HIERARCHY).toHaveProperty('administrative');
       expect(ROLE_HIERARCHY).toHaveProperty('teacher');
       expect(ROLE_HIERARCHY).toHaveProperty('parent');
       expect(ROLE_HIERARCHY).toHaveProperty('student');
+      expect(ROLE_HIERARCHY).toHaveProperty('staff');
     });
   });
 });

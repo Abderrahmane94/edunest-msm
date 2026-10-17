@@ -241,7 +241,7 @@ export const usersService = {
     search?: string,
     sortBy: string = 'createdAt',
     sortDir: 'asc' | 'desc' = 'desc',
-    filters: { role?: 'admin' | 'administrative' | 'teacher' | 'parent'; status?: 'active' | 'inactive' } = {},
+    filters: { role?: 'admin' | 'administrative' | 'teacher' | 'parent' | 'staff'; status?: 'active' | 'inactive' } = {},
   ) {
     const skip = (page - 1) * pageSize;
 
@@ -269,7 +269,7 @@ export const usersService = {
     // Per role for the same search and status: the list's role chips show them.
     // (groupBy is not covered by the client's soft-delete filter: removed accounts are left out here.)
     const byRole = await prisma.user.groupBy({ by: ['role'], where: { ...where, deletedAt: null }, _count: { _all: true } });
-    const roleCounts = { admin: 0, administrative: 0, teacher: 0, parent: 0 };
+    const roleCounts = { admin: 0, administrative: 0, teacher: 0, parent: 0, staff: 0 };
     for (const g of byRole) if (g.role in roleCounts) roleCounts[g.role as keyof typeof roleCounts] = g._count._all;
     if (filters.role) where.role = filters.role;
 
@@ -466,6 +466,7 @@ export const usersService = {
       where: actor.schoolId ? { id, schoolId: actor.schoolId } : { id },
     });
     if (!user) throw new UserServiceError('User not found', 404);
+    if (user.role === 'staff') throw new UserServiceError('This employee does not use the app: no password to give', 400);
     return user;
   },
 
@@ -475,6 +476,10 @@ export const usersService = {
    * Used by super_admin (any school) and admin (their own school).
    */
   async createDirectly(schoolId: string, input: CreateUserDirectlyInput, db: DbClient = prisma) {
+    // An employee without access to the app: no email, nothing to sign in with.
+    const isStaff = input.role === 'staff';
+    if (isStaff) input = { ...input, email: undefined };
+
     if (input.email) {
       // Scoped to this school — the same email can already exist in a different school.
       const existing = await db.user.findFirst({ where: { email: input.email, schoolId } });
@@ -490,7 +495,7 @@ export const usersService = {
           { restorable: true, deletedUserId: deletedUser.id },
         );
       }
-    } else if (input.phone && (await accountIdsWithPhone(input.phone, schoolId, db)).length > 0) {
+    } else if (!isStaff && input.phone && (await accountIdsWithPhone(input.phone, schoolId, db)).length > 0) {
       // Without an email the number is how this account signs in: it must point to it alone.
       throw new UserServiceError('A user with this phone number already exists', 409);
     }
@@ -509,7 +514,7 @@ export const usersService = {
         role: input.role as UserRole,
         preferredLanguage: (input.preferredLanguage ?? 'fr') as Language,
         isActive: true,
-        mustChangePassword: true,
+        mustChangePassword: !isStaff,
         phone: input.phone,
         address: input.address,
         nationalId: input.nationalId,
@@ -521,7 +526,8 @@ export const usersService = {
       },
     });
 
-    return { ...user, temporaryPassword: password };
+    // Nobody signs in to an employee's account: its password is never told.
+    return { ...user, temporaryPassword: isStaff ? null : password };
   },
 
   /**
@@ -535,7 +541,7 @@ export const usersService = {
     }
 
     // Without an email the phone number is how this account signs in: it must stay its own.
-    if (!user.email && input.phone !== undefined) {
+    if (!user.email && user.role !== 'staff' && input.phone !== undefined) {
       const others = (await accountIdsWithPhone(input.phone, user.schoolId ?? undefined)).filter((other) => other !== id);
       if (others.length > 0) throw new UserServiceError('A user with this phone number already exists', 409);
     }

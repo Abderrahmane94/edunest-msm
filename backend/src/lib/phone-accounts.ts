@@ -2,7 +2,8 @@ import prisma, { type DbClient } from './prisma';
 import { normalizePhone } from './phone';
 
 /**
- * The active accounts with this phone number, however each was written (see
+ * The active accounts with this phone number (employees who never sign in
+ * aside), however each was written (see
  * normalizePhone, which the SQL below repeats), in one school or in all.
  * Raw SQL: the comparison is on the cleaned-up number, which Prisma can't express.
  */
@@ -12,7 +13,7 @@ export async function accountIdsWithPhone(phone: string, schoolId?: string, db: 
   const rows = await db.$queryRaw<{ id: string }[]>`
     SELECT id FROM (
       SELECT id, school_id, regexp_replace(phone, '[^0-9]', '', 'g') AS d
-      FROM users WHERE deleted_at IS NULL AND phone IS NOT NULL
+      FROM users WHERE deleted_at IS NULL AND phone IS NOT NULL AND role <> 'staff'
     ) u
     WHERE (CASE
       WHEN d LIKE '00213%' THEN '0' || substr(d, 6)

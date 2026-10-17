@@ -84,7 +84,7 @@ class SubstitutionsService {
         );
         substituteId = user.id;
         newSubstitute = true;
-        temporaryPassword = user.temporaryPassword;
+        temporaryPassword = user.temporaryPassword!; // a teacher: always one
       }
       await this.check(tx, schoolId, classroom, substituteId, start, end, input.allowBusySubstitute);
       const substitution = await tx.substitution.create({

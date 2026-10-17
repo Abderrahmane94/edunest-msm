@@ -364,7 +364,7 @@ export const authService = {
     cutSessions(resetToken.userId);
   },
 
-  async changePassword(userId: string, newPassword: string, currentPassword?: string): Promise<{ accessToken: string }> {
+  async changePassword(userId: string, newPassword: string, currentPassword?: string): Promise<{ accessToken: string; refreshToken: string }> {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new AuthError('User not found', 404);
 
@@ -383,21 +383,29 @@ export const authService = {
       data: { passwordHash, mustChangePassword: false },
     });
 
-    // Invalidate all existing refresh tokens so the user re-authenticates with new password
-    await prisma.refreshToken.deleteMany({ where: { userId } });
-
-    // Issue a fresh access token with mustChangePassword cleared so the current
-    // session isn't immediately blocked by the mustChangePassword gate below.
-    const accessToken = generateAccessToken({
+    // Fresh tokens with mustChangePassword cleared, so the current session
+    // isn't immediately blocked by the mustChangePassword gate.
+    const tokenPayload: TokenPayload = {
       userId: user.id,
       schoolId: user.schoolId,
       role: user.role,
       mustChangePassword: false,
-    });
-    // Every other session of the account ends here; this one goes on with the new token.
+    };
+    const accessToken = generateAccessToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
+
+    // Every other device signs in again with the new password; this one goes
+    // on with its own new session (without it, it would end with the access
+    // token, 15 minutes later).
+    await prisma.$transaction([
+      prisma.refreshToken.deleteMany({ where: { userId } }),
+      prisma.refreshToken.create({ data: { userId, token: refreshToken, expiresAt } }),
+    ]);
     cutSessions(userId, accessToken);
 
-    return { accessToken };
+    return { accessToken, refreshToken };
   },
 
   verifyAccessToken,

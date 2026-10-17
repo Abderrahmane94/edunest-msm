@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Camera, Trash2, Upload } from 'lucide-react';
+import { Camera, KeyRound, Trash2, Upload } from 'lucide-react';
 import { Avatar, Button, ErrorAlert, Input, ListSkeleton, PageHeader, RoleBadge } from '@/components/ui';
 import { FormField } from '@/components/forms';
 import { useAuth } from '@/contexts/AuthContext';
 import { errorMessage } from '@/lib/errorMessage';
+import { apiClient, apiError } from '@/lib/api-client';
 import { useMyProfile, useRemoveMyAvatar, useUpdateMyProfile, useUploadMyAvatar } from '@/hooks/useMyProfile';
 
 /**
@@ -166,9 +167,86 @@ export function ProfilePage() {
               </div>
               <p className="text-caption text-text-secondary mt-4">{t('myProfile.emailHint')}</p>
             </form>
+
+            <PasswordSection />
           </>
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * A new password, on proof of the current one. The account's other devices
+ * are signed out; this one goes on with the new session the server gives.
+ */
+function PasswordSection() {
+  const { t } = useTranslation();
+  const { setTokens } = useAuth();
+  const [form, setForm] = React.useState({ current: '', next: '', confirm: '' });
+  const [problem, setProblem] = React.useState<string | null>(null);
+  const [done, setDone] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setDone(false);
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setProblem(null);
+    setDone(false);
+    if (form.next.length < 8) return setProblem(t('auth.changePassword.minLength'));
+    if (form.next !== form.confirm) return setProblem(t('auth.changePassword.mismatch'));
+    setBusy(true);
+    try {
+      const res = await apiClient.post<{ accessToken: string; refreshToken?: string }>('/users/change-password', {
+        currentPassword: form.current,
+        newPassword: form.next,
+      });
+      if (!res.success || !res.data) {
+        if (res.error?.message === 'Current password is incorrect') return setProblem(t('myProfile.wrongCurrentPassword'));
+        throw apiError(res.error, t('common.error'));
+      }
+      if (res.data.refreshToken) setTokens(res.data.accessToken, res.data.refreshToken);
+      else localStorage.setItem('access_token', res.data.accessToken);
+      setForm({ current: '', next: '', confirm: '' });
+      setDone(true);
+    } catch (err) {
+      setProblem(errorMessage(err, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-card border border-border rounded-lg p-6">
+      <h2 className="flex items-center gap-2 text-subsection font-semibold text-text-heading mb-1">
+        <KeyRound className="w-4 h-4 text-text-secondary" />
+        {t('myProfile.passwordTitle')}
+      </h2>
+      <p className="text-caption text-text-secondary mb-4">{t('myProfile.passwordHint')}</p>
+      {problem && <ErrorAlert message={problem} className="mb-4" />}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+        <div className="sm:col-span-2">
+          <FormField label={t('myProfile.currentPassword')} htmlFor="current" required>
+            <Input id="current" name="current" type="password" value={form.current} onChange={handleChange} required autoComplete="current-password" />
+          </FormField>
+        </div>
+        <FormField label={t('auth.changePassword.newPassword')} htmlFor="next" required>
+          <Input id="next" name="next" type="password" value={form.next} onChange={handleChange} required minLength={8} maxLength={128} autoComplete="new-password" placeholder={t('auth.changePassword.newPasswordPlaceholder')} />
+        </FormField>
+        <FormField label={t('auth.changePassword.confirmPassword')} htmlFor="confirm" required>
+          <Input id="confirm" name="confirm" type="password" value={form.confirm} onChange={handleChange} required autoComplete="new-password" />
+        </FormField>
+      </div>
+      <div className="flex items-center justify-end gap-3 mt-2">
+        {done && <span className="text-caption text-[var(--color-success-ink)]">{t('myProfile.passwordChanged')}</span>}
+        <Button type="submit" disabled={busy || !form.current || !form.next || !form.confirm}>
+          {busy ? t('myProfile.saving') : t('myProfile.changePassword')}
+        </Button>
+      </div>
+    </form>
   );
 }

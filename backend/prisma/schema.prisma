@@ -26,6 +26,9 @@ enum UserRole {
   teacher
   parent
   student
+  /// An employee who does not use the app (cleaning, kitchen, driver…): in
+  /// the staff list and the payroll, but cannot sign in.
+  staff
 }
 
 enum Language {

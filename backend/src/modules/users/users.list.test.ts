@@ -62,7 +62,7 @@ describe('usersService.list filters', () => {
       status: 'active',
     });
 
-    expect(roleCounts).toEqual({ admin: 0, administrative: 0, teacher: 4, parent: 12 });
+    expect(roleCounts).toEqual({ admin: 0, administrative: 0, teacher: 4, parent: 12, staff: 0 });
     // Removed accounts are left out explicitly: groupBy is not covered by the soft-delete filter.
     expect(mockPrisma.user.groupBy.mock.calls[0][0].where).toEqual({ schoolId: 'school-1', role: { not: 'super_admin' }, isActive: true, deletedAt: null });
   });

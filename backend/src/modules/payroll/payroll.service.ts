@@ -54,7 +54,7 @@ export const payrollService = {
     const users = await prisma.user.findMany({
       where: {
         schoolId,
-        role: { in: ['admin', 'administrative', 'teacher'] },
+        role: { in: ['admin', 'administrative', 'teacher', 'staff'] },
         deletedAt: null,
         isActive: true,
       },

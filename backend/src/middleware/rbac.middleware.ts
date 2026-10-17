@@ -12,6 +12,8 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
   administrative: 3.5,
   teacher: 3,
   parent: 2,
+  // Never signs in.
+  staff: 0,
   student: 1,
 };
 

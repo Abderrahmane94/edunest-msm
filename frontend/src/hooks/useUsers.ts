@@ -28,7 +28,7 @@ interface UsersParams {
   search?: string;
   sortColumn?: string;
   sortDirection?: 'asc' | 'desc';
-  role?: 'admin' | 'administrative' | 'teacher' | 'parent';
+  role?: 'admin' | 'administrative' | 'teacher' | 'parent' | 'staff';
   status?: 'active' | 'inactive';
 }
 
@@ -36,7 +36,7 @@ interface UsersResult {
   users: User[];
   total: number;
   /** Accounts per role for the same search and status, whatever the role shown. */
-  roleCounts?: Record<'admin' | 'administrative' | 'teacher' | 'parent', number>;
+  roleCounts?: Record<'admin' | 'administrative' | 'teacher' | 'parent' | 'staff', number>;
 }
 
 // The API returns camelCase fields; map them to the interface the UI expects

@@ -120,6 +120,7 @@ export function UserDetailPage() {
     { value: 'administrative', label: t('users.roles.administrative') },
     { value: 'teacher', label: t('users.roles.teacher') },
     { value: 'parent', label: t('users.roles.parent') },
+    { value: 'staff', label: t('users.roles.staff') },
   ];
 
   const languageOptions = [
@@ -291,7 +292,8 @@ export function UserDetailPage() {
           </Button>
 
           {/* One's own password is changed from the account menu, not reset here. */}
-          {user.id !== currentUser?.id && (
+          {/* An employee without access to the app has no password. */}
+          {user.id !== currentUser?.id && user.role !== 'staff' && (
             <Button type="button" variant="secondary" onClick={() => setResetOpen(true)}>
               <KeyRound className="w-4 h-4 text-primary" /> {t('users.resetPassword.button')}
             </Button>

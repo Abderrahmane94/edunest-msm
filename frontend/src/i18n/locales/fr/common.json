@@ -1002,6 +1002,7 @@
     }
   },
   "users": {
+    "staffRoleHint": "Femme de ménage, cuisinière, chauffeur… : apparaît dans le Personnel et la Paie, sans email, sans mot de passe, et ne peut pas se connecter.",
     "filters": {
       "role": "Rôle",
       "allRoles": "Tous les rôles",
@@ -1062,7 +1063,8 @@
       "admin": "Directeur",
       "administrative": "Agent administratif",
       "teacher": "Enseignant",
-      "parent": "Parent"
+      "parent": "Parent",
+      "staff": "Employé sans accès"
     },
     "notFound": "Utilisateur introuvable",
     "detail": {

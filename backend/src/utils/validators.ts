@@ -44,7 +44,7 @@ export const paginationSchema = z.object({
  */
 export const userListQuerySchema = paginationSchema.extend({
   search: z.string().max(100).optional(),
-  role: z.enum(['admin', 'administrative', 'teacher', 'parent']).optional(),
+  role: z.enum(['admin', 'administrative', 'teacher', 'parent', 'staff']).optional(),
   status: z.enum(['active', 'inactive']).optional(),
   sortBy: z.enum(['name', 'first_name', 'last_name', 'firstName', 'lastName', 'email', 'role', 'is_active', 'isActive', 'created_at', 'createdAt']).optional().default('createdAt'),
   sortDir: z.enum(['asc', 'desc']).optional().default('desc'),

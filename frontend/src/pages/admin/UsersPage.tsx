@@ -56,7 +56,7 @@ export function UsersPage() {
   const { t } = useTranslation();
   const [page, setPage] = React.useState(1);
   const [search, setSearch] = React.useState('');
-  const [roleFilter, setRoleFilter] = React.useState<'' | 'admin' | 'administrative' | 'teacher' | 'parent'>('');
+  const [roleFilter, setRoleFilter] = React.useState<'' | 'admin' | 'administrative' | 'teacher' | 'parent' | 'staff'>('');
   const [statusFilter, setStatusFilter] = React.useState<'' | 'active' | 'inactive'>('');
   const [sortColumn, setSortColumn] = React.useState<string>('created_at');
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('desc');
@@ -235,7 +235,7 @@ export function UsersPage() {
             }}
             options={[
               { value: '' as const, label: t('users.filters.allRoles'), count: roleCounts && Object.values(roleCounts).reduce((a, b) => a + b, 0) },
-              ...(['admin', 'administrative', 'teacher', 'parent'] as const).map((r) => ({ value: r, label: t(`users.roles.${r}`), count: roleCounts?.[r] })),
+              ...(['admin', 'administrative', 'teacher', 'parent', 'staff'] as const).map((r) => ({ value: r, label: t(`users.roles.${r}`), count: roleCounts?.[r] })),
             ]}
           />
         }

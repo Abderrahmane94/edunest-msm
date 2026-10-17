@@ -31,7 +31,7 @@ export const updateLanguageSchema = z.object({
 export const updateUserSchema = z.object({
   firstName: personNameSchema(100).optional(),
   lastName: personNameSchema(100).optional(),
-  role: z.enum(['admin', 'administrative', 'teacher', 'parent'], {
+  role: z.enum(['admin', 'administrative', 'teacher', 'parent', 'staff'], {
     errorMap: () => ({ message: 'Role must be admin, teacher, or parent' }),
   }).optional(),
   preferredLanguage: z.enum(['ar', 'fr']).optional(),
@@ -52,7 +52,8 @@ export const createUserDirectlySchema = z.object({
   firstName: personNameSchema(100),
   lastName: personNameSchema(100),
   email: optionalEmailSchema(),
-  role: z.enum(['admin', 'administrative', 'teacher', 'parent'], {
+  // staff: an employee who does not use the app (no email, no password).
+  role: z.enum(['admin', 'administrative', 'teacher', 'parent', 'staff'], {
     errorMap: () => ({ message: 'Role must be admin, teacher, or parent' }),
   }),
   preferredLanguage: z.enum(['ar', 'fr']).optional().default('fr'),
@@ -60,7 +61,7 @@ export const createUserDirectlySchema = z.object({
   phone: optionalPhoneSchema(20),
   address: z.string().trim().min(1).max(500).optional(),
   nationalId: z.string().trim().min(1).max(50).optional(),
-}).refine(EMAIL_OR_PHONE.check, EMAIL_OR_PHONE.message);
+}).refine((v) => v.role === 'staff' || EMAIL_OR_PHONE.check(v), EMAIL_OR_PHONE.message);
 
 export type CreateUserDirectlyInput = z.infer<typeof createUserDirectlySchema>;
 export type InviteUserInput = z.infer<typeof inviteUserSchema>;

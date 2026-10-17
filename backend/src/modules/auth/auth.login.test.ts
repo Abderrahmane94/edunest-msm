@@ -51,7 +51,7 @@ describe('login', () => {
     db.user.findMany.mockResolvedValue([account('u1', 's1', 'nadia@example.dz')]);
     await authService.login({ email: 'Nadia@example.dz', password: 'secret-123' });
     expect(byPhone).not.toHaveBeenCalled();
-    expect(db.user.findMany).toHaveBeenCalledWith({ where: { email: { equals: 'Nadia@example.dz', mode: 'insensitive' }, deletedAt: null } });
+    expect(db.user.findMany).toHaveBeenCalledWith({ where: { email: { equals: 'Nadia@example.dz', mode: 'insensitive' }, deletedAt: null, role: { not: 'staff' } } });
   });
 
   it('an unknown number is a wrong sign-in, like an unknown email', async () => {
@@ -70,5 +70,12 @@ describe('login', () => {
     byPhone.mockResolvedValue(['u1', 'u2']);
     db.user.findMany.mockResolvedValue([account('u1', 's1'), account('u2', 's1')]);
     await expect(authService.login({ email: '0555123456', password: 'secret-123' })).rejects.toMatchObject({ statusCode: 409 });
+  });
+
+  it('never signs in an employee without access to the app', async () => {
+    byPhone.mockResolvedValue(['u1']);
+    db.user.findMany.mockResolvedValue([]);
+    await expect(authService.login({ email: '0550000000', password: 'secret-123' })).rejects.toMatchObject({ statusCode: 401 });
+    expect(db.user.findMany).toHaveBeenCalledWith({ where: { id: { in: ['u1'] }, deletedAt: null, role: { not: 'staff' } } });
   });
 });

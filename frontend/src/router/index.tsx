@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { Link, Navigate, Outlet, useParams, useSearchParams, type RouteObject } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -54,6 +55,8 @@ const ParentNotificationsPage = lazyPage('parent', () => import('@/pages/parent/
 const ParentAnnouncementsPage = lazyPage('parent', () => import('@/pages/parent/ParentAnnouncementsPage').then((m) => m.ParentAnnouncementsPage));
 const ParentPaymentsPage = lazyPage('parent', () => import('@/pages/parent/ParentPaymentsPage').then((m) => m.ParentPaymentsPage));
 const ParentDocumentsPage = lazyPage('parent', () => import('@/pages/parent/ParentDocumentsPage').then((m) => m.ParentDocumentsPage));
+// Every role's: downloaded when opened, by whoever opens it.
+const ProfilePage = React.lazy(() => import('@/pages/ProfilePage').then((m) => ({ default: m.ProfilePage })));
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { AdminLayout, ParentLayout } from '@/components/layout';
 import { YearBanner, YearSwitcher } from '@/components/layout/YearSwitcher';
@@ -64,6 +67,7 @@ import { Avatar } from '@/components/ui';
 import type { NavItem } from '@/components/layout';
 import { useSchool } from '@/hooks/useSchool';
 import { useOfficeNavCounts, usePersonalNavCounts } from '@/hooks/useNavCounts';
+import { useMyProfile } from '@/hooks/useMyProfile';
 import {
   LayoutDashboard,
   Users,
@@ -261,19 +265,24 @@ function SidebarFooterContent() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const { requestLogout, dialog: logoutDialog } = useLogoutWithConfirm();
+  const { data: profile } = useMyProfile();
 
   return (
     <div className="space-y-2">
       {user && (
-        <div className="flex items-center gap-2 px-1 mb-2">
-          <Avatar name={`${user.firstName} ${user.lastName}`} size="sm" />
+        <Link
+          to={`${getDefaultPath(user.role)}/profile`}
+          className="flex items-center gap-2 px-1 py-1 mb-2 rounded-md hover:bg-subtle transition-colors duration-150 focus-visible:outline-none focus-visible:shadow-focus-ring"
+          title={t('myProfile.title')}
+        >
+          <Avatar src={profile?.avatarUrl} name={`${user.firstName} ${user.lastName}`} size="sm" />
           <div className="flex-1 min-w-0">
             <p className="text-caption font-medium text-text-primary truncate">
               {user.firstName} {user.lastName}
             </p>
             <p className="text-micro text-text-secondary truncate">{user.email}</p>
           </div>
-        </div>
+        </Link>
       )}
       <InstallAppButton />
       <LanguageSwitcher />
@@ -446,6 +455,7 @@ export const routes: RouteObject[] = [
             element: <AdminLayoutWrapper />,
             children: [
               { index: true, element: <DashboardPage /> },
+              { path: 'profile', element: <React.Suspense fallback={null}><ProfilePage /></React.Suspense> },
               // The platform's pages (super_admin) and the director's.
               {
                 element: <RoleRoute allowedRoles={['super_admin', 'admin']} />,
@@ -532,6 +542,7 @@ export const routes: RouteObject[] = [
               { path: 'planning', element: <TeacherPlanningPage /> },
               { path: 'messages', element: <TeacherMessagesPage /> },
               { path: 'announcements', element: <TeacherAnnouncementsPage /> },
+              { path: 'profile', element: <React.Suspense fallback={null}><ProfilePage /></React.Suspense> },
             ],
           },
         ],
@@ -552,6 +563,7 @@ export const routes: RouteObject[] = [
               { path: 'payments', element: <ParentPaymentsPage /> },
               { path: 'documents', element: <ParentDocumentsPage /> },
               { path: 'notifications', element: <ParentNotificationsPage /> },
+              { path: 'profile', element: <React.Suspense fallback={null}><ProfilePage /></React.Suspense> },
             ],
           },
         ],

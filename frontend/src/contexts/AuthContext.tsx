@@ -34,6 +34,8 @@ interface AuthContextValue extends AuthState {
   logout: () => Promise<void>;
   setTokens: (accessToken: string, refreshToken: string) => void;
   clearMustChangePassword: () => void;
+  /** After "Mon profil": the menu shows the new names. */
+  updateNames: (firstName: string, lastName: string) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -230,8 +232,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const updateNames = useCallback((firstName: string, lastName: string) => {
+    setState((prev) => {
+      if (!prev.user) return prev;
+      const updated = { ...prev.user, firstName, lastName };
+      localStorage.setItem('user', JSON.stringify(updated));
+      return { ...prev, user: updated };
+    });
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, setTokens, clearMustChangePassword }}>
+    <AuthContext.Provider value={{ ...state, login, logout, setTokens, clearMustChangePassword, updateNames }}>
       {children}
     </AuthContext.Provider>
   );

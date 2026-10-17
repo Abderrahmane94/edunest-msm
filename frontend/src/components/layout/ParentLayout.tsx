@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LogOut, Languages } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,8 @@ import { InstallAppButton } from '@/components/InstallAppButton';
 import { BottomTabBar } from './BottomTabBar';
 import { SchoolHeaderName } from './SchoolHeaderName';
 import { NavBadge, type NavItem } from './Sidebar';
+import { Avatar } from '@/components/ui';
+import { useMyProfile } from '@/hooks/useMyProfile';
 
 interface ParentLayoutProps {
   topBarContent?: React.ReactNode;
@@ -22,6 +24,7 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const { requestLogout, dialog: logoutDialog } = useLogoutWithConfirm();
+  const { data: profile } = useMyProfile();
 
   function toggleLanguage() {
     const newLang = i18n.language === 'ar' ? 'fr' : 'ar';
@@ -67,9 +70,15 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
           {/* Right: User actions */}
           <div className="flex items-center gap-1">
             {user && (
-              <span className="text-caption text-text-secondary hidden sm:inline me-2">
-                {user.firstName}
-              </span>
+              <Link
+                to="/parent/profile"
+                className="flex items-center gap-2 rounded-full p-0.5 sm:pe-2 me-1 hover:bg-subtle transition-colors duration-150 focus-visible:outline-none focus-visible:shadow-focus-ring"
+                aria-label={t('myProfile.title')}
+                title={t('myProfile.title')}
+              >
+                <Avatar src={profile?.avatarUrl} name={`${user.firstName} ${user.lastName}`} size="xs" />
+                <span className="text-caption text-text-secondary hidden sm:inline">{user.firstName}</span>
+              </Link>
             )}
             <OfflineStatus />
             <NotificationBell />

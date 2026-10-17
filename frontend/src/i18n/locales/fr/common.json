@@ -3863,5 +3863,24 @@
       "history": "Aucun paiement enregistré pour le moment.",
       "balances": "Aucun enfant lié à votre compte."
     }
+  },
+  "myProfile": {
+    "title": "Mon profil",
+    "description": "Votre photo, votre nom et votre téléphone.",
+    "addPhoto": "Ajouter une photo",
+    "changePhoto": "Changer la photo",
+    "removePhoto": "Retirer",
+    "uploading": "Envoi…",
+    "photoHint": "JPEG, PNG ou WebP, 5 Mo au plus.",
+    "photoTooLarge": "Cette photo dépasse 5 Mo.",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "phone": "Téléphone",
+    "email": "Adresse e-mail",
+    "role": "Rôle",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saved": "Profil enregistré",
+    "emailHint": "L'adresse e-mail sert à vous connecter : seule la direction de l'école peut la changer."
   }
 }

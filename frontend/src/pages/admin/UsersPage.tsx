@@ -20,7 +20,7 @@ import {
 } from '@/components/ui';
 import type { TFunction } from 'i18next';
 import type { Column } from '@/components/ui';
-import { CardGrid, ViewToggle, useListView } from '@/components/ui';
+import { CardGrid, ViewToggle, useListView, roleDetail } from '@/components/ui';
 
 import { avatarColor } from '@/components/ui/Avatar';
 import { FormSelect } from '@/components/forms';
@@ -120,7 +120,7 @@ export function UsersPage() {
       key: 'role',
       header: t('users.columns.role'),
       sortable: true,
-      render: (user) => <RoleBadge role={user.role} detail={user.role === 'administrative' ? user.access_profile?.name : null} />,
+      render: (user) => <RoleBadge role={user.role} detail={roleDetail(user.role, { accessProfile: user.access_profile?.name, position: user.position })} />,
     },
     {
       key: 'is_active',
@@ -282,7 +282,7 @@ export function UsersPage() {
                 </span>
               </span>
               <span className="flex flex-wrap items-center gap-1.5">
-                <RoleBadge role={user.role} detail={user.role === 'administrative' ? user.access_profile?.name : null} />
+                <RoleBadge role={user.role} detail={roleDetail(user.role, { accessProfile: user.access_profile?.name, position: user.position })} />
                 {!user.is_active && <StatusBadge variant="neutral">{t('users.inactive')}</StatusBadge>}
                 {user.phone && <span className="text-caption text-text-secondary" dir="ltr">{user.phone}</span>}
               </span>

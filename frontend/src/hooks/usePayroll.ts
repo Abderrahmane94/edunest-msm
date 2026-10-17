@@ -21,6 +21,8 @@ export interface EmployeeRecord {
   lastName: string;
   email: string | null;
   role: string;
+  /** The job written in the staff profile, if any. */
+  position?: string | null;
   salary: EmployeeSalary | null;
   lastPayment: {
     month: number;

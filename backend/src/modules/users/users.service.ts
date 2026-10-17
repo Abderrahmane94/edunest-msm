@@ -291,6 +291,7 @@ export const usersService = {
           createdAt: true,
           school: { select: { id: true, name: true } },
           accessProfile: { select: { id: true, name: true } },
+          staffProfile: { select: { position: true } },
         },
         orderBy: { [sortBy]: sortDir },
         skip,

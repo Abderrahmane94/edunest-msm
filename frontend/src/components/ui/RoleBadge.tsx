@@ -9,9 +9,17 @@ const ROLE_STYLES: Record<string, string> = {
 };
 
 /**
- * A user's role, in the same colours everywhere; office staff with their
- * administrative role after it ("Administratif · Comptable").
+ * What follows the role in its badge: the office role of the office staff
+ * ("Administratif · Comptable"), the job of an employee without access to
+ * the app ("Employé sans accès · Femme de ménage").
  */
+export function roleDetail(role: string, of: { accessProfile?: string | null; position?: string | null }): string | null {
+  if (role === 'administrative') return of.accessProfile ?? null;
+  if (role === 'staff') return of.position ?? null;
+  return null;
+}
+
+/** A user's role, in the same colours everywhere, with its detail after it (see roleDetail). */
 export function RoleBadge({ role, detail, className }: { role: string; detail?: string | null; className?: string }) {
   const { t } = useTranslation();
   return (

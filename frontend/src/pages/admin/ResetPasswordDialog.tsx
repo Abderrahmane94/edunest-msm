@@ -13,6 +13,7 @@ import {
   ErrorAlert,
 } from '@/components/ui';
 import { useResetUserPassword, useSendResetLink } from '@/hooks/useUsers';
+import { WhatsAppShareButton } from '@/components/WhatsAppShareButton';
 
 type Outcome = { kind: 'password'; password: string } | { kind: 'email'; email: string };
 
@@ -27,7 +28,7 @@ export function ResetPasswordDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: { id: string; first_name: string; last_name: string; email: string | null };
+  user: { id: string; first_name: string; last_name: string; email: string | null; phone?: string | null };
 }) {
   const { t } = useTranslation();
   const resetPassword = useResetUserPassword();
@@ -139,6 +140,13 @@ export function ResetPasswordDialog({
                 {copied ? t('users.resetPassword.copied') : t('users.resetPassword.copy')}
               </Button>
             </div>
+            <WhatsAppShareButton
+              phone={user.phone}
+              name={user.first_name}
+              login={user.email || user.phone || ''}
+              password={outcome.password}
+              className="w-full"
+            />
             <ul className="text-caption text-text-secondary list-disc ps-5 space-y-1">
               <li>{t('users.resetPassword.temporary.shownOnce')}</li>
               <li>{t('users.resetPassword.temporary.mustChange', { name })}</li>

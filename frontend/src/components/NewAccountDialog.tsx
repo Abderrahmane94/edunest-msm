@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Check, Copy } from 'lucide-react';
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui';
 import { onNewAccount, type NewAccount } from '@/lib/newAccount';
+import { WhatsAppShareButton } from '@/components/WhatsAppShareButton';
 
 /**
  * Shows, once, the temporary password of an account that was just created
@@ -58,6 +59,13 @@ export function NewAccountDialog() {
                 {copied ? t('users.resetPassword.copied') : t('users.resetPassword.copy')}
               </Button>
             </div>
+            <WhatsAppShareButton
+              phone={account.phone}
+              name={account.firstName}
+              login={account.login}
+              password={account.temporaryPassword}
+              className="w-full"
+            />
             <ul className="text-caption text-text-secondary list-disc ps-5 space-y-1">
               <li>{t('users.newAccount.shownOnce')}</li>
               <li>{t('users.newAccount.mustChange')}</li>

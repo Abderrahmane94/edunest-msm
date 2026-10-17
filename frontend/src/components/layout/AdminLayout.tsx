@@ -3,6 +3,9 @@ import * as React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CircleUserRound } from 'lucide-react';
+import { Avatar } from '@/components/ui';
+import { useAuth } from '@/contexts/AuthContext';
+import { useMyProfile } from '@/hooks/useMyProfile';
 import { Sidebar, type NavItem } from './Sidebar';
 import { PageContainer } from './PageContainer';
 import { BottomTabBar } from './BottomTabBar';
@@ -61,6 +64,8 @@ function MobileAccountMenu({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const { data: profile } = useMyProfile();
 
   React.useEffect(() => {
     if (!open) return;
@@ -87,12 +92,17 @@ function MobileAccountMenu({ children }: { children: React.ReactNode }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center justify-center w-9 h-9 rounded-md hover:bg-subtle text-text-secondary hover:text-text-primary transition-colors duration-150"
+        className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-subtle text-text-secondary hover:text-text-primary transition-colors duration-150 focus-visible:outline-none focus-visible:shadow-focus-ring"
         aria-label={t('common.account')}
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <CircleUserRound className="w-5 h-5" />
+        {/* Whose account: their photo, or their initials. */}
+        {user ? (
+          <Avatar src={profile?.avatarUrl} name={`${user.firstName} ${user.lastName}`} size="sm" />
+        ) : (
+          <CircleUserRound className="w-5 h-5" />
+        )}
       </button>
       {open && (
         <div className="absolute end-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-card border border-border rounded-lg shadow-level-4 p-3 z-50">

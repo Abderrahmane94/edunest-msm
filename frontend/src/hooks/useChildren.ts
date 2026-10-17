@@ -1,5 +1,5 @@
 import { everyPage, FULL_PAGE } from '@/lib/everyPage';
-import { announceNewAccount, type NewAccount } from '@/lib/newAccount';
+import { announceNewAccount, type CreatedAccount } from '@/lib/newAccount';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, apiError } from '@/lib/api-client';
 import { useYearScope } from './useSelectedYear';
@@ -375,7 +375,7 @@ export interface RegisterChildInput {
   };
   parent?:
     | { relationship: string; parentUserId: string }
-    | { relationship: string; newParent: { firstName: string; lastName: string; email: string; phone?: string } };
+    | { relationship: string; newParent: { firstName: string; lastName: string; email?: string; phone?: string } };
   emergencyContacts: Omit<EmergencyContact, 'id'>[];
   medicalNotes: { type: MedicalNoteType; title: string; details?: string | null; severity: MedicalNoteSeverity }[];
   classroomId?: string;
@@ -388,7 +388,7 @@ export function useRegisterChild() {
   return useMutation({
     mutationFn: async (data: RegisterChildInput): Promise<{ childId: string; billed: boolean }> => {
       const { child } = data;
-      const res = await apiClient.post<{ child: { id: string }; billing: unknown; newParentAccount: NewAccount | null }>('/children/register', {
+      const res = await apiClient.post<{ child: { id: string }; billing: unknown; newParentAccount: CreatedAccount | null }>('/children/register', {
         child: {
           firstName: child.first_name,
           lastName: child.last_name,

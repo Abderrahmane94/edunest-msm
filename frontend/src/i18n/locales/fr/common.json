@@ -703,6 +703,10 @@
       "accountDeactivated": "Ce compte est désactivé. Contactez l'administration de l'établissement.",
       "schoolInactive": "Le compte de cet établissement est désactivé.",
       "emailTaken": "Un utilisateur avec cette adresse e-mail existe déjà.",
+      "phoneTaken": "Un autre compte de l'école utilise déjà ce numéro de téléphone.",
+      "emailOrPhoneRequired": "Indiquez un email ou un numéro de téléphone.",
+      "phoneIsLogin": "Votre numéro de téléphone vous sert à vous connecter : vous pouvez le changer, pas le retirer.",
+      "noEmailForLink": "Ce compte n'a pas d'email : donnez-lui plutôt un mot de passe temporaire.",
       "emailTakenDeleted": "Un utilisateur supprimé avec cette adresse e-mail existe dans la corbeille : restaurez-le plutôt.",
       "invalidEmail": "Adresse e-mail invalide.",
       "userNotFound": "Utilisateur introuvable.",
@@ -1985,7 +1989,7 @@
         "description": "Liez un parent existant à cet enfant, ou créez-en un nouveau. Vous pouvez aussi passer cette étape et le faire plus tard.",
         "selectExisting": "Parent existant",
         "createNew": "Créer un nouveau parent",
-        "newParentIncomplete": "Veuillez renseigner le prénom, le nom et l'email du nouveau parent, ou laisser les champs vides pour passer cette étape.",
+        "newParentIncomplete": "Veuillez renseigner le prénom et le nom du nouveau parent, ou laisser les champs vides pour passer cette étape.",
         "invalidEmail": "L'email du nouveau parent n'est pas valide."
       },
       "classroom": {
@@ -3888,5 +3892,15 @@
     "wrongCurrentPassword": "Le mot de passe actuel est incorrect.",
     "changePassword": "Changer le mot de passe",
     "passwordChanged": "Mot de passe changé"
+  },
+  "loginId": {
+    "label": "Email ou numéro de téléphone",
+    "placeholder": "vous@exemple.com ou 0555 12 34 56",
+    "phone": "Téléphone",
+    "phoneShared": "Plusieurs comptes utilisent ce numéro : connectez-vous avec votre email.",
+    "required": "Indiquez un email ou un numéro de téléphone.",
+    "hint": "Un email ou un numéro de téléphone : sans email, la personne se connecte avec son numéro.",
+    "resetNoEmail": "Vous vous connectez avec votre numéro de téléphone ? Demandez un nouveau mot de passe à la direction de votre école.",
+    "noEmail": "Pas d'email : connexion avec le numéro de téléphone."
   }
 }

@@ -104,6 +104,9 @@ export function LoginPage() {
         if (msg.includes('deactivated')) {
           return { type: 'user', title: t('auth.userDeactivated'), hint: t('auth.userDeactivatedHint') };
         }
+        if (msg.includes('several accounts')) {
+          return { type: 'credentials', title: t('loginId.phoneShared') };
+        }
         if (msg.includes('inactive')) {
           return { type: 'school', title: t('auth.schoolInactive'), hint: t('auth.schoolInactiveHint') };
         }
@@ -209,19 +212,24 @@ export function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="login-email" className="text-label font-medium text-text-heading block mb-1.5">
-                {t('auth.email')}
+                {t('loginId.label')}
               </label>
               <div className="relative">
                 <Mail className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-disabled pointer-events-none" />
+                {/* An email, or the phone number of an account without one. */}
                 <input
                   id="login-email"
-                  type="email"
+                  type="text"
                   name="email"
+                  dir="ltr"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t('auth.emailPlaceholder')}
+                  placeholder={t('loginId.placeholder')}
                   required
-                  autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  autoComplete="username"
                   className="w-full h-11 ps-10 pe-4 rounded-lg border border-border bg-card text-foreground text-body placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition"
                 />
               </div>

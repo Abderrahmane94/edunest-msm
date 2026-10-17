@@ -11,13 +11,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSchoolsList } from '@/hooks/useSchools';
 import { useRestoreRecord } from '@/hooks/useTrash';
-import { announceNewAccount, type NewAccount } from '@/lib/newAccount';
+import { announceNewAccount, type CreatedAccount } from '@/lib/newAccount';
 
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string; address?: string; nationalId?: string }) => {
-      const res = await apiClient.post<NewAccount>('/users', data);
+    mutationFn: async (data: { firstName: string; lastName: string; email?: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string; address?: string; nationalId?: string }) => {
+      const res = await apiClient.post<CreatedAccount>('/users', data);
       if (!res.success) {
         throw new ApiRequestError(res.error ?? { code: 'UNKNOWN_ERROR', message: 'Failed to create user' });
       }
@@ -72,8 +72,9 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
     const newErrors: Record<string, string> = {};
     if (!form.firstName.trim()) newErrors.firstName = t('users.invite_form.firstNameRequired');
     if (!form.lastName.trim()) newErrors.lastName = t('users.invite_form.lastNameRequired');
-    if (!form.email.trim()) newErrors.email = t('users.invite_form.emailRequired');
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = t('users.invite_form.emailInvalid');
+    // One of the two: without an email, the person signs in with the phone number.
+    if (!form.email.trim() && !form.phone.trim()) newErrors.email = t('loginId.required');
+    else if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) newErrors.email = t('users.invite_form.emailInvalid');
     if (isSuperAdmin && !form.schoolId) newErrors.schoolId = t('users.create_form.schoolRequired');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -85,14 +86,14 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
     setCreateError(null);
     setRestorableUserId(null);
     try {
-      const payload: { firstName: string; lastName: string; email: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string; address?: string; nationalId?: string } = {
+      const payload: { firstName: string; lastName: string; email?: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string; address?: string; nationalId?: string } = {
         firstName: form.firstName,
         lastName: form.lastName,
-        email: form.email,
         role: form.role,
         preferredLanguage: form.preferredLanguage,
       };
       if (isSuperAdmin && form.schoolId) payload.schoolId = form.schoolId;
+      if (form.email.trim()) payload.email = form.email.trim();
       if (form.phone.trim()) payload.phone = form.phone.trim();
       if (form.address.trim()) payload.address = form.address.trim();
       if (form.nationalId.trim()) payload.nationalId = form.nationalId.trim();
@@ -166,13 +167,14 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
             </FormField>
           </div>
 
-          <FormField label={t('users.invite_form.email')} htmlFor="cu-email" error={errors.email} required>
-            <Input id="cu-email" name="email" type="email" value={form.email} onChange={handleChange} placeholder={t('users.invite_form.emailPlaceholder')} />
+          <FormField label={t('users.invite_form.email')} htmlFor="cu-email" error={errors.email}>
+            <Input id="cu-email" name="email" type="email" dir="ltr" value={form.email} onChange={handleChange} placeholder={t('users.invite_form.emailPlaceholder')} />
           </FormField>
 
           <FormField label={t('users.invite_form.phone')} htmlFor="cu-phone">
-            <Input id="cu-phone" name="phone" type="tel" value={form.phone} onChange={handleChange} placeholder={t('users.invite_form.phonePlaceholder')} />
+            <Input id="cu-phone" name="phone" type="tel" dir="ltr" value={form.phone} onChange={handleChange} placeholder={t('users.invite_form.phonePlaceholder')} />
           </FormField>
+          <p className="text-caption text-text-secondary -mt-2 mb-3">{t('loginId.hint')}</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <FormField label={t('users.invite_form.address')} htmlFor="cu-address">

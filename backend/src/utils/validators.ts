@@ -129,3 +129,17 @@ export const phoneSchema = (max = 20) =>
     .refine((value) => (value.match(/\d/g) ?? []).length >= 6, 'This phone number is not valid');
 
 export const END_BEFORE_START = 'The end date cannot be before the start date';
+
+/** An email that may be left empty ("" from a form counts as none). */
+export const optionalEmailSchema = () =>
+  z.preprocess((value) => (typeof value === 'string' && value.trim() === '' ? undefined : value), z.string().trim().email('Invalid email address').optional());
+
+/** A phone number that may be left empty. */
+export const optionalPhoneSchema = (max = 20) =>
+  z.preprocess((value) => (typeof value === 'string' && value.trim() === '' ? undefined : value), phoneSchema(max).optional());
+
+/** An account signs in with its email or its phone number: it needs one of them. */
+export const EMAIL_OR_PHONE = {
+  check: (v: { email?: string; phone?: string }) => !!v.email || !!v.phone,
+  message: { message: 'An email or a phone number is required', path: ['email'] },
+};

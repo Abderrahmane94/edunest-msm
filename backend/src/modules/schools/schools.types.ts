@@ -9,7 +9,9 @@ export interface CreateSchoolInput {
   director: {
     firstName: string;
     lastName: string;
-    email: string;
+    /** One of the two: the director signs in with the email, or the phone when there is none. */
+    email?: string;
+    phone?: string;
     preferredLanguage?: string;
   };
 }

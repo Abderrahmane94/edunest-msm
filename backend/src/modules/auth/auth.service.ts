@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import prisma from '../../lib/prisma';
 import { emailService } from '../../services/email.service';
+import { isEmailIdentifier } from '../../lib/phone';
+import { accountIdsWithPhone } from '../../lib/phone-accounts';
 import { cutSessions, keepToken } from '../../lib/session-cutoff';
 import { getFrontendUrl } from '../../lib/frontend-url';
 import type {
@@ -85,12 +87,23 @@ function verifyRefreshToken(token: string): TokenPayload {
   return jwt.verify(token, getRefreshSecret()) as TokenPayload;
 }
 
+/**
+ * The accounts one signs in to with this email (whatever its case: "Fatima@…"
+ * is "fatima@…") or phone number (however it is written, see normalizePhone).
+ */
+async function findAccounts(identifier: string) {
+  const value = identifier.trim();
+  if (isEmailIdentifier(value)) {
+    return prisma.user.findMany({ where: { email: { equals: value, mode: 'insensitive' }, deletedAt: null } });
+  }
+  const ids = await accountIdsWithPhone(value);
+  if (ids.length === 0) return [];
+  return prisma.user.findMany({ where: { id: { in: ids }, deletedAt: null } });
+}
+
 export const authService = {
   async login(input: LoginInput): Promise<LoginResponse | LoginChoiceRequired> {
-    // Emails match regardless of case: an account saved as "Fatima@…" signs in with "fatima@…".
-    const candidates = await prisma.user.findMany({
-      where: { email: { equals: input.email.trim(), mode: 'insensitive' }, deletedAt: null },
-    });
+    const candidates = await findAccounts(input.email);
 
     if (candidates.length === 0) {
       throw new AuthError('Invalid email or password', 401);
@@ -102,10 +115,22 @@ export const authService = {
         valid: await bcrypt.compare(input.password, candidate.passwordHash),
       })),
     );
-    const matches = passwordChecks.filter((c) => c.valid).map((c) => c.user);
+    let matches = passwordChecks.filter((c) => c.valid).map((c) => c.user);
 
     if (matches.length === 0) {
       throw new AuthError('Invalid email or password', 401);
+    }
+
+    // The school picked after a choiceRequired answer.
+    if (matches.length > 1 && input.schoolId !== undefined) {
+      const picked = matches.filter((m) => (m.schoolId ?? '') === input.schoolId);
+      if (picked.length > 0) matches = picked;
+    }
+
+    // Two accounts of one school share this phone number and password: no
+    // school to choose between, the email (or another number) must say which.
+    if (matches.length > 1 && new Set(matches.map((m) => m.schoolId)).size < matches.length) {
+      throw new AuthError('Several accounts use this phone number', 409);
     }
 
     if (matches.length > 1) {
@@ -282,7 +307,7 @@ export const authService = {
 
     for (const user of users) {
       // Tells the accounts apart when the email has several.
-      await authService.sendPasswordResetLink(user, users.length > 1 ? (user.school?.name ?? null) : null);
+      if (user.email) await authService.sendPasswordResetLink({ ...user, email: user.email }, users.length > 1 ? (user.school?.name ?? null) : null);
     }
     return users.length;
   },

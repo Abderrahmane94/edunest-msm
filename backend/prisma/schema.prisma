@@ -194,7 +194,7 @@ model User {
   // scoped per school, via a partial index (see migrations 0011 and 0012) —
   // the same email can belong to separate accounts in different schools,
   // and a soft-deleted user's email can be reused by a new/invited user.
-  email              String
+  email              String?
   passwordHash       String    @map("password_hash")
   role               UserRole
   /// Office staff (administrative): what they may do. The director needs none.

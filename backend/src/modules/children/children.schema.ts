@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { uuidSchema, isoDateSchema, birthDateSchema, personNameSchema, phoneSchema } from '../../utils/validators';
+import { uuidSchema, isoDateSchema, birthDateSchema, personNameSchema, optionalEmailSchema, optionalPhoneSchema, EMAIL_OR_PHONE } from '../../utils/validators';
 
 const bloodTypeSchema = z.enum(
   ['a_positive', 'a_negative', 'b_positive', 'b_negative', 'ab_positive', 'ab_negative', 'o_positive', 'o_negative'],
@@ -164,9 +164,11 @@ export const registerChildSchema = z.object({
         .object({
           firstName: personNameSchema(100),
           lastName: personNameSchema(100),
-          email: z.string().email('Invalid email address'),
-          phone: phoneSchema(20).optional(),
+          email: optionalEmailSchema(),
+          phone: optionalPhoneSchema(20),
         })
+        // Signs in with the email, or with the phone number when there is none.
+        .refine(EMAIL_OR_PHONE.check, EMAIL_OR_PHONE.message)
         .optional(),
     })
     .refine((p) => !!p.parentUserId !== !!p.newParent, {

@@ -27,7 +27,8 @@ export interface LoginChoiceRequired {
 
 export interface UserInfo {
   id: string;
-  email: string;
+  /** None for an account that signs in with its phone number. */
+  email: string | null;
   firstName: string;
   lastName: string;
   role: UserRole;

@@ -21,7 +21,7 @@ import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient, apiError } from '@/lib/api-client';
-import { announceNewAccount, type NewAccount } from '@/lib/newAccount';
+import { announceNewAccount, type CreatedAccount } from '@/lib/newAccount';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSchoolsList, type SchoolItem } from '@/hooks/useSchools';
 import { ErrorAlert, FilterBar, ListSkeleton, PageHeader, useConfirm, type ConfirmOptions } from '@/components/ui';
@@ -32,9 +32,9 @@ export function useCreateSchool() {
   return useMutation({
     mutationFn: async (data: {
       name: string; address: string; wilaya: string; contactEmail: string; contactPhone: string;
-      director: { firstName: string; lastName: string; email: string; preferredLanguage: string };
+      director: { firstName: string; lastName: string; email: string; phone: string; preferredLanguage: string };
     }) => {
-      const res = await apiClient.post<{ director?: NewAccount }>('/schools', data);
+      const res = await apiClient.post<{ director?: CreatedAccount }>('/schools', data);
       if (!res.success) throw apiError(res.error, 'Failed to create school');
       announceNewAccount(res.data?.director);
       return res.data;
@@ -270,7 +270,7 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
   const { t } = useTranslation();
   const createSchool = useCreateSchool();
   const emptySchool = { name: '', address: '', wilaya: '', contactEmail: '', contactPhone: '' };
-  const emptyDirector = { firstName: '', lastName: '', email: '', preferredLanguage: 'fr' };
+  const emptyDirector = { firstName: '', lastName: '', email: '', phone: '', preferredLanguage: 'fr' };
   const [formData, setFormData] = React.useState(emptySchool);
   const [director, setDirector] = React.useState(emptyDirector);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
@@ -308,7 +308,7 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
     if (!formData.contactPhone.trim()) newErrors.contactPhone = t('schools.form.phoneRequired');
     if (!director.firstName.trim()) newErrors.d_firstName = t('schools.form.director.firstNameRequired');
     if (!director.lastName.trim()) newErrors.d_lastName = t('schools.form.director.lastNameRequired');
-    if (!director.email.trim()) newErrors.d_email = t('schools.form.director.emailRequired');
+    if (!director.email.trim() && !director.phone.trim()) newErrors.d_email = t('loginId.required');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -374,9 +374,16 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
                 <Input id="d-last" name="lastName" value={director.lastName} onChange={handleDirectorChange} />
               </FormField>
             </div>
-            <FormField label={t('users.detail.email')} htmlFor="d-email" error={errors.d_email} required>
-              <Input id="d-email" name="email" type="email" value={director.email} onChange={handleDirectorChange} placeholder="directeur@ecole.dz" />
-            </FormField>
+            {/* One of the two: without an email, the director signs in with the phone number. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+              <FormField label={t('users.detail.email')} htmlFor="d-email" error={errors.d_email}>
+                <Input id="d-email" name="email" type="email" dir="ltr" value={director.email} onChange={handleDirectorChange} placeholder="directeur@ecole.dz" />
+              </FormField>
+              <FormField label={t('loginId.phone')} htmlFor="d-phone">
+                <Input id="d-phone" name="phone" type="tel" dir="ltr" value={director.phone} onChange={handleDirectorChange} placeholder="0555 12 34 56" />
+              </FormField>
+            </div>
+            <p className="text-caption text-text-secondary -mt-2 mb-3">{t('loginId.hint')}</p>
             <div className="flex items-center gap-2">
               <FormSelect label={t('users.columns.language')} name="preferredLanguage" value={director.preferredLanguage} onChange={handleDirectorSelectChange} options={langOptions} />
             </div>

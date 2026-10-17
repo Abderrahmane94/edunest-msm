@@ -57,7 +57,7 @@ export interface StatementDocument {
   school: { name: string; address: string; wilaya: string; contactPhone: string; contactEmail: string };
   year: { id: string; name: string; startDate: string; endDate: string };
   generatedOn: string;
-  parents: { firstName: string; lastName: string; email: string; phone: string | null; relationship: string }[];
+  parents: { firstName: string; lastName: string; email: string | null; phone: string | null; relationship: string }[];
   /** The child asked for first, then their brothers and sisters when the family is asked for. */
   statements: Statement[];
   /** Everything together, when there are several children. */

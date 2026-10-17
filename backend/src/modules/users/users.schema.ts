@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { personNameSchema, phoneSchema } from '../../utils/validators';
+import { personNameSchema, phoneSchema, optionalEmailSchema, optionalPhoneSchema, EMAIL_OR_PHONE } from '../../utils/validators';
 
 export const inviteUserSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -47,19 +47,20 @@ export const updateMyProfileSchema = z.object({
   phone: phoneSchema(20).nullable().optional(),
 });
 
+// Signs in with the email, or with the phone number when there is none.
 export const createUserDirectlySchema = z.object({
   firstName: personNameSchema(100),
   lastName: personNameSchema(100),
-  email: z.string().email('Invalid email address'),
+  email: optionalEmailSchema(),
   role: z.enum(['admin', 'administrative', 'teacher', 'parent'], {
     errorMap: () => ({ message: 'Role must be admin, teacher, or parent' }),
   }),
   preferredLanguage: z.enum(['ar', 'fr']).optional().default('fr'),
   schoolId: z.string().uuid('Invalid school ID').optional(), // only used when super_admin provides it
-  phone: phoneSchema(20).optional(),
+  phone: optionalPhoneSchema(20),
   address: z.string().trim().min(1).max(500).optional(),
   nationalId: z.string().trim().min(1).max(50).optional(),
-});
+}).refine(EMAIL_OR_PHONE.check, EMAIL_OR_PHONE.message);
 
 export type CreateUserDirectlyInput = z.infer<typeof createUserDirectlySchema>;
 export type InviteUserInput = z.infer<typeof inviteUserSchema>;

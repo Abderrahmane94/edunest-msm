@@ -111,7 +111,7 @@ export function UsersPage() {
             <p className="text-body font-medium text-foreground">
               {user.first_name} {user.last_name}
             </p>
-            <p className="text-caption text-text-secondary">{user.email}</p>
+            <p className="text-caption text-text-secondary" dir="ltr">{user.email || user.phone}</p>
           </div>
         </div>
       ),
@@ -278,7 +278,7 @@ export function UsersPage() {
                   <span className="block text-body-lg font-semibold text-text-heading [overflow-wrap:anywhere]">
                     {user.first_name} {user.last_name}
                   </span>
-                  <span className="block text-caption text-text-secondary [overflow-wrap:anywhere]" dir="ltr">{user.email}</span>
+                  <span className="block text-caption text-text-secondary [overflow-wrap:anywhere]" dir="ltr">{user.email || user.phone}</span>
                 </span>
               </span>
               <span className="flex flex-wrap items-center gap-1.5">

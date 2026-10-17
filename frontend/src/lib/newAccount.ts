@@ -3,16 +3,25 @@
  * password is shown once to whoever created it (see NewAccountDialog).
  */
 export interface NewAccount {
-  email: string;
+  /** What the account signs in with: its email, or its phone number when it has none. */
+  login: string;
   temporaryPassword: string;
+}
+
+/** What the server answers when it creates an account. */
+export interface CreatedAccount {
+  email?: string | null;
+  phone?: string | null;
+  temporaryPassword?: string;
 }
 
 type Listener = (account: NewAccount) => void;
 const listeners = new Set<Listener>();
 
-export function announceNewAccount(account: Partial<NewAccount> | null | undefined): void {
-  if (!account?.email || !account.temporaryPassword) return;
-  for (const listener of listeners) listener({ email: account.email, temporaryPassword: account.temporaryPassword });
+export function announceNewAccount(account: CreatedAccount | null | undefined): void {
+  const login = account?.email || account?.phone;
+  if (!login || !account?.temporaryPassword) return;
+  for (const listener of listeners) listener({ login, temporaryPassword: account.temporaryPassword });
 }
 
 export function onNewAccount(listener: Listener): () => void {

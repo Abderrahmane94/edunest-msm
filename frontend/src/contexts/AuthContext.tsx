@@ -5,7 +5,8 @@ import { setMonitoredUser } from '@/lib/monitoring';
 
 interface User {
   id: string;
-  email: string;
+  /** None for an account that signs in with its phone number. */
+  email: string | null;
   firstName: string;
   lastName: string;
   role: 'super_admin' | 'admin' | 'administrative' | 'teacher' | 'parent';
@@ -130,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshToken: string;
         user: {
           id: string;
-          email: string;
+          email: string | null;
           firstName: string;
           lastName: string;
           role: User['role'];

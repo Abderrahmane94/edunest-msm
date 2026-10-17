@@ -48,7 +48,7 @@ export interface StatementDocumentData {
   school: { name: string; address: string; wilaya: string; contactPhone: string; contactEmail: string };
   year: { id: string; name: string; startDate: string; endDate: string };
   generatedOn: string;
-  parents: { firstName: string; lastName: string; email: string; phone: string | null; relationship: string }[];
+  parents: { firstName: string; lastName: string; email: string | null; phone: string | null; relationship: string }[];
   statements: Statement[];
   totals: StatementTotals;
   hasSiblings: boolean;

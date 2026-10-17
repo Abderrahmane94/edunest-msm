@@ -4,7 +4,7 @@ import { apiClient, ApiRequestError, apiError } from '@/lib/api-client';
 
 export interface User {
   id: string;
-  email: string;
+  email: string | null;
   first_name: string;
   last_name: string;
   role: string;

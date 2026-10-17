@@ -92,6 +92,9 @@ export function ResetPasswordRequestPage() {
           </Button>
         </form>
 
+        {/* No email to send a link to: the office gives a temporary password. */}
+        <p className="mt-4 text-caption text-text-secondary text-center">{t('loginId.resetNoEmail')}</p>
+
         <div className="mt-4 text-center">
           <Link
             to="/login"

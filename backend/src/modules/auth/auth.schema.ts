@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  /** The email or the phone number (the name stays for the apps already installed). */
+  email: z.string().trim().min(1, 'Email or phone number is required').max(254),
   password: z.string().min(1, 'Password is required'),
   // Only required when the email+password combination matches accounts in
   // more than one school; the client resubmits with this set once the user

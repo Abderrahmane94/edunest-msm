@@ -53,6 +53,7 @@ interface SchoolUser {
   lastName: string;
   email: string | null;
   phone: string | null;
+  accessProfile?: { id: string; name: string } | null;
   role: string;
   isActive: boolean;
   preferredLanguage: string;
@@ -286,7 +287,7 @@ function UsersTab({ schoolId }: { schoolId: string }) {
     {
       key: 'role',
       header: t('users.columns.role'),
-      render: (u) => <RoleBadge role={u.role} />,
+      render: (u) => <RoleBadge role={u.role} detail={u.role === 'administrative' ? u.accessProfile?.name : null} />,
     },
     {
       key: 'isActive',

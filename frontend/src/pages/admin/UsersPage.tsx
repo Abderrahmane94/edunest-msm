@@ -120,7 +120,7 @@ export function UsersPage() {
       key: 'role',
       header: t('users.columns.role'),
       sortable: true,
-      render: (user) => <RoleBadge role={user.role} />,
+      render: (user) => <RoleBadge role={user.role} detail={user.role === 'administrative' ? user.access_profile?.name : null} />,
     },
     {
       key: 'is_active',
@@ -282,7 +282,7 @@ export function UsersPage() {
                 </span>
               </span>
               <span className="flex flex-wrap items-center gap-1.5">
-                <RoleBadge role={user.role} />
+                <RoleBadge role={user.role} detail={user.role === 'administrative' ? user.access_profile?.name : null} />
                 {!user.is_active && <StatusBadge variant="neutral">{t('users.inactive')}</StatusBadge>}
                 {user.phone && <span className="text-caption text-text-secondary" dir="ltr">{user.phone}</span>}
               </span>

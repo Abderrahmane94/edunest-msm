@@ -110,7 +110,7 @@ export function StaffListPage() {
     {
       key: 'role',
       header: t('staff.columns.role'),
-      render: (row) => <RoleBadge role={row.user.role} />,
+      render: (row) => <RoleBadge role={row.user.role} detail={row.user.role === 'administrative' ? row.user.access_profile?.name : null} />,
     },
     {
       key: 'position',
@@ -259,7 +259,7 @@ export function StaffListPage() {
                 </span>
               </span>
               <span className="flex flex-wrap items-center gap-1.5">
-                <RoleBadge role={row.user.role} />
+                <RoleBadge role={row.user.role} detail={row.user.role === 'administrative' ? row.user.access_profile?.name : null} />
                 {!row.user.is_active && <StatusBadge variant="neutral">{t('users.inactive')}</StatusBadge>}
                 {row.profile && <StatusBadge variant="info">{t(`staff.contractTypes.${row.profile.contract_type}`)}</StatusBadge>}
               </span>

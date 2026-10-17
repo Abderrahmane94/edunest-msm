@@ -225,7 +225,7 @@ export function AccessProfilesSection() {
     <div className="space-y-4">
       <SectionHeader
         title={t('accessProfiles.title')}
-        description={t('accessProfiles.description')}
+        description={t('accessProfiles.sectionDescription')}
         actions={
           <div className="flex gap-2">
             <Button type="button" variant="secondary" onClick={() => setJournalOpen(true)}>

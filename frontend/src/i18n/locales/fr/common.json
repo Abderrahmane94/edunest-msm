@@ -1182,6 +1182,7 @@
       "marker": "✱ : droits ajustés par une exception (voir sa fiche)."
     },
     "title": "Profils et droits",
+    "sectionDescription": "Ce que chaque profil du personnel de bureau peut voir et faire. Le directeur a tous les droits.",
     "description": "Description",
     "create": "Nouveau profil",
     "createTitle": "Nouveau profil",

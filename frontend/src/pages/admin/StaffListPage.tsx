@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '@/lib/formatters';
-import { CardGrid, DataTable, FilterBar, ListSkeleton, PageHeader, RoleBadge, StatusBadge, ViewToggle, useListView } from '@/components/ui';
+import { CardGrid, DataTable, FilterBar, ListSkeleton, PageHeader, RoleBadge, roleDetail, StatusBadge, ViewToggle, useListView } from '@/components/ui';
 import { avatarColor } from '@/components/ui/Avatar';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
@@ -110,7 +110,7 @@ export function StaffListPage() {
     {
       key: 'role',
       header: t('staff.columns.role'),
-      render: (row) => <RoleBadge role={row.user.role} detail={row.user.role === 'administrative' ? row.user.access_profile?.name : null} />,
+      render: (row) => <RoleBadge role={row.user.role} detail={roleDetail(row.user.role, { accessProfile: row.user.access_profile?.name, position: row.profile?.position ?? row.user.position })} />,
     },
     {
       key: 'position',
@@ -260,7 +260,7 @@ export function StaffListPage() {
                 </span>
               </span>
               <span className="flex flex-wrap items-center gap-1.5">
-                <RoleBadge role={row.user.role} detail={row.user.role === 'administrative' ? row.user.access_profile?.name : null} />
+                <RoleBadge role={row.user.role} detail={roleDetail(row.user.role, { accessProfile: row.user.access_profile?.name, position: row.profile?.position ?? row.user.position })} />
                 {!row.user.is_active && <StatusBadge variant="neutral">{t('users.inactive')}</StatusBadge>}
                 {row.profile && <StatusBadge variant="info">{t(`staff.contractTypes.${row.profile.contract_type}`)}</StatusBadge>}
               </span>

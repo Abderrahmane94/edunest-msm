@@ -27,7 +27,7 @@ export { FilterChips, type FilterChip, type FilterChipsProps } from './FilterChi
 export { SearchInput, type SearchInputProps } from './SearchInput';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { ListSkeleton } from './ListSkeleton';
-export { RoleBadge } from './RoleBadge';
+export { RoleBadge, roleDetail } from './RoleBadge';
 export { DangerZone } from './DangerZone';
 export { SectionHeader } from './SectionHeader';
 export { useConfirm, type ConfirmOptions } from './ConfirmDialog';

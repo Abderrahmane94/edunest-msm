@@ -33,7 +33,7 @@ import {
   type EmployeeRecord,
   type SalaryPayment,
 } from '@/hooks/usePayroll';
-import { FilterBar, PageHeader, RoleBadge, Tabs } from '@/components/ui';
+import { FilterBar, PageHeader, RoleBadge, Tabs, roleDetail } from '@/components/ui';
 import { useTabParam } from '@/hooks/useTabParam';
 import { useYearClosed } from '@/hooks/useSelectedYear';
 import { usePermissions } from '@/lib/roles';
@@ -654,7 +654,7 @@ function EmployeesTab() {
       key: 'role',
       header: t('payroll.columns.role'),
       render: (emp) => (
-        <RoleBadge role={emp.role} />
+        <RoleBadge role={emp.role} detail={roleDetail(emp.role, { position: emp.position })} />
       ),
     },
     {

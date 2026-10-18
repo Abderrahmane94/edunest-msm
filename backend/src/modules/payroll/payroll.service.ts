@@ -60,6 +60,7 @@ export const payrollService = {
       },
       include: {
         employeeSalary: true,
+        staffProfile: { select: { position: true } },
         salaryPayments: {
           where: { deletedAt: null, schoolId },
           orderBy: [{ year: 'desc' }, { month: 'desc' }],
@@ -75,6 +76,8 @@ export const payrollService = {
       lastName: u.lastName,
       email: u.email,
       role: u.role,
+      // The job ("Femme de ménage"), from the staff profile when there is one.
+      position: u.staffProfile?.position ?? null,
       salary: u.employeeSalary
         ? {
             salaryType: u.employeeSalary.salaryType as 'fixed' | 'per_student',

@@ -16,12 +16,13 @@ import { announceNewAccount, type CreatedAccount } from '@/lib/newAccount';
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { firstName: string; lastName: string; email?: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string; address?: string; nationalId?: string }) => {
+    // schoolName: the school picked by a super admin, for the message that sends the access.
+    mutationFn: async ({ schoolName, ...data }: { firstName: string; lastName: string; email?: string; role: string; preferredLanguage: string; schoolId?: string; phone?: string; address?: string; nationalId?: string; schoolName?: string }) => {
       const res = await apiClient.post<CreatedAccount>('/users', data);
       if (!res.success) {
         throw new ApiRequestError(res.error ?? { code: 'UNKNOWN_ERROR', message: 'Failed to create user' });
       }
-      announceNewAccount(res.data);
+      announceNewAccount(res.data, { role: data.role, schoolName });
       return res.data;
     },
     onSuccess: () => {
@@ -99,7 +100,8 @@ export function InviteUserDialog({ open, onOpenChange }: InviteUserDialogProps) 
       if (form.phone.trim()) payload.phone = form.phone.trim();
       if (form.address.trim()) payload.address = form.address.trim();
       if (form.nationalId.trim()) payload.nationalId = form.nationalId.trim();
-      await createUser.mutateAsync(payload);
+      const schoolName = isSuperAdmin ? schools?.find((s) => s.id === form.schoolId)?.name : undefined;
+      await createUser.mutateAsync({ ...payload, schoolName });
       resetForm();
       onOpenChange(false);
     } catch (err) {

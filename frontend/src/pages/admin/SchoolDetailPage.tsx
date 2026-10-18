@@ -72,13 +72,13 @@ function useSchoolUsers(schoolId: string) {
   });
 }
 
-function useCreateUserInSchool(schoolId: string) {
+function useCreateUserInSchool(schoolId: string, schoolName?: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { firstName: string; lastName: string; email: string; phone: string; role: string; preferredLanguage: string }) => {
       const res = await apiClient.post<CreatedAccount>(`/schools/${schoolId}/users`, data);
       if (!res.success) throw apiError(res.error, 'Failed to create user');
-      announceNewAccount(res.data);
+      announceNewAccount(res.data, { role: data.role, schoolName });
       return res.data;
     },
     onSuccess: () => {
@@ -266,6 +266,7 @@ function UsersTab({ schoolId }: { schoolId: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: users, isLoading } = useSchoolUsers(schoolId);
+  const { data: school } = useSchoolDetail(schoolId);
   const [inviteOpen, setInviteOpen] = React.useState(false);
 
   const columns: Column<SchoolUser>[] = [
@@ -342,7 +343,7 @@ function UsersTab({ schoolId }: { schoolId: string }) {
         />
       )}
 
-      <CreateUserDialog open={inviteOpen} onOpenChange={setInviteOpen} schoolId={schoolId} />
+      <CreateUserDialog open={inviteOpen} onOpenChange={setInviteOpen} schoolId={schoolId} schoolName={school?.name} />
     </div>
   );
 }
@@ -350,10 +351,10 @@ function UsersTab({ schoolId }: { schoolId: string }) {
 /* ─── Create User Dialog (super_admin) ─── */
 
 function CreateUserDialog({
-  open, onOpenChange, schoolId,
-}: { open: boolean; onOpenChange: (v: boolean) => void; schoolId: string }) {
+  open, onOpenChange, schoolId, schoolName,
+}: { open: boolean; onOpenChange: (v: boolean) => void; schoolId: string; schoolName?: string }) {
   const { t } = useTranslation();
-  const createUser = useCreateUserInSchool(schoolId);
+  const createUser = useCreateUserInSchool(schoolId, schoolName);
   const emptyForm = { firstName: '', lastName: '', email: '', phone: '', role: 'teacher', preferredLanguage: 'fr' };
   const [form, setForm] = React.useState(emptyForm);
   const [error, setError] = React.useState<string | null>(null);

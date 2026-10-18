@@ -3908,6 +3908,25 @@
   },
   "whatsapp": {
     "send": "Envoyer par WhatsApp",
-    "access": "Bonjour{{name}}, voici votre accès à Kiddoo :\n{{url}}\nIdentifiant : {{login}}\nMot de passe temporaire : {{password}}\nVous choisirez votre propre mot de passe à la première connexion."
+    "msg": {
+      "greeting": "Bonjour {{name}} 👋",
+      "greetingNoName": "Bonjour 👋",
+      "intro": {
+        "parent": "*{{school}}* vous ouvre votre espace parent sur *Kiddoo* : présences de votre enfant, messages, annonces et paiements, depuis votre téléphone.",
+        "teacher": "*{{school}}* vous a créé un compte sur *Kiddoo* : faites l'appel, rédigez les comptes rendus et échangez avec les parents, depuis votre téléphone.",
+        "admin": "Votre établissement *{{school}}* est prêt sur *Kiddoo* : enfants, équipe, paiements et communication avec les parents, tout au même endroit.",
+        "administrative": "*{{school}}* vous a créé un compte sur *Kiddoo* pour le travail administratif.",
+        "other": "Un compte a été créé pour vous sur *Kiddoo*."
+      },
+      "reset": "Voici un nouveau mot de passe temporaire pour votre compte *Kiddoo*.",
+      "link": "🔗 Lien : {{url}}",
+      "login": "👤 Identifiant : *{{login}}*",
+      "password": "🔑 Mot de passe temporaire : *{{password}}*",
+      "firstLogin": "À la connexion, vous choisirez votre propre mot de passe.",
+      "homeScreen": "📱 Astuce : ajoutez Kiddoo à l'écran d'accueil de votre téléphone pour l'ouvrir comme une application.",
+      "private": "🔒 Ce message est personnel : ne le transférez à personne.",
+      "reply": "Une question ? Répondez simplement à ce message.",
+      "team": "L'équipe Kiddoo"
+    }
   }
 }

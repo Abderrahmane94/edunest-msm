@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { MessageCircle } from 'lucide-react';
 import { buttonVariants } from '@/components/ui';
-import { whatsappLink } from '@/lib/whatsapp';
+import { accessMessage, whatsappLink } from '@/lib/whatsapp';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSchoolBrand } from '@/hooks/useSchool';
 import { cn } from '@/lib/utils';
 
 /**
@@ -9,21 +11,35 @@ import { cn } from '@/lib/utils';
  * sender's own WhatsApp: the chat opens with the message written.
  */
 export function WhatsAppShareButton({
+  kind = 'new',
   phone,
   name,
+  role,
+  schoolName,
   login,
   password,
   className,
 }: {
+  /** A new account, or a new temporary password for an existing one. */
+  kind?: 'new' | 'reset';
   phone?: string | null;
   name?: string | null;
+  role?: string;
+  /** Defaults to the sender's own school. */
+  schoolName?: string;
   login: string;
   password: string;
   className?: string;
 }) {
   const { t } = useTranslation();
-  const text = t('whatsapp.access', {
-    name: name ? ` ${name}` : '',
+  const { user } = useAuth();
+  const { data: brand } = useSchoolBrand();
+  const text = accessMessage(t, {
+    kind,
+    name,
+    role,
+    school: schoolName ?? brand?.name,
+    sender: user && user.role !== 'super_admin' ? `${user.firstName} ${user.lastName}` : null,
     url: window.location.origin,
     login,
     password,

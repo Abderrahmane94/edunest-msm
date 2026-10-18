@@ -143,7 +143,7 @@ export function SubstitutionDialog({
           allowBusySubstitute,
         });
         if (res.newSubstitute) {
-          announceNewAccount({ email: newSub.email.trim(), temporaryPassword: res.temporaryPassword ?? undefined });
+          announceNewAccount({ email: newSub.email.trim(), temporaryPassword: res.temporaryPassword ?? undefined }, { role: 'teacher' });
           setCreated({ newSubstitute: true, email: newSub.email.trim() });
         }
         else onOpenChange(false);

@@ -9,6 +9,10 @@ export interface NewAccount {
   /** To send it by WhatsApp. */
   phone?: string | null;
   firstName?: string;
+  /** To word the WhatsApp message for a parent, a teacher, a director… */
+  role?: string;
+  /** The school the account belongs to, when it is not the sender's own (a super admin creating it). */
+  schoolName?: string;
 }
 
 /** What the server answers when it creates an account. */
@@ -16,17 +20,22 @@ export interface CreatedAccount {
   firstName?: string;
   email?: string | null;
   phone?: string | null;
+  role?: string;
   temporaryPassword?: string;
 }
 
 type Listener = (account: NewAccount) => void;
 const listeners = new Set<Listener>();
 
-export function announceNewAccount(account: CreatedAccount | null | undefined): void {
+export function announceNewAccount(
+  account: CreatedAccount | null | undefined,
+  about: { role?: string; schoolName?: string } = {},
+): void {
   const login = account?.email || account?.phone;
   if (!login || !account?.temporaryPassword) return;
   const { temporaryPassword, phone, firstName } = account;
-  for (const listener of listeners) listener({ login, temporaryPassword, phone, firstName });
+  const role = about.role ?? account.role;
+  for (const listener of listeners) listener({ login, temporaryPassword, phone, firstName, role, schoolName: about.schoolName });
 }
 
 export function onNewAccount(listener: Listener): () => void {

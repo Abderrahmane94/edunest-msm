@@ -62,6 +62,8 @@ export function NewAccountDialog() {
             <WhatsAppShareButton
               phone={account.phone}
               name={account.firstName}
+              role={account.role}
+              schoolName={account.schoolName}
               login={account.login}
               password={account.temporaryPassword}
               className="w-full"

@@ -1785,6 +1785,7 @@
       "nameRequired": "الاسم مطلوب",
       "capacity": "السعة",
       "capacityRequired": "السعة يجب أن تكون رقماً موجباً",
+      "capacityHint": "أقصى عدد من الأطفال المسجلين في هذا القسم.",
       "roomNumber": "القاعة",
       "roomNumberPlaceholder": "مثال: 101",
       "level": "المستوى (الفئة العمرية)",

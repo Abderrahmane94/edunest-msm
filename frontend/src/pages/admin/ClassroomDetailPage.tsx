@@ -169,7 +169,7 @@ export function ClassroomDetailPage() {
             <FormField label={t('classrooms.form.name')} htmlFor="cr-name" required>
               <Input id="cr-name" name="name" value={formData.name} onChange={handleChange} />
             </FormField>
-            <FormField label={t('classrooms.form.capacity')} htmlFor="cr-capacity" required>
+            <FormField label={t('classrooms.form.capacity')} htmlFor="cr-capacity" helperText={edit.editing ? t('classrooms.form.capacityHint') : undefined} required>
               <Input id="cr-capacity" name="capacity" type="number" min="1" value={formData.capacity} onChange={handleChange} />
             </FormField>
             <FormField label={t('classrooms.form.level')} htmlFor="cr-level">

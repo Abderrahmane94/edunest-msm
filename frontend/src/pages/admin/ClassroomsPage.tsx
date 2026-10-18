@@ -30,6 +30,7 @@ import { useSelectedYear, useYearClosed } from '@/hooks/useSelectedYear';
 import { useUsers } from '@/hooks/useUsers';
 import { EmptyState, FilterBar, ListSkeleton, PageHeader } from '@/components/ui';
 import { DEFAULT_WORKING_DAYS, RoomField } from './RoomField';
+import { useRooms } from '@/hooks/useRooms';
 import { usePermissions } from '@/lib/roles';
 
 function CreateClassroomDialog({
@@ -56,15 +57,35 @@ function CreateClassroomDialog({
   });
   const [color, setColor] = React.useState<ClassColor | null>(null);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const { data: rooms = [] } = useRooms(academicYearId);
+  // The capacity was taken from the room, not typed: another room may replace it.
+  const [capacityFromRoom, setCapacityFromRoom] = React.useState(false);
 
   function resetForm() {
     setFormData({ name: '', capacity: '', room_id: '', level: '', teacher_id: '' });
     setColor(null);
     setErrors({});
+    setCapacityFromRoom(false);
+  }
+
+  function handleRoomChange(roomId: string) {
+    const room = rooms.find((r) => r.id === roomId);
+    const fill = capacityFromRoom || !formData.capacity;
+    if (fill && room?.capacity) {
+      setFormData((prev) => ({ ...prev, room_id: roomId, capacity: String(room.capacity) }));
+      setCapacityFromRoom(true);
+      setErrors((prev) => ({ ...prev, capacity: '' }));
+    } else if (capacityFromRoom && !room?.capacity) {
+      setFormData((prev) => ({ ...prev, room_id: roomId, capacity: '' }));
+      setCapacityFromRoom(false);
+    } else {
+      setFormData((prev) => ({ ...prev, room_id: roomId }));
+    }
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
+    if (name === 'capacity') setCapacityFromRoom(false);
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
@@ -149,10 +170,20 @@ function CreateClassroomDialog({
             />
           </FormField>
 
+          {/* The room first: its places fill the class capacity, which stays editable. */}
+          <RoomField
+            id="cr-room"
+            value={formData.room_id}
+            onChange={handleRoomChange}
+            academicYearId={academicYearId}
+            placed={{ capacity: Number(formData.capacity) || 0, working_days: DEFAULT_WORKING_DAYS }}
+          />
+
           <FormField
             label={t('classrooms.form.capacity')}
             htmlFor="cr-capacity"
             error={errors.capacity}
+            helperText={t('classrooms.form.capacityHint')}
             required
           >
             <Input
@@ -165,14 +196,6 @@ function CreateClassroomDialog({
               placeholder="25"
             />
           </FormField>
-
-          <RoomField
-            id="cr-room"
-            value={formData.room_id}
-            onChange={(roomId) => setFormData((prev) => ({ ...prev, room_id: roomId }))}
-            academicYearId={academicYearId}
-            placed={{ capacity: Number(formData.capacity) || 0, working_days: DEFAULT_WORKING_DAYS }}
-          />
 
           <FormField
             label={t('classrooms.form.level')}

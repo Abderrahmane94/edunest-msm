@@ -1674,6 +1674,7 @@
       "nameRequired": "Le nom est requis",
       "capacity": "Capacité",
       "capacityRequired": "La capacité doit être un nombre positif",
+      "capacityHint": "Nombre maximum d'enfants inscrits dans cette classe.",
       "roomNumber": "Salle",
       "roomNumberPlaceholder": "Ex: 101",
       "level": "Niveau (groupe d'âge)",

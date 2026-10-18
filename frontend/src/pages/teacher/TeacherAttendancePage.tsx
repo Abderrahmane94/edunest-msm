@@ -110,9 +110,70 @@ function getTodayString(): string {
  * lib/offlineQueue); what's waiting is shown on the children concerned.
  */
 export function TeacherAttendancePage() {
+  const { t } = useTranslation();
+  // Offline, data not cached on this device stays "paused" instead of loading.
+  const classroomQuery = useTeacherClassroom();
+  const classroom = classroomQuery.data;
+
+  if (classroomQuery.isPending && classroomQuery.fetchStatus === 'fetching') return <SheetSkeleton />;
+  if (classroomQuery.isPending && classroomQuery.fetchStatus === 'paused') return <OfflineUnavailable />;
+
+  if (!classroom) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
+        <div className="text-center space-y-2">
+          <p className="text-body text-text-secondary">
+            {t('teacherAttendance.noClassroom')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <AttendanceSheet classroom={classroom} />;
+}
+
+function SheetSkeleton() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center p-4">
+      <div className="animate-pulse space-y-4 w-full max-w-2xl">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-20 bg-subtle rounded-lg" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OfflineUnavailable() {
+  const { t } = useTranslation();
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center p-4">
+      <div className="text-center space-y-3 max-w-sm">
+        <CloudOff className="w-10 h-10 text-text-disabled mx-auto" />
+        <p className="text-body text-text-secondary">{t('teacherAttendance.offlineUnavailable')}</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * One class's attendance for a day: the teacher's own screen, also opened by
+ * the office for any class (a teacher without the app, or away).
+ */
+export function AttendanceSheet({
+  classroom,
+  initialDate,
+  back,
+}: {
+  classroom: { id: string; name: string; level?: string | null };
+  initialDate?: string;
+  /** Shown before the title: the way back, when opened from the office. */
+  back?: React.ReactNode;
+}) {
   const { t, i18n } = useTranslation();
   const { confirm, dialog: confirmDialog } = useConfirm();
-  const [selectedDate, setSelectedDate] = React.useState<string>(getTodayString());
+  const [selectedDate, setSelectedDate] = React.useState<string>(initialDate ?? getTodayString());
   const [attendanceMap, setAttendanceMap] = React.useState<Map<string, ChildAttendanceState>>(
     new Map()
   );
@@ -121,17 +182,14 @@ export function TeacherAttendancePage() {
   const [submitted, setSubmitted] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
 
-  // Offline, data not cached on this device stays "paused" instead of loading.
-  const classroomQuery = useTeacherClassroom();
-  const classroom = classroomQuery.data;
-  const childrenQuery = useClassroomChildren(classroom?.id);
+  const childrenQuery = useClassroomChildren(classroom.id);
   const children = childrenQuery.data;
-  const recordsQuery = useClassroomAttendance(classroom?.id, selectedDate);
+  const recordsQuery = useClassroomAttendance(classroom.id, selectedDate);
   // A day not cached offline starts empty: the teacher can still mark it.
   const existingRecords = recordsQuery.data;
 
   const { actions, notices, syncing } = useOfflineQueue();
-  const dayKey = classroom ? attendanceDayKey(classroom.id, selectedDate) : null;
+  const dayKey = attendanceDayKey(classroom.id, selectedDate);
   const pending = actions.find((a) => a.key === dayKey) as QueuedAction<AttendanceDayPayload> | undefined;
   const notice = notices.find((n) => n.key === dayKey);
   const pendingChildIds = React.useMemo(
@@ -254,7 +312,6 @@ export function TeacherAttendancePage() {
   // Save: queued on the device and sent right away when online (or as soon
   // as the connection returns).
   const handleSubmit = React.useCallback(async () => {
-    if (!classroom || !dayKey) return;
 
     const records = Array.from(attendanceMap.values())
       .filter((r): r is ChildAttendanceState & { status: AttendanceStatus; markedAt: string } =>
@@ -296,47 +353,13 @@ export function TeacherAttendancePage() {
   }
 
   const isFetching = (q: { isPending: boolean; fetchStatus: string }) => q.isPending && q.fetchStatus === 'fetching';
-  const isLoading = isFetching(classroomQuery) || isFetching(childrenQuery) || isFetching(recordsQuery);
+  const isLoading = isFetching(childrenQuery) || isFetching(recordsQuery);
   // Offline and never loaded on this device.
-  const unavailableOffline =
-    (classroomQuery.isPending && classroomQuery.fetchStatus === 'paused') ||
-    (!!classroom && childrenQuery.isPending && childrenQuery.fetchStatus === 'paused');
+  const unavailableOffline = childrenQuery.isPending && childrenQuery.fetchStatus === 'paused';
   const hasMarks = Array.from(attendanceMap.values()).some((r) => r.status !== null && r.markedAt);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center p-4">
-        <div className="animate-pulse space-y-4 w-full max-w-2xl">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-20 bg-subtle rounded-lg" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (unavailableOffline) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center p-4">
-        <div className="text-center space-y-3 max-w-sm">
-          <CloudOff className="w-10 h-10 text-text-disabled mx-auto" />
-          <p className="text-body text-text-secondary">{t('teacherAttendance.offlineUnavailable')}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!classroom) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center p-4">
-        <div className="text-center space-y-2">
-          <p className="text-body text-text-secondary">
-            {t('teacherAttendance.noClassroom')}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <SheetSkeleton />;
+  if (unavailableOffline) return <OfflineUnavailable />;
 
   const childName = (id: string) => {
     const child = children?.find((c) => c.id === id);
@@ -350,13 +373,16 @@ export function TeacherAttendancePage() {
       <header className="sticky top-14 z-10 bg-card border-b border-border px-4 py-3">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+            {back}
             <div>
               <h1 className="text-subsection font-semibold text-text-heading">
                 {t('teacherAttendance.title')}
               </h1>
               <p className="text-caption text-text-secondary">
-                {classroom.name} — {classroom.level}
+                {classroom.level ? `${classroom.name} — ${classroom.level}` : classroom.name}
               </p>
+            </div>
             </div>
             <div className="w-36">
               <Input
@@ -761,7 +787,7 @@ export function TeacherAttendancePage() {
       </div>
       <ChildQuickView
         scope="class"
-        child={quickChild && { ...quickChild, classroom_id: classroom?.id, classroom_name: classroom?.name }}
+        child={quickChild && { ...quickChild, classroom_id: classroom.id, classroom_name: classroom.name }}
         onClose={() => setQuickChild(null)}
       />
     </div>

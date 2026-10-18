@@ -2074,6 +2074,10 @@
     }
   },
   "attendance": {
+    "office": {
+      "take": "Faire l'appel",
+      "edit": "Modifier l'appel"
+    },
     "title": "Présence",
     "dailyView": "Vue quotidienne",
     "monthlyView": "Rapport mensuel",

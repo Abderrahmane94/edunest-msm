@@ -36,7 +36,7 @@ export function useCreateSchool() {
     }) => {
       const res = await apiClient.post<{ director?: CreatedAccount }>('/schools', data);
       if (!res.success) throw apiError(res.error, 'Failed to create school');
-      announceNewAccount(res.data?.director);
+      announceNewAccount(res.data?.director, { role: 'admin', schoolName: data.name });
       return res.data;
     },
     onSuccess: () => {

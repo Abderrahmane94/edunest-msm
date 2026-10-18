@@ -141,6 +141,7 @@ export function ResetPasswordDialog({
               </Button>
             </div>
             <WhatsAppShareButton
+              kind="reset"
               phone={user.phone}
               name={user.first_name}
               login={user.email || user.phone || ''}

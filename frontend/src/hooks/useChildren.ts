@@ -415,7 +415,9 @@ export function useRegisterChild() {
         billing: data.billing,
       });
       if (!res.success) throw apiError(res.error, 'Failed to register child');
-      announceNewAccount(res.data!.newParentAccount);
+      const created = res.data!.newParentAccount;
+      const firstName = data.parent && 'newParent' in data.parent ? data.parent.newParent.firstName : undefined;
+      announceNewAccount(created && { ...created, firstName }, { role: 'parent' });
       return { childId: res.data!.child.id, billed: !!res.data!.billing };
     },
     onSuccess: () => {

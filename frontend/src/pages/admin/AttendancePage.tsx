@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDateIn } from '@/lib/formatters';
-import { ClipboardCheck, Calendar, BarChart2, Users, Eye } from 'lucide-react';
+import { ArrowLeft, ClipboardCheck, Calendar, BarChart2, Users, Eye } from 'lucide-react';
 import { Button, DataTable, FilterChips, Input, KPICard, PageHeader, StatusBadge, Tabs } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { FormSelect } from '@/components/forms';
@@ -18,6 +18,7 @@ import {
 } from '@/hooks/useAttendance';
 import { useTabParam } from '@/hooks/useTabParam';
 import { usePermissions } from '@/lib/roles';
+import { AttendanceSheet } from '@/pages/teacher/TeacherAttendancePage';
 
 type ViewMode = 'daily' | 'monthly' | 'tracking';
 const VIEW_MODES: ViewMode[] = ['daily', 'monthly', 'tracking'];
@@ -57,6 +58,8 @@ export function AttendancePage() {
   const [viewMode, setViewMode] = useTabParam<ViewMode>(VIEW_MODES, 'daily');
   const [selectedClassroomId, setSelectedClassroomId] = React.useState<string>('');
   const [selectedDate, setSelectedDate] = React.useState<string>(getTodayString());
+  // The office takes a class's attendance itself: a teacher without the app, or away.
+  const [marking, setMarking] = React.useState<{ classroom: Classroom; date: string } | null>(null);
   const [selectedMonth, setSelectedMonth] = React.useState<number>(getCurrentMonth());
   const [selectedYear, setSelectedYear] = React.useState<number>(getCurrentYear());
   const [trackingStartDate, setTrackingStartDate] = React.useState<string>(getTodayString());
@@ -252,6 +255,31 @@ export function AttendancePage() {
   }, []);
 
 
+  if (marking) {
+    return (
+      <AttendanceSheet
+        key={`${marking.classroom.id}-${marking.date}`}
+        classroom={marking.classroom}
+        initialDate={marking.date}
+        back={
+          <button
+            type="button"
+            onClick={() => setMarking(null)}
+            aria-label={t('common.back')}
+            className="shrink-0 grid place-items-center w-9 h-9 rounded-lg text-text-secondary hover:bg-hover hover:text-text-heading focus-visible:outline-none focus-visible:shadow-focus-ring"
+          >
+            <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
+          </button>
+        }
+      />
+    );
+  }
+
+  const markClass = (classroomId: string, date: string) => {
+    const classroom = (classrooms ?? []).find((c) => c.id === classroomId);
+    if (classroom) setMarking({ classroom, date });
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader title={t('attendance.title')} description={schoolYear?.name} />
@@ -325,6 +353,14 @@ export function AttendancePage() {
       {/* Daily view */}
       {viewMode === 'daily' && selectedClassroomId && (
         <>
+          {!closed && !dailyLoading && (
+            <div className="flex justify-end">
+              <Button type="button" onClick={() => markClass(selectedClassroomId, selectedDate)}>
+                <ClipboardCheck className="w-4 h-4" />
+                {(dailyRecords ?? []).length > 0 ? t('attendance.office.edit') : t('attendance.office.take')}
+              </Button>
+            </div>
+          )}
           {/* Not marked warning */}
           {!dailyLoading && (dailyRecords ?? []).length === 0 && (
             <div className="bg-warning-muted border border-[var(--color-warning)] rounded-lg px-4 py-3 flex items-center gap-3">
@@ -533,7 +569,12 @@ export function AttendancePage() {
                               <span className="text-caption text-danger font-medium">
                                 {t('attendance.tracking.notDone')}
                               </span>
-                              {/* Teacher away today: replace from here. */}
+                              {/* Not done: the office takes it, or names a replacement for today. */}
+                              {!closed && (classrooms ?? []).some((c) => c.id === cr.id) && (
+                                <Button type="button" size="sm" onClick={() => markClass(cr.id, day.date)}>
+                                  {t('attendance.office.take')}
+                                </Button>
+                              )}
                               {day.date === today() &&
                                 !closed &&
                                 !(todaysReplacements ?? []).some((x) => x.classroomId === cr.id && x.substitute) &&

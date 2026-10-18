@@ -13,20 +13,22 @@ export function YearSwitcher() {
 
   // What shows is our own text (short on a phone, in the Latin font even in
   // Arabic); the phone's own list sits invisible on top and opens on a tap.
+  // On a phone the current year is plain text: only another year gets the
+  // coloured pill, so it is noticed.
   return (
     <label
       className={cn(
         'relative inline-flex items-center gap-1.5 h-9 ps-2.5 pe-7 rounded-full border text-caption font-semibold cursor-pointer transition-colors',
-        "font-['Plus_Jakarta_Sans',system-ui,sans-serif] focus-within:shadow-focus-ring",
+        "font-['Plus_Jakarta_Sans',system-ui,sans-serif] has-[:focus-visible]:shadow-focus-ring",
         isActive
-          ? 'bg-[var(--color-accent-subtle)] border-accent-muted text-primary hover:bg-accent-muted'
-          : 'bg-warning-muted border-warning text-warning',
+          ? 'bg-[var(--color-accent-subtle)] border-accent-muted text-primary hover:bg-accent-muted max-sm:bg-transparent max-sm:border-transparent max-sm:ps-1 max-sm:pe-5 max-sm:text-text-secondary'
+          : 'bg-warning-muted border-warning text-warning max-sm:ps-2 max-sm:pe-6',
       )}
       title={t('yearSwitcher.label')}
     >
-      <CalendarRange className="w-4 h-4 shrink-0" />
+      <CalendarRange className="w-4 h-4 shrink-0 hidden sm:block" />
       <span dir="ltr" aria-hidden="true" className="whitespace-nowrap leading-none">
-        <span className="sm:hidden">{shortYearName(year.name)}</span>
+        <span className="sm:hidden">{`⁦${shortYearName(year.name)}⁩`}</span>
         <span className="hidden sm:inline">
           {year.name}
           {isActive ? ` · ${t('yearSwitcher.current')}` : ''}
@@ -45,7 +47,7 @@ export function YearSwitcher() {
           </option>
         ))}
       </select>
-      <ChevronDown className="w-3.5 h-3.5 absolute end-2.5 pointer-events-none" />
+      <ChevronDown className={cn('w-3.5 h-3.5 absolute end-2.5 pointer-events-none', isActive ? 'max-sm:end-1' : 'max-sm:end-2')} />
     </label>
   );
 }

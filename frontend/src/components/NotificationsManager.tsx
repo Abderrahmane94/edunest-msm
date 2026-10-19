@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/hooks/useSocket';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { showSystemNotification } from '@/lib/push';
 
 interface NotificationEvent {
   title?: string;
@@ -36,9 +37,7 @@ export function NotificationsManager() {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
       if (!payload?.title) return;
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(payload.title, { body: payload.body, icon: '/icon-192.png' });
-      }
+      void showSystemNotification(payload.title, payload.body);
     };
 
     socket.on('notification:new', handler);

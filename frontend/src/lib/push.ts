@@ -138,3 +138,25 @@ export async function onForegroundMessage(
   if (!m) return () => undefined;
   return onMessage(m, handler);
 }
+
+/**
+ * Shows a system notification while the app is open. Through the service
+ * worker, as Android requires (`new Notification()` throws there); the plain
+ * constructor only where no worker is ready. Never throws: a notification
+ * that can't show is just skipped, the in-app bell has it anyway.
+ */
+export async function showSystemNotification(title: string, body?: string): Promise<void> {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const options = { body, icon: '/icon-192.png' };
+  try {
+    const registration =
+      'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : undefined;
+    if (registration) {
+      await registration.showNotification(title, options);
+      return;
+    }
+    new Notification(title, options);
+  } catch (err) {
+    console.warn('[notifications] Could not show a system notification:', err);
+  }
+}

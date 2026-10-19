@@ -217,10 +217,12 @@ describe('ChildrenService', () => {
           id: 'child-1', schoolId, firstName: 'Ahmed', isActive: true, enrollments: [],
           parentLinks: [{ parent: { firstName: 'Karim', lastName: 'Parent' }, canPickup: true }],
           emergencyContacts: [],
+          _count: { medicalNotes: 2 },
         },
         {
           id: 'child-2', schoolId, firstName: 'Fatima', isActive: true, enrollments: [],
           parentLinks: [], emergencyContacts: [],
+          _count: { medicalNotes: 0 },
         },
       ];
 
@@ -230,8 +232,8 @@ describe('ChildrenService', () => {
       const result = await childrenService.list(schoolId, 1, 20);
 
       expect(result.children).toEqual([
-        { id: 'child-1', schoolId, firstName: 'Ahmed', isActive: true, enrollments: [], parentNames: ['Karim Parent'], hasAuthorizedPickup: true },
-        { id: 'child-2', schoolId, firstName: 'Fatima', isActive: true, enrollments: [], parentNames: [], hasAuthorizedPickup: false },
+        { id: 'child-1', schoolId, firstName: 'Ahmed', isActive: true, enrollments: [], medicalNoteCount: 2, parentNames: ['Karim Parent'], hasAuthorizedPickup: true },
+        { id: 'child-2', schoolId, firstName: 'Fatima', isActive: true, enrollments: [], medicalNoteCount: 0, parentNames: [], hasAuthorizedPickup: false },
       ]);
       expect(result.total).toBe(2);
       expect(mockPrisma.child.findMany).toHaveBeenCalledWith({

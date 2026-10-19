@@ -1651,6 +1651,14 @@
     }
   },
   "classrooms": {
+    "children": {
+      "title_one": "Enfants de la classe ({{count}}/{{capacity}})",
+      "title_other": "Enfants de la classe ({{count}}/{{capacity}})",
+      "seeAll": "Voir dans Enfants",
+      "enroll": "Inscrire un enfant",
+      "empty": "Aucun enfant dans cette classe pour l'instant.",
+      "health": "Santé"
+    },
     "colors": {
       "violet": "Violet",
       "sky": "Bleu",

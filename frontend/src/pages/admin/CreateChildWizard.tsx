@@ -794,6 +794,8 @@ interface CreateChildWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onFinished?: (child: { id: string; first_name: string; last_name: string }) => void;
+  /** Opened from a class: that class is already chosen. */
+  initialClassroomId?: string;
 }
 
 const toContact = (input: EmergencyContactInput, id: string): EmergencyContact => ({ id, ...input });
@@ -804,7 +806,7 @@ const toNote = (input: MedicalNoteInput, id: string): MedicalNote => ({
   created_at: new Date().toISOString(),
 });
 
-export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChildWizardProps) {
+export function CreateChildWizard({ open, onOpenChange, onFinished, initialClassroomId }: CreateChildWizardProps) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { confirm, dialog: confirmDialog } = useConfirm();
@@ -817,6 +819,10 @@ export function CreateChildWizard({ open, onOpenChange, onFinished }: CreateChil
   const [contacts, setContacts] = React.useState<EmergencyContact[]>([]);
   const [notes, setNotes] = React.useState<MedicalNote[]>([]);
   const [classroomId, setClassroomId] = React.useState('');
+  // Opened from a class page: start with that class.
+  React.useEffect(() => {
+    if (open && initialClassroomId) setClassroomId((current) => current || initialClassroomId);
+  }, [open, initialClassroomId]);
   const [selectedFeeIds, setSelectedFeeIds] = React.useState<string[]>([]);
   const [bill, setBill] = React.useState(false);
   const [createdChildId, setCreatedChildId] = React.useState<string | null>(null);

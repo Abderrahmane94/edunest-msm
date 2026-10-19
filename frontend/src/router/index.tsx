@@ -177,7 +177,7 @@ function getAdminNavItems(role: string, can: (area: Area) => boolean): NavItem[]
     { label: 'nav.classrooms',    href: '/admin/classrooms', icon: School, area: 'classes', section: 'daily' },
     { label: 'nav.communication', href: '/admin/communication', icon: MessageCircle, area: 'communication', section: 'daily' },
     // The money and the supplies.
-    { label: 'nav.payments',      href: '/admin/payments', icon: CreditCard, area: PAYMENT_AREAS, section: 'management', tab: true },
+    { label: 'nav.finance',       href: '/admin/payments', icon: CreditCard, area: PAYMENT_AREAS, section: 'management', tab: true },
     { label: 'nav.payroll',       href: '/admin/payroll', icon: Banknote, area: 'payroll', section: 'management' },
     { label: 'nav.inventory',     href: '/admin/inventory', icon: Package, area: 'inventory', section: 'management' },
     // The accounts and the school's settings.

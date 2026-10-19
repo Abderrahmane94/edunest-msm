@@ -56,6 +56,8 @@ export interface AdminDashboard {
     newThisMonth: number;
     classrooms: { id: string; name: string; capacity: number; enrolled: number }[];
   };
+  /** What a new school still has to set up (the director's first steps). */
+  setup: { year: boolean; rooms: boolean; classes: boolean; fees: boolean; team: boolean; children: boolean };
   communication: {
     waitingParents: number;
     pendingConsents: number;
@@ -297,6 +299,12 @@ export const dashboardService = {
       activeYear?.id ?? null,
     );
 
+    const [rooms, fees, team] = await Promise.all([
+      prisma.room.count({ where: { schoolId } }),
+      prisma.branchFee.count({ where: { branch: { schoolId }, isActive: true } }),
+      prisma.user.count({ where: { schoolId, deletedAt: null, role: { in: ['teacher', 'administrative', 'staff'] } } }),
+    ]);
+
     const monthly = collectedByMonth(payments, chartMonths);
     const collected = monthly[monthly.length - 1].collected;
     const collectedPreviousMonth =
@@ -348,6 +356,14 @@ export const dashboardService = {
           capacity: c.capacity,
           enrolled: c.enrollments.length,
         })),
+      },
+      setup: {
+        year: !!activeYear,
+        rooms: rooms > 0,
+        classes: classrooms.length > 0,
+        fees: fees > 0,
+        team: team > 0,
+        children: activeChildren > 0,
       },
       communication: {
         waitingParents: waitingConversations.filter((c) => c.messages[0]?.senderUserId === c.parentUserId).length,

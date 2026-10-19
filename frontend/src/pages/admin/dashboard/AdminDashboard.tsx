@@ -32,6 +32,7 @@ import { useEquipmentToRepair } from '@/hooks/useEquipment';
 import { useCashSummary } from '@/hooks/useCashDesks';
 import { classDot, useClassColor } from '@/components/ClassTag';
 import { KeyFigures } from './KeyFigures';
+import { FirstSteps } from './FirstSteps';
 import { useIsDirector } from '@/lib/roles';
 import { today, useSubstitutions } from '@/hooks/useSubstitutions';
 import { ActionList, BarChart, BigNumber, Progress, Section, Tile, type ActionItem } from './parts';
@@ -596,6 +597,9 @@ export function AdminDashboard() {
           </p>
         </div>
       </header>
+
+      {/* A new school's set-up, for the director (who can do every step). */}
+      {user?.role === 'admin' && data.setup && <FirstSteps setup={data.setup} />}
 
       <KeyFigures data={data} />
 

@@ -3,6 +3,8 @@ import { accessService } from '../access/access.service';
 import prisma from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { temporaryPassword } from '../users/users.service';
+import { schoolToday } from '../admin/dashboard.service';
+import { schoolYearOf } from '../../lib/school-year';
 import type { CreateSchoolInput, UpdateSchoolInput, SchoolResponse } from './schools.types';
 
 const BCRYPT_ROUNDS = 10;
@@ -68,6 +70,15 @@ class SchoolsService {
 
       // Its office staff's default rights.
       await accessService.ensureDefault(newSchool.id, tx);
+
+      // Ready to use: the current school year, active (dates can be changed
+      // later), and where payments are recorded, reminders off until chosen.
+      const year = schoolYearOf(schoolToday());
+      await tx.academicYear.create({
+        data: { schoolId: newSchool.id, name: year.name, startDate: new Date(year.startDate), endDate: new Date(year.endDate), isActive: true },
+      });
+      const branch = await tx.branch.create({ data: { schoolId: newSchool.id, name: input.name, isActive: true } });
+      await tx.branchBillingConfig.create({ data: { branchId: branch.id } });
       return { school: newSchool, director: newDirector };
     });
 

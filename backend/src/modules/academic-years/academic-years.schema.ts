@@ -1,12 +1,15 @@
 import { z } from 'zod';
 import { isoDateSchema } from '../../utils/validators';
+import { orderedYearName } from '../../lib/school-year';
 
 export const createAcademicYearSchema = z
   .object({
     name: z
       .string()
       .min(1, 'Academic year name is required')
-      .max(255, 'Academic year name must not exceed 255 characters'),
+      .max(255, 'Academic year name must not exceed 255 characters')
+      // Typed in a right-to-left field, "2026/2027" may arrive as "2027/2026".
+      .transform(orderedYearName),
     startDate: isoDateSchema,
     endDate: isoDateSchema,
   })
@@ -17,7 +20,7 @@ export const createAcademicYearSchema = z
 
 export const updateAcademicYearSchema = z
   .object({
-    name: z.string().min(1).max(255).optional(),
+    name: z.string().min(1).max(255).transform(orderedYearName).optional(),
     startDate: isoDateSchema.optional(),
     endDate: isoDateSchema.optional(),
   })

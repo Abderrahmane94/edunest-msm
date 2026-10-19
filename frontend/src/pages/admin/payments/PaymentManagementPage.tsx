@@ -35,7 +35,7 @@ export function PaymentManagementPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title={t('nav.payments')} description={t('pageIntro.payments')} />
+      <PageHeader title={t('nav.finance')} description={t('pageIntro.payments')} />
 
       <Tabs value={activeTab} onChange={setActiveTab} items={tabs.filter((tab) => allowed.includes(tab.value))} />
 

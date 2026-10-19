@@ -4,7 +4,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { localToday } from '@/lib/period';
-import { Upload, Download, Trash2, X, Eye, Pencil } from 'lucide-react';
+import { Upload, Download, Trash2, X, Eye, Pencil, History } from 'lucide-react';
 import { formatDate, formatDZD } from '@/lib/formatters';
 import {
   Button,
@@ -34,6 +34,7 @@ import {
 import { FilterBar, SectionHeader } from '@/components/ui';
 import { useViewedYear, useYearClosed } from '@/hooks/useSelectedYear';
 import { usePermissions } from '@/lib/roles';
+import { DeletedExpensesDialog, ExpenseHistoryDialog, lastChangeLine } from './ExpenseHistory';
 
 /** Today, or the nearest day of the school year being looked at (an expense counts in that year). */
 function defaultExpenseDate(year: { start_date: string; end_date: string } | undefined): string {
@@ -181,6 +182,8 @@ export function ExpensesTab() {
   const [showCreateDialog, setShowCreateDialog] = React.useState(false);
   const [editingExpense, setEditingExpense] = React.useState<Expense | null>(null);
   const receipt = useExpenseReceiptActions();
+  const [historyOf, setHistoryOf] = React.useState<Expense | null>(null);
+  const [showDeleted, setShowDeleted] = React.useState(false);
 
   const columns: Column<Expense>[] = [
     {
@@ -204,6 +207,7 @@ export function ExpensesTab() {
               {t(row.cashHandoverId ? 'cashDesks.expense.badgeCounted' : 'cashDesks.expense.badge')}
             </span>
           )}
+          {row.lastChange && <span className="block text-micro text-text-secondary">{lastChangeLine(row, t)}</span>}
         </span>
       ),
     },
@@ -261,17 +265,30 @@ export function ExpensesTab() {
     {
       key: 'actions',
       header: '',
-      className: 'w-12',
+      className: 'w-24',
       render: (row) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setEditingExpense(row)}
-          aria-label={t('finance.expenses.edit')}
-          title={t('finance.expenses.edit')}
-        >
-          <Pencil className="w-4 h-4 text-primary" />
-        </Button>
+        <div className="flex items-center gap-1 justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setHistoryOf(row)}
+            aria-label={t('finance.expenses.trace.history')}
+            title={t('finance.expenses.trace.history')}
+          >
+            <History className="w-4 h-4 text-text-secondary" />
+          </Button>
+          {!closed && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setEditingExpense(row)}
+              aria-label={t('finance.expenses.edit')}
+              title={t('finance.expenses.edit')}
+            >
+              <Pencil className="w-4 h-4 text-primary" />
+            </Button>
+          )}
+        </div>
       ),
     },
   ];
@@ -292,7 +309,15 @@ export function ExpensesTab() {
     <div className="space-y-6">
       <SectionHeader
         title={t('finance.tabs.expenses')}
-        actions={!closed && <CreateButton label={t('finance.expenses.create')} onClick={() => setShowCreateDialog(true)} />}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="secondary" size="sm" onClick={() => setShowDeleted(true)}>
+              <Trash2 className="w-4 h-4" />
+              {t('finance.expenses.trace.deletedList.button')}
+            </Button>
+            {!closed && <CreateButton label={t('finance.expenses.create')} onClick={() => setShowCreateDialog(true)} />}
+          </div>
+        }
       />
 
       {receipt.error && (
@@ -354,7 +379,7 @@ export function ExpensesTab() {
       </FilterBar>
 
       <DataTable<Expense>
-        columns={closed ? columns.filter((c) => c.key !== 'actions') : columns}
+        columns={columns}
         data={expenses ?? []}
         keyExtractor={(row) => row.id}
         page={page}
@@ -365,6 +390,8 @@ export function ExpensesTab() {
       />
 
       <CreateExpenseDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
+      <ExpenseHistoryDialog expense={historyOf} onOpenChange={(open) => !open && setHistoryOf(null)} />
+      <DeletedExpensesDialog open={showDeleted} onOpenChange={setShowDeleted} canRestore={!closed} />
 
       {editingExpense && (
         <EditExpenseDialog
@@ -727,7 +754,8 @@ function EditExpenseDialog({
           </FormField>
 
           <div className={locked ? 'hidden' : 'border-t border-border pt-4'}>
-            <p className="text-caption font-medium text-danger mb-2">{t('finance.expenses.detail.dangerZone')}</p>
+            <p className="text-caption font-medium text-danger mb-1">{t('finance.expenses.detail.dangerZone')}</p>
+            <p className="text-caption text-text-secondary mb-2">{t('finance.expenses.detail.deleteWarning')}</p>
             {confirmingDelete ? (
               <div className="flex items-center gap-2">
                 <span className="text-caption text-text-secondary">{t('finance.expenses.detail.confirmDelete')}</span>

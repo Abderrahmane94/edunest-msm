@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 vi.mock('../../lib/prisma', () => ({
   default: {
     expense: { findMany: vi.fn(), count: vi.fn(), aggregate: vi.fn() },
+    expenseChange: { findMany: vi.fn() },
   },
 }));
 
@@ -26,6 +27,7 @@ describe('expenseService.list', () => {
     mockPrisma.expense.findMany.mockResolvedValue([]);
     mockPrisma.expense.count.mockResolvedValue(0);
     mockPrisma.expense.aggregate.mockResolvedValue({ _sum: { amount: null } });
+    (prisma as unknown as { expenseChange: { findMany: ReturnType<typeof vi.fn> } }).expenseChange.findMany.mockResolvedValue([]);
   });
 
   it('lists all school expenses, newest first, without filters', async () => {

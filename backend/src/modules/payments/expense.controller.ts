@@ -103,7 +103,7 @@ export const expenseController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
-      await expenseService.delete(id, schoolId);
+      await expenseService.delete(id, schoolId, req.user!.userId);
       res.status(200).json(successResponse({ message: 'Expense deleted successfully' }));
     } catch (error) {
       if (error instanceof ExpenseServiceError) {
@@ -132,8 +132,62 @@ export const expenseController = {
         // Multer decodes the multipart file name as latin1; browsers send UTF-8.
         originalName: Buffer.from(req.file.originalname, 'latin1').toString('utf8'),
         mimeType: req.file.mimetype,
-      });
+      }, req.user!.userId);
       res.status(200).json(successResponse(expense));
+    } catch (error) {
+      if (error instanceof ExpenseServiceError) {
+        res.status(error.statusCode).json(errorResponse('EXPENSE_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * GET /api/payments/expenses/:id/history — Everything that happened to an expense
+   */
+  async history(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      res.status(200).json(successResponse(await expenseService.history(req.params.id, req.user!.schoolId!)));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * GET /api/payments/expenses/deleted?academic_year_id= — Deleted expenses, with who and when
+   */
+  async listDeleted(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const year = typeof req.query.academic_year_id === 'string' ? req.query.academic_year_id : undefined;
+      res.status(200).json(successResponse(await expenseService.listDeleted(req.user!.schoolId!, year)));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/payments/expenses/changes/:id/restore — Puts a deleted expense back
+   */
+  async restore(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const expense = await expenseService.restore(req.params.id, req.user!.schoolId!, req.user!.userId);
+      res.status(200).json(successResponse(expense));
+    } catch (error) {
+      if (error instanceof ExpenseServiceError) {
+        res.status(error.statusCode).json(errorResponse('EXPENSE_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * GET /api/payments/expenses/changes/:id/receipt — A receipt kept in the history
+   */
+  async getChangeReceipt(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      sendFile(res, await expenseService.getChangeReceiptFile(req.params.id, req.user!.schoolId!));
     } catch (error) {
       if (error instanceof ExpenseServiceError) {
         res.status(error.statusCode).json(errorResponse('EXPENSE_ERROR', error.message));
@@ -151,13 +205,7 @@ export const expenseController = {
     try {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
-      const file = await expenseService.getReceiptFile(id, schoolId);
-      res.setHeader('Content-Type', file.mimeType);
-      res.setHeader('Content-Disposition', contentDisposition('inline', file.fileName));
-      // The frontend is on another origin and reads the name from this header.
-      res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
-      res.setHeader('Cache-Control', 'private, no-store');
-      res.status(200).send(file.buffer);
+      sendFile(res, await expenseService.getReceiptFile(id, schoolId));
     } catch (error) {
       if (error instanceof ExpenseServiceError) {
         res.status(error.statusCode).json(errorResponse('EXPENSE_ERROR', error.message));
@@ -167,3 +215,13 @@ export const expenseController = {
     }
   },
 };
+
+/** Streams a receipt with its real type and a readable file name. */
+function sendFile(res: Response, file: { buffer: Buffer; fileName: string; mimeType: string }): void {
+  res.setHeader('Content-Type', file.mimeType);
+  res.setHeader('Content-Disposition', contentDisposition('inline', file.fileName));
+  // The frontend is on another origin and reads the name from this header.
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.status(200).send(file.buffer);
+}

@@ -11,6 +11,12 @@ vi.mock('../../lib/prisma', () => {
   db.$transaction.mockImplementation((fn: (tx: typeof db) => unknown) => fn(db));
   return { default: db };
 });
+// The expense's history is told apart (expense-history.ts).
+vi.mock('../payments/expense-history', () => ({
+  expenseAuthor: vi.fn().mockResolvedValue({ byUserId: 'u1', byName: 'Nadia' }),
+  snapshotOf: vi.fn().mockResolvedValue({}),
+  recordExpenseChange: vi.fn(),
+}));
 vi.mock('../academic-years/academic-years.service', () => ({
   academicYearsService: { yearForDate: vi.fn().mockResolvedValue('y26') },
 }));

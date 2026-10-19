@@ -657,6 +657,31 @@ model Expense {
   @@map("expenses")
 }
 
+/// The history of each expense: created, changed (field by field), receipt
+/// replaced, deleted, restored; who and when. No foreign key: it outlives the
+/// expense it tells about.
+model ExpenseChange {
+  id        String   @id @default(uuid())
+  schoolId  String   @map("school_id")
+  expenseId String   @map("expense_id")
+  /// created, updated, receipt, deleted or restored.
+  action    String
+  /// What changed: [{ field, from, to }] (updated, receipt).
+  changes   Json?
+  /// The whole expense as it was (created, deleted): enough to restore it.
+  snapshot  Json?
+  /// The receipt file it had before (replaced or deleted), still readable.
+  receiptPublicId String? @map("receipt_public_id")
+  byUserId  String   @map("by_user_id")
+  /// The name at the time, kept even if the account changes or goes.
+  byName    String   @map("by_name")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([expenseId])
+  @@index([schoolId, action, createdAt])
+  @@map("expense_changes")
+}
+
 model Notification {
   id            String           @id @default(uuid())
   userId        String           @map("user_id")

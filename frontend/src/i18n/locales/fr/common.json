@@ -2443,6 +2443,43 @@
       }
     },
     "expenses": {
+      "trace": {
+        "history": "Historique",
+        "title": "Historique de la dépense",
+        "description": "Tout ce qui est arrivé à cette dépense : qui, quand, et ce qui a changé.",
+        "before": "Saisie avant la mise en place de l'historique.",
+        "created": "Saisie par {{name}}",
+        "updated": "Modifiée par {{name}}",
+        "receiptAdded": "Reçu ajouté par {{name}}",
+        "receiptReplaced": "Reçu remplacé par {{name}}",
+        "deleted": "Supprimée par {{name}}",
+        "restored": "Restaurée par {{name}}",
+        "last": {
+          "updated": "Modifiée par {{name}} le {{date}}",
+          "receipt": "Reçu changé par {{name}} le {{date}}",
+          "restored": "Restaurée par {{name}} le {{date}}"
+        },
+        "fields": {
+          "category": "Catégorie",
+          "description": "Description",
+          "amount": "Montant",
+          "date": "Date",
+          "academicYear": "Année scolaire",
+          "paidFromCash": "Payée de la caisse"
+        },
+        "yes": "oui",
+        "no": "non",
+        "oldReceipt": "Voir l'ancien reçu",
+        "receipt": "Voir le reçu",
+        "deletedList": {
+          "button": "Supprimées",
+          "title": "Dépenses supprimées",
+          "description": "Les dépenses supprimées de l'année, avec qui les a supprimées et quand. Une dépense restaurée revient dans la liste et les totaux.",
+          "empty": "Aucune dépense supprimée.",
+          "restore": "Restaurer",
+          "restored": "Dépense restaurée."
+        }
+      },
       "create": "Nouvelle dépense",
       "empty": "Aucune dépense enregistrée",
       "notFound": "Dépense introuvable",
@@ -2470,7 +2507,7 @@
       "detail": {
         "info": "Informations",
         "dangerZone": "Zone dangereuse",
-        "deleteWarning": "La suppression est définitive.",
+        "deleteWarning": "Elle sera retirée des listes et des totaux, et restera visible dans « Supprimées ».",
         "delete": "Supprimer",
         "confirmDelete": "Confirmer la suppression ?"
       },

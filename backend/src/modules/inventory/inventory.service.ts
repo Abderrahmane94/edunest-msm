@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import prisma, { type DbClient } from '../../lib/prisma';
 import { academicYearsService } from '../academic-years/academic-years.service';
+import { expenseAuthor, recordExpenseChange, snapshotOf } from '../payments/expense-history';
 import type { CreateStockItemInput, CreateStockMovementInput, UpdateStockItemInput } from './inventory.schema';
 
 export class InventoryServiceError extends Error {
@@ -153,6 +154,13 @@ class InventoryService {
           academicYearId,
           createdByUserId: userId,
         },
+      });
+      await recordExpenseChange(tx, {
+        schoolId,
+        expenseId: expense.id,
+        action: 'created',
+        snapshot: await snapshotOf(tx, expense),
+        author: await expenseAuthor(userId, tx),
       });
       expenseId = expense.id;
     }

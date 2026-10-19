@@ -11,6 +11,7 @@ import { personName, today, useSubstitutions } from '@/hooks/useSubstitutions';
 import { SubstitutionDialog } from './SubstitutionDialog';
 import {
   useClassroomAttendance,
+  useClassroomAttendanceHistory,
   useClassroomMonthlyReport,
   useAttendanceTracking,
   type AttendanceRecord,
@@ -20,6 +21,7 @@ import { useTabParam } from '@/hooks/useTabParam';
 import { usePermissions } from '@/lib/roles';
 import { AttendanceSheet } from '@/pages/teacher/TeacherAttendancePage';
 import { yearLabel } from '@/lib/yearName';
+import { AttendanceTrace } from './AttendanceTrace';
 
 type ViewMode = 'daily' | 'monthly' | 'tracking';
 const VIEW_MODES: ViewMode[] = ['daily', 'monthly', 'tracking'];
@@ -90,6 +92,15 @@ export function AttendancePage() {
   } = useClassroomAttendance(
     viewMode === 'daily' ? selectedClassroomId : undefined,
     viewMode === 'daily' ? selectedDate : undefined
+  );
+  // Who marked and changed each child's attendance that day.
+  const { data: dayHistory } = useClassroomAttendanceHistory(
+    viewMode === 'daily' ? selectedClassroomId : undefined,
+    viewMode === 'daily' ? selectedDate : undefined,
+  );
+  const historyByRecord = React.useMemo(
+    () => new Map((dayHistory ?? []).map((h) => [h.recordId, h])),
+    [dayHistory],
   );
 
   // Fetch monthly report
@@ -186,6 +197,14 @@ export function AttendancePage() {
           {record.note || '—'}
         </span>
       ),
+    },
+    {
+      key: 'trace',
+      header: t('attendance.columns.trace'),
+      render: (record) => {
+        const entry = historyByRecord.get(record.id);
+        return entry ? <AttendanceTrace entry={entry} /> : null;
+      },
     },
   ];
 

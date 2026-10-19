@@ -453,11 +453,42 @@ model AttendanceRecord {
   child     Child     @relation(fields: [childId], references: [id])
   classroom Classroom @relation(fields: [classroomId], references: [id])
   markedBy  User      @relation(fields: [markedByUserId], references: [id])
+  changes   AttendanceChange[]
 
   @@unique([childId, date])
   @@index([classroomId, date])
   @@index([schoolId, date])
   @@map("attendance_records")
+}
+
+/// Every mark and correction of a child's attendance, as it happened: who,
+/// when, from what to what. Only ever added to (the traceability of the
+/// attendance, for the office; parents see only the final status).
+model AttendanceChange {
+  id          String            @id @default(uuid())
+  recordId    String            @map("record_id")
+  schoolId    String            @map("school_id")
+  childId     String            @map("child_id")
+  classroomId String            @map("classroom_id")
+  date        DateTime          @db.Date
+  /// None for the first mark of the day.
+  fromStatus  AttendanceStatus? @map("from_status")
+  toStatus    AttendanceStatus  @map("to_status")
+  fromNote    String?           @map("from_note")
+  toNote      String?           @map("to_note")
+  byUserId    String            @map("by_user_id")
+  /// The name at the time, kept even if the account changes or goes.
+  byName      String            @map("by_name")
+  /// teacher (their own screen) or office.
+  source      String
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  record AttendanceRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  @@index([recordId])
+  @@index([schoolId, classroomId, date])
+  @@index([childId, date])
+  @@map("attendance_changes")
 }
 
 model DailyReport {

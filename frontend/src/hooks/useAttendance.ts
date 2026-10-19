@@ -184,3 +184,45 @@ export function useAttendanceTracking(startDate: string | undefined, endDate: st
     enabled: !!startDate && !!endDate,
   });
 }
+
+/** One child's attendance for a day, with how it came to be (office only). */
+export interface AttendanceHistoryEntry {
+  recordId: string;
+  childId: string;
+  date: string;
+  status: AttendanceStatus;
+  note: string | null;
+  /** Who first marked it, and when. */
+  markedBy: string;
+  markedAt: string;
+  /** Every mark and correction since the history began, oldest first. */
+  changes: {
+    fromStatus: AttendanceStatus | null;
+    toStatus: AttendanceStatus;
+    fromNote: string | null;
+    toNote: string | null;
+    byName: string;
+    source: 'teacher' | 'office' | string;
+    at: string;
+  }[];
+}
+
+/** Who marked and changed what, for a class on a day. */
+export function useClassroomAttendanceHistory(classroomId: string | undefined, date: string | undefined) {
+  return useQuery({
+    queryKey: ['attendance', 'history', 'classroom', classroomId, date],
+    queryFn: async () =>
+      (await apiClient.get<AttendanceHistoryEntry[]>(`/attendance/history/classroom/${classroomId}?date=${date}`)).data ?? [],
+    enabled: !!classroomId && !!date,
+  });
+}
+
+/** A child's attendance over a month (YYYY-MM), with its history. */
+export function useChildAttendanceHistory(childId: string | undefined, month: string) {
+  return useQuery({
+    queryKey: ['attendance', 'history', 'child', childId, month],
+    queryFn: async () =>
+      (await apiClient.get<AttendanceHistoryEntry[]>(`/attendance/history/child/${childId}?month=${month}`)).data ?? [],
+    enabled: !!childId,
+  });
+}

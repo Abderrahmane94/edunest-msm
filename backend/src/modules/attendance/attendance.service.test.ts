@@ -4,6 +4,8 @@ import { attendanceService, AttendanceServiceError } from './attendance.service'
 // Mock Prisma
 vi.mock('../../lib/prisma', () => ({
   default: {
+    // Who marks: their name goes in the attendance history.
+    user: { findUnique: vi.fn(async () => ({ firstName: 'Fatima', lastName: 'Haddad' })) },
     // No teacher replacement unless a test sets one.
     substitution: { findFirst: vi.fn(async () => null), findMany: vi.fn(async () => []) },
     classroom: {
@@ -216,6 +218,10 @@ describe('AttendanceService', () => {
         data: {
           status: 'late',
           note: 'Arrived 10 minutes late',
+          // The correction goes in the history: what it became, and who did it.
+          changes: {
+            create: expect.objectContaining({ toStatus: 'late', toNote: 'Arrived 10 minutes late', byName: 'Fatima Haddad' }),
+          },
         },
         include: {
           child: { select: { id: true, firstName: true, lastName: true } },
@@ -759,7 +765,17 @@ describe('AttendanceService', () => {
       });
       expect(mockPrisma.attendanceRecord.update).toHaveBeenCalledWith({
         where: { id: 'rec-child-2' },
-        data: { status: 'absent', note: null, classroomId },
+        data: {
+          status: 'absent',
+          note: null,
+          classroomId,
+          changes: { create: expect.objectContaining({ toStatus: 'absent', byUserId: userId, byName: 'Fatima Haddad' }) },
+        },
+      });
+      expect(mockPrisma.attendanceRecord.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          changes: { create: expect.objectContaining({ toStatus: 'present', byName: 'Fatima Haddad' }) },
+        }),
       });
     });
 
@@ -872,5 +888,56 @@ describe("a parent's month of attendance", () => {
       { date: '2026-10-05', status: 'late', note: 'Bus en retard' },
       { date: '2026-10-06', status: 'absent', note: null },
     ]);
+  });
+});
+
+describe('the traceability of the attendance', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('a class on a day: who first marked each child, then every change, oldest first', async () => {
+    mockPrisma.attendanceRecord.findMany.mockResolvedValueOnce([
+      {
+        id: 'rec-1',
+        childId: 'child-1',
+        date: new Date('2026-10-19T00:00:00Z'),
+        status: 'absent',
+        note: null,
+        createdAt: new Date('2026-10-19T08:12:00Z'),
+        markedBy: { id: 'u-t', firstName: 'Fatima', lastName: 'Haddad' },
+        changes: [
+          { fromStatus: null, toStatus: 'present', fromNote: null, toNote: null, byName: 'Fatima Haddad', source: 'teacher', createdAt: new Date('2026-10-19T08:12:00Z') },
+          { fromStatus: 'present', toStatus: 'absent', fromNote: null, toNote: null, byName: 'Nadia Benmansour', source: 'office', createdAt: new Date('2026-10-19T10:05:00Z') },
+        ],
+      },
+    ]);
+    const entries = await attendanceService.getHistory('school-1', { classroomId: 'class-1', date: '2026-10-19' });
+    expect(mockPrisma.attendanceRecord.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { schoolId: 'school-1', classroomId: 'class-1', date: new Date('2026-10-19') } }),
+    );
+    expect(entries).toEqual([
+      {
+        recordId: 'rec-1',
+        childId: 'child-1',
+        date: '2026-10-19',
+        status: 'absent',
+        note: null,
+        markedBy: 'Fatima Haddad',
+        markedAt: '2026-10-19T08:12:00.000Z',
+        changes: [
+          { fromStatus: null, toStatus: 'present', fromNote: null, toNote: null, byName: 'Fatima Haddad', source: 'teacher', at: '2026-10-19T08:12:00.000Z' },
+          { fromStatus: 'present', toStatus: 'absent', fromNote: null, toNote: null, byName: 'Nadia Benmansour', source: 'office', at: '2026-10-19T10:05:00.000Z' },
+        ],
+      },
+    ]);
+  });
+
+  it('a child over a month: that month only', async () => {
+    mockPrisma.attendanceRecord.findMany.mockResolvedValueOnce([]);
+    await attendanceService.getHistory('school-1', { childId: 'child-1', month: '2026-10' });
+    expect(mockPrisma.attendanceRecord.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { schoolId: 'school-1', childId: 'child-1', date: { gte: new Date('2026-10-01T00:00:00Z'), lt: new Date('2026-11-01T00:00:00Z') } },
+      }),
+    );
   });
 });

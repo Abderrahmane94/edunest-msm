@@ -4,7 +4,17 @@ import { Prisma } from '@prisma/client';
 vi.mock('../../lib/prisma', () => ({
   default: {
     expense: { findUnique: vi.fn(), create: vi.fn() },
+    // Run the work on the same client.
+    $transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn((await import('../../lib/prisma')).default)),
   },
+}));
+// The history is told apart (expense-history.test.ts).
+vi.mock('./expense-history', () => ({
+  expenseAuthor: vi.fn().mockResolvedValue({ byUserId: 'user-1', byName: 'Nadia' }),
+  snapshotOf: vi.fn().mockResolvedValue({}),
+  recordExpenseChange: vi.fn(),
+  fieldChanges: vi.fn(),
+  toHistoryEntry: vi.fn(),
 }));
 vi.mock('../../services/cloudinary.service', () => ({ cloudinaryService: {} }));
 vi.mock('../academic-years/academic-years.service', () => ({

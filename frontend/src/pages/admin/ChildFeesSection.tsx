@@ -16,6 +16,7 @@ import { setSelectedYearId, useSelectedYear, useYearClosed } from '@/hooks/useSe
 import type { AcademicYear } from '@/hooks/useAcademicYears';
 import { FeeChecklist, clampToAcademicYear, useOfferedFees } from './FeeChecklist';
 import { usePermissions } from '@/lib/roles';
+import { yearLabel } from '@/lib/yearName';
 
 interface AssignedFee {
   key: string;
@@ -138,7 +139,7 @@ function BillingEnrollDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>{t('children.fees.enrollTitle', { year: year.name })}</DialogTitle>
+          <DialogTitle>{t('children.fees.enrollTitle', { year: yearLabel(year.name) })}</DialogTitle>
           <DialogDescription>{t('children.fees.enrollDescription', { name: childName })}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -221,7 +222,7 @@ export function ChildFeesSection({
     <div className="bg-card border border-border rounded-lg p-6 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-subsection font-semibold text-text-heading">
-          {byYear && year ? t('children.fees.titleInYear', { year: year.name }) : t('children.fees.title')}
+          {byYear && year ? t('children.fees.titleInYear', { year: yearLabel(year.name) }) : t('children.fees.title')}
         </h2>
         {showManageBilling && notBilled && !closed && (
           <Button type="button" size="sm" onClick={() => setEnrollOpen(true)}>

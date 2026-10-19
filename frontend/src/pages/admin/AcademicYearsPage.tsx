@@ -25,7 +25,7 @@ import {
 } from '@/hooks/useAcademicYears';
 import { EmptyState, ListSkeleton, SectionHeader, useConfirm, type ConfirmOptions } from '@/components/ui';
 import type { TFunction } from 'i18next';
-import { yearNameFromDates } from '@/lib/yearName';
+import { yearLabel, yearNameFromDates } from '@/lib/yearName';
 
 function CreateAcademicYearDialog({
   open,
@@ -198,7 +198,7 @@ export function AcademicYearsSection() {
   const [actionError, setActionError] = React.useState<string | null>(null);
 
   async function handleActivate(year: { id: string; name: string }) {
-    if (!(await confirm(yearActivateConfirm(t, year.name)))) return;
+    if (!(await confirm(yearActivateConfirm(t, yearLabel(year.name))))) return;
     setActionError(null);
     try {
       await activateAcademicYear.mutateAsync(year.id);
@@ -238,7 +238,7 @@ export function AcademicYearsSection() {
                   <Circle className="w-5 h-5 text-text-disabled" />
                 )}
                 <div>
-                  <p className="text-body font-medium text-foreground">{year.name}</p>
+                  <p className="text-body font-medium text-foreground">{yearLabel(year.name)}</p>
                   <p className="text-caption text-text-secondary flex items-center gap-1">
                     <span>{formatDate(year.start_date)}</span>
                     <span>–</span>

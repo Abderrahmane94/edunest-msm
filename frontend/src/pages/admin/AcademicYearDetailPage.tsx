@@ -25,6 +25,7 @@ import {
   useActivateAcademicYear,
 } from '@/hooks/useAcademicYears';
 import { useYearClosed } from '@/hooks/useSelectedYear';
+import { yearLabel } from '@/lib/yearName';
 
 export function AcademicYearDetailPage() {
   const { t } = useTranslation();
@@ -100,7 +101,7 @@ export function AcademicYearDetailPage() {
 
   async function handleToggleActive() {
     if (!year) return;
-    if (!(await confirm(yearActivateConfirm(t, year.name)))) return;
+    if (!(await confirm(yearActivateConfirm(t, yearLabel(year.name))))) return;
     try {
       setSaveError(null);
       await activateYear.mutateAsync(year.id);
@@ -135,7 +136,7 @@ export function AcademicYearDetailPage() {
       {confirmDialog}
       <PageHeader
         back={ACADEMIC_YEARS_HREF}
-        title={year.name}
+        title={yearLabel(year.name)}
         description={
           <>
             <span dir="ltr">{formatDate(year.start_date)}</span> – <span dir="ltr">{formatDate(year.end_date)}</span>
@@ -230,12 +231,12 @@ export function AcademicYearDetailPage() {
         <div className="bg-card border border-border rounded-lg p-6 space-y-3">
           <h2 className="text-subsection font-semibold text-text-heading">{t('yearRollover.entry.title')}</h2>
           <p className="text-body text-text-secondary">
-            {t('yearRollover.entry.description', { source: `⁦${previousYear.name}⁩`, year: `⁦${year.name}⁩` })}
+            {t('yearRollover.entry.description', { source: yearLabel(previousYear.name), year: yearLabel(year.name) })}
           </p>
           <Link to={`/admin/settings/academic-years/${year.id}/prepare`}>
             <Button type="button" variant="secondary">
               <CopyPlus className="w-4 h-4" />
-              {t('yearRollover.entry.action', { year: `⁦${year.name}⁩` })}
+              {t('yearRollover.entry.action', { year: yearLabel(year.name) })}
             </Button>
           </Link>
         </div>

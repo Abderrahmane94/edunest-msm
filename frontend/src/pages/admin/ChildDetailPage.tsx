@@ -45,6 +45,7 @@ import { EmergencyContactsDialog } from './EmergencyContactsDialog';
 import { MedicalNotesDialog, severityBadgeVariant } from './MedicalNotesDialog';
 import { ChildFeesSection } from './ChildFeesSection';
 import { usePermissions } from '@/lib/roles';
+import { yearLabel } from '@/lib/yearName';
 
 export function ChildDetailPage() {
   const { t } = useTranslation();
@@ -264,7 +265,7 @@ export function ChildDetailPage() {
                     }
                     dir="ltr"
                   >
-                    {y.name}
+                    {yearLabel(y.name)}
                   </button>
                 ))}
               </span>
@@ -337,7 +338,7 @@ export function ChildDetailPage() {
         <div className="bg-card border border-border rounded-lg p-6 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-subsection font-semibold text-text-heading">
-              {schoolYear ? t('children.detail.classroomInYear', { year: schoolYear.name }) : t('children.detail.classroom')}
+              {schoolYear ? t('children.detail.classroomInYear', { year: yearLabel(schoolYear.name) }) : t('children.detail.classroom')}
             </h2>
             <Button
               type="button"

@@ -16,6 +16,7 @@ import {
   type RolloverPreview,
   type RolloverResult,
 } from '@/hooks/useYearRollover';
+import { yearLabel } from '@/lib/yearName';
 
 const STEPS = ['classes', 'fees', 'children', 'summary'] as const;
 type Step = (typeof STEPS)[number];
@@ -308,7 +309,7 @@ export function YearRolloverPage() {
             className="h-9 rounded-md border border-border bg-card px-2 text-body"
           >
             {p.otherYears.map((y) => (
-              <option key={y.id} value={y.id}>{y.name}</option>
+              <option key={y.id} value={y.id}>{yearLabel(y.name)}</option>
             ))}
           </select>
         </div>

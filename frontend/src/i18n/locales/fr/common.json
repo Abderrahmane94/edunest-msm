@@ -2841,6 +2841,15 @@
     "loadMore": "Charger les plus anciennes"
   },
   "notifications": {
+    "remove": "Retirer la notification « {{title}} »",
+    "removeShort": "Retirer",
+    "clearRead": {
+      "button": "Effacer les lues",
+      "title_one": "Effacer 1 notification lue ?",
+      "title_other": "Effacer {{count}} notifications lues ?",
+      "description": "Les notifications non lues restent. Les messages, annonces et paiements eux-mêmes ne sont pas touchés.",
+      "confirm": "Effacer"
+    },
     "title": "Notifications",
     "unreadCount": "{{count}} non lue(s)",
     "markAllRead": "Tout marquer comme lu",

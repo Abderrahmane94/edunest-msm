@@ -2965,6 +2965,19 @@
     "loadMore": "تحميل الأقدم"
   },
   "notifications": {
+    "remove": "إزالة الإشعار «{{title}}»",
+    "removeShort": "إزالة",
+    "clearRead": {
+      "button": "مسح المقروءة",
+      "title_zero": "مسح الإشعارات المقروءة؟",
+      "title_one": "مسح إشعار مقروء واحد؟",
+      "title_two": "مسح إشعارين مقروءين؟",
+      "title_few": "مسح {{count}} إشعارات مقروءة؟",
+      "title_many": "مسح {{count}} إشعارًا مقروءًا؟",
+      "title_other": "مسح {{count}} إشعار مقروء؟",
+      "description": "تبقى الإشعارات غير المقروءة. لا تُمَسّ الرسائل والإعلانات والمدفوعات نفسها.",
+      "confirm": "مسح"
+    },
     "title": "الإشعارات",
     "unreadCount": "{{count}} غير مقروءة",
     "markAllRead": "تحديد الكل كمقروء",

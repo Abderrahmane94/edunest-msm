@@ -28,6 +28,8 @@ interface NotificationsPage {
   items: AppNotification[];
   page: number;
   totalPages: number;
+  /** All the user's notifications, read or not. */
+  total: number;
 }
 
 const PAGE_SIZE = 20;
@@ -59,7 +61,7 @@ export function useNotificationsInfinite() {
       )) as ApiResponse<Record<string, unknown>[]>;
       const items = Array.isArray(res.data) ? res.data.map(normalize) : [];
       const totalPages = res.meta?.totalPages ?? 1;
-      return { items, page: pageParam as number, totalPages };
+      return { items, page: pageParam as number, totalPages, total: res.meta?.total ?? items.length };
     },
     getNextPageParam: (last) => (last.page < last.totalPages ? last.page + 1 : undefined),
   });
@@ -122,6 +124,49 @@ export function useMarkAllNotificationsRead() {
         };
       });
       qc.setQueryData(['notifications', 'unread-count'], 0);
+    },
+  });
+}
+
+/** Takes notifications out of the list already shown, without reloading it. */
+function dropFromList(qc: ReturnType<typeof useQueryClient>, keep: (n: AppNotification) => boolean) {
+  qc.setQueryData<InfiniteData<NotificationsPage>>(['notifications', 'list'], (data) => {
+    if (!data) return data;
+    const removed = data.pages.reduce((sum, p) => sum + p.items.filter((n) => !keep(n)).length, 0);
+    return {
+      ...data,
+      pages: data.pages.map((p) => ({ ...p, items: p.items.filter(keep), total: Math.max(0, p.total - removed) })),
+    };
+  });
+}
+
+/** Removes one notification (only the alert: what it points to stays). */
+export function useRemoveNotification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.delete(`/notifications/${id}`);
+      if (!res.success) throw apiError(res.error, 'Failed to remove the notification');
+    },
+    onSuccess: (_, id) => {
+      dropFromList(qc, (n) => n.id !== id);
+      qc.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+    },
+  });
+}
+
+/** Removes the read notifications, never one not seen yet. */
+export function useClearReadNotifications() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.delete('/notifications/read');
+      if (!res.success) throw apiError(res.error, 'Failed to clear the notifications');
+    },
+    onSuccess: () => {
+      dropFromList(qc, (n) => !n.is_read);
+      // Older pages not loaded yet may hold more: load them afresh.
+      qc.invalidateQueries({ queryKey: ['notifications', 'list'] });
     },
   });
 }

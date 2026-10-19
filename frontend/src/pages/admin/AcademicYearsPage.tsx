@@ -25,6 +25,7 @@ import {
 } from '@/hooks/useAcademicYears';
 import { EmptyState, ListSkeleton, SectionHeader, useConfirm, type ConfirmOptions } from '@/components/ui';
 import type { TFunction } from 'i18next';
+import { yearNameFromDates } from '@/lib/yearName';
 
 function CreateAcademicYearDialog({
   open,
@@ -42,15 +43,23 @@ function CreateAcademicYearDialog({
     end_date: '',
   });
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+  // The name follows the dates ("2026-2027") until the director types one.
+  const [nameTyped, setNameTyped] = React.useState(false);
 
   function resetForm() {
     setFormData({ name: '', start_date: '', end_date: '' });
     setErrors({});
+    setNameTyped(false);
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'name') setNameTyped(value.trim() !== '');
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      if (name !== 'name' && !nameTyped) next.name = yearNameFromDates(next.start_date, next.end_date) ?? prev.name;
+      return next;
+    });
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
@@ -110,6 +119,7 @@ function CreateAcademicYearDialog({
             <Input
               id="ay-name"
               name="name"
+              dir="ltr"
               value={formData.name}
               onChange={handleChange}
               placeholder={t('academicYears.form.namePlaceholder')}

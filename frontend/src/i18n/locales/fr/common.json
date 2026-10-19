@@ -28,6 +28,38 @@
     },
     "title": "Tableau de bord",
     "admin": {
+      "firstSteps": {
+        "title": "Premiers pas",
+        "progress": "{{done}} sur {{total}} étapes faites — tout se coche tout seul.",
+        "hide": "Masquer",
+        "done": "Fait",
+        "steps": {
+          "year": {
+            "title": "L'année scolaire",
+            "hint": "Vérifiez ses dates (créée avec la crèche)."
+          },
+          "rooms": {
+            "title": "Les salles",
+            "hint": "Les locaux et leur nombre de places."
+          },
+          "classes": {
+            "title": "Les classes",
+            "hint": "Les groupes d'enfants, chacun dans sa salle."
+          },
+          "fees": {
+            "title": "Les frais",
+            "hint": "Inscription, mensualité, cantine…"
+          },
+          "team": {
+            "title": "L'équipe",
+            "hint": "Éducatrices, agents et employés."
+          },
+          "children": {
+            "title": "Les enfants",
+            "hint": "Inscrivez-les avec leurs parents."
+          }
+        }
+      },
       "welcome": "Bonjour, {{name}} 👋",
       "todo": {
         "title": "À faire",

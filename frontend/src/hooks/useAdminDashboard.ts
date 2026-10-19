@@ -35,6 +35,8 @@ export interface AdminDashboard {
     newThisMonth: number;
     classrooms: { id: string; name: string; capacity: number; enrolled: number }[];
   };
+  /** What a new school still has to set up (the director's first steps). */
+  setup: { year: boolean; rooms: boolean; classes: boolean; fees: boolean; team: boolean; children: boolean };
   communication: {
     waitingParents: number;
     pendingConsents: number;

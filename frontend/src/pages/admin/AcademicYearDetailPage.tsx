@@ -163,6 +163,7 @@ export function AcademicYearDetailPage() {
             <Input
               id="ay-name"
               name="name"
+              dir="ltr"
               value={formData.name}
               onChange={handleChange}
               placeholder={t('academicYears.form.namePlaceholder')}

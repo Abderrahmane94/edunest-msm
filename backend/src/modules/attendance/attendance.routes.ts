@@ -13,6 +13,7 @@ import {
   childAttendanceQuerySchema,
   attendanceReportQuerySchema,
   parentChildrenMonthQuerySchema,
+  childHistoryQuerySchema,
 } from './attendance.schema';
 import { idParamSchema } from '../../utils/validators';
 import { rejectClosedYear, yearOf } from '../../middleware/closed-year.middleware';
@@ -43,6 +44,24 @@ router.get(
   '/tracking',
   requirePermission('classes', 'view'),
   attendanceController.getMarkingStatus,
+);
+
+// GET /api/attendance/history/classroom/:classroomId?date= — Who marked and changed what (office only)
+router.get(
+  '/history/classroom/:classroomId',
+  requirePermission('classes', 'view'),
+  validateParams(classroomIdParamSchema),
+  validateQuery(classroomAttendanceQuerySchema),
+  attendanceController.classroomHistory,
+);
+
+// GET /api/attendance/history/child/:childId?month=YYYY-MM — A child's attendance history (office only)
+router.get(
+  '/history/child/:childId',
+  requirePermission('classes', 'view'),
+  validateParams(childIdParamSchema),
+  validateQuery(childHistoryQuerySchema),
+  attendanceController.childHistory,
 );
 
 // GET /api/attendance/my-children?month=YYYY-MM — Parent's children monthly attendance summary

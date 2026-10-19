@@ -645,7 +645,6 @@
     "supplies": "اللوازم",
     "announcements": "الإعلانات",
     "payments": "المدفوعات",
-    "finance": "المالية",
     "paymentsEnrollments": "التسجيلات",
     "paymentsRecords": "التحصيلات",
     "paymentsLate": "التأخيرات",
@@ -1874,6 +1873,12 @@
     }
   },
   "children": {
+    "attendance": {
+      "title": "الحضور",
+      "previous": "الشهر السابق",
+      "next": "الشهر التالي",
+      "empty": "لا يوجد تسجيل حضور في هذا الشهر."
+    },
     "age": {
       "years_zero": "أقل من سنة",
       "years_one": "سنة",
@@ -2231,6 +2236,21 @@
     }
   },
   "attendance": {
+    "trace": {
+      "marked": "سجّله {{name}} على {{time}}",
+      "corrected": "صحّحه {{name}} على {{time}}: {{change}}",
+      "noteChanged": "عدّل {{name}} الملاحظة على {{time}}",
+      "history": "السجل ({{count}})",
+      "arrow": "←",
+      "source": {
+        "teacher": "شاشة المربي",
+        "office": "الإدارة"
+      },
+      "firstMark": "سجّل {{status}}",
+      "sameStatus": "أبقى {{status}}",
+      "note": "ملاحظة «{{note}}»",
+      "noteRemoved": "حُذفت الملاحظة"
+    },
     "office": {
       "take": "تسجيل الحضور",
       "edit": "تعديل الحضور"
@@ -2256,6 +2276,7 @@
       "noData": "لا توجد بيانات لهذه الفترة."
     },
     "columns": {
+      "trace": "من ومتى",
       "childName": "اسم الطفل",
       "status": "الحالة",
       "note": "ملاحظة",

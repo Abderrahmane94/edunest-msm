@@ -5,6 +5,32 @@ import type { BulkMarkAttendanceInput, SaveAttendanceDayInput, UpdateAttendanceI
 
 export const attendanceController = {
   /**
+   * GET /api/attendance/history/classroom/:classroomId?date= — Who marked and changed what, for a class on a day
+   */
+  async classroomHistory(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { date } = req.query as unknown as ClassroomAttendanceQuery;
+      const entries = await attendanceService.getHistory(req.user!.schoolId!, { classroomId: req.params.classroomId, date });
+      res.status(200).json(successResponse(entries));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * GET /api/attendance/history/child/:childId?month= — A child's attendance history over a month
+   */
+  async childHistory(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { month } = req.query as unknown as ParentChildrenMonthQuery;
+      const entries = await attendanceService.getHistory(req.user!.schoolId!, { childId: req.params.childId, month });
+      res.status(200).json(successResponse(entries));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
    * POST /api/attendance/bulk-mark — Bulk mark attendance for a classroom
    */
   async bulkMark(req: Request, res: Response, next: NextFunction): Promise<void> {

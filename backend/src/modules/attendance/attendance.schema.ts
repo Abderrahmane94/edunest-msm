@@ -120,3 +120,6 @@ export const parentChildrenMonthQuerySchema = z.object({
 });
 
 export type ParentChildrenMonthQuery = z.infer<typeof parentChildrenMonthQuerySchema>;
+
+/** A child's attendance history: one month (YYYY-MM). */
+export const childHistoryQuerySchema = parentChildrenMonthQuerySchema;

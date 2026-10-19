@@ -46,6 +46,7 @@ import { MedicalNotesDialog, severityBadgeVariant } from './MedicalNotesDialog';
 import { ChildFeesSection } from './ChildFeesSection';
 import { usePermissions } from '@/lib/roles';
 import { yearLabel } from '@/lib/yearName';
+import { ChildAttendanceSection } from './ChildAttendanceSection';
 
 export function ChildDetailPage() {
   const { t } = useTranslation();
@@ -726,6 +727,9 @@ export function ChildDetailPage() {
         childId={childId!}
         childName={child ? `${child.first_name} ${child.last_name}` : ''}
       />
+
+      {/* Attendance, day by day, with who marked or changed it */}
+      <ChildAttendanceSection childId={childId!} />
 
       {/* Assigned fees */}
       <ChildFeesSection

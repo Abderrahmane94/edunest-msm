@@ -610,7 +610,6 @@
     "supplies": "Fournitures",
     "announcements": "Annonces",
     "payments": "Paiements",
-    "finance": "Finances",
     "paymentsEnrollments": "Inscriptions",
     "paymentsRecords": "Encaissements",
     "paymentsLate": "Retards",
@@ -1760,6 +1759,12 @@
     }
   },
   "children": {
+    "attendance": {
+      "title": "Présence",
+      "previous": "Mois précédent",
+      "next": "Mois suivant",
+      "empty": "Aucun appel ce mois-ci."
+    },
     "age": {
       "years_one": "1 an",
       "years_many": "{{count}} ans",
@@ -2107,6 +2112,21 @@
     }
   },
   "attendance": {
+    "trace": {
+      "marked": "Marqué par {{name}} à {{time}}",
+      "corrected": "Corrigé par {{name}} à {{time}} : {{change}}",
+      "noteChanged": "Remarque modifiée par {{name}} à {{time}}",
+      "history": "Historique ({{count}})",
+      "arrow": "→",
+      "source": {
+        "teacher": "écran de l'enseignant",
+        "office": "bureau"
+      },
+      "firstMark": "a marqué {{status}}",
+      "sameStatus": "a gardé {{status}}",
+      "note": "remarque « {{note}} »",
+      "noteRemoved": "remarque retirée"
+    },
     "office": {
       "take": "Faire l'appel",
       "edit": "Modifier l'appel"
@@ -2132,6 +2152,7 @@
       "noData": "Aucune donnée pour cette période."
     },
     "columns": {
+      "trace": "Qui et quand",
       "childName": "Nom de l'enfant",
       "status": "Statut",
       "note": "Note",

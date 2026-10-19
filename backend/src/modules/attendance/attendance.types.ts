@@ -81,3 +81,25 @@ export interface ChildMonthlySummary {
   lateCount: number;
   attendancePercentage: number;
 }
+
+/** One child's attendance for a day, with how it came to be (office only). */
+export interface AttendanceHistoryEntry {
+  recordId: string;
+  childId: string;
+  date: string;
+  status: string;
+  note: string | null;
+  /** Who first marked it, and when (known for every record, history or not). */
+  markedBy: string;
+  markedAt: string;
+  /** Every mark and correction since the history began, oldest first. */
+  changes: {
+    fromStatus: string | null;
+    toStatus: string;
+    fromNote: string | null;
+    toNote: string | null;
+    byName: string;
+    source: string;
+    at: string;
+  }[];
+}

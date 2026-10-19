@@ -4,6 +4,7 @@ import { notificationService } from '../../services/notification.service';
 import { Prisma } from '@prisma/client';
 import type { BulkMarkAttendanceInput, SaveAttendanceDayInput, UpdateAttendanceInput } from './attendance.schema';
 import type {
+  AttendanceHistoryEntry,
   AttendanceRecordWithChild,
   AttendanceRecordWithDetails,
   ClassroomMonthlyReport,
@@ -31,6 +32,16 @@ const markedBySelect = {
   firstName: true,
   lastName: true,
 };
+
+/** Who is marking, as kept in the history: their name then, and from where. */
+async function changeAuthor(userId: string, userRole: string): Promise<{ byUserId: string; byName: string; source: string }> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true } });
+  return {
+    byUserId: userId,
+    byName: user ? `${user.firstName} ${user.lastName}`.trim() : '',
+    source: userRole === 'teacher' ? 'teacher' : 'office',
+  };
+}
 
 class AttendanceService {
   /**
@@ -87,7 +98,8 @@ class AttendanceService {
       );
     }
 
-    // Create all records in a transaction
+    // Create all records in a transaction, each with its first history line.
+    const author = await changeAuthor(userId, userRole);
     const attendanceRecords = await prisma.$transaction(
       records.map((record) =>
         prisma.attendanceRecord.create({
@@ -99,6 +111,12 @@ class AttendanceService {
             status: record.status,
             markedByUserId: userId,
             note: record.note || null,
+            changes: {
+              create: {
+                schoolId, childId: record.childId, classroomId, date: new Date(date),
+                toStatus: record.status, toNote: record.note || null, ...author,
+              },
+            },
           },
           include: {
             child: { select: childSelect },
@@ -155,11 +173,23 @@ class AttendanceService {
       }
     }
 
+    const nextNote = input.note !== undefined ? input.note || null : record.note;
+    const changed = input.status !== record.status || nextNote !== record.note;
     const updated = await prisma.attendanceRecord.update({
       where: { id },
       data: {
         status: input.status,
         ...(input.note !== undefined && { note: input.note || null }),
+        // What it was and who changed it, when it did change.
+        ...(changed && {
+          changes: {
+            create: {
+              schoolId, childId: record.childId, classroomId: record.classroomId, date: record.date,
+              fromStatus: record.status, toStatus: input.status, fromNote: record.note, toNote: nextNote,
+              ...(await changeAuthor(userId, userRole)),
+            },
+          },
+        }),
       },
       include: {
         child: { select: childSelect },
@@ -228,6 +258,7 @@ class AttendanceService {
     const skipped: string[] = [];
     const becameAbsent = new Set<string>();
     const writes: Prisma.PrismaPromise<unknown>[] = [];
+    const author = await changeAuthor(userId, userRole);
     for (const r of records) {
       const current = byChild.get(r.childId);
       if (current) {
@@ -240,7 +271,17 @@ class AttendanceService {
         writes.push(
           prisma.attendanceRecord.update({
             where: { id: current.id },
-            data: { status: r.status, note, classroomId },
+            data: {
+              status: r.status,
+              note,
+              classroomId,
+              changes: {
+                create: {
+                  schoolId, childId: r.childId, classroomId, date: day,
+                  fromStatus: current.status, toStatus: r.status, fromNote: current.note, toNote: note, ...author,
+                },
+              },
+            },
           }),
         );
         if (r.status === 'absent' && current.status !== 'absent') becameAbsent.add(r.childId);
@@ -255,6 +296,9 @@ class AttendanceService {
               status: r.status,
               markedByUserId: userId,
               note: r.note || null,
+              changes: {
+                create: { schoolId, childId: r.childId, classroomId, date: day, toStatus: r.status, toNote: r.note || null, ...author },
+              },
             },
           }),
         );
@@ -291,6 +335,51 @@ class AttendanceService {
     }
 
     return { records: saved, skipped };
+  }
+
+  /**
+   * The traceability of the attendance (office only): for a class on a day,
+   * or a child over a month, each record with who first marked it and every
+   * change since — who, when, from what to what.
+   */
+  async getHistory(
+    schoolId: string,
+    filter: { classroomId: string; date: string } | { childId: string; month: string },
+  ): Promise<AttendanceHistoryEntry[]> {
+    let where: Prisma.AttendanceRecordWhereInput;
+    if ('classroomId' in filter) {
+      where = { schoolId, classroomId: filter.classroomId, date: new Date(filter.date) };
+    } else {
+      const [y, m] = filter.month.split('-').map(Number);
+      where = { schoolId, childId: filter.childId, date: { gte: new Date(Date.UTC(y, m - 1, 1)), lt: new Date(Date.UTC(y, m, 1)) } };
+    }
+    const records = await prisma.attendanceRecord.findMany({
+      where,
+      orderBy: [{ date: 'desc' }, { child: { lastName: 'asc' } }],
+      select: {
+        id: true,
+        childId: true,
+        date: true,
+        status: true,
+        note: true,
+        createdAt: true,
+        markedBy: { select: markedBySelect },
+        changes: {
+          orderBy: { createdAt: 'asc' },
+          select: { fromStatus: true, toStatus: true, fromNote: true, toNote: true, byName: true, source: true, createdAt: true },
+        },
+      },
+    });
+    return records.map((r) => ({
+      recordId: r.id,
+      childId: r.childId,
+      date: r.date.toISOString().slice(0, 10),
+      status: r.status,
+      note: r.note,
+      markedBy: `${r.markedBy.firstName} ${r.markedBy.lastName}`.trim(),
+      markedAt: r.createdAt.toISOString(),
+      changes: r.changes.map(({ createdAt, ...c }) => ({ ...c, at: createdAt.toISOString() })),
+    }));
   }
 
   /**

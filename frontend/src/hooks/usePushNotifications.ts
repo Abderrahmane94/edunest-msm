@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/contexts/AuthContext';
-import { isPushConfigured, requestPushToken, onForegroundMessage } from '@/lib/push';
+import { isPushConfigured, requestPushToken, onForegroundMessage, showSystemNotification } from '@/lib/push';
 
 const REGISTERED_TOKEN_KEY = 'fcm_token';
 
@@ -57,9 +57,7 @@ export function usePushNotifications() {
       const title = payload.notification?.title;
       const body = payload.notification?.body;
       if (!title) return;
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(title, { body, icon: '/icon-192.png' });
-      }
+      void showSystemNotification(title, body);
     }).then((unsub) => {
       if (cancelled) unsub();
       else unsubscribe = unsub;

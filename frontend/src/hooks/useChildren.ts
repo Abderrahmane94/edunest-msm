@@ -24,6 +24,8 @@ export interface Child {
   place_of_birth?: string | null;
   blood_type?: BloodType | null;
   has_authorized_pickup?: boolean;
+  /** How many health notes (allergy, treatment…) — lists only. */
+  medical_note_count?: number;
   /** The years the child was registered, placed or billed, latest first (child file only). */
   school_years?: { id: string; name: string }[];
   /** What is still owed from the years before the one looked at (child file only). */
@@ -136,6 +138,7 @@ function mapChild(raw: Record<string, unknown>): Child {
     place_of_birth: (raw.placeOfBirth ?? raw.place_of_birth ?? null) as string | null,
     blood_type: (raw.bloodType ?? raw.blood_type ?? null) as BloodType | null,
     has_authorized_pickup: (raw.hasAuthorizedPickup ?? raw.has_authorized_pickup) as boolean | undefined,
+    medical_note_count: (raw.medicalNoteCount ?? raw.medical_note_count) as number | undefined,
     school_years: raw.schoolYears as { id: string; name: string }[] | undefined,
     unpaid_other_years: raw.unpaidOtherYears as { id: string; name: string; amount: string }[] | undefined,
     created_at: (raw.createdAt ?? raw.created_at) as string,

@@ -1,7 +1,7 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Link2, Phone, HeartPulse, Eye } from 'lucide-react';
 import { ClassTag, classColor, classDot } from '@/components/ClassTag';
 import { ChildQuickView, childAge } from './ChildQuickView';
@@ -180,7 +180,9 @@ export function ChildrenPage() {
   const navigate = useNavigate();
   const [page, setPage] = React.useState(1);
   const [search, setSearch] = React.useState('');
-  const [classroomFilter, setClassroomFilter] = React.useState('');
+  // "Voir dans Enfants" from a class page opens the list on that class.
+  const [searchParams] = useSearchParams();
+  const [classroomFilter, setClassroomFilter] = React.useState(() => searchParams.get('classroom') ?? '');
   const [genderFilter, setGenderFilter] = React.useState<'' | 'male' | 'female'>('');
   const [parentFilter, setParentFilter] = React.useState<'' | 'true' | 'false'>('');
   const [statusFilter, setStatusFilter] = React.useState<'' | 'active' | 'inactive'>('');

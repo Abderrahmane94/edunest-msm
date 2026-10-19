@@ -32,6 +32,7 @@ import { RoomField } from './RoomField';
 import { useSelectedYear, useYearClosed } from '@/hooks/useSelectedYear';
 import { ClassSubstitutionsSection } from './SubstitutionsSection';
 import { usePermissions } from '@/lib/roles';
+import { ClassroomChildrenSection } from './ClassroomChildrenSection';
 
 export function ClassroomDetailPage() {
   const { t } = useTranslation();
@@ -42,7 +43,8 @@ export function ClassroomDetailPage() {
   // A class of a closed year is looked at, not changed.
   const { can, canDelete } = usePermissions();
   // Read-only: a closed year, or a profile that only views classes.
-  const closed = useYearClosed(classroom?.academic_year_id) || !can('classes', 'edit');
+  const yearClosed = useYearClosed(classroom?.academic_year_id);
+  const closed = yearClosed || !can('classes', 'edit');
   const { activeYear } = useSelectedYear();
   const updateClassroom = useUpdateClassroom();
   const assignTeacher = useAssignTeacher();
@@ -254,6 +256,16 @@ export function ClassroomDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Who is in the class */}
+      <ClassroomChildrenSection
+        classroom={{
+          id: classroom.id,
+          capacity: classroom.capacity,
+          isCurrentYear: !!activeYear?.is_active && classroom.academic_year_id === activeYear.id,
+        }}
+        readOnly={yearClosed}
+      />
 
       {/* Replacements of the class's teacher */}
       <ClassSubstitutionsSection

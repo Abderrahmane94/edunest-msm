@@ -208,13 +208,16 @@ class ChildrenService {
             include: { parent: { select: { firstName: true, lastName: true } } },
           },
           emergencyContacts: true,
+          // A health flag in lists (allergy, treatment…): how many notes, not what they say.
+          _count: { select: { medicalNotes: true } },
         },
       }),
       prisma.child.count({ where }),
     ]);
 
-    const childrenWithParentNames = children.map(({ parentLinks, emergencyContacts, ...child }) => ({
+    const childrenWithParentNames = children.map(({ parentLinks, emergencyContacts, _count, ...child }) => ({
       ...child,
+      medicalNoteCount: _count.medicalNotes,
       parentNames: parentLinks.map((link) => `${link.parent.firstName} ${link.parent.lastName}`),
       hasAuthorizedPickup:
         parentLinks.some((link) => link.canPickup) ||

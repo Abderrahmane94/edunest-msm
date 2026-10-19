@@ -1762,6 +1762,18 @@
     }
   },
   "classrooms": {
+    "children": {
+      "title_zero": "أطفال القسم ({{count}}/{{capacity}})",
+      "title_one": "أطفال القسم ({{count}}/{{capacity}})",
+      "title_two": "أطفال القسم ({{count}}/{{capacity}})",
+      "title_few": "أطفال القسم ({{count}}/{{capacity}})",
+      "title_many": "أطفال القسم ({{count}}/{{capacity}})",
+      "title_other": "أطفال القسم ({{count}}/{{capacity}})",
+      "seeAll": "عرض في الأطفال",
+      "enroll": "تسجيل طفل",
+      "empty": "لا يوجد أطفال في هذا القسم حاليًا.",
+      "health": "صحة"
+    },
     "colors": {
       "violet": "بنفسجي",
       "sky": "أزرق",

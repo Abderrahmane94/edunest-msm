@@ -158,6 +158,10 @@ export const platformDashboardService = {
     const growthMonths = monthKeys(today, GROWTH_MONTHS);
     const weekAgo = new Date(now.getTime() - ACTIVE_WINDOW_DAYS * DAY_MS);
     const live = { deletedAt: null };
+    // Demonstration schools (fictitious data) are not the platform's activity.
+    const realSchool = { demoExpiresAt: null };
+    const ofRealSchool = { school: { is: realSchool } };
+    const ofRealChild = { child: { school: realSchool } };
     const roles = ['admin', 'administrative', 'teacher', 'parent'] as const;
 
     const [
@@ -177,6 +181,7 @@ export const platformDashboardService = {
       payments,
     ] = await Promise.all([
       prisma.school.findMany({
+        where: realSchool,
         select: {
           id: true,
           name: true,
@@ -217,21 +222,22 @@ export const platformDashboardService = {
         where: {
           role: { in: [...roles] },
           isActive: true,
+          ...ofRealSchool,
           OR: [{ lastActiveAt: { gte: weekAgo } }, { refreshTokens: { some: { createdAt: { gte: weekAgo } } } }],
         },
         select: { role: true },
       }),
       prisma.user.groupBy({
         by: ['role'],
-        where: { ...live, isActive: true, role: { in: [...roles] } },
+        where: { ...live, isActive: true, role: { in: [...roles] }, ...ofRealSchool },
         _count: { _all: true },
       }),
-      prisma.child.count({ where: { isActive: true } }),
-      prisma.attendanceRecord.count({ where: { createdAt: { gte: weekAgo } } }),
-      prisma.dailyReport.count({ where: { createdAt: { gte: weekAgo } } }),
-      prisma.message.count({ where: { createdAt: { gte: weekAgo } } }),
-      prisma.staffMessage.count({ where: { createdAt: { gte: weekAgo } } }),
-      prisma.paymentRecord.count({ where: { createdAt: { gte: weekAgo }, isCorrection: false } }),
+      prisma.child.count({ where: { isActive: true, school: realSchool } }),
+      prisma.attendanceRecord.count({ where: { createdAt: { gte: weekAgo }, ...ofRealChild } }),
+      prisma.dailyReport.count({ where: { createdAt: { gte: weekAgo }, ...ofRealChild } }),
+      prisma.message.count({ where: { createdAt: { gte: weekAgo }, sender: ofRealSchool } }),
+      prisma.staffMessage.count({ where: { createdAt: { gte: weekAgo }, sender: ofRealSchool } }),
+      prisma.paymentRecord.count({ where: { createdAt: { gte: weekAgo }, isCorrection: false, ...ofRealChild } }),
     ]);
 
     const countOf = (rows: { schoolId: string | null; _count: { _all: number } }[]) =>

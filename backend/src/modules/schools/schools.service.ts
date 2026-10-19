@@ -90,12 +90,14 @@ class SchoolsService {
    */
   async list(page: number, pageSize: number): Promise<{ schools: SchoolResponse[]; total: number }> {
     const [schools, total] = await Promise.all([
+      // Real schools only: demonstrations have their own list.
       prisma.school.findMany({
+        where: { demoExpiresAt: null },
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.school.count(),
+      prisma.school.count({ where: { demoExpiresAt: null } }),
     ]);
 
     return { schools: schools.map(withLogoUrl), total };
@@ -120,10 +122,10 @@ class SchoolsService {
    * What every member of a school sees of it in their header: its name and
    * logo, nothing else (contacts and subscription stay with the office).
    */
-  async getBrand(id: string): Promise<{ name: string; logoUrl: string | null }> {
+  async getBrand(id: string): Promise<{ name: string; logoUrl: string | null; demoExpiresAt: string | null }> {
     const school = await prisma.school.findUnique({
       where: { id },
-      select: { name: true, logoPublicId: true },
+      select: { name: true, logoPublicId: true, demoExpiresAt: true },
     });
 
     if (!school) {
@@ -133,6 +135,8 @@ class SchoolsService {
     return {
       name: school.name,
       logoUrl: school.logoPublicId ? cloudinaryService.generateSignedUrl(school.logoPublicId, 'photo') : null,
+      // A demonstration: everyone in it sees until when.
+      demoExpiresAt: school.demoExpiresAt?.toISOString() ?? null,
     };
   }
 

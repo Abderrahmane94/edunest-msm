@@ -248,7 +248,8 @@ export const usersService = {
     // Exclude super_admin users — they are platform-level and not school-scoped
     const where: Prisma.UserWhereInput = schoolId
       ? { schoolId, role: { not: 'super_admin' } }
-      : { role: { not: 'super_admin' } };
+      : // The platform's list: people of real schools, not of demonstrations.
+        { role: { not: 'super_admin' }, school: { is: { demoExpiresAt: null } } };
 
     if (filters.status) where.isActive = filters.status === 'active';
 

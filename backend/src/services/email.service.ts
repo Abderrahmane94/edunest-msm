@@ -1,3 +1,4 @@
+import { isDemoEmail } from '../lib/demo';
 /**
  * Email service using Resend.
  * In development mode, emails are logged to console instead of being sent.
@@ -35,6 +36,8 @@ class EmailService {
   }
 
   private async send(options: SendEmailOptions): Promise<void> {
+    // A demonstration's fictitious accounts: their addresses can never receive mail.
+    if (isDemoEmail(options.to)) return;
     if (this.isDevelopment || !this.apiKey) {
       console.log('[EmailService] Development mode - email not sent:');
       console.log(`  To: ${options.to}`);

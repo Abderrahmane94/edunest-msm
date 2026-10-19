@@ -37,6 +37,7 @@ const EventDetailPage = lazyPage('office', () => import('@/pages/admin/EventDeta
 const PayrollPage = lazyPage('office', () => import('@/pages/admin/PayrollPage').then((m) => m.PayrollPage));
 const TrashPage = lazyPage('platform', () => import('@/pages/admin/TrashPage').then((m) => m.TrashPage));
 const SchoolsPage = lazyPage('platform', () => import('@/pages/admin/SchoolsPage').then((m) => m.SchoolsPage));
+const DemosPage = lazyPage('platform', () => import('@/pages/admin/DemosPage').then((m) => m.DemosPage));
 const SchoolDetailPage = lazyPage('platform', () => import('@/pages/admin/SchoolDetailPage').then((m) => m.SchoolDetailPage));
 const BillingPage = lazyPage('platform', () => import('@/pages/admin/BillingPage').then((m) => m.BillingPage));
 const PaymentManagementPage = lazyPage('office', () => import('@/pages/admin/payments/PaymentManagementPage').then((m) => m.PaymentManagementPage));
@@ -83,6 +84,7 @@ import {
   Bell,
   LogOut,
   Building2,
+  FlaskConical,
   Languages,
   Trash2,
   Banknote,
@@ -162,6 +164,7 @@ function getAdminNavItems(role: string, can: (area: Area) => boolean): NavItem[]
     return [
       { label: 'nav.dashboard', href: '/admin', icon: LayoutDashboard },
       { label: 'nav.schools',   href: '/admin/schools', icon: Building2 },
+      { label: 'nav.demos',     href: '/admin/demos', icon: FlaskConical },
       { label: 'nav.users',     href: '/admin/users', icon: Users },
       { label: 'nav.billing',   href: '/admin/billing', icon: Wallet },
       { label: 'nav.trash',     href: '/admin/trash', icon: Trash2 },
@@ -465,6 +468,11 @@ export const routes: RouteObject[] = [
                   { path: 'schools/:schoolId', element: <SchoolDetailPage /> },
                   { path: 'billing', element: <BillingPage /> },
                 ],
+              },
+              // Demonstration schools: the platform's only.
+              {
+                element: <RoleRoute allowedRoles={['super_admin']} />,
+                children: [{ path: 'demos', element: <DemosPage /> }],
               },
               // Each area's pages, open to the office staff whose profile allows it.
               {

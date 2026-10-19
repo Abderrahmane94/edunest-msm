@@ -11,6 +11,7 @@ import { verifyUploadPath } from './services/cloudinary.service';
 import { checkDatabase } from './lib/db-health';
 import authRoutes from './modules/auth/auth.routes';
 import schoolRoutes from './modules/schools/schools.routes';
+import demoRoutes from './modules/demos/demos.routes';
 import userRoutes from './modules/users/users.routes';
 import staffRoutes from './modules/staff/staff.routes';
 import academicYearRoutes from './modules/academic-years/academic-years.routes';
@@ -136,6 +137,7 @@ app.use('/api', tenancyMiddleware);
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/schools', schoolRoutes);
+app.use('/api/demos', demoRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/academic-years', academicYearRoutes);

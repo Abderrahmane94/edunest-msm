@@ -160,6 +160,9 @@ model School {
   cashAlertAmount Decimal @default(50000) @map("cash_alert_amount") @db.Decimal(10, 2)
   /// …or when the oldest cash in a desk is this many days old.
   cashAlertDays   Int     @default(3) @map("cash_alert_days")
+  /// A demonstration school (fictitious data) for a director trying Kiddoo:
+  /// closed from this moment on. Null for a real school.
+  demoExpiresAt   DateTime? @map("demo_expires_at")
   deletedAt    DateTime?  @map("deleted_at")
   createdAt    DateTime   @default(now()) @map("created_at")
 
@@ -1074,7 +1077,8 @@ model PaymentRecord {
   id                String         @id @default(uuid())
   branchId          String         @map("branch_id")
   childId           String         @map("child_id")
-  receiptNumber     String         @unique @map("receipt_number")
+  /// Numbered per branch: each school counts its own receipts.
+  receiptNumber     String         @map("receipt_number")
   totalAmount       Decimal        @map("total_amount") @db.Decimal(10, 2)
   channel           PaymentChannel
   valueDate         DateTime       @map("value_date") @db.Date
@@ -1103,6 +1107,7 @@ model PaymentRecord {
   allocations      PaymentAllocation[]
   academicYear     AcademicYear?       @relation(fields: [academicYearId], references: [id])
 
+  @@unique([branchId, receiptNumber])
   @@index([branchId, valueDate])
   @@index([branchId, academicYearId])
   @@index([childId])

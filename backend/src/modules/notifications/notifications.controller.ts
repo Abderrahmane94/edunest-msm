@@ -3,6 +3,9 @@ import prisma from '../../lib/prisma';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
 import type { ListNotificationsQuery } from './notifications.schema';
 
+/** Read notifications older than this go by themselves, so the list never grows without end. */
+export const READ_NOTIFICATION_DAYS = 90;
+
 export const notificationsController = {
   /**
    * GET /api/notifications — List the authenticated user's notifications (paginated)
@@ -11,6 +14,13 @@ export const notificationsController = {
     try {
       const userId = req.user!.userId;
       const { page, pageSize } = req.query as unknown as ListNotificationsQuery;
+
+      // Opening the list: this person's old read ones are dropped first.
+      if (page === 1) {
+        await prisma.notification.deleteMany({
+          where: { userId, isRead: true, createdAt: { lt: new Date(Date.now() - READ_NOTIFICATION_DAYS * 24 * 60 * 60 * 1000) } },
+        });
+      }
 
       const [notifications, total] = await Promise.all([
         prisma.notification.findMany({
@@ -87,6 +97,40 @@ export const notificationsController = {
       });
 
       res.status(200).json(successResponse({ message: 'All notifications marked as read' }));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * DELETE /api/notifications/:id — Remove one of the user's notifications
+   * (only the alert: what it points to stays).
+   */
+  async remove(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { count } = await prisma.notification.deleteMany({
+        where: { id: req.params.id, userId: req.user!.userId },
+      });
+      if (count === 0) {
+        res.status(404).json(errorResponse('NOT_FOUND', 'Notification not found'));
+        return;
+      }
+      res.status(200).json(successResponse({ deleted: count }));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * DELETE /api/notifications/read — Remove the user's read notifications
+   * (never one not seen yet).
+   */
+  async removeRead(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { count } = await prisma.notification.deleteMany({
+        where: { userId: req.user!.userId, isRead: true },
+      });
+      res.status(200).json(successResponse({ deleted: count }));
     } catch (error) {
       next(error);
     }

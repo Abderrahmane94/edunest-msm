@@ -36,4 +36,19 @@ router.patch(
   notificationsController.markAsRead,
 );
 
+// DELETE /api/notifications/read — Remove the read notifications
+router.delete(
+  '/read',
+  requireActiveRole,
+  notificationsController.removeRead,
+);
+
+// DELETE /api/notifications/:id — Remove one notification
+router.delete(
+  '/:id',
+  requireActiveRole,
+  validateParams(notificationIdParamSchema),
+  notificationsController.remove,
+);
+
 export default router;

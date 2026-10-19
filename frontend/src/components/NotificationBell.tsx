@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Bell, BellOff, CheckCheck } from 'lucide-react';
+import { Bell, BellOff, CheckCheck, Trash2, X } from 'lucide-react';
+import { useConfirm } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -9,6 +10,8 @@ import {
   useUnreadCount,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
+  useRemoveNotification,
+  useClearReadNotifications,
   type AppNotification,
 } from '@/hooks/useNotificationCenter';
 import {
@@ -42,13 +45,29 @@ export function NotificationBell() {
   } = useNotificationsInfinite();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
+  const remove = useRemoveNotification();
+  const clearRead = useClearReadNotifications();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const notifications = data?.pages.flatMap((p) => p.items) ?? [];
+  // Read ones, loaded here or not yet (older pages).
+  const readCount = Math.max(0, (data?.pages[0]?.total ?? 0) - unreadCount);
+
+  const handleClearRead = async () => {
+    const ok = await confirm({
+      title: t('notifications.clearRead.title', { count: readCount }),
+      description: t('notifications.clearRead.description'),
+      confirmLabel: t('notifications.clearRead.confirm'),
+    });
+    if (ok) clearRead.mutate();
+  };
 
   // Close on outside click and Escape.
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
+      // The confirmation shows over the page, outside the panel: it doesn't close it.
+      if ((e.target as Element).closest?.('[role=dialog],[role=alertdialog]')) return;
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
@@ -96,7 +115,7 @@ export function NotificationBell() {
 
       {open && (
         <div
-          className="absolute end-0 mt-2 w-[360px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-lg shadow-[0_10px_30px_rgba(15,23,42,0.12),0_4px_8px_rgba(15,23,42,0.06)] overflow-hidden z-50"
+          className="absolute end-0 mt-2 w-[360px] max-w-[calc(100vw-2rem)] max-sm:fixed max-sm:inset-x-4 max-sm:top-14 max-sm:w-auto max-sm:max-w-none bg-card border border-border rounded-lg shadow-[0_10px_30px_rgba(15,23,42,0.12),0_4px_8px_rgba(15,23,42,0.06)] overflow-hidden z-50"
           role="menu"
         >
           {/* Header */}
@@ -149,12 +168,12 @@ export function NotificationBell() {
                 {notifications.map((n) => {
                   const Icon = notificationIcon(n.type);
                   return (
-                    <li key={n.id}>
+                    <li key={n.id} className="group relative">
                       <button
                         type="button"
                         onClick={() => handleItemClick(n)}
                         className={cn(
-                          'w-full flex items-start gap-3 px-4 py-3 text-start transition-colors duration-150 border-b border-[var(--color-border)]/60',
+                          'w-full flex items-start gap-3 ps-4 pe-11 py-3 text-start transition-colors duration-150 border-b border-[var(--color-border)]/60',
                           n.is_read ? 'hover:bg-hover' : 'bg-[var(--color-accent-muted)]/25 hover:bg-[var(--color-accent-muted)]/40',
                         )}
                         role="menuitem"
@@ -183,6 +202,17 @@ export function NotificationBell() {
                           </p>
                         </div>
                       </button>
+                      {/* Removes the alert only; on a computer it shows on hover. */}
+                      <button
+                        type="button"
+                        onClick={() => remove.mutate(n.id)}
+                        disabled={remove.isPending && remove.variables === n.id}
+                        aria-label={t('notifications.remove', { title: n.title })}
+                        title={t('notifications.removeShort')}
+                        className="absolute top-2 end-2 grid place-items-center w-8 h-8 rounded-full text-text-disabled hover:text-text-primary hover:bg-subtle transition-opacity sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:shadow-focus-ring"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </li>
                   );
                 })}
@@ -203,8 +233,23 @@ export function NotificationBell() {
               </ul>
             )}
           </div>
+
+          {readCount > 0 && notifications.length > 0 && (
+            <div className="border-t border-border px-4 py-2 flex justify-center">
+              <button
+                type="button"
+                onClick={() => void handleClearRead()}
+                disabled={clearRead.isPending}
+                className="inline-flex items-center gap-1.5 min-h-9 px-2 rounded text-caption font-medium text-text-secondary hover:text-[var(--color-danger)] focus-visible:outline-none focus-visible:shadow-focus-ring"
+              >
+                <Trash2 className="w-4 h-4" />
+                {t('notifications.clearRead.button')}
+              </button>
+            </div>
+          )}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }

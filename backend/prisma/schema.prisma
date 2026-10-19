@@ -1074,7 +1074,8 @@ model PaymentRecord {
   id                String         @id @default(uuid())
   branchId          String         @map("branch_id")
   childId           String         @map("child_id")
-  receiptNumber     String         @unique @map("receipt_number")
+  /// Numbered per branch: each school counts its own receipts.
+  receiptNumber     String         @map("receipt_number")
   totalAmount       Decimal        @map("total_amount") @db.Decimal(10, 2)
   channel           PaymentChannel
   valueDate         DateTime       @map("value_date") @db.Date
@@ -1106,6 +1107,7 @@ model PaymentRecord {
   @@index([branchId, valueDate])
   @@index([branchId, academicYearId])
   @@index([childId])
+  @@unique([branchId, receiptNumber])
   @@index([correctsPaymentId])
   @@index([cashierUserId, cashHandoverId])
   @@map("payment_records")

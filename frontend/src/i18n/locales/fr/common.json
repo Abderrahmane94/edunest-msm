@@ -587,6 +587,7 @@
   "nav": {
     "dashboard": "Tableau de bord",
     "schools": "Écoles",
+    "demos": "Démos",
     "children": "Enfants",
     "classrooms": "Classes",
     "academicYears": "Années",
@@ -4040,6 +4041,69 @@
       "private": "🔒 Ce message est personnel : ne le transférez à personne.",
       "reply": "Une question ? Répondez simplement à ce message.",
       "team": "L'équipe Kiddoo"
+    }
+  },
+  "demos": {
+    "title": "Démonstrations",
+    "description": "Une crèche fictive déjà remplie pour chaque directeur qui veut essayer Kiddoo. Chacune est séparée des autres et se ferme seule au bout de 14 jours.",
+    "create": "Nouvelle démo",
+    "empty": "Aucune démonstration en cours.",
+    "neverUsed": "Pas encore connecté",
+    "extend": "+7 jours",
+    "end": "Fermer",
+    "endConfirm": {
+      "title": "Fermer la démo de {{name}} ?",
+      "description": "Ses comptes ne pourront plus se connecter. Les données fictives ne seront plus visibles."
+    },
+    "columns": {
+      "director": "Directeur",
+      "phone": "Téléphone",
+      "created": "Créée le",
+      "expires": "Ouverte jusqu'au",
+      "lastActive": "Dernière activité"
+    },
+    "form": {
+      "title": "Nouvelle démo",
+      "description": "Kiddoo prépare une crèche fictive (classes, enfants, présences, paiements, dépenses) rien que pour ce directeur.",
+      "firstName": "Prénom du directeur",
+      "lastName": "Nom",
+      "phone": "Téléphone (WhatsApp)",
+      "phoneHint": "Pour lui envoyer ses accès. Aucun SMS n’est envoyé.",
+      "schoolName": "Nom de la crèche de démo",
+      "schoolNameHint": "Le nom de sa crèche, pour qu’il se projette. Laissez vide pour « Crèche démo ».",
+      "schoolNamePlaceholder": "Crèche démo",
+      "language": "Langue de l'application",
+      "submit": "Créer la démo",
+      "preparing": "Préparation… (quelques secondes)"
+    },
+    "ready": {
+      "title": "La démo est prête",
+      "description": "Trois comptes pour voir chaque écran, avec le même mot de passe.",
+      "once": "Le mot de passe ne sera plus affiché : envoyez-le maintenant.",
+      "whatsapp": "Envoyer par WhatsApp",
+      "copy": "Copier le message",
+      "copied": "Message copié"
+    },
+    "accounts": {
+      "director": "Directeur",
+      "teacher": "Enseignante",
+      "parent": "Parent",
+      "password": "Mot de passe"
+    },
+    "banner": {
+      "title": "Démonstration.",
+      "text": "Les enfants, les familles et les paiements sont fictifs : essayez tout librement. Ouverte jusqu'au {{date}}."
+    },
+    "whatsapp": {
+      "greeting": "Bonjour {{name}},",
+      "intro": "Voici votre démonstration de Kiddoo : une crèche fictive déjà remplie (classes, enfants, présences, paiements), rien que pour vous. Essayez tout, vous ne pouvez rien casser.",
+      "link": "🔗 {{url}}",
+      "password": "Mot de passe (le même pour les 3 comptes) : *{{password}}*",
+      "director": "👩‍💼 Directeur : {{login}}",
+      "teacher": "👩‍🏫 Enseignante : {{login}}",
+      "parent": "👪 Parent : {{login}}",
+      "tip": "Commencez par le compte Directeur. Ouvrez ensuite le compte Parent sur votre téléphone pour voir ce que voient les familles.",
+      "until": "La démonstration reste ouverte jusqu'au {{date}}."
     }
   }
 }

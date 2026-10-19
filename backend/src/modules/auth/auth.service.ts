@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import { schoolIsOpen } from '../../lib/demo';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import prisma from '../../lib/prisma';
@@ -154,7 +155,7 @@ export const authService = {
     // Block login if the user's school is inactive
     if (user.schoolId) {
       const school = await prisma.school.findUnique({ where: { id: user.schoolId } });
-      if (school && !school.isActive) {
+      if (school && !schoolIsOpen(school)) {
         throw new AuthError('School account is inactive', 403);
       }
     }
@@ -230,7 +231,7 @@ export const authService = {
 
     if (user.schoolId) {
       const school = await prisma.school.findUnique({ where: { id: user.schoolId } });
-      if (school && !school.isActive) {
+      if (school && !schoolIsOpen(school)) {
         await prisma.refreshToken.delete({ where: { id: storedToken.id } });
         throw new AuthError('Invalid or expired refresh token', 401);
       }

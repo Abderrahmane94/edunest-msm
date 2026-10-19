@@ -101,6 +101,8 @@ export function useUpdateSchool() {
 export interface SchoolBrand {
   name: string;
   logoUrl: string | null;
+  /** A demonstration school: open until then. */
+  demoExpiresAt?: string | null;
 }
 
 /** The name and logo of the user's own school, shown in every member's header. */

@@ -65,6 +65,8 @@ export function useUploadSchoolLogo() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['school'] });
+      // The name and logo in everyone's header, this screen's included.
+      queryClient.invalidateQueries({ queryKey: ['school-brand'] });
     },
   });
 }
@@ -90,6 +92,8 @@ export function useUpdateSchool() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['school'] });
+      // The name and logo in everyone's header, this screen's included.
+      queryClient.invalidateQueries({ queryKey: ['school-brand'] });
     },
   });
 }
@@ -106,6 +110,9 @@ export function useSchoolBrand() {
     queryKey: ['school-brand', user?.schoolId],
     queryFn: async () => (await apiClient.get<SchoolBrand>('/schools/mine/brand')).data,
     enabled: !!user?.schoolId,
-    staleTime: 30 * 60 * 1000,
+    // Asked again each time the app opens or comes back to the front: a new
+    // logo shows without signing out. The last one known stays offline.
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 }

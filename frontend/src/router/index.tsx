@@ -65,7 +65,7 @@ import { SchoolHeaderName } from '@/components/layout/SchoolHeaderName';
 import { useCurrentTeacherClass } from '@/hooks/useSubstitutions';
 import { Avatar } from '@/components/ui';
 import type { NavItem } from '@/components/layout';
-import { useSchool } from '@/hooks/useSchool';
+import { useSchoolBrand } from '@/hooks/useSchool';
 import { useOfficeNavCounts, usePersonalNavCounts } from '@/hooks/useNavCounts';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import {
@@ -299,14 +299,15 @@ function SidebarFooterContent() {
   );
 }
 
+/** The office's school name and logo: asked again each time the app opens, like everyone's header. */
 function SchoolSidebarHeader() {
-  const { data: school } = useSchool();
+  const { data: school } = useSchoolBrand();
 
   return (
     <div className="flex items-center gap-2 px-1">
-      {school?.logo_url ? (
+      {school?.logoUrl ? (
         <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0">
-          <img src={school.logo_url} alt={school.name} className="w-full h-full object-cover" />
+          <img src={school.logoUrl} alt={school.name} className="w-full h-full object-cover" />
         </div>
       ) : (
         <BrandMark size={34} className="shrink-0" />

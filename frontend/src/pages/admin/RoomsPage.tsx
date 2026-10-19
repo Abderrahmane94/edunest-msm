@@ -26,6 +26,7 @@ import { useViewedYear } from '@/hooks/useSelectedYear';
 import { useCreateRoom, useDeleteRoom, useRooms, useUpdateRoom, type Room } from '@/hooks/useRooms';
 import { useEquipment } from '@/hooks/useEquipment';
 import { roomCardWarnings } from './RoomField';
+import { yearLabel } from '@/lib/yearName';
 
 function RoomDialog({
   open,
@@ -267,7 +268,7 @@ export function RoomsSection() {
                 {' '}
                 {t('rooms.deactivateConfirm.classes', {
                   count: classes.length,
-                  year: activeYear ? `⁦${activeYear.name}⁩` : '',
+                  year: activeYear ? yearLabel(activeYear.name) : '',
                   names: classes.join(i18n.language === 'ar' ? '، ' : ', '),
                 })}
               </>

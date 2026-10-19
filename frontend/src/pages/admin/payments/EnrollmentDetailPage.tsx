@@ -32,6 +32,7 @@ import {
   type DiscountType,
 } from '@/hooks/useDiscounts';
 import { EmptyState, ListSkeleton, PageHeader } from '@/components/ui';
+import { yearLabel } from '@/lib/yearName';
 
 // ─── Withdrawal Dialog ─────────────────────────────────────────────────────────
 
@@ -662,7 +663,7 @@ export function EnrollmentDetailPage() {
               {t('payments.enrollments.columns.academicYear')}
             </span>
             <span className="text-body font-medium text-foreground">
-              {enrollment.academicYear?.name ?? '—'}
+              {enrollment.academicYear ? yearLabel(enrollment.academicYear.name) : '—'}
             </span>
           </div>
           <div>

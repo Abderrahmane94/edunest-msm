@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { shortYearName, yearNameFromDates } from './yearName';
+import { shortYearName, yearLabel, yearNameFromDates } from './yearName';
 
 describe('shortYearName', () => {
   it('keeps the last two digits of each year, however the name is written', () => {
@@ -21,5 +21,19 @@ describe('yearNameFromDates', () => {
 
   it('nothing until both dates are set', () => {
     expect(yearNameFromDates('2026-09-01', '')).toBeNull();
+  });
+});
+
+describe('yearLabel', () => {
+  it('in Arabic the first year reads first, from the right', () => {
+    expect(yearLabel('2026/2027', 'ar')).toBe('⁦2027/2026⁩');
+    expect(yearLabel('2026-2027', 'ar')).toBe('⁦2027-2026⁩');
+    expect(shortYearName('2026-2027', 'ar')).toBe('27-26');
+  });
+
+  it('in French, or without two years, as stored', () => {
+    expect(yearLabel('2026/2027', 'fr')).toBe('2026/2027');
+    expect(yearLabel('Rentrée', 'ar')).toBe('Rentrée');
+    expect(shortYearName('2026-2027', 'fr')).toBe('26-27');
   });
 });

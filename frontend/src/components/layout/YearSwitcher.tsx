@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { CalendarRange, ChevronDown, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { setSelectedYearId, useSelectedYear } from '@/hooks/useSelectedYear';
-import { shortYearName } from '@/lib/yearName';
+import { shortYearName, yearLabel } from '@/lib/yearName';
 
 /** Picks the school year the admin screens show (top bar). */
 export function YearSwitcher() {
@@ -30,7 +30,7 @@ export function YearSwitcher() {
       <span dir="ltr" aria-hidden="true" className="whitespace-nowrap leading-none">
         <span className="sm:hidden">{`⁦${shortYearName(year.name)}⁩`}</span>
         <span className="hidden sm:inline">
-          {year.name}
+          {yearLabel(year.name)}
           {isActive ? ` · ${t('yearSwitcher.current')}` : ''}
         </span>
       </span>
@@ -42,7 +42,7 @@ export function YearSwitcher() {
       >
         {years.map((y) => (
           <option key={y.id} value={y.id}>
-            {y.name}
+            {yearLabel(y.name)}
             {y.is_active ? ` · ${t('yearSwitcher.current')}` : ''}
           </option>
         ))}
@@ -65,7 +65,7 @@ export function YearBanner() {
     >
       <History className="w-4 h-4 text-warning shrink-0" />
       <span className="flex-1 min-w-[12rem]">
-        {t(isClosed ? 'yearSwitcher.closedBanner' : 'yearSwitcher.banner', { name: `⁦${year.name}⁩` })}
+        {t(isClosed ? 'yearSwitcher.closedBanner' : 'yearSwitcher.banner', { name: yearLabel(year.name) })}
       </span>
       {activeYear && (
         <button
@@ -73,7 +73,7 @@ export function YearBanner() {
           onClick={() => setSelectedYearId(null)}
           className="text-caption font-semibold text-primary hover:underline"
         >
-          {t('yearSwitcher.back', { name: activeYear.name })}
+          {t('yearSwitcher.back', { name: yearLabel(activeYear.name) })}
         </button>
       )}
     </div>

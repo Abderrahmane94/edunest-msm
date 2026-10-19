@@ -19,6 +19,7 @@ import {
 import { useTabParam } from '@/hooks/useTabParam';
 import { usePermissions } from '@/lib/roles';
 import { AttendanceSheet } from '@/pages/teacher/TeacherAttendancePage';
+import { yearLabel } from '@/lib/yearName';
 
 type ViewMode = 'daily' | 'monthly' | 'tracking';
 const VIEW_MODES: ViewMode[] = ['daily', 'monthly', 'tracking'];
@@ -282,7 +283,7 @@ export function AttendancePage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title={t('attendance.title')} description={schoolYear?.name} />
+      <PageHeader title={t('attendance.title')} description={schoolYear && yearLabel(schoolYear.name)} />
 
       <Tabs
         value={viewMode}

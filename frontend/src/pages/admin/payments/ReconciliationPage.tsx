@@ -7,6 +7,7 @@ import { FormField } from '@/components/forms';
 import { useDefaultBranch } from '@/hooks/useDefaultBranch';
 import { useViewedYear } from '@/hooks/useSelectedYear';
 import { useReconciliation, type ReconciliationReport } from '@/hooks/useReconciliation';
+import { yearLabel } from '@/lib/yearName';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -246,7 +247,7 @@ export function ReconciliationPage() {
               }}
             >
               <CalendarRange className="w-4 h-4" />
-              {t('payments.reconciliation.schoolYear', { name: activeYear?.name ?? '' })}
+              {t('payments.reconciliation.schoolYear', { name: activeYear ? yearLabel(activeYear.name) : '' })}
             </Button>
           </div>
         )}

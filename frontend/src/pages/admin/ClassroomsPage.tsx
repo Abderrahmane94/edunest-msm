@@ -32,6 +32,7 @@ import { EmptyState, FilterBar, ListSkeleton, PageHeader } from '@/components/ui
 import { DEFAULT_WORKING_DAYS, RoomField } from './RoomField';
 import { useRooms } from '@/hooks/useRooms';
 import { usePermissions } from '@/lib/roles';
+import { yearLabel } from '@/lib/yearName';
 
 function CreateClassroomDialog({
   open,
@@ -447,7 +448,7 @@ export function ClassroomsPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title={t('classrooms.title')}
-        description={schoolYear?.name}
+        description={schoolYear && yearLabel(schoolYear.name)}
         actions={
           <>
             <ViewToggle view={view} onChange={setView} />

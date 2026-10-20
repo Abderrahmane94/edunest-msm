@@ -128,7 +128,8 @@ export function LoginPage() {
 
   async function handleSchoolChoiceSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!selectedSchoolId) return;
+    // '' is the platform account (no school): a choice too.
+    if (selectedSchoolId === null) return;
     setError(null);
     setIsSubmitting(true);
     try {
@@ -189,7 +190,7 @@ export function LoginPage() {
 
                 <button
                   type="submit"
-                  disabled={isSubmitting || !selectedSchoolId || !online}
+                  disabled={isSubmitting || selectedSchoolId === null || !online}
                   className="w-full h-11 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold text-body flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2 shadow-level-1 focus-visible:outline-none focus-visible:shadow-focus-ring"
                 >
                   {isSubmitting ? (

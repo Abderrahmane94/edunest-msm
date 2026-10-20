@@ -5,6 +5,7 @@ vi.mock('../../lib/prisma', () => ({
   default: {
     user: { findFirst: vi.fn(), update: vi.fn((args: unknown) => ({ op: 'user.update', args })) },
     refreshToken: { deleteMany: vi.fn((args: unknown) => ({ op: 'refreshToken.deleteMany', args })) },
+    pushDevice: { deleteMany: vi.fn((args: unknown) => ({ op: 'pushDevice.deleteMany', args })) },
     passwordResetToken: { updateMany: vi.fn((args: unknown) => ({ op: 'passwordResetToken.updateMany', args })) },
     $transaction: vi.fn(),
   },
@@ -53,7 +54,7 @@ describe('usersService.resetPassword', () => {
 
     expect(db.user.findFirst).toHaveBeenCalledWith({ where: { id: 'parent-1', schoolId: 'school-1' } });
     const ops = db.$transaction.mock.calls[0][0] as { op: string; args: { data?: { passwordHash: string; mustChangePassword: boolean } } }[];
-    expect(ops.map((o) => o.op)).toEqual(['user.update', 'refreshToken.deleteMany', 'passwordResetToken.updateMany']);
+    expect(ops.map((o) => o.op)).toEqual(['user.update', 'refreshToken.deleteMany', 'pushDevice.deleteMany', 'passwordResetToken.updateMany']);
     const data = ops[0].args.data!;
     expect(data.mustChangePassword).toBe(true);
     expect(await bcrypt.compare(pw, data.passwordHash)).toBe(true);

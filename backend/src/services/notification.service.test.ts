@@ -13,16 +13,29 @@ vi.mock('../lib/prisma', () => ({
     child: {
       findUnique: vi.fn(),
     },
+    pushDevice: {
+      findMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
   },
 }));
 
 // Mock push service
-vi.mock('./push.service', () => ({
-  pushService: {
-    send: vi.fn().mockResolvedValue(undefined),
-    sendToMany: vi.fn().mockResolvedValue(undefined),
-  },
-}));
+vi.mock('./push.service', () => {
+  class PushTokenInvalidError extends Error {
+    constructor(public token: string) {
+      super('invalid');
+    }
+  }
+  return {
+    pushService: {
+      send: vi.fn().mockResolvedValue(undefined),
+      sendToMany: vi.fn().mockResolvedValue(undefined),
+      isConfigured: true,
+    },
+    PushTokenInvalidError,
+  };
+});
 
 // Mock email service
 vi.mock('./email.service', () => ({
@@ -49,7 +62,7 @@ vi.mock('./socket.service', () => ({
 }));
 
 import prisma from '../lib/prisma';
-import { pushService } from './push.service';
+import { pushService, PushTokenInvalidError } from './push.service';
 import { emailService } from './email.service';
 import { smsService } from './sms.service';
 import { notificationService } from './notification.service';
@@ -57,6 +70,11 @@ import { notificationService } from './notification.service';
 describe('NotificationService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Each person's devices: one each, named after the person.
+    vi.mocked(prisma.pushDevice.findMany).mockImplementation((async (args: { where: { userId: string } }) => [
+      { token: `device-of-${args.where.userId}` },
+    ]) as any);
+    vi.mocked(prisma.pushDevice.deleteMany).mockResolvedValue({ count: 0 } as any);
   });
 
   describe('notify', () => {
@@ -75,7 +93,6 @@ describe('NotificationService', () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         email: 'parent@test.com',
-        fcmToken: 'fcm-token-123',
         preferredLanguage: 'fr',
         firstName: 'Parent',
       } as any);
@@ -102,7 +119,7 @@ describe('NotificationService', () => {
       });
 
       expect(pushService.send).toHaveBeenCalledWith({
-        token: 'fcm-token-123',
+        token: 'device-of-user-1',
         title: 'Test Title',
         body: 'Test Body',
         data: {
@@ -128,7 +145,6 @@ describe('NotificationService', () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         email: 'parent@test.com',
-        fcmToken: null,
         preferredLanguage: 'fr',
         firstName: 'Parent',
       } as any);
@@ -148,7 +164,8 @@ describe('NotificationService', () => {
       );
     });
 
-    it('should not send push when user has no fcm_token', async () => {
+    it('should not send push when the user has no device', async () => {
+      vi.mocked(prisma.pushDevice.findMany).mockResolvedValue([]);
       vi.mocked(prisma.notification.create).mockResolvedValue({
         id: 'notif-3',
         userId: 'user-1',
@@ -163,7 +180,6 @@ describe('NotificationService', () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         email: 'parent@test.com',
-        fcmToken: null,
         preferredLanguage: 'fr',
         firstName: 'Parent',
       } as any);
@@ -223,7 +239,6 @@ describe('NotificationService', () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         email: 'user@test.com',
-        fcmToken: 'token',
         preferredLanguage: 'fr',
         firstName: 'User',
       } as any);
@@ -265,6 +280,36 @@ describe('NotificationService', () => {
     });
   });
 
+  describe('push to every device', () => {
+    it('sends to every device of the person and drops the ones Firebase no longer knows', async () => {
+      vi.mocked(prisma.notification.create).mockResolvedValue({ id: 'n1' } as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ preferredLanguage: 'fr', firstName: 'A', role: 'parent' } as any);
+      vi.mocked(prisma.pushDevice.findMany).mockResolvedValue([{ token: 'phone' }, { token: 'old-tablet' }, { token: 'computer' }] as any);
+      vi.mocked(pushService.send).mockImplementation(async ({ token }) => {
+        if (token === 'old-tablet') throw new PushTokenInvalidError(token);
+      });
+
+      await notificationService.notify({ userId: 'user-1', title: 'T', body: 'B', type: 'message_new', channels: ['push'] });
+
+      expect(vi.mocked(pushService.send).mock.calls.map((c) => c[0].token)).toEqual(['phone', 'old-tablet', 'computer']);
+      expect(vi.mocked(pushService.send).mock.calls[0][0].data).toEqual({ type: 'message_new', role: 'parent' });
+      expect(prisma.pushDevice.deleteMany).toHaveBeenCalledWith({ where: { token: { in: ['old-tablet'] } } });
+    });
+
+    it('a failed send to one device does not stop the others', async () => {
+      vi.mocked(prisma.notification.create).mockResolvedValue({ id: 'n1' } as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ preferredLanguage: 'fr', role: 'teacher' } as any);
+      vi.mocked(prisma.pushDevice.findMany).mockResolvedValue([{ token: 'a' }, { token: 'b' }] as any);
+      vi.mocked(pushService.send).mockRejectedValueOnce(new Error('network'));
+
+      await expect(
+        notificationService.notify({ userId: 'user-1', title: 'T', body: 'B', type: 'message_new', channels: ['push'] }),
+      ).resolves.toBeUndefined();
+      expect(pushService.send).toHaveBeenCalledTimes(2);
+      expect(prisma.pushDevice.deleteMany).not.toHaveBeenCalled();
+    });
+  });
+
   describe('dispatchAbsenceNotifications', () => {
     it('should send push and email to all parents, SMS to primary parent only', async () => {
       vi.mocked(prisma.child.findUnique).mockResolvedValue({
@@ -277,7 +322,6 @@ describe('NotificationService', () => {
               id: 'parent-1',
               email: 'primary@test.com',
               phone: '+213600000001',
-              fcmToken: 'fcm-primary',
               preferredLanguage: 'fr',
               firstName: 'Fatima',
             },
@@ -287,7 +331,6 @@ describe('NotificationService', () => {
             parent: {
               id: 'parent-2',
               email: 'secondary@test.com',
-              fcmToken: 'fcm-secondary',
               preferredLanguage: 'ar',
               firstName: 'Mohamed',
             },
@@ -312,8 +355,10 @@ describe('NotificationService', () => {
       // Should persist 2 notifications (one per parent)
       expect(prisma.notification.create).toHaveBeenCalledTimes(2);
 
-      // Should send push to both parents
+      // Should send push to both parents (sent without waiting: let it leave)
+      await new Promise((resolve) => setTimeout(resolve, 0));
       expect(pushService.send).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(pushService.send).mock.calls.map((c) => c[0].token).sort()).toEqual(['device-of-parent-1', 'device-of-parent-2']);
 
       // Should send email to both parents
       expect(emailService.sendNotificationEmail).toHaveBeenCalledTimes(2);
@@ -336,7 +381,6 @@ describe('NotificationService', () => {
             parent: {
               id: 'parent-ar',
               email: 'arabic@test.com',
-              fcmToken: 'fcm-ar',
               preferredLanguage: 'ar',
               firstName: 'فاطمة',
             },

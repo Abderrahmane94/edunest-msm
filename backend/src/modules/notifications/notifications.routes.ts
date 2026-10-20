@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { notificationsController } from './notifications.controller';
 import { requireActiveRole } from '../../middleware/rbac.middleware';
-import { validateParams, validateQuery } from '../../middleware/validation.middleware';
-import { listNotificationsQuerySchema, notificationIdParamSchema } from './notifications.schema';
+import { validate, validateParams, validateQuery } from '../../middleware/validation.middleware';
+import { listNotificationsQuerySchema, notificationIdParamSchema, pushDeviceSchema } from './notifications.schema';
 
 const router = Router();
 
@@ -34,6 +34,29 @@ router.patch(
   requireActiveRole,
   validateParams(notificationIdParamSchema),
   notificationsController.markAsRead,
+);
+
+// POST /api/notifications/devices — This device gets the notifications
+router.post(
+  '/devices',
+  requireActiveRole,
+  validate(pushDeviceSchema),
+  notificationsController.registerDevice,
+);
+
+// POST /api/notifications/devices/forget — Signing out: this device stops getting them
+router.post(
+  '/devices/forget',
+  requireActiveRole,
+  validate(pushDeviceSchema),
+  notificationsController.forgetDevice,
+);
+
+// POST /api/notifications/devices/test — A test notification to each of my devices
+router.post(
+  '/devices/test',
+  requireActiveRole,
+  notificationsController.testDevices,
 );
 
 // DELETE /api/notifications/read — Remove the read notifications

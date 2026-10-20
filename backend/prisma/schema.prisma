@@ -230,6 +230,7 @@ model User {
   staffAbsences               StaffAbsence[]       @relation("StaffAbsences")
   parentLinks                 ParentChildLink[]
   notifications               Notification[]
+  pushDevices                 PushDevice[]
   sentMessages                Message[]
   teacherConversations        Conversation[]       @relation("TeacherConversations")
   parentConversations         Conversation[]       @relation("ParentConversations")
@@ -709,6 +710,20 @@ model Notification {
 
   @@index([userId, isRead, createdAt])
   @@map("notifications")
+}
+
+/// A device a person allowed notifications on: each one gets them.
+model PushDevice {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  token      String   @unique
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_devices")
 }
 
 model RefreshToken {

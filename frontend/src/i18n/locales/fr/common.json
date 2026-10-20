@@ -1,4 +1,34 @@
 {
+  "pushSetup": {
+    "banner": {
+      "title": "Recevez les messages même quand Kiddoo est fermé.",
+      "text": "Activez les notifications sur cet appareil.",
+      "install": "Sur iPhone, ajoutez d'abord Kiddoo à l'écran d'accueil, puis ouvrez-le depuis son icône.",
+      "later": "Plus tard"
+    },
+    "enable": "Activer",
+    "howTo": "Comment faire",
+    "retry": "Réessayer",
+    "test": "Envoyer une notification de test",
+    "testing": "Envoi…",
+    "card": {
+      "title": "Notifications sur cet appareil",
+      "on": "Activées : les messages, les absences et les annonces arrivent ici même quand Kiddoo est fermé.",
+      "notRegistered": "Autorisées, mais cet appareil n'a pas pu être inscrit.",
+      "ask": "Désactivées : vous ne voyez les nouveaux messages qu'en ouvrant Kiddoo.",
+      "denied": "Bloquées pour Kiddoo. Pour les autoriser : touchez le cadenas à côté de l'adresse › Autorisations › Notifications (ou, pour l'application installée : Réglages du téléphone › Applications › Kiddoo › Notifications), puis revenez ici.",
+      "install": "Sur iPhone, les notifications n'arrivent que si Kiddoo est ajouté à l'écran d'accueil et ouvert depuis son icône.",
+      "unsupported": "Ce navigateur ne reçoit pas les notifications. Sur Android, ouvrez Kiddoo dans Chrome.",
+      "unconfigured": "Les notifications ne sont pas disponibles pour le moment."
+    },
+    "result": {
+      "sent_one": "Envoyée. Elle doit s'afficher dans quelques secondes. Rien ? Vérifiez que les notifications ne sont pas coupées dans les réglages du téléphone (Ne pas déranger, économie d'énergie).",
+      "sent_other": "Envoyée à vos {{count}} appareils. Elle doit s'afficher dans quelques secondes. Rien ? Vérifiez que les notifications ne sont pas coupées dans les réglages du téléphone (Ne pas déranger, économie d'énergie).",
+      "noDevice": "Cet appareil n'est plus inscrit. Rechargez la page pour l'inscrire à nouveau.",
+      "failed": "L'envoi n'a pas abouti. Réessayez dans un moment.",
+      "notConfigured": "Le serveur n'envoie pas encore de notifications. Prévenez le support Kiddoo."
+    }
+  },
   "childPhoto": {
     "add": "Ajouter une photo",
     "change": "Changer la photo",

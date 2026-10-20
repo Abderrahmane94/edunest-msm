@@ -22,6 +22,8 @@ import {
   type Messaging,
   type MessagePayload,
 } from 'firebase/messaging';
+import { isIos, isStandalone } from '@/lib/install';
+import { apiClient } from '@/lib/api-client';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -94,11 +96,34 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 }
 
 /**
- * Requests notification permission and returns an FCM registration token,
- * or null if unavailable/denied. Safe to call repeatedly — the browser only
- * prompts once, and getToken reuses the existing token afterward.
+ * Where notifications stand on this device:
+ * - 'unconfigured': the app was built without Firebase;
+ * - 'install': an iPhone in a Safari tab, which only gets them once Kiddoo
+ *   is on the home screen and opened from there;
+ * - 'unsupported': this browser can't get them;
+ * - 'ask': not asked yet; 'denied': refused (only the browser's settings can
+ *   undo it); 'on': allowed.
  */
-export async function requestPushToken(): Promise<string | null> {
+export type PushState = 'unconfigured' | 'install' | 'unsupported' | 'ask' | 'denied' | 'on';
+
+export async function pushState(): Promise<PushState> {
+  if (!isPushConfigured()) return 'unconfigured';
+  if (isIos() && !isStandalone()) return 'install';
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return 'unsupported';
+  if (!(await isSupported().catch(() => false))) return 'unsupported';
+  if (Notification.permission === 'granted') return 'on';
+  if (Notification.permission === 'denied') return 'denied';
+  return 'ask';
+}
+
+/**
+ * Returns this device's FCM registration token, or null if unavailable or
+ * not allowed. `ask`: may open the browser's permission question — only
+ * from a tap (iPhone refuses it otherwise, and other browsers hide or block
+ * a question nobody asked for). Safe to call repeatedly: getToken reuses the
+ * existing token.
+ */
+export async function requestPushToken(ask = false): Promise<string | null> {
   const m = await getMessagingInstance();
   if (!m) return null;
 
@@ -106,7 +131,7 @@ export async function requestPushToken(): Promise<string | null> {
 
   try {
     const permission =
-      Notification.permission === 'default'
+      Notification.permission === 'default' && ask
         ? await Notification.requestPermission()
         : Notification.permission;
 
@@ -158,5 +183,42 @@ export async function showSystemNotification(title: string, body?: string): Prom
     new Notification(title, options);
   } catch (err) {
     console.warn('[notifications] Could not show a system notification:', err);
+  }
+}
+
+/** This device's token once registered, kept so signing out can unregister it. */
+const REGISTERED_TOKEN_KEY = 'fcm_token';
+
+export function registeredToken(): string | null {
+  try {
+    return localStorage.getItem(REGISTERED_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** This device gets the signed-in person's notifications. */
+export async function registerDevice(token: string): Promise<boolean> {
+  const res = await apiClient.post('/notifications/devices', { token });
+  if (!res.success) return false;
+  try {
+    localStorage.setItem(REGISTERED_TOKEN_KEY, token);
+  } catch {
+    // Without storage the device still gets them; signing out just can't unregister it.
+  }
+  return true;
+}
+
+/**
+ * Signing out: this device stops getting this person's notifications (a
+ * phone shared by two parents, a computer at the office). Never throws.
+ */
+export async function forgetThisDevice(): Promise<void> {
+  const token = registeredToken();
+  if (!token) return;
+  try {
+    await apiClient.post('/notifications/devices/forget', { token });
+  } catch {
+    // Offline: the next account signing in here takes the device over anyway.
   }
 }

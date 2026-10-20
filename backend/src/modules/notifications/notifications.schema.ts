@@ -13,4 +13,10 @@ export const notificationIdParamSchema = z.object({
   id: uuidSchema,
 });
 
+/** A device's push token, from Firebase in the browser. */
+export const pushDeviceSchema = z.object({
+  token: z.string().min(20).max(4096),
+});
+
 export type ListNotificationsQuery = z.infer<typeof listNotificationsQuerySchema>;
+export type PushDeviceInput = z.infer<typeof pushDeviceSchema>;

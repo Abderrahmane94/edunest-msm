@@ -6,6 +6,7 @@ vi.mock('../../lib/prisma', () => ({
     user: { findMany: vi.fn(), update: vi.fn() },
     passwordResetToken: { findUnique: vi.fn(), updateMany: vi.fn(), create: vi.fn(), update: vi.fn() },
     refreshToken: { deleteMany: vi.fn() },
+    pushDevice: { deleteMany: vi.fn() },
     $transaction: vi.fn(),
   },
 }));
@@ -27,6 +28,7 @@ const mockPrisma = prisma as unknown as {
     update: ReturnType<typeof vi.fn>;
   };
   refreshToken: { deleteMany: ReturnType<typeof vi.fn> };
+  pushDevice: { deleteMany: ReturnType<typeof vi.fn> };
   $transaction: ReturnType<typeof vi.fn>;
 };
 const sendEmail = emailService.sendPasswordResetEmail as ReturnType<typeof vi.fn>;
@@ -130,6 +132,7 @@ describe('password reset', () => {
         data: { passwordHash: 'new-hash', mustChangePassword: false },
       });
       expect(mockPrisma.refreshToken.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
+      expect(mockPrisma.pushDevice.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
     });
 
     it.each([

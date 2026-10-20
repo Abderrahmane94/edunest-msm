@@ -103,6 +103,7 @@ const MODELS_WITHOUT_SCHOOL_ID = new Set([
   'EventClassroom',
   'PaymentAuditLog',
   'Notification',
+  'PushDevice',
   // Payment management models (scoped via Branch → School, not direct schoolId)
   'Branch',
   'BranchBillingConfig',

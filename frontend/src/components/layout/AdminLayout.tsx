@@ -1,5 +1,6 @@
 import { NewAccountDialog } from '@/components/NewAccountDialog';
 import { DemoBanner } from '@/components/DemoBanner';
+import { PushNotificationsBanner } from '@/components/PushNotifications';
 import * as React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +49,7 @@ export function AdminLayout({ navItems, sidebarHeader, sidebarFooter, sidebarSta
         <PageContainer>
           <LoadErrorBanner />
           <DemoBanner office />
+          <PushNotificationsBanner />
           {yearBanner}
           <ErrorBoundary>
             <Outlet />

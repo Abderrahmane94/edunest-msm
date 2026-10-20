@@ -4068,7 +4068,7 @@
   },
   "loginId": {
     "label": "Email ou numéro de téléphone",
-    "placeholder": "vous@exemple.com ou 0555 12 34 56",
+    "placeholder": "⁦you@example.com⁩ ou ⁦0555 12 34 56⁩",
     "phone": "Téléphone",
     "phoneShared": "Plusieurs comptes utilisent ce numéro : connectez-vous avec votre email.",
     "required": "Indiquez un email ou un numéro de téléphone.",

@@ -282,7 +282,7 @@
     "login": "تسجيل الدخول",
     "logout": "تسجيل الخروج",
     "email": "البريد الإلكتروني",
-    "emailPlaceholder": "أنت@مثال.com",
+    "emailPlaceholder": "you@example.com",
     "password": "كلمة المرور",
     "showPassword": "إظهار كلمة المرور",
     "hidePassword": "إخفاء كلمة المرور",
@@ -4249,7 +4249,7 @@
   },
   "loginId": {
     "label": "البريد الإلكتروني أو رقم الهاتف",
-    "placeholder": "you@example.com أو 0555 12 34 56",
+    "placeholder": "مثال: ⁦0555 12 34 56⁩",
     "phone": "الهاتف",
     "phoneShared": "هذا الرقم مستعمل في عدة حسابات: سجّل الدخول ببريدك الإلكتروني.",
     "required": "أدخل بريدًا إلكترونيًا أو رقم هاتف.",

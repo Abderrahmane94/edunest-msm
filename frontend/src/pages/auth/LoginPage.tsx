@@ -219,12 +219,14 @@ export function LoginPage() {
               </label>
               <div className="relative">
                 <Mail className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-disabled pointer-events-none" />
-                {/* An email, or the phone number of an account without one. */}
+                {/* An email, or the phone number of an account without one. Empty, its
+                    example reads in the page's language (beside the icon); typed, an
+                    address or a number always reads left to right, kept on the icon's side. */}
                 <input
                   id="login-email"
                   type="text"
                   name="email"
-                  dir="ltr"
+                  dir={email ? 'ltr' : undefined}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t('loginId.placeholder')}
@@ -233,7 +235,7 @@ export function LoginPage() {
                   autoCorrect="off"
                   spellCheck={false}
                   autoComplete="username"
-                  className="w-full h-11 ps-10 pe-4 rounded-lg border border-border bg-card text-foreground text-body placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition"
+                  className="w-full h-11 px-10 rounded-lg border border-border bg-card text-foreground text-body font-['Plus_Jakarta_Sans','Noto_Sans_Arabic',system-ui,sans-serif] rtl:text-right placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition"
                 />
               </div>
             </div>

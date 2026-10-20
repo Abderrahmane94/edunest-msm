@@ -11,6 +11,8 @@ import { enrollmentService } from '../payments/enrollment.service';
 import { expenseService } from '../payments/expense.service';
 import { paymentService } from '../payments/payments.service';
 import { temporaryPassword } from '../users/users.service';
+import { cloudinaryService } from '../../services/cloudinary.service';
+import { activityPicture, portrait } from './demo-pictures';
 
 export class DemoServiceError extends Error {
   constructor(
@@ -70,6 +72,11 @@ const addDays = (d: string, n: number) => {
 };
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const maxDay = (a: string, b: string) => (a > b ? a : b);
+
+/** Runs `fn` on every item, `size` at a time. */
+async function inBatches<T>(items: T[], size: number, fn: (item: T) => Promise<void>) {
+  for (let i = 0; i < items.length; i += size) await Promise.all(items.slice(i, i + size).map(fn));
+}
 
 /** Repeatable randomness for one demonstration: the same picks in the same order. */
 function randomFrom(seed: string) {
@@ -281,7 +288,7 @@ class DemosService {
         }
 
         // Children, their family, their file.
-        const children: { id: string; classroomId: string; teacherId: string; start: string; profile: 'good' | 'late' | 'none' }[] = [];
+        const children: { id: string; girl: boolean; classroomId: string; teacherId: string; start: string; profile: 'good' | 'late' | 'none' }[] = [];
         let n = 0;
         let demoParentId: string | null = null;
         for (const c of classes) {
@@ -339,7 +346,7 @@ class DemosService {
             });
 
             const r = rnd.next();
-            children.push({ id: child.id, classroomId: c.id, teacherId: c.teacherId, start, profile: r < 0.65 ? 'good' : r < 0.9 ? 'late' : 'none' });
+            children.push({ id: child.id, girl, classroomId: c.id, teacherId: c.teacherId, start, profile: r < 0.65 ? 'good' : r < 0.9 ? 'late' : 'none' });
           }
         }
 
@@ -400,6 +407,7 @@ class DemosService {
     );
 
     await this.fillMoney(built, T, rnd, today, opened);
+    await this.addPictures(built, T, rnd, `${input.firstName} ${input.lastName}`.trim());
 
     return {
       schoolId: built.school.id,
@@ -491,6 +499,50 @@ class DemosService {
         { category, description, amount, currency: 'DZD', date: addDays(opened, Math.floor((span * (i + 0.5)) / T.expenses.length)) },
         built.director.id,
       );
+    }
+  }
+
+  /**
+   * Drawn pictures (no real child): a portrait for every child, its parents'
+   * agreement given, and a picture of the day's activity on the reports of the
+   * demonstration parent's two children. Decoration only: if storing them
+   * fails, the demonstration stays as it is, with initials.
+   */
+  private async addPictures(
+    built: { school: { id: string }; director: { id: string }; children: { id: string; girl: boolean }[] },
+    T: (typeof TEXT)[keyof typeof TEXT],
+    rnd: ReturnType<typeof randomFrom>,
+    directorName: string,
+  ) {
+    const store = (body: string, folder: string) =>
+      cloudinaryService.uploadFile(Buffer.from(body), {
+        folder: `schools/${built.school.id}/${folder}`,
+        resourceType: 'image',
+        accessMode: 'authenticated',
+        extension: 'svg',
+        mimeType: 'image/svg+xml',
+      });
+    try {
+      // Drawn in order (the same demonstration, the same faces), sent a few at a time.
+      const portraits = built.children.map((c) => ({ id: c.id, body: portrait(c.girl, rnd.pick) }));
+      await inBatches(portraits, 6, async ({ id, body }) => {
+        const { publicId } = await store(body, 'children');
+        await prisma.child.update({
+          where: { id },
+          data: { photoPublicId: publicId, photoConsentAt: new Date(), photoConsentById: built.director.id, photoConsentByName: directorName },
+        });
+      });
+      const reports = await prisma.dailyReport.findMany({
+        where: { childId: { in: built.children.slice(0, 2).map((c) => c.id) } },
+        select: { id: true, activities: true },
+      });
+      const pictures = reports.map((r) => ({ id: r.id, body: activityPicture(Math.max(0, T.activities.indexOf(r.activities ?? '')), rnd.pick) }));
+      await inBatches(pictures, 6, async ({ id, body }) => {
+        const { publicId } = await store(body, 'daily-reports');
+        await prisma.dailyReportPhoto.create({ data: { dailyReportId: id, cloudinaryPublicId: publicId } });
+      });
+    } catch (error) {
+      console.error('[Demos] Pictures not all stored:', error);
     }
   }
 

@@ -158,6 +158,29 @@ class CloudinaryService {
   }
 
   /**
+   * A picture for a phone notification: small (192 px square, a few KB),
+   * signed without expiry since a notification can wait on a phone left
+   * offline. `fit`: 'fill' crops a portrait around the face, 'pad' keeps a
+   * whole logo on white. Null where it can't be shown (files kept on the
+   * API's own disk, in development: a notification needs a public https link).
+   */
+  notificationIconUrl(publicId: string, fit: 'fill' | 'pad'): string | null {
+    if (!this.isConfigured()) return null;
+    return cloudinary.url(publicId, {
+      type: 'authenticated',
+      sign_url: true,
+      secure: true,
+      resource_type: 'image',
+      format: 'png',
+      transformation: [
+        fit === 'fill'
+          ? { width: 192, height: 192, crop: 'fill', gravity: 'face' }
+          : { width: 192, height: 192, crop: 'pad', background: 'white' },
+      ],
+    });
+  }
+
+  /**
    * Fetches a stored file's bytes (from Cloudinary, or local disk in development).
    */
   async downloadFile(publicId: string, type: 'photo' | 'document'): Promise<Buffer> {

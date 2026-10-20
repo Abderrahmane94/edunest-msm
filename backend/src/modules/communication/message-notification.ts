@@ -24,14 +24,9 @@ export async function newMessageNotificationText(
     prisma.user.findUnique({ where: { id: recipientUserId }, select: { preferredLanguage: true } }),
     senderUserId ? prisma.user.findUnique({ where: { id: senderUserId }, select: { avatarPublicId: true } }) : null,
   ]);
-  const icon = sender?.avatarPublicId ? absolute(cloudinaryService.generateSignedUrl(sender.avatarPublicId, 'photo')) : undefined;
+  const icon = sender?.avatarPublicId ? (cloudinaryService.notificationIconUrl(sender.avatarPublicId, 'fill') ?? undefined) : undefined;
   const labels = LABELS[recipient?.preferredLanguage === 'ar' ? 'ar' : 'fr'];
   const body =
     messageType === 'text' ? (content || '').slice(0, 200) : messageType === 'photo' ? labels.photo : labels.document;
   return { title: senderName || labels.newMessage, body, ...(icon && { icon }) };
-}
-
-/** A notification can only show a picture from a full https link (not a local test file). */
-function absolute(url: string): string | undefined {
-  return url.startsWith('https://') ? url : undefined;
 }

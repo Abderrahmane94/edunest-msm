@@ -161,7 +161,7 @@ function ChildDayCard({ child, date }: { child: ChildAttendanceSummary; date: st
 
   return (
     <article className="flex items-center gap-3 bg-card border border-border rounded-2xl p-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
-      <Avatar name={child.child_name} size="md" />
+      <Avatar src={child.child_photo_url} name={child.child_name} size="md" />
       <div className="flex-1 min-w-0">
         <p className="text-body font-semibold text-text-heading truncate">{child.child_name}</p>
         {record?.note && <p className="text-caption text-text-secondary [overflow-wrap:anywhere]">{record.note}</p>}
@@ -212,7 +212,7 @@ function ChildMonthCard({
   return (
     <article className="bg-card border border-border rounded-2xl p-5 space-y-4 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
       <header className="flex items-center gap-3">
-        <Avatar name={child.child_name} size="lg" />
+        <Avatar src={child.child_photo_url} name={child.child_name} size="lg" />
         <div className="flex-1 min-w-0">
           <h2 className="text-subsection font-semibold text-text-heading truncate">{child.child_name}</h2>
           <p className="text-caption text-text-secondary">

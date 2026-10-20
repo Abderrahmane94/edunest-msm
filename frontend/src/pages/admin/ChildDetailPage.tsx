@@ -45,6 +45,7 @@ import { EmergencyContactsDialog } from './EmergencyContactsDialog';
 import { MedicalNotesDialog, severityBadgeVariant } from './MedicalNotesDialog';
 import { ChildFeesSection } from './ChildFeesSection';
 import { usePermissions } from '@/lib/roles';
+import { ChildPhotoEditor } from '@/components/ChildPhotoEditor';
 import { yearLabel } from '@/lib/yearName';
 import { ChildAttendanceSection } from './ChildAttendanceSection';
 
@@ -245,7 +246,21 @@ export function ChildDetailPage() {
       {confirmDialog}
       <PageHeader
         back="/admin/children"
-        leading={<Avatar name={`${child.first_name} ${child.last_name}`} size="lg" className="ring-4 ring-white shadow-level-2" />}
+        leading={
+          can('children', 'edit') ? (
+            <ChildPhotoEditor
+              childId={child.id}
+              name={`${child.first_name} ${child.last_name}`}
+              photoUrl={child.photo_url}
+              photoConsentAt={child.photo_consent_at}
+              photoConsentByName={child.photo_consent_by_name}
+              mode="office"
+              layout="header"
+            />
+          ) : (
+            <Avatar src={child.photo_url} name={`${child.first_name} ${child.last_name}`} size="lg" className="ring-4 ring-white shadow-level-2" />
+          )
+        }
         title={`${child.first_name} ${child.last_name}`}
         description={
           <>

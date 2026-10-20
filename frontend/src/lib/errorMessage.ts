@@ -80,6 +80,7 @@ const SERVER_MESSAGES: Array<[RegExp, string]> = [
   [/^Account is deactivated$/, 'accountDeactivated'],
   [/^School account is inactive$/, 'schoolInactive'],
   [/^The trial period of this school has ended$/, 'trialEnded'],
+  [/^The parents' agreement is required to keep a photo$/, 'photoConsentRequired'],
   [/^This school is not on trial$/, 'notOnTrial'],
   [/^The name typed is not the name of this school$/, 'purgeNameMismatch'],
   [/^Only a school whose trial has ended/, 'purgeNotAllowed'],

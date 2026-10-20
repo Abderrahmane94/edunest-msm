@@ -1,3 +1,4 @@
+import { cloudinaryService } from '../../services/cloudinary.service';
 import prisma from '../../lib/prisma';
 import { teacherClassroomIds, teachesClassroom } from '../substitutions/teaching-access';
 import { notificationService } from '../../services/notification.service';
@@ -861,7 +862,7 @@ class AttendanceService {
         return {
           child_id: child.id,
           child_name: `${child.firstName} ${child.lastName}`,
-          ...(child.photoPublicId && { child_photo_url: child.photoPublicId }),
+          ...(child.photoPublicId && { child_photo_url: cloudinaryService.generateSignedUrl(child.photoPublicId, 'photo') }),
           present_count: presentCount,
           absent_count: absentCount,
           late_count: lateCount,

@@ -1,4 +1,24 @@
 {
+  "childPhoto": {
+    "add": "Ajouter une photo",
+    "change": "Changer la photo",
+    "remove": "Retirer la photo",
+    "dialogTitle": "La photo de {{name}}",
+    "hint": "Recadrée en carré. Seuls l'équipe de la crèche et les parents de l'enfant la voient.",
+    "consentParent": "J'autorise la crèche à conserver la photo de mon enfant. Je peux la retirer à tout moment.",
+    "consentOffice": "Les parents de {{name}} ont donné leur accord pour que la crèche conserve sa photo.",
+    "save": "Enregistrer la photo",
+    "saving": "Envoi…",
+    "removeTitle": "Retirer la photo de {{name}} ?",
+    "removeText": "La photo est effacée, avec l'accord enregistré.",
+    "consentBy": "Accord enregistré par {{name}} le {{date}}",
+    "unreadable": "Cette image ne peut pas être lue. Choisissez une photo JPEG ou PNG.",
+    "myChildrenTitle": "Mes enfants",
+    "myChildrenHint": "Ajoutez leur photo : l'équipe de la crèche les reconnaît plus facilement, et vous la voyez dans le fil du jour.",
+    "invite_one": "Ajoutez la photo de {{names}} : l'équipe la reconnaîtra plus facilement.",
+    "invite_other": "Ajoutez la photo de {{names}} : l'équipe les reconnaîtra plus facilement.",
+    "inviteAction": "Ajouter"
+  },
   "app": {
     "name": "Kiddoo",
     "tagline": "Système de gestion de maternelle"
@@ -748,6 +768,7 @@
     "fileType": "Ce type de fichier n'est pas accepté.",
     "validation": "Certaines informations saisies ne sont pas valides. Vérifiez le formulaire.",
     "server": {
+      "photoConsentRequired": "L'accord des parents est nécessaire pour conserver une photo.",
       "trialEnded": "La période d'essai de cette crèche est terminée.",
       "notOnTrial": "Cette crèche n'est pas en période d'essai.",
       "purgeNameMismatch": "Le nom tapé n'est pas celui de cette crèche.",

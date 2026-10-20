@@ -83,6 +83,8 @@ function verifyUploadsAccess(req: Request, res: Response, next: NextFunction): v
     res.status(403).json(errorResponse('FORBIDDEN', 'Invalid or expired file link'));
     return;
   }
+  // Shown by the app from its own address (an <img>): a signed link, so it may cross origins.
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 }
 

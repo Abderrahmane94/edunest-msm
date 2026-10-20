@@ -1,4 +1,6 @@
+import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { fileUrl } from '@/lib/api-client';
 
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg';
 
@@ -44,11 +46,14 @@ function getInitials(name: string): string {
 
 export function Avatar({ src, alt, name, size = 'md', className }: AvatarProps) {
   const initials = name ? getInitials(name) : '';
+  // A photo that does not load (link expired, offline): the initials instead.
+  const [failed, setFailed] = React.useState<string | null>(null);
 
-  if (src) {
+  if (src && failed !== src) {
     return (
       <img
-        src={src}
+        src={fileUrl(src)}
+        onError={() => setFailed(src)}
         alt={alt || name || 'Avatar'}
         className={cn(
           'rounded-full object-cover shrink-0',

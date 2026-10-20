@@ -1,5 +1,14 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
+/**
+ * A stored file's link as the page can load it: files kept on the API's own
+ * disk (development, no Cloudinary) come as "/uploads/…", served by the API.
+ */
+export function fileUrl(src: string): string {
+  if (!src.startsWith('/uploads/') || !/^https?:\/\//.test(API_BASE_URL)) return src;
+  return new URL(API_BASE_URL).origin + src;
+}
+
 interface ApiError {
   code: string;
   message: string;

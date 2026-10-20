@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { errorMessage } from '@/lib/errorMessage';
 import { apiClient, apiError } from '@/lib/api-client';
 import { useMyProfile, useRemoveMyAvatar, useUpdateMyProfile, useUploadMyAvatar } from '@/hooks/useMyProfile';
+import { MyChildrenPhotos } from '@/components/MyChildrenPhotos';
 
 /**
  * "Mon profil", for every role: one's own photo, names and phone. The email
@@ -137,6 +138,8 @@ export function ProfilePage() {
                 />
               </div>
             </section>
+
+            {user?.role === 'parent' && <MyChildrenPhotos />}
 
             <form onSubmit={handleSubmit} className="bg-card border border-border rounded-lg p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">

@@ -1,12 +1,14 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Utensils, Moon, Activity, FileText } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Utensils, Moon, Activity, FileText, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui';
 import { apiClient } from '@/lib/api-client';
 import { useSocket } from '@/hooks/useSocket';
 import { useMessageContacts } from '@/hooks/useMessaging';
+import { useMyChildren } from '@/hooks/useChildPhoto';
 import {
   ChildChips,
   DayNav,
@@ -206,11 +208,11 @@ function ReportCard({ report, locale }: { report: DailyReport; locale: string })
 }
 
 /** Today's report not there yet, or no report that day. */
-function NoReportCard({ name, isToday }: { name: string; isToday: boolean }) {
+function NoReportCard({ name, photoUrl, isToday }: { name: string; photoUrl?: string | null; isToday: boolean }) {
   const { t } = useTranslation();
   return (
     <article className="flex items-center gap-3 bg-card border border-dashed border-border rounded-2xl p-4">
-      <Avatar name={name} size="md" />
+      <Avatar src={photoUrl} name={name} size="md" />
       <div className="min-w-0">
         <p className="text-body font-semibold text-text-heading truncate">{name}</p>
         <p className="text-caption text-text-secondary">
@@ -224,11 +226,13 @@ function NoReportCard({ name, isToday }: { name: string; isToday: boolean }) {
 /** A child's month: how many reports, moods, meals and naps, and a calendar. */
 function MonthSummaryCard({
   name,
+  photoUrl,
   month,
   reports,
   onSelectDay,
 }: {
   name: string;
+  photoUrl?: string | null;
   month: string;
   reports: DailyReport[];
   onSelectDay: (date: string) => void;
@@ -247,7 +251,7 @@ function MonthSummaryCard({
   return (
     <article className="bg-card border border-border rounded-2xl p-5 space-y-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
       <header className="flex items-center gap-3">
-        <Avatar name={name} size="lg" />
+        <Avatar src={photoUrl} name={name} size="lg" />
         <div className="min-w-0">
           <h2 className="text-subsection font-semibold text-text-heading truncate">{name}</h2>
           <p className="text-caption text-text-secondary">{t('parentFeed.reportsCount', { count: reports.length })}</p>
@@ -314,6 +318,9 @@ export function ParentFeedPage() {
   const shownMonth = view === 'day' ? monthOf(date) : month;
   const { data: reports = [], isLoading, isError } = useParentDailyReports(shownMonth);
   const { data: children = [] } = useMessageContacts(true);
+  const { data: myChildren = [] } = useMyChildren();
+  const photoOf = (id: string) => myChildren.find((c) => c.id === id)?.photoUrl ?? null;
+  const withoutPhoto = myChildren.filter((c) => !c.photoUrl);
 
   // A report sent or corrected by the teacher shows up straight away.
   const { on } = useSocket();
@@ -367,7 +374,7 @@ export function ParentFeedPage() {
       return report ? (
         <ReportCard key={child.id} report={report} locale={i18n.language} />
       ) : (
-        <NoReportCard key={child.id} name={child.name} isToday={date === localToday()} />
+        <NoReportCard key={child.id} name={child.name} photoUrl={photoOf(child.id)} isToday={date === localToday()} />
       );
     });
   } else {
@@ -375,6 +382,7 @@ export function ParentFeedPage() {
       <MonthSummaryCard
         key={child.id}
         name={child.name}
+        photoUrl={photoOf(child.id)}
         month={month}
         reports={reports.filter((r) => r.child_id === child.id)}
         onSelectDay={openDay}
@@ -412,6 +420,22 @@ export function ParentFeedPage() {
             onChange={setChildFilter}
             allLabel={t('parentFeed.allChildren')}
           />
+        )}
+
+        {/* Children without a photo: an invitation to add it, from the profile. */}
+        {withoutPhoto.length > 0 && (
+          <div className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3">
+            <Camera className="w-5 h-5 shrink-0 text-primary" aria-hidden="true" />
+            <p className="flex-1 min-w-0 text-caption text-foreground">
+              {t('childPhoto.invite', {
+                count: withoutPhoto.length,
+                names: withoutPhoto.map((c) => `\u2068${c.firstName}\u2069`).join(i18n.language === 'ar' ? ' و' : ', '),
+              })}
+            </p>
+            <Link to="/parent/profile#children" className="shrink-0 text-caption font-semibold text-primary hover:underline">
+              {t('childPhoto.inviteAction')}
+            </Link>
+          </div>
         )}
 
         {content}

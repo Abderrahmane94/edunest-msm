@@ -27,7 +27,7 @@ import {
   useListView,
 } from '@/components/ui';
 import type { Column } from '@/components/ui';
-import { avatarColor } from '@/components/ui/Avatar';
+import { Avatar } from '@/components/ui/Avatar';
 import { FormSelect } from '@/components/forms';
 import {
   useChildren, useLinkParent, useMedicalNotes,
@@ -249,9 +249,7 @@ export function ChildrenPage() {
         // beside the action icons) instead of running over them.
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 min-w-0">
           <div className="flex items-center gap-2 min-w-0">
-            <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-label font-semibold ${avatarColor(`${child.first_name} ${child.last_name}`)}`}>
-              {child.first_name.charAt(0)}{child.last_name.charAt(0)}
-            </div>
+            <Avatar src={child.photo_url} name={`${child.first_name} ${child.last_name}`} size="sm" />
             <div className="min-w-0">
               <p className="text-body font-medium text-foreground [overflow-wrap:anywhere]">
                 {child.first_name} {child.last_name}
@@ -446,9 +444,7 @@ export function ChildrenPage() {
           render={(child) => (
             <>
               <span className="flex items-center gap-3 min-w-0">
-                <span className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-body font-semibold ${avatarColor(`${child.first_name} ${child.last_name}`)}`}>
-                  {child.first_name.charAt(0)}{child.last_name.charAt(0)}
-                </span>
+                <Avatar src={child.photo_url} name={`${child.first_name} ${child.last_name}`} size="md" className="!w-11 !h-11" />
                 <span className="min-w-0">
                   <span className="block text-body-lg font-semibold text-text-heading [overflow-wrap:anywhere]">
                     {child.first_name} {child.last_name}

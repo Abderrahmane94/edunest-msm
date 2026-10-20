@@ -7,6 +7,7 @@ import { schoolToday } from '../admin/dashboard.service';
 import { schoolYearOf } from '../../lib/school-year';
 import type { CreateSchoolInput, UpdateSchoolInput, SchoolResponse } from './schools.types';
 import { purgeSchool } from '../../lib/purge-school';
+import { emailHasOtherAccount } from '../../lib/email-accounts';
 import { trialIsOver } from '../../lib/demo';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -36,7 +37,7 @@ class SchoolsService {
   /**
    * Create a new school (super_admin only).
    */
-  async create(input: CreateSchoolInput): Promise<SchoolResponse & { director: { id: string; email: string | null; phone: string | null; firstName: string; lastName: string; temporaryPassword: string } }> {
+  async create(input: CreateSchoolInput): Promise<SchoolResponse & { director: { id: string; email: string | null; phone: string | null; firstName: string; lastName: string; temporaryPassword: string; emailHasOtherAccount: boolean } }> {
     // No pre-check needed: email is only unique per-school (see migration
     // 0011/0012), and this school doesn't exist yet, so the director's email
     // can't already be taken within it — the same person can direct multiple schools.
@@ -88,7 +89,10 @@ class SchoolsService {
       return { school: newSchool, director: newDirector };
     });
 
-    return { ...withLogoUrl(school), director: { ...director, temporaryPassword: password } };
+    return {
+      ...withLogoUrl(school),
+      director: { ...director, temporaryPassword: password, emailHasOtherAccount: await emailHasOtherAccount(director.email, director.id) },
+    };
   }
 
   /**

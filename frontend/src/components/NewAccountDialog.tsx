@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, Info } from 'lucide-react';
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui';
 import { onNewAccount, type NewAccount } from '@/lib/newAccount';
 import { WhatsAppShareButton } from '@/components/WhatsAppShareButton';
@@ -59,6 +59,15 @@ export function NewAccountDialog() {
                 {copied ? t('users.resetPassword.copied') : t('users.resetPassword.copy')}
               </Button>
             </div>
+            {account.otherAccount && (
+              <div role="note" data-testid="new-account-other" className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-caption text-foreground">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+                <p>
+                  <span className="font-semibold">{t('users.newAccount.otherAccountTitle')}</span>{' '}
+                  {t('users.newAccount.otherAccountText')}
+                </p>
+              </div>
+            )}
             <WhatsAppShareButton
               phone={account.phone}
               name={account.firstName}

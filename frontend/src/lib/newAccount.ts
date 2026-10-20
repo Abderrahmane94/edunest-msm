@@ -13,6 +13,11 @@ export interface NewAccount {
   role?: string;
   /** The school the account belongs to, when it is not the sender's own (a super admin creating it). */
   schoolName?: string;
+  /**
+   * Its email already had another account (another school, the platform):
+   * this one opens with the temporary password, not the one the person knows.
+   */
+  otherAccount?: boolean;
 }
 
 /** What the server answers when it creates an account. */
@@ -22,6 +27,7 @@ export interface CreatedAccount {
   phone?: string | null;
   role?: string;
   temporaryPassword?: string;
+  emailHasOtherAccount?: boolean;
 }
 
 type Listener = (account: NewAccount) => void;
@@ -35,7 +41,8 @@ export function announceNewAccount(
   if (!login || !account?.temporaryPassword) return;
   const { temporaryPassword, phone, firstName } = account;
   const role = about.role ?? account.role;
-  for (const listener of listeners) listener({ login, temporaryPassword, phone, firstName, role, schoolName: about.schoolName });
+  const otherAccount = account.emailHasOtherAccount === true;
+  for (const listener of listeners) listener({ login, temporaryPassword, phone, firstName, role, schoolName: about.schoolName, otherAccount });
 }
 
 export function onNewAccount(listener: Listener): () => void {

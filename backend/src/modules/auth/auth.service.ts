@@ -15,6 +15,9 @@ import type {
   RefreshResponse,
   UserInfo,
 } from './auth.types';
+
+/** The account of the platform itself (a super admin's), in a reset link meant for one of several accounts. */
+const PLATFORM_ACCOUNT = Symbol('platform account');
 import type {
   LoginInput,
   RefreshInput,
@@ -311,7 +314,10 @@ export const authService = {
 
     for (const user of users) {
       // Tells the accounts apart when the email has several.
-      if (user.email) await authService.sendPasswordResetLink({ ...user, email: user.email }, users.length > 1 ? (user.school?.name ?? null) : null);
+      if (!user.email) continue;
+      // The platform's own account (no school) is named as such.
+      const account = users.length > 1 ? (user.school?.name ?? PLATFORM_ACCOUNT) : null;
+      await authService.sendPasswordResetLink({ ...user, email: user.email }, account);
     }
     return users.length;
   },
@@ -323,7 +329,8 @@ export const authService = {
    */
   async sendPasswordResetLink(
     user: { id: string; email: string; firstName: string },
-    schoolName: string | null = null,
+    /** When the email has several accounts: which one this link is for. */
+    account: string | typeof PLATFORM_ACCOUNT | null = null,
   ): Promise<boolean> {
     await prisma.passwordResetToken.updateMany({
       where: { userId: user.id, usedAt: null },
@@ -342,7 +349,8 @@ export const authService = {
         firstName: user.firstName,
         resetUrl: `${getFrontendUrl()}/reset-password/confirm?token=${token}`,
         expiresInHours: PASSWORD_RESET_EXPIRY_HOURS,
-        schoolName,
+        schoolName: account === PLATFORM_ACCOUNT ? null : account,
+        platformAccount: account === PLATFORM_ACCOUNT,
       });
       return true;
     } catch (err) {

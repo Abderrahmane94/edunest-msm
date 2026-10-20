@@ -89,6 +89,17 @@ describe('password reset', () => {
       expect(new Set(tokens).size).toBe(2);
     });
 
+    it("names the platform's own account (a super admin's) among the email's accounts", async () => {
+      mockPrisma.user.findMany.mockResolvedValue([{ ...account('u1', ''), school: null }, account('u2', 'Crèche B')]);
+
+      expect(await authService.sendPasswordResetLinks('fatima@school.dz')).toBe(2);
+
+      expect(sendEmail.mock.calls.map(([, o]) => [o.schoolName, o.platformAccount])).toEqual([
+        [null, true],
+        ['Crèche B', false],
+      ]);
+    });
+
     it('keeps going when an email fails to send', async () => {
       mockPrisma.user.findMany.mockResolvedValue([account('u1', 'A'), account('u2', 'B')]);
       sendEmail.mockRejectedValueOnce(new Error('provider down'));

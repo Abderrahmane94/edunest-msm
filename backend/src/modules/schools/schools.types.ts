@@ -14,6 +14,8 @@ export interface CreateSchoolInput {
     phone?: string;
     preferredLanguage?: string;
   };
+  /** On trial for this many days: closed after, until it subscribes. */
+  trialDays?: number;
 }
 
 export interface UpdateSchoolInput {
@@ -35,5 +37,8 @@ export interface SchoolResponse {
   contactEmail: string;
   contactPhone: string;
   isActive: boolean;
+  /** On trial until then; null once subscribed (and for every school that never was). */
+  trialEndsAt?: Date | null;
+  demoExpiresAt?: Date | null;
   createdAt: Date;
 }

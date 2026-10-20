@@ -1,6 +1,6 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/lib/formatters';
 import { Building2, Shield, ShieldOff } from 'lucide-react';
@@ -27,12 +27,34 @@ import { useSchoolsList, type SchoolItem } from '@/hooks/useSchools';
 import { ErrorAlert, FilterBar, ListSkeleton, PageHeader, useConfirm, type ConfirmOptions } from '@/components/ui';
 import type { TFunction } from 'i18next';
 
+/** A new school on trial: this many days, then closed until it subscribes. */
+const TRIAL_DAYS = 15;
+
+/** Where a school is in its trial, if it is on one: still running (until when) or over. */
+export function trialState(school: { trialEndsAt?: string | null }): 'running' | 'ended' | null {
+  if (!school.trialEndsAt) return null;
+  return new Date(school.trialEndsAt).getTime() > Date.now() ? 'running' : 'ended';
+}
+
+/** The badge of a school on trial. */
+export function TrialBadge({ school }: { school: { trialEndsAt?: string | null } }) {
+  const { t } = useTranslation();
+  const state = trialState(school);
+  if (!state) return null;
+  return state === 'running' ? (
+    <StatusBadge variant="warning">{t('schools.trial.badgeUntil', { date: `⁨${formatDate(school.trialEndsAt!)}⁩` })}</StatusBadge>
+  ) : (
+    <StatusBadge variant="danger">{t('schools.trial.badgeEnded')}</StatusBadge>
+  );
+}
+
 export function useCreateSchool() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: {
       name: string; address: string; wilaya: string; contactEmail: string; contactPhone: string;
       director: { firstName: string; lastName: string; email: string; phone: string; preferredLanguage: string };
+      trialDays?: number;
     }) => {
       const res = await apiClient.post<{ director?: CreatedAccount }>('/schools', data);
       if (!res.success) throw apiError(res.error, 'Failed to create school');
@@ -82,6 +104,8 @@ export function SchoolsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
+  // Said by the page left (a school erased for good).
+  const notice = (useLocation().state as { notice?: string } | null)?.notice;
   const { data: schools, isLoading } = useSchoolsList();
   const toggleSchool = useToggleSchoolActive();
   const { confirm, dialog: confirmDialog } = useConfirm();
@@ -155,9 +179,12 @@ export function SchoolsPage() {
       key: 'isActive',
       header: t('schools.columns.status'),
       render: (school) => (
-        <StatusBadge variant={school.isActive ? 'success' : 'neutral'}>
-          {school.isActive ? t('schools.active') : t('schools.inactive')}
-        </StatusBadge>
+        <div className="flex flex-wrap items-center gap-1">
+          <StatusBadge variant={school.isActive ? 'success' : 'neutral'}>
+            {school.isActive ? t('schools.active') : t('schools.inactive')}
+          </StatusBadge>
+          <TrialBadge school={school} />
+        </div>
       ),
     },
     {
@@ -211,6 +238,7 @@ export function SchoolsPage() {
         actions={<CreateButton label={t('schools.create')} onClick={() => setCreateDialogOpen(true)} />}
       />
 
+      {notice && <p role="status" className="text-body text-success">{notice}</p>}
       <ErrorAlert message={actionError} onDismiss={() => setActionError(null)} />
 
       {isLoading ? (
@@ -273,12 +301,14 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
   const emptyDirector = { firstName: '', lastName: '', email: '', phone: '', preferredLanguage: 'fr' };
   const [formData, setFormData] = React.useState(emptySchool);
   const [director, setDirector] = React.useState(emptyDirector);
+  const [trial, setTrial] = React.useState(false);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [createError, setCreateError] = React.useState<string | null>(null);
 
   function resetForm() {
     setFormData(emptySchool);
     setDirector(emptyDirector);
+    setTrial(false);
     setErrors({});
     setCreateError(null);
   }
@@ -318,7 +348,7 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
     if (!validate()) return;
     setCreateError(null);
     try {
-      await createSchool.mutateAsync({ ...formData, director });
+      await createSchool.mutateAsync({ ...formData, director, ...(trial && { trialDays: TRIAL_DAYS }) });
       resetForm();
       onOpenChange(false);
     } catch (err) {
@@ -360,6 +390,15 @@ function CreateSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChang
               <Input id="s-phone" name="contactPhone" type="tel" value={formData.contactPhone} onChange={handleChange} placeholder={t('schoolSettings.contactPhonePlaceholder')} />
             </FormField>
           </div>
+
+          {/* On trial: closed at its end (data kept) until it subscribes. */}
+          <label className="mt-1 flex items-start gap-2 rounded-lg border border-border p-3 cursor-pointer">
+            <input type="checkbox" name="trial" className="mt-0.5 w-4 h-4 rounded border-border text-primary" checked={trial} onChange={(e) => setTrial(e.target.checked)} />
+            <span>
+              <span className="block text-body font-medium text-foreground">{t('schools.trial.formLabel', { count: TRIAL_DAYS })}</span>
+              <span className="block text-caption text-text-secondary">{t('schools.trial.formHint')}</span>
+            </span>
+          </label>
 
           {/* Director section */}
           <div className="mt-4 pt-4 border-t border-border">

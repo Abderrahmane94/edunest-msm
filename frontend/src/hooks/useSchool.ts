@@ -103,6 +103,8 @@ export interface SchoolBrand {
   logoUrl: string | null;
   /** A demonstration school: open until then. */
   demoExpiresAt?: string | null;
+  /** A school on trial: open until then (its office sees it). */
+  trialEndsAt?: string | null;
 }
 
 /** The name and logo of the user's own school, shown in every member's header. */

@@ -188,6 +188,32 @@ class CloudinaryService {
       await cloudinary.uploader.destroy(publicId, { type: 'authenticated', resource_type: 'raw' });
     }
   }
+
+  /**
+   * Delete every file stored under a folder (e.g. "schools/<id>/"), of any
+   * kind: images, documents and videos. Returns how many were deleted.
+   */
+  async deleteFolder(prefix: string): Promise<number> {
+    if (!prefix.endsWith('/') || prefix.length < 10) throw new Error(`Refusing to delete the folder "${prefix}"`);
+    if (!this.isConfigured()) {
+      const dir = path.join(__dirname, '..', '..', 'uploads', prefix);
+      if (!fs.existsSync(dir)) return 0;
+      const count = fs.readdirSync(dir, { recursive: true, withFileTypes: true }).filter((e) => e.isFile()).length;
+      fs.rmSync(dir, { recursive: true, force: true });
+      return count;
+    }
+    let count = 0;
+    for (const resourceType of ['image', 'raw', 'video'] as const) {
+      // Deleted a thousand at a time: repeated while some are left.
+      for (;;) {
+        const result = await cloudinary.api.delete_resources_by_prefix(prefix, { type: 'authenticated', resource_type: resourceType });
+        const deleted = Object.values(result.deleted ?? {}).filter((s) => s === 'deleted').length;
+        count += deleted;
+        if (!result.partial) break;
+      }
+    }
+    return count;
+  }
 }
 
 export const cloudinaryService = new CloudinaryService();

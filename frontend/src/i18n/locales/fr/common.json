@@ -233,6 +233,8 @@
     }
   },
   "auth": {
+    "trialEnded": "La période d'essai de cette crèche est terminée.",
+    "trialEndedHint": "Ses données sont conservées. Contactez l'équipe Kiddoo pour vous abonner : vous la retrouverez telle quelle.",
     "login": "Se connecter",
     "logout": "Se déconnecter",
     "email": "Adresse e-mail",
@@ -618,6 +620,34 @@
     "paymentsCash": "Caisses"
   },
   "schools": {
+    "trial": {
+      "banner": {
+        "title": "Période d'essai.",
+        "text_one": "Votre crèche est ouverte jusqu'au {{date}} (encore {{count}} jour). Pour continuer ensuite, contactez l'équipe Kiddoo : tout ce que vous avez saisi sera conservé.",
+        "text_other": "Votre crèche est ouverte jusqu'au {{date}} (encore {{count}} jours). Pour continuer ensuite, contactez l'équipe Kiddoo : tout ce que vous avez saisi sera conservé.",
+        "lastDay": "Dernier jour d'essai : votre crèche se ferme le {{date}}. Pour continuer, contactez l'équipe Kiddoo : tout ce que vous avez saisi sera conservé."
+      },
+      "formLabel": "Période d'essai de {{count}} jours",
+      "formHint": "À la fin de l'essai, la crèche se ferme et ses données sont conservées. Elle rouvre quand vous la passez « Abonnée ».",
+      "badgeUntil": "Essai jusqu'au {{date}}",
+      "badgeEnded": "Essai terminé",
+      "cardTitle": "Période d'essai",
+      "running_one": "En essai jusqu'au {{date}} : encore {{count}} jour.",
+      "running_other": "En essai jusqu'au {{date}} : encore {{count}} jours.",
+      "ended": "Essai terminé le {{date}}. La crèche est fermée (personne ne peut se connecter) et ses données sont conservées.",
+      "subscribe": "Abonnée : garder ses données",
+      "subscribeTitle": "{{name}} s'abonne ?",
+      "subscribeText": "La période d'essai s'arrête. La crèche reste ouverte avec tout ce qui a été saisi. Son abonnement se suit ensuite dans « Facturation ».",
+      "extend": "+7 jours",
+      "extended": "Essai prolongé jusqu'au {{date}}.",
+      "subscribed": "La crèche est abonnée : elle reste ouverte.",
+      "purge": "Effacer définitivement",
+      "purgeHint": "L'essai est terminé sans abonnement. Vous pouvez effacer la crèche et toutes ses données. C'est irréversible.",
+      "purgeTitle": "Effacer {{name}} définitivement ?",
+      "purgeText": "Tout sera effacé : comptes, enfants, familles, présences, paiements, dépenses et fichiers. Impossible de revenir en arrière.",
+      "purgeTypeName": "Pour confirmer, tapez le nom de la crèche :",
+      "purgeDone": "{{name}} a été effacée définitivement."
+    },
     "filters": {
       "searchPlaceholder": "Nom, wilaya ou contact…",
       "status": "Statut",
@@ -718,6 +748,11 @@
     "fileType": "Ce type de fichier n'est pas accepté.",
     "validation": "Certaines informations saisies ne sont pas valides. Vérifiez le formulaire.",
     "server": {
+      "trialEnded": "La période d'essai de cette crèche est terminée.",
+      "notOnTrial": "Cette crèche n'est pas en période d'essai.",
+      "purgeNameMismatch": "Le nom tapé n'est pas celui de cette crèche.",
+      "purgeNotAllowed": "Seule une crèche dont l'essai est terminé (ou une démo fermée) peut être effacée.",
+      "purgePaid": "Cette crèche a payé un abonnement : elle ne peut pas être effacée.",
       "notFound": "Élément introuvable : il a peut-être été supprimé entre-temps.",
       "validation": "Certaines informations saisies ne sont pas valides. Vérifiez le formulaire.",
       "tooManyRequests": "Trop de tentatives. Patientez quelques minutes, puis réessayez.",

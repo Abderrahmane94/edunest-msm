@@ -107,6 +107,9 @@ export function LoginPage() {
         if (msg.includes('several accounts')) {
           return { type: 'credentials', title: t('loginId.phoneShared') };
         }
+        if (msg.includes('trial period')) {
+          return { type: 'school', title: t('auth.trialEnded'), hint: t('auth.trialEndedHint') };
+        }
         if (msg.includes('inactive')) {
           return { type: 'school', title: t('auth.schoolInactive'), hint: t('auth.schoolInactiveHint') };
         }

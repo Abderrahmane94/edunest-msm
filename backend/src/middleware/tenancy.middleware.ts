@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'async_hooks';
-import { schoolIsOpen } from '../lib/demo';
+import { schoolIsOpen, trialIsOver } from '../lib/demo';
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../lib/prisma';
 
@@ -28,7 +28,7 @@ export async function tenancyMiddleware(req: Request, res: Response, next: NextF
   // token is refused (the client asks for a new one, or signs in again).
   const account = await prisma.user.findUnique({
     where: { id: userId },
-    select: { isActive: true, role: true, school: { select: { isActive: true, demoExpiresAt: true } } },
+    select: { isActive: true, role: true, school: { select: { isActive: true, demoExpiresAt: true, trialEndsAt: true } } },
   });
   if (!account || !account.isActive || account.role !== role) {
     res.status(401).json({
@@ -58,7 +58,9 @@ export async function tenancyMiddleware(req: Request, res: Response, next: NextF
   if (!school || !schoolIsOpen(school)) {
     res.status(403).json({
       success: false,
-      error: { code: 'SCHOOL_INACTIVE', message: 'School account is inactive' },
+      error: school && school.isActive && trialIsOver(school)
+        ? { code: 'TRIAL_ENDED', message: 'The trial period of this school has ended' }
+        : { code: 'SCHOOL_INACTIVE', message: 'School account is inactive' },
     });
     return;
   }

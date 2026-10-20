@@ -17,7 +17,14 @@ export const createSchoolSchema = z.object({
   contactEmail: z.string().email('Invalid contact email address'),
   contactPhone: phoneSchema(20),
   director: directorSchema,
+  /** On trial for this many days: closed after, until it subscribes. */
+  trialDays: z.number().int().min(1).max(60).optional(),
 });
+
+export const extendTrialSchema = z.object({ days: z.number().int().min(1).max(60) });
+
+/** Erasing a school for good: its name typed again, as written. */
+export const purgeSchoolSchema = z.object({ confirmName: z.string().trim().min(1) });
 
 export const updateSchoolSchema = z.object({
   name: z.string().trim().min(1, 'School name is required').max(255, 'School name must not exceed 255 characters').optional(),

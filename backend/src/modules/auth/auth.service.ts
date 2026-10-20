@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { schoolIsOpen } from '../../lib/demo';
+import { schoolIsOpen, trialIsOver } from '../../lib/demo';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import prisma from '../../lib/prisma';
@@ -156,6 +156,8 @@ export const authService = {
     if (user.schoolId) {
       const school = await prisma.school.findUnique({ where: { id: user.schoolId } });
       if (school && !schoolIsOpen(school)) {
+        // A trial over: the director is told so, to subscribe (its data is kept).
+        if (school.isActive && trialIsOver(school)) throw new AuthError('The trial period of this school has ended', 403);
         throw new AuthError('School account is inactive', 403);
       }
     }

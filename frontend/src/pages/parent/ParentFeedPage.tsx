@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { Utensils, Moon, Activity, FileText, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, fileUrl } from '@/lib/api-client';
 import { useSocket } from '@/hooks/useSocket';
 import { useMessageContacts } from '@/hooks/useMessaging';
 import { useMyChildren } from '@/hooks/useChildPhoto';
@@ -104,7 +104,7 @@ function PhotoGrid({ photos }: { photos: DailyReportPhoto[] }) {
           className="relative aspect-square rounded-lg overflow-hidden border border-border"
         >
           <img
-            src={photo.url}
+            src={fileUrl(photo.url)}
             alt={`Photo ${index + 1}`}
             className="w-full h-full object-cover"
             loading="lazy"

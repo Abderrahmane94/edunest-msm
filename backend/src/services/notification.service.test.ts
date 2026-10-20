@@ -37,6 +37,11 @@ vi.mock('./push.service', () => {
   };
 });
 
+// School logos as notification pictures
+vi.mock('./cloudinary.service', () => ({
+  cloudinaryService: { notificationIconUrl: vi.fn((id: string) => `https://img/${id}.png`) },
+}));
+
 // Mock email service
 vi.mock('./email.service', () => ({
   emailService: {
@@ -297,6 +302,18 @@ describe('NotificationService', () => {
       expect(vi.mocked(pushService.send).mock.calls.map((c) => c[0].token)).toEqual(['phone', 'old-tablet', 'computer']);
       expect(vi.mocked(pushService.send).mock.calls[0][0].data).toEqual({ type: 'message_new', role: 'parent' });
       expect(prisma.pushDevice.deleteMany).toHaveBeenCalledWith({ where: { token: { in: ['old-tablet'] } } });
+    });
+
+    it('without a picture of its own, shows the school logo; a sender photo wins', async () => {
+      vi.mocked(prisma.notification.create).mockResolvedValue({ id: 'n1' } as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ preferredLanguage: 'ar', role: 'parent', school: { logoPublicId: 'logo-1' } } as any);
+      vi.mocked(prisma.pushDevice.findMany).mockResolvedValue([{ token: 'phone' }] as any);
+
+      await notificationService.notify({ userId: 'user-1', title: 'T', body: 'B', type: 'announcement', channels: ['push'] });
+      expect(vi.mocked(pushService.send).mock.calls[0][0]).toMatchObject({ icon: 'https://img/logo-1.png', lang: 'ar' });
+
+      await notificationService.notify({ userId: 'user-1', title: 'T', body: 'B', type: 'message_new', channels: ['push'], icon: 'https://img/sender.png' });
+      expect(vi.mocked(pushService.send).mock.calls[1][0].icon).toBe('https://img/sender.png');
     });
 
     it('a failed send to one device does not stop the others', async () => {

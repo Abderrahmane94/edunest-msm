@@ -6,6 +6,7 @@
 
 import prisma from '../lib/prisma';
 import { pushService, PushTokenInvalidError } from './push.service';
+import { cloudinaryService } from './cloudinary.service';
 
 export interface PushMessage {
   title: string;
@@ -52,8 +53,10 @@ export const pushDevices = {
         console.error('[PushDevices] Could not read the devices:', err);
         return [] as { token: string }[];
       });
+    // Without a picture of its own (the sender's photo), the school's logo.
+    const icon = message.icon ?? (devices.length ? await schoolLogo(userId) : undefined);
     const results = await Promise.allSettled(
-      devices.map((d) => pushService.send({ token: d.token, ...message })),
+      devices.map((d) => pushService.send({ token: d.token, ...message, ...(icon && { icon }) })),
     );
     const invalid: string[] = [];
     results.forEach((r, i) => {
@@ -69,3 +72,12 @@ export const pushDevices = {
     };
   },
 };
+
+/** The logo of the person's school, as a notification picture. */
+async function schoolLogo(userId: string): Promise<string | undefined> {
+  const user = await prisma.user
+    .findUnique({ where: { id: userId }, select: { school: { select: { logoPublicId: true } } } })
+    .catch(() => null);
+  const logo = user?.school?.logoPublicId;
+  return (logo && cloudinaryService.notificationIconUrl(logo, 'pad')) || undefined;
+}

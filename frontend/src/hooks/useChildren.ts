@@ -13,7 +13,11 @@ export interface Child {
   date_of_birth: string;
   gender: string;
   enrollment_date: string;
+  /** The photo as shown: a signed link (an hour). */
   photo_url?: string;
+  /** The parents' agreement to keep it: when, and who gave or recorded it. */
+  photo_consent_at?: string | null;
+  photo_consent_by_name?: string | null;
   is_active: boolean;
   classroom_name?: string;
   /** The class of the year being looked at (child file), or the first one. */
@@ -128,7 +132,9 @@ function mapChild(raw: Record<string, unknown>): Child {
     date_of_birth: (raw.dateOfBirth ?? raw.date_of_birth) as string,
     gender: raw.gender as string,
     enrollment_date: (raw.enrollmentDate ?? raw.enrollment_date) as string,
-    photo_url: (raw.photoPublicId ?? raw.photo_url) as string | undefined,
+    photo_url: (raw.photoUrl ?? undefined) as string | undefined,
+    photo_consent_at: (raw.photoConsentAt ?? null) as string | null,
+    photo_consent_by_name: (raw.photoConsentByName ?? null) as string | null,
     is_active: (raw.isActive ?? raw.is_active) as boolean,
     classroom_name: classroomName,
     classroom_id: classroomId,

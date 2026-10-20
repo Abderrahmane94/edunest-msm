@@ -10,6 +10,31 @@ import { ENROLLED_BEFORE_BIRTH } from './children.schema';
 import type { RegisterChildInput, CreateChildInput, UpdateChildInput, EnrollChildInput, CreateParentLinkInput, UpdateParentLinkInput, CreateEmergencyContactInput, UpdateEmergencyContactInput, CreateMedicalNoteInput, UpdateMedicalNoteInput } from './children.schema';
 import type { ChildWithEnrollments, ClassroomEnrollmentResponse, PhotoUrlResponse, ParentChildLinkResponse, EmergencyContactResponse, MedicalNoteResponse } from './children.types';
 
+/** A child's photo as shown: a signed link (valid an hour), never the stored id. */
+export function childPhotoUrl(photoPublicId: string | null | undefined): string | null {
+  return photoPublicId ? cloudinaryService.generateSignedUrl(photoPublicId, 'photo') : null;
+}
+
+/** Who adds or removes a photo: a parent (of that child only) or the office. */
+export interface PhotoActor {
+  userId: string;
+  role: string;
+}
+
+export interface ChildPhoto {
+  id: string;
+  photoUrl: string | null;
+  photoConsentAt: Date | null;
+  photoConsentByName: string | null;
+}
+
+const photoOf = (c: { id: string; photoPublicId: string | null; photoConsentAt: Date | null; photoConsentByName: string | null }): ChildPhoto => ({
+  id: c.id,
+  photoUrl: childPhotoUrl(c.photoPublicId),
+  photoConsentAt: c.photoConsentAt,
+  photoConsentByName: c.photoConsentByName,
+});
+
 export class ChildServiceError extends Error {
   constructor(
     message: string,
@@ -217,6 +242,7 @@ class ChildrenService {
 
     const childrenWithParentNames = children.map(({ parentLinks, emergencyContacts, _count, ...child }) => ({
       ...child,
+      photoUrl: childPhotoUrl(child.photoPublicId),
       medicalNoteCount: _count.medicalNotes,
       parentNames: parentLinks.map((link) => `${link.parent.firstName} ${link.parent.lastName}`),
       hasAuthorizedPickup:
@@ -284,6 +310,7 @@ class ChildrenService {
     const { academicYear: _registrationYear, paymentEnrollments: _billing, enrollments, ...rest } = child;
     return {
       ...rest,
+      photoUrl: childPhotoUrl(rest.photoPublicId),
       enrollments: enrollments
         .filter((e) => !academicYearId || e.classroom.academicYear.id === academicYearId)
         .map(({ classroom: { academicYear, ...classroom }, ...e }) => ({ ...e, classroom })),
@@ -477,38 +504,66 @@ class ChildrenService {
   }
 
   /**
-   * Upload a child's photo to Cloudinary.
-   * Stores the photo with authenticated access.
+   * A child's photo, private (seen only signed in), with the parents'
+   * agreement: given by a parent of the child, or recorded by the office for
+   * them. Replaces the previous photo. A parent may only do it for their own child.
    */
-  async uploadPhoto(childId: string, schoolId: string, file: Buffer): Promise<ChildWithEnrollments> {
-    const child = await prisma.child.findFirst({
-      where: { id: childId, schoolId },
-    });
+  async uploadPhoto(childId: string, schoolId: string, file: { buffer: Buffer; mimetype: string }, by: PhotoActor): Promise<ChildPhoto> {
+    const child = await prisma.child.findFirst({ where: { id: childId, schoolId } });
+    if (!child) throw new ChildServiceError('Child not found', 404);
+    if (by.role === 'parent') await this.assertParentLinked(childId, by.userId);
 
-    if (!child) {
-      throw new ChildServiceError('Child not found', 404);
-    }
-
-    // If there's an existing photo, delete it
-    if (child.photoPublicId) {
-      await cloudinaryService.deleteFile(child.photoPublicId);
-    }
-
-    // Upload new photo
-    const result = await cloudinaryService.uploadFile(file, {
+    const result = await cloudinaryService.uploadFile(file.buffer, {
       folder: `schools/${schoolId}/children`,
       resourceType: 'image',
       accessMode: 'authenticated',
+      extension: file.mimetype === 'image/png' ? 'png' : file.mimetype === 'image/webp' ? 'webp' : 'jpg',
+      mimeType: file.mimetype,
     });
-
-    // Update child record with new photo public_id
+    const author = await prisma.user.findUnique({ where: { id: by.userId }, select: { firstName: true, lastName: true } });
     const updated = await prisma.child.update({
       where: { id: childId },
-      data: { photoPublicId: result.publicId },
-      include: enrollmentInclude,
+      data: {
+        photoPublicId: result.publicId,
+        photoConsentAt: new Date(),
+        photoConsentById: by.userId,
+        photoConsentByName: author ? `${author.firstName} ${author.lastName}`.trim() : null,
+      },
     });
+    // The previous one goes once the new one is saved.
+    if (child.photoPublicId) await this.deleteStoredPhoto(child.photoPublicId);
+    return photoOf(updated);
+  }
 
-    return updated;
+  /** Removes a child's photo (and the agreement that came with it): the office, or a parent of the child. */
+  async removePhoto(childId: string, schoolId: string, by: PhotoActor): Promise<ChildPhoto> {
+    const child = await prisma.child.findFirst({ where: { id: childId, schoolId } });
+    if (!child) throw new ChildServiceError('Child not found', 404);
+    if (by.role === 'parent') await this.assertParentLinked(childId, by.userId);
+    const updated = await prisma.child.update({
+      where: { id: childId },
+      data: { photoPublicId: null, photoConsentAt: null, photoConsentById: null, photoConsentByName: null },
+    });
+    if (child.photoPublicId) await this.deleteStoredPhoto(child.photoPublicId);
+    return photoOf(updated);
+  }
+
+  /** A parent's own children, with their photos: what the parent may change. */
+  async myChildren(parentUserId: string, schoolId: string): Promise<Array<ChildPhoto & { firstName: string; lastName: string }>> {
+    const children = await prisma.child.findMany({
+      where: { schoolId, isActive: true, parentLinks: { some: { parentUserId } } },
+      orderBy: [{ dateOfBirth: 'asc' }],
+    });
+    return children.map((c) => ({ ...photoOf(c), firstName: c.firstName, lastName: c.lastName }));
+  }
+
+  /** A stored photo deleted; a failure only leaves an unused file behind. */
+  private async deleteStoredPhoto(publicId: string): Promise<void> {
+    try {
+      await cloudinaryService.deleteFile(publicId);
+    } catch (error) {
+      console.error('[ChildrenService] Old photo not deleted:', error);
+    }
   }
 
   /**

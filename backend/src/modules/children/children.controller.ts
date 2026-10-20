@@ -177,18 +177,50 @@ export const childrenController = {
       const schoolId = req.user!.schoolId!;
       const { id } = req.params;
 
-      if (!req.body || !Buffer.isBuffer(req.body)) {
-        res.status(400).json(errorResponse('VALIDATION_ERROR', 'Photo file is required. Send raw image data in the request body.'));
+      if (!req.file?.buffer) {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', 'Photo file is required'));
+        return;
+      }
+      // Kept only with the parents' agreement, said when sending it.
+      if ((req.body as { consent?: string } | undefined)?.consent !== 'true') {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', "The parents' agreement is required to keep a photo"));
         return;
       }
 
-      const child = await childrenService.uploadPhoto(id, schoolId, req.body);
-      res.status(200).json(successResponse(child));
+      const photo = await childrenService.uploadPhoto(id, schoolId, req.file, { userId: req.user!.userId, role: req.user!.role });
+      res.status(200).json(successResponse(photo));
     } catch (error) {
       if (error instanceof ChildServiceError) {
         res.status(error.statusCode).json(errorResponse('CHILD_ERROR', error.message));
         return;
       }
+      next(error);
+    }
+  },
+
+  /**
+   * DELETE /api/children/:id/photo — Remove the photo (office, or a parent of the child)
+   */
+  async removePhoto(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const photo = await childrenService.removePhoto(req.params.id, req.user!.schoolId!, { userId: req.user!.userId, role: req.user!.role });
+      res.status(200).json(successResponse(photo));
+    } catch (error) {
+      if (error instanceof ChildServiceError) {
+        res.status(error.statusCode).json(errorResponse('CHILD_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * GET /api/children/mine — A parent's own children, with their photos
+   */
+  async mine(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      res.status(200).json(successResponse(await childrenService.myChildren(req.user!.userId, req.user!.schoolId!)));
+    } catch (error) {
       next(error);
     }
   },

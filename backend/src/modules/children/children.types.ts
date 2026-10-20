@@ -9,6 +9,10 @@ export interface ChildResponse {
   dateOfBirth: Date;
   gender: Gender;
   photoPublicId: string | null;
+  /** The photo as shown: a signed link (an hour); null without photo. */
+  photoUrl?: string | null;
+  photoConsentAt?: Date | null;
+  photoConsentByName?: string | null;
   enrollmentDate: Date;
   learnerType: LearnerType;
   nationalId: string | null;

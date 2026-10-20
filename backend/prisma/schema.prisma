@@ -372,6 +372,11 @@ model Child {
   dateOfBirth    DateTime    @map("date_of_birth") @db.Date
   gender         Gender
   photoPublicId  String?     @map("photo_public_id")
+  /// The parents' agreement to keep the photo: when, and who gave or recorded it
+  /// (the parent, or the office saying the parents agreed). Cleared with the photo.
+  photoConsentAt     DateTime? @map("photo_consent_at")
+  photoConsentById   String?   @map("photo_consent_by_id")
+  photoConsentByName String?   @map("photo_consent_by_name")
   enrollmentDate DateTime    @map("enrollment_date") @db.Date
   learnerType    LearnerType @default(child) @map("learner_type")
   nationalId     String?     @map("national_id")

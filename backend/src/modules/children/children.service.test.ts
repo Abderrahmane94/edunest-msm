@@ -48,6 +48,7 @@ vi.mock('../../lib/prisma', () => ({
     },
     user: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -232,8 +233,8 @@ describe('ChildrenService', () => {
       const result = await childrenService.list(schoolId, 1, 20);
 
       expect(result.children).toEqual([
-        { id: 'child-1', schoolId, firstName: 'Ahmed', isActive: true, enrollments: [], medicalNoteCount: 2, parentNames: ['Karim Parent'], hasAuthorizedPickup: true },
-        { id: 'child-2', schoolId, firstName: 'Fatima', isActive: true, enrollments: [], medicalNoteCount: 0, parentNames: [], hasAuthorizedPickup: false },
+        { id: 'child-1', schoolId, firstName: 'Ahmed', isActive: true, enrollments: [], medicalNoteCount: 2, parentNames: ['Karim Parent'], hasAuthorizedPickup: true, photoUrl: null },
+        { id: 'child-2', schoolId, firstName: 'Fatima', isActive: true, enrollments: [], medicalNoteCount: 0, parentNames: [], hasAuthorizedPickup: false, photoUrl: null },
       ]);
       expect(result.total).toBe(2);
       expect(mockPrisma.child.findMany).toHaveBeenCalledWith({
@@ -312,6 +313,7 @@ describe('ChildrenService', () => {
         id: 'child-1',
         schoolId,
         firstName: 'Ahmed',
+        photoUrl: null,
         enrollments: [],
         schoolYears: [{ id: 'y25', name: '2025-2026' }],
         unpaidOtherYears: [],
@@ -488,57 +490,72 @@ describe('ChildrenService', () => {
   });
 
   describe('uploadPhoto', () => {
-    it('should upload a photo and update the child record', async () => {
-      const child = { id: 'child-1', schoolId, isActive: true, photoPublicId: null };
-      const uploadResult = {
-        publicId: 'schools/school-123/children/photo_123',
-        url: 'https://res.cloudinary.com/demo/image/upload/schools/school-123/children/photo_123',
-        format: 'jpg',
-        bytes: 1024,
-      };
-      const updatedChild = {
-        ...child,
-        photoPublicId: uploadResult.publicId,
-        enrollments: [],
-      };
+    const image = { buffer: Buffer.from('fake-image'), mimetype: 'image/jpeg' };
+    const office = { userId: 'office-1', role: 'admin' };
 
+    it('keeps the photo with the agreement: when and by whom, and gives a signed link', async () => {
+      const child = { id: 'child-1', schoolId, isActive: true, photoPublicId: null };
+      const uploadResult = { publicId: 'schools/school-123/children/photo_123', url: 'u', format: 'jpg', bytes: 1024 };
       mockPrisma.child.findFirst.mockResolvedValue(child);
       mockCloudinary.uploadFile.mockResolvedValue(uploadResult);
-      mockPrisma.child.update.mockResolvedValue(updatedChild);
+      mockPrisma.user.findUnique.mockResolvedValue({ firstName: 'Samia', lastName: 'Kaci' });
+      mockPrisma.child.update.mockImplementation(({ data }: { data: Record<string, unknown> }) => Promise.resolve({ ...child, ...data }));
+      mockCloudinary.generateSignedUrl.mockReturnValue('https://signed/photo_123');
 
-      const result = await childrenService.uploadPhoto('child-1', schoolId, Buffer.from('fake-image'));
+      const result = await childrenService.uploadPhoto('child-1', schoolId, image, office);
 
-      expect(mockCloudinary.uploadFile).toHaveBeenCalledWith(Buffer.from('fake-image'), {
+      expect(mockCloudinary.uploadFile).toHaveBeenCalledWith(image.buffer, expect.objectContaining({
         folder: 'schools/school-123/children',
         resourceType: 'image',
         accessMode: 'authenticated',
-      });
+      }));
       expect(mockPrisma.child.update).toHaveBeenCalledWith({
         where: { id: 'child-1' },
-        data: { photoPublicId: uploadResult.publicId },
-        include: expect.any(Object),
+        data: { photoPublicId: uploadResult.publicId, photoConsentAt: expect.any(Date), photoConsentById: 'office-1', photoConsentByName: 'Samia Kaci' },
       });
-      expect(result.photoPublicId).toBe(uploadResult.publicId);
+      expect(result).toMatchObject({ id: 'child-1', photoUrl: 'https://signed/photo_123', photoConsentByName: 'Samia Kaci' });
+      expect(result).not.toHaveProperty('photoPublicId');
     });
 
-    it('should delete existing photo before uploading new one', async () => {
+    it('deletes the previous photo once the new one is saved', async () => {
       const child = { id: 'child-1', schoolId, isActive: true, photoPublicId: 'old-photo-id' };
-      const uploadResult = {
-        publicId: 'new-photo-id',
-        url: 'https://example.com/new',
-        format: 'jpg',
-        bytes: 2048,
-      };
-      const updatedChild = { ...child, photoPublicId: 'new-photo-id', enrollments: [] };
-
       mockPrisma.child.findFirst.mockResolvedValue(child);
       mockCloudinary.deleteFile.mockResolvedValue(undefined);
-      mockCloudinary.uploadFile.mockResolvedValue(uploadResult);
-      mockPrisma.child.update.mockResolvedValue(updatedChild);
+      mockCloudinary.uploadFile.mockResolvedValue({ publicId: 'new-photo-id', url: 'u', format: 'jpg', bytes: 2048 });
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.child.update.mockResolvedValue({ ...child, photoPublicId: 'new-photo-id' });
 
-      await childrenService.uploadPhoto('child-1', schoolId, Buffer.from('new-image'));
+      await childrenService.uploadPhoto('child-1', schoolId, image, office);
 
       expect(mockCloudinary.deleteFile).toHaveBeenCalledWith('old-photo-id');
+      expect(mockPrisma.child.update.mock.invocationCallOrder[0]).toBeLessThan(mockCloudinary.deleteFile.mock.invocationCallOrder[0]);
+    });
+
+    it("refuses a parent who is not the child's", async () => {
+      mockPrisma.child.findFirst.mockResolvedValue({ id: 'child-1', schoolId, photoPublicId: null });
+      mockPrisma.parentChildLink.findUnique.mockResolvedValue(null);
+
+      await expect(childrenService.uploadPhoto('child-1', schoolId, image, { userId: 'parent-9', role: 'parent' })).rejects.toThrow('Child not found');
+      expect(mockCloudinary.uploadFile).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('removePhoto', () => {
+    it('clears the photo and the agreement, then deletes the file', async () => {
+      const child = { id: 'child-1', schoolId, photoPublicId: 'photo-1' };
+      mockPrisma.child.findFirst.mockResolvedValue(child);
+      mockPrisma.parentChildLink.findUnique.mockResolvedValue({ id: 'link-1' });
+      mockPrisma.child.update.mockResolvedValue({ ...child, photoPublicId: null, photoConsentAt: null, photoConsentByName: null });
+      mockCloudinary.deleteFile.mockResolvedValue(undefined);
+
+      const result = await childrenService.removePhoto('child-1', schoolId, { userId: 'parent-1', role: 'parent' });
+
+      expect(mockPrisma.child.update).toHaveBeenCalledWith({
+        where: { id: 'child-1' },
+        data: { photoPublicId: null, photoConsentAt: null, photoConsentById: null, photoConsentByName: null },
+      });
+      expect(mockCloudinary.deleteFile).toHaveBeenCalledWith('photo-1');
+      expect(result.photoUrl).toBeNull();
     });
   });
 

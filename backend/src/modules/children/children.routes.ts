@@ -1,11 +1,22 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { childrenController } from './children.controller';
-import { requireActiveRole } from '../../middleware/rbac.middleware';
+import { rbac, requireActiveRole } from '../../middleware/rbac.middleware';
 import { requirePermission, requireAnyPermission } from '../../middleware/permission.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
 import { registerChildSchema, createChildSchema, updateChildSchema, enrollChildSchema, createParentLinkSchema, updateParentLinkSchema, parentLinkParamsSchema, createEmergencyContactSchema, updateEmergencyContactSchema, emergencyContactParamsSchema, createMedicalNoteSchema, updateMedicalNoteSchema, medicalNoteParamsSchema } from './children.schema';
 import { idParamSchema } from '../../utils/validators';
 import { rejectClosedYear, yearOf } from '../../middleware/closed-year.middleware';
+
+// A child's photo: an image, already made small by the app (the limit is generous).
+const photoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only JPEG, PNG and WebP images are allowed'));
+  },
+});
 
 const router = Router();
 
@@ -28,6 +39,9 @@ router.post(
 router.get('/', requireAnyPermission([['children', 'view'], ['classes', 'view'], ['collections', 'view'], ['communication', 'view']], { alsoRoles: ['teacher'] }), childrenController.list);
 
 // GET /api/children/:id — Get child by ID (admin, teacher, or parent)
+// GET /api/children/mine — A parent's own children, with their photos
+router.get('/mine', rbac(['parent']), childrenController.mine);
+
 router.get('/:id', requireActiveRole, validateParams(idParamSchema), childrenController.getById);
 
 // PUT /api/children/:id — Update child (admin only)
@@ -39,8 +53,11 @@ router.delete('/:id', requirePermission('children', 'edit', { delete: true }), v
 // POST /api/children/:id/enroll — Enroll child in classroom (admin only)
 router.post('/:id/enroll', requireAnyPermission([['children', 'edit'], ['classes', 'edit']]), validateParams(idParamSchema), validate(enrollChildSchema), rejectClosedYear((req) => yearOf.classroom((req.body as { classroomId: string }).classroomId)), childrenController.enroll);
 
-// POST /api/children/:id/photo — Upload child photo (admin only)
-router.post('/:id/photo', requirePermission('children', 'edit'), validateParams(idParamSchema), childrenController.uploadPhoto);
+// POST /api/children/:id/photo — The child's photo, with the parents' agreement (office, or a parent of the child)
+router.post('/:id/photo', requirePermission('children', 'edit', { alsoRoles: ['parent'] }), validateParams(idParamSchema), photoUpload.single('photo'), childrenController.uploadPhoto);
+
+// DELETE /api/children/:id/photo — Remove it (office, or a parent of the child)
+router.delete('/:id/photo', requirePermission('children', 'edit', { alsoRoles: ['parent'] }), validateParams(idParamSchema), childrenController.removePhoto);
 
 // GET /api/children/:id/photo-url — Get signed photo URL (admin, teacher, or parent)
 router.get('/:id/photo-url', requireActiveRole, validateParams(idParamSchema), childrenController.getPhotoUrl);

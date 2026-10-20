@@ -1,3 +1,4 @@
+import { cloudinaryService } from './cloudinary.service';
 import prisma, { softDeleteStorage } from '../lib/prisma';
 
 export type SoftDeletableModel = 'school' | 'user' | 'child' | 'classroom';
@@ -87,6 +88,10 @@ class SoftDeleteService {
       await softDeleteStorage.run({ includeDeleted: true }, async () => {
         await (prisma[model] as any).delete({ where: { id } });
       });
+      // A child removed for good takes its photo with it.
+      if (model === 'child' && record.photoPublicId) {
+        await cloudinaryService.deleteFile(record.photoPublicId).catch((err) => console.error('[SoftDelete] Child photo not deleted:', err));
+      }
     } catch (error: any) {
       if (error.code === 'P2003') {
         throw new SoftDeleteError(

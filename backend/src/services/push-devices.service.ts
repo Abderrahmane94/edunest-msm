@@ -79,5 +79,5 @@ async function schoolLogo(userId: string): Promise<string | undefined> {
     .findUnique({ where: { id: userId }, select: { school: { select: { logoPublicId: true } } } })
     .catch(() => null);
   const logo = user?.school?.logoPublicId;
-  return (logo && cloudinaryService.notificationIconUrl(logo, 'pad')) || undefined;
+  return (logo && cloudinaryService.notificationIconUrl(logo, 'center')) || undefined;
 }

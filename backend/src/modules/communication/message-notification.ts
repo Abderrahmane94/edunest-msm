@@ -24,7 +24,7 @@ export async function newMessageNotificationText(
     prisma.user.findUnique({ where: { id: recipientUserId }, select: { preferredLanguage: true } }),
     senderUserId ? prisma.user.findUnique({ where: { id: senderUserId }, select: { avatarPublicId: true } }) : null,
   ]);
-  const icon = sender?.avatarPublicId ? (cloudinaryService.notificationIconUrl(sender.avatarPublicId, 'fill') ?? undefined) : undefined;
+  const icon = sender?.avatarPublicId ? (cloudinaryService.notificationIconUrl(sender.avatarPublicId, 'face') ?? undefined) : undefined;
   const labels = LABELS[recipient?.preferredLanguage === 'ar' ? 'ar' : 'fr'];
   const body =
     messageType === 'text' ? (content || '').slice(0, 200) : messageType === 'photo' ? labels.photo : labels.document;

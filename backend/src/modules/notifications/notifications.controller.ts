@@ -7,11 +7,29 @@ import type { ListNotificationsQuery, PushDeviceInput } from './notifications.sc
 /** Read notifications older than this go by themselves, so the list never grows without end. */
 export const READ_NOTIFICATION_DAYS = 90;
 
-/** The test notification, in the person's language. */
-const TEST_MESSAGE = {
-  fr: { title: 'Kiddoo', body: 'Les notifications marchent sur cet appareil.' },
-  ar: { title: 'Kiddoo', body: 'الإشعارات تعمل على هذا الجهاز.' },
-} as const;
+/**
+ * The test notification, in the person's language: what will arrive here
+ * from now on. The phone already shows "Kiddoo" and the site above it, so
+ * the title says the news instead.
+ */
+export function testNotificationText(language: string, role: string, school: string | null): { title: string; body: string } {
+  const parent = role === 'parent';
+  if (language === 'ar') {
+    const from = school ? `من ${school}` : 'من الروضة';
+    return {
+      title: 'الإشعارات مفعّلة ✅',
+      body: parent
+        ? `ستصلك هنا رسائل ${school ?? 'الروضة'} وغيابات أطفالك والإعلانات، حتى عندما يكون التطبيق مغلقًا.`
+        : `ستصلك هنا رسائل الأولياء والفريق والإعلانات ${from}، حتى عندما يكون التطبيق مغلقًا.`,
+    };
+  }
+  return {
+    title: 'Notifications activées ✅',
+    body: parent
+      ? `Vous recevrez ici les messages ${school ? `de ${school}` : 'de la crèche'}, les absences de vos enfants et les annonces, même quand l'application est fermée.`
+      : `Vous recevrez ici les messages des parents et de l'équipe${school ? ` de ${school}` : ''}, même quand l'application est fermée.`,
+  };
+}
 
 export const notificationsController = {
   /**
@@ -44,8 +62,11 @@ export const notificationsController = {
   async testDevices(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.userId;
-      const user = await prisma.user.findUnique({ where: { id: userId }, select: { preferredLanguage: true, role: true } });
-      const text = TEST_MESSAGE[user?.preferredLanguage === 'ar' ? 'ar' : 'fr'];
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { preferredLanguage: true, role: true, school: { select: { name: true } } },
+      });
+      const text = testNotificationText(user?.preferredLanguage ?? 'fr', user?.role ?? '', user?.school?.name ?? null);
       const result = await pushDevices.send(userId, { ...text, data: { type: 'test', role: user?.role ?? '' } });
       res.status(200).json(successResponse(result));
     } catch (error) {

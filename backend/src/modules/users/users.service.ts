@@ -9,6 +9,7 @@ import type { CreateUserDirectlyInput } from './users.schema';
 import { authService } from '../auth/auth.service';
 import { getFrontendUrl } from '../../lib/frontend-url';
 import { pushDevices } from '../../services/push-devices.service';
+import { emailHasOtherAccount } from '../../lib/email-accounts';
 import { accountIdsWithPhone } from '../../lib/phone-accounts';
 
 const INVITATION_EXPIRY_HOURS = 48;
@@ -531,7 +532,11 @@ export const usersService = {
     });
 
     // Nobody signs in to an employee's account: its password is never told.
-    return { ...user, temporaryPassword: isStaff ? null : password };
+    return {
+      ...user,
+      temporaryPassword: isStaff ? null : password,
+      emailHasOtherAccount: await emailHasOtherAccount(user.email, user.id, db),
+    };
   },
 
   /**

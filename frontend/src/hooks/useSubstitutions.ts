@@ -92,9 +92,9 @@ function useSubstitutionMutation<V, R>(fn: (v: V) => Promise<R>) {
 
 export function useCreateSubstitution() {
   return useSubstitutionMutation(async (input: SubstitutionInput) => {
-    const res = await apiClient.post<{ substitution: Substitution; newSubstitute: boolean; temporaryPassword: string | null }>('/substitutions', input);
+    const res = await apiClient.post<{ substitution: Substitution; newSubstitute: boolean; temporaryPassword: string | null; emailHasOtherAccount?: boolean }>('/substitutions', input);
     if (!res.success) throw apiError(res.error, 'Failed to record the replacement');
-    return res.data as { substitution: Substitution; newSubstitute: boolean; temporaryPassword: string | null };
+    return res.data as { substitution: Substitution; newSubstitute: boolean; temporaryPassword: string | null; emailHasOtherAccount?: boolean };
   });
 }
 

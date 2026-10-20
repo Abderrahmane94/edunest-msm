@@ -103,15 +103,27 @@ describe('UsersService', () => {
 
     it('should create the user normally when no soft-deleted record exists', async () => {
       mockPrisma.user.findFirst.mockResolvedValueOnce(null);
-      mockPrisma.$queryRaw.mockResolvedValueOnce([]);
+      mockPrisma.$queryRaw.mockResolvedValueOnce([]); // restorable check
       mockPrisma.user.create.mockResolvedValue({ id: 'new-user', email, schoolId });
+      mockPrisma.$queryRaw.mockResolvedValueOnce([{ n: 0 }]); // other accounts with this email
 
       const result = await usersService.createDirectly(schoolId, input);
+      expect(result.emailHasOtherAccount).toBe(false);
 
       expect(result).toMatchObject({ id: 'new-user', email, schoolId });
       // Its own first password, never a shared one.
       expect(result.temporaryPassword).toMatch(/^[A-Za-z0-9]{4}-[A-Za-z0-9]{4}$/);
       expect(mockPrisma.user.create).toHaveBeenCalled();
+    });
+
+    it('says when the email already has another account (another school, the platform)', async () => {
+      mockPrisma.user.findFirst.mockResolvedValueOnce(null);
+      mockPrisma.$queryRaw.mockResolvedValueOnce([]); // restorable check
+      mockPrisma.user.create.mockResolvedValue({ id: 'new-user', email, schoolId });
+      mockPrisma.$queryRaw.mockResolvedValueOnce([{ n: 1 }]);
+
+      const result = await usersService.createDirectly(schoolId, input);
+      expect(result.emailHasOtherAccount).toBe(true);
     });
   });
 });

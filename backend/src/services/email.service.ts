@@ -84,11 +84,16 @@ class EmailService {
       expiresInHours: number;
       /** Set when the email has accounts in several schools. */
       schoolName?: string | null;
+      /** The email has several accounts, and this link is for the platform's own (a super admin's). */
+      platformAccount?: boolean;
     },
   ): Promise<void> {
     const e = escapeHtml;
     const hours = options.expiresInHours;
     const school = options.schoolName ? e(options.schoolName) : null;
+    const platform = !school && options.platformAccount === true;
+    // Several accounts: one email each, and each says this link changes only its own.
+    const several = school !== null || platform;
     const url = e(options.resetUrl);
 
     const sections = [
@@ -100,7 +105,10 @@ class EmailService {
         hello: `مرحبًا ${e(options.firstName)}،`,
         intro: school
           ? `طلبت إعادة تعيين كلمة مرور حسابك في Kiddoo لدى <strong>${school}</strong>.`
-          : 'طلبت إعادة تعيين كلمة مرور حسابك في Kiddoo.',
+          : platform
+            ? 'طلبت إعادة تعيين كلمة مرور حسابك في <strong>منصة Kiddoo</strong> (الإدارة العامة).'
+            : 'طلبت إعادة تعيين كلمة مرور حسابك في Kiddoo.',
+        several: 'لهذا العنوان عدة حسابات: تصلك رسالة لكل حساب، وهذا الرابط لا يغيّر إلا كلمة مرور هذا الحساب.',
         action: 'اختيار كلمة مرور جديدة',
         expiry:
           hours === 1
@@ -117,7 +125,10 @@ class EmailService {
         hello: `Bonjour ${e(options.firstName)},`,
         intro: school
           ? `Vous avez demandé à réinitialiser le mot de passe de votre compte Kiddoo chez <strong>${school}</strong>.`
-          : 'Vous avez demandé à réinitialiser le mot de passe de votre compte Kiddoo.',
+          : platform
+            ? 'Vous avez demandé à réinitialiser le mot de passe de votre compte de la <strong>plateforme Kiddoo</strong> (super administrateur).'
+            : 'Vous avez demandé à réinitialiser le mot de passe de votre compte Kiddoo.',
+        several: "Cette adresse a plusieurs comptes : vous recevez un e-mail par compte, et ce lien ne change que le mot de passe de celui-ci.",
         action: 'Choisir un nouveau mot de passe',
         expiry: `Ce lien est valable ${hours} heure${hours > 1 ? 's' : ''} et ne peut servir qu'une fois.`,
         ignore: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : votre mot de passe ne changera pas.",
@@ -132,6 +143,7 @@ class EmailService {
           <h2 style="margin:0 0 16px;">${t.title}</h2>
           <p>${t.hello}</p>
           <p>${t.intro}</p>
+          ${several ? `<p style="color:#6B7280;font-size:13px;">${t.several}</p>` : ''}
           <p style="margin:24px 0;">
             <a href="${url}" style="background:#4F46E5;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;display:inline-block;font-weight:600;">${t.action}</a>
           </p>
@@ -144,7 +156,10 @@ class EmailService {
 
     await this.send({
       to,
-      subject: 'Kiddoo - إعادة تعيين كلمة المرور / Réinitialisation du mot de passe',
+      // Several accounts: the subjects tell the emails apart in the inbox.
+      subject: `Kiddoo - إعادة تعيين كلمة المرور / Réinitialisation du mot de passe${
+        options.schoolName ? ` — ${options.schoolName}` : platform ? ' — Plateforme Kiddoo' : ''
+      }`,
       html: `<div style="font-family:Arial,Helvetica,sans-serif;color:#111827;max-width:520px;">${html}</div>`,
     });
   }

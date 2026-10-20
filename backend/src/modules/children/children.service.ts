@@ -72,12 +72,12 @@ class ChildrenService {
     child: ChildWithEnrollments;
     billing: EnrollmentGenerationResult | null;
     /** The parent account created on the way, with its first password (told once). */
-    newParentAccount: { email: string | null; phone: string | null; temporaryPassword: string } | null;
+    newParentAccount: { email: string | null; phone: string | null; temporaryPassword: string; emailHasOtherAccount: boolean } | null;
   }> {
     return prisma.$transaction(
       async (tx) => {
         const child = await this.create(schoolId, input.child, tx);
-        let newParentAccount: { email: string | null; phone: string | null; temporaryPassword: string } | null = null;
+        let newParentAccount: { email: string | null; phone: string | null; temporaryPassword: string; emailHasOtherAccount: boolean } | null = null;
 
         if (input.parent) {
           const { relationship, newParent } = input.parent;
@@ -89,7 +89,7 @@ class ChildrenService {
               tx,
             );
             parentUserId = user.id;
-            newParentAccount = { email: user.email, phone: user.phone, temporaryPassword: user.temporaryPassword! }; // a parent: always one
+            newParentAccount = { email: user.email, phone: user.phone, temporaryPassword: user.temporaryPassword!, emailHasOtherAccount: user.emailHasOtherAccount }; // a parent: always one
           }
           await this.createParentLink(child.id, schoolId, { parentUserId: parentUserId!, relationship }, tx);
         }

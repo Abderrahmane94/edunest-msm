@@ -1141,6 +1141,8 @@
     "deactivate": "Désactiver",
     "newAccount": {
       "title": "Compte créé",
+      "otherAccountTitle": "Cette adresse avait déjà un compte Kiddoo (dans une autre crèche ou sur la plateforme).",
+      "otherAccountText": "Ce nouveau compte est séparé : il s'ouvre avec le mot de passe provisoire ci-dessus, pas avec l'ancien mot de passe. S'il choisit ensuite le même mot de passe pour les deux, Kiddoo lui demandera à chaque connexion dans quel compte entrer.",
       "description": "Mot de passe provisoire à transmettre, par téléphone ou de vive voix, à",
       "shownOnce": "Notez-le maintenant : il ne sera plus affiché.",
       "mustChange": "À sa première connexion, la personne devra choisir son propre mot de passe.",

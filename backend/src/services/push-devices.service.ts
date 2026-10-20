@@ -11,6 +11,9 @@ export interface PushMessage {
   title: string;
   body: string;
   data?: Record<string, string>;
+  icon?: string;
+  tag?: string;
+  lang?: 'fr' | 'ar';
 }
 
 export interface PushResult {

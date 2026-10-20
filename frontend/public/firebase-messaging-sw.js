@@ -142,16 +142,36 @@ if (params.get('apiKey')) {
   }
 }
 
-// Background message handler — show the OS notification.
-messaging?.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || 'Kiddoo';
-  const options = {
-    body: payload.notification?.body || '',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    data: payload.data || {},
+/**
+ * How a notification looks: its text, the sender's photo when there is one
+ * (else the app's icon), the app's outline in the status bar, Arabic right
+ * to left, and one notification per conversation — a new message replaces
+ * the previous one and rings again. Kept in sync with notificationOptions
+ * in src/lib/push.ts (the same notification while the app is open).
+ */
+function notificationOptions(data) {
+  return {
+    body: data.body || '',
+    icon: data.icon || '/icon-192.png',
+    badge: '/badge-96.png',
+    lang: data.lang || undefined,
+    dir: data.lang === 'ar' ? 'rtl' : 'auto',
+    tag: data.tag || undefined,
+    renotify: Boolean(data.tag),
+    timestamp: Date.now(),
+    data,
   };
-  self.registration.showNotification(title, options);
+}
+
+// Background message handler — show the OS notification. The server sends
+// the text in data (older servers: in notification).
+messaging?.onBackgroundMessage((payload) => {
+  const data = { ...(payload.data || {}) };
+  if (!data.title && payload.notification) {
+    data.title = payload.notification.title;
+    data.body = payload.notification.body;
+  }
+  return self.registration.showNotification(data.title || 'Kiddoo', notificationOptions(data));
 });
 
 /**

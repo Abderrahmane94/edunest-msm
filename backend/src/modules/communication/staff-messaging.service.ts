@@ -290,12 +290,13 @@ class StaffMessagingService {
     const recipientUserId =
       userId === conversation.initiatorId ? conversation.recipientId : conversation.initiatorId;
     const senderName = `${message.sender.firstName} ${message.sender.lastName}`.trim();
-    newMessageNotificationText(recipientUserId, senderName, messageType, content)
-      .then(({ title, body }) =>
+    newMessageNotificationText(recipientUserId, senderName, messageType, content, userId)
+      .then(({ title, body, icon }) =>
         notificationService.notify({
           userId: recipientUserId,
           title,
           body,
+          icon,
           type: 'message_new',
           referenceId: conversation.id,
           referenceType: 'staff_conversation',

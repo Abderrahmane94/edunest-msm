@@ -170,9 +170,24 @@ export async function onForegroundMessage(
  * constructor only where no worker is ready. Never throws: a notification
  * that can't show is just skipped, the in-app bell has it anyway.
  */
-export async function showSystemNotification(title: string, body?: string): Promise<void> {
+export async function showSystemNotification(
+  title: string,
+  body?: string,
+  extra: { icon?: string; tag?: string; lang?: string; data?: Record<string, string> } = {},
+): Promise<void> {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  const options = { body, icon: '/icon-192.png' };
+  // As the service worker draws them (notificationOptions there).
+  const options: NotificationOptions & { renotify?: boolean } = {
+    body,
+    icon: extra.icon || '/icon-192.png',
+    badge: '/badge-96.png',
+    lang: extra.lang,
+    dir: extra.lang === 'ar' ? 'rtl' : 'auto',
+    // The same tag as the push for the same thing: shown once, not twice.
+    tag: extra.tag,
+    renotify: Boolean(extra.tag),
+    data: extra.data,
+  };
   try {
     const registration =
       'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : undefined;

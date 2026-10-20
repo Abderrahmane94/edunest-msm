@@ -122,6 +122,9 @@ describe('NotificationService', () => {
         token: 'device-of-user-1',
         title: 'Test Title',
         body: 'Test Body',
+        // One per record: a newer one replaces it; in the person's language.
+        tag: 'attendance_record:ref-1',
+        lang: 'fr',
         data: {
           type: 'absence_alert',
           referenceId: 'ref-1',

@@ -24,8 +24,15 @@ describe('showSystemNotification', () => {
     const registration = { showNotification: vi.fn(async () => undefined) };
     const Notification = browser(registration);
     await showSystemNotification('Nouveau message', 'Bonjour');
-    expect(registration.showNotification).toHaveBeenCalledWith('Nouveau message', { body: 'Bonjour', icon: '/icon-192.png' });
+    expect(registration.showNotification).toHaveBeenCalledWith('Nouveau message', expect.objectContaining({ body: 'Bonjour', icon: '/icon-192.png', badge: '/badge-96.png' }));
     expect(Notification).not.toHaveBeenCalled();
+  });
+
+  it('one per conversation, Arabic right to left, with the sender photo', async () => {
+    const registration = { showNotification: vi.fn(async () => undefined) };
+    browser(registration);
+    await showSystemNotification('سارة', 'مرحبا', { tag: 'conversation:c1', lang: 'ar', icon: 'https://x/p.jpg' });
+    expect(registration.showNotification).toHaveBeenCalledWith('سارة', expect.objectContaining({ tag: 'conversation:c1', renotify: true, dir: 'rtl', lang: 'ar', icon: 'https://x/p.jpg' }));
   });
 
   it('never throws, even when nothing can show it', async () => {

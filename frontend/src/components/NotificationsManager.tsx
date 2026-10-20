@@ -8,6 +8,9 @@ import { showSystemNotification } from '@/lib/push';
 interface NotificationEvent {
   title?: string;
   body?: string;
+  type?: string;
+  referenceId?: string | null;
+  referenceType?: string | null;
 }
 
 /**
@@ -37,7 +40,9 @@ export function NotificationsManager() {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
       if (!payload?.title) return;
-      void showSystemNotification(payload.title, payload.body);
+      // Tagged as the push for the same thing is, so the two show as one.
+      const tag = payload.referenceId ? `${payload.referenceType ?? payload.type}:${payload.referenceId}` : undefined;
+      void showSystemNotification(payload.title, payload.body, { tag, lang: document.documentElement.lang === 'ar' ? 'ar' : undefined });
     };
 
     socket.on('notification:new', handler);

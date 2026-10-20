@@ -498,12 +498,13 @@ class CommunicationService {
         : [conversation.teacherUserId];
     const senderName = `${message.sender.firstName} ${message.sender.lastName}`.trim();
     for (const recipientUserId of recipientIds) {
-      newMessageNotificationText(recipientUserId, senderName, input.messageType, input.content)
-        .then(({ title, body }) =>
+      newMessageNotificationText(recipientUserId, senderName, input.messageType, input.content, userId)
+        .then(({ title, body, icon }) =>
           notificationService.notify({
             userId: recipientUserId,
             title,
             body,
+            icon,
             type: 'message_new',
             referenceId: conversation.id,
             referenceType: 'conversation',

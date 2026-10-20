@@ -389,6 +389,8 @@ export const authService = {
       prisma.refreshToken.deleteMany({
         where: { userId: resetToken.userId },
       }),
+      // And its devices stop getting the notifications until it signs in again
+      prisma.pushDevice.deleteMany({ where: { userId: resetToken.userId } }),
     ]);
     cutSessions(resetToken.userId);
   },

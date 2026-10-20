@@ -8,6 +8,7 @@ import type { UserRole, Language } from '@prisma/client';
 import type { CreateUserDirectlyInput } from './users.schema';
 import { authService } from '../auth/auth.service';
 import { getFrontendUrl } from '../../lib/frontend-url';
+import { pushDevices } from '../../services/push-devices.service';
 import { accountIdsWithPhone } from '../../lib/phone-accounts';
 
 const INVITATION_EXPIRY_HOURS = 48;
@@ -444,6 +445,7 @@ export const usersService = {
     await prisma.$transaction([
       prisma.user.update({ where: { id }, data: { passwordHash, mustChangePassword: true } }),
       prisma.refreshToken.deleteMany({ where: { userId: id } }),
+      prisma.pushDevice.deleteMany({ where: { userId: id } }),
       prisma.passwordResetToken.updateMany({ where: { userId: id, usedAt: null }, data: { usedAt: new Date() } }),
     ]);
     cutSessions(id);
@@ -571,7 +573,8 @@ export const usersService = {
   },
 
   /**
-   * Update a user's FCM token.
+   * Update a user's FCM token (what the app sent before devices were kept
+   * one by one): the device is also added to this person's devices.
    */
   async updateFcmToken(id: string, fcmToken: string) {
     const user = await prisma.user.findUnique({
@@ -582,6 +585,7 @@ export const usersService = {
       throw new UserServiceError('User not found', 404);
     }
 
+    await pushDevices.register(id, fcmToken);
     const updated = await prisma.user.update({
       where: { id },
       data: { fcmToken },

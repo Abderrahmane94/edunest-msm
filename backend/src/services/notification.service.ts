@@ -5,13 +5,13 @@
  * Notifications are delivered in the user's preferred_language (ar or fr).
  *
  * Channel selection:
- * - Push (FCM): All notifications — requires user's fcm_token
+ * - Push (FCM): All notifications — to each device the user allowed them on
  * - Email (Resend): Absence alerts, payment received/overdue, announcements
  * - SMS (Twilio): Critical only — absence alerts, overdue payment reminders (primary parent only)
  */
 
 import prisma from '../lib/prisma';
-import { pushService, PushTokenInvalidError } from './push.service';
+import { pushDevices } from './push-devices.service';
 import { emailService } from './email.service';
 import { smsService } from './sms.service';
 import { socketService } from './socket.service';
@@ -91,7 +91,6 @@ class NotificationService implements INotificationService {
       select: {
         email: true,
         phone: true,
-        fcmToken: true,
         preferredLanguage: true,
         firstName: true,
         role: true,
@@ -106,12 +105,10 @@ class NotificationService implements INotificationService {
     // Dispatch to each requested channel
     const deliveryPromises: Promise<void>[] = [];
 
-    if (channels.includes('push') && user.fcmToken) {
-      const staleToken = user.fcmToken;
+    if (channels.includes('push')) {
       deliveryPromises.push(
-        pushService
-          .send({
-            token: staleToken,
+        pushDevices
+          .send(userId, {
             title,
             body,
             data: {
@@ -121,16 +118,7 @@ class NotificationService implements INotificationService {
               ...(referenceType && { referenceType }),
             },
           })
-          .catch(async (err) => {
-            // Drop tokens FCM reports as no longer valid so we stop retrying them.
-            if (err instanceof PushTokenInvalidError) {
-              await prisma.user
-                .updateMany({ where: { id: userId, fcmToken: staleToken }, data: { fcmToken: null } })
-                .catch(() => undefined);
-              return;
-            }
-            throw err;
-          }),
+          .then(() => undefined),
       );
     }
 
@@ -213,7 +201,7 @@ class NotificationService implements INotificationService {
                 id: true,
                 email: true,
                 phone: true,
-                fcmToken: true,
+                role: true,
                 preferredLanguage: true,
                 firstName: true,
               },
@@ -254,23 +242,17 @@ class NotificationService implements INotificationService {
       // parents viewing the app got no live notification for absences).
       socketService.emitToUser(parent.id, 'notification:new', notification);
 
-      // Push notification (if FCM token available)
-      if (parent.fcmToken) {
-        pushService
-          .send({
-            token: parent.fcmToken,
-            title: localized.title,
-            body: localized.body,
-            data: {
-              type: 'absence_alert',
-              referenceId: attendanceRecordId,
-              referenceType: 'attendance_record',
-            },
-          })
-          .catch((err) => {
-            console.error(`[NotificationService] Push failed for user ${parent.id}:`, err);
-          });
-      }
+      // Push notification, to each of the parent's devices
+      void pushDevices.send(parent.id, {
+        title: localized.title,
+        body: localized.body,
+        data: {
+          type: 'absence_alert',
+          role: parent.role,
+          referenceId: attendanceRecordId,
+          referenceType: 'attendance_record',
+        },
+      });
 
       // Email notification (not to a parent who signs in with a phone number)
       if (parent.email) {

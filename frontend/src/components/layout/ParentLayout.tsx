@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { DemoBanner } from '@/components/DemoBanner';
+import { PushNotificationsBanner } from '@/components/PushNotifications';
 import { useTranslation } from 'react-i18next';
 import { LogOut, Languages } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -108,6 +109,7 @@ export function ParentLayout({ navItems }: ParentLayoutProps) {
       {logoutDialog}
       <LoadErrorBanner className="mx-4 mt-4 sm:mx-auto sm:max-w-[868px] sm:w-[calc(100%-2rem)]" />
       <DemoBanner className="mx-4 mt-4 !mb-0 sm:mx-auto sm:max-w-[868px] sm:w-[calc(100%-2rem)]" />
+      <PushNotificationsBanner className="mx-4 mt-4 !mb-0 sm:mx-auto sm:max-w-[868px] sm:w-[calc(100%-2rem)]" />
       <ErrorBoundary>
         <Outlet />
       </ErrorBoundary>

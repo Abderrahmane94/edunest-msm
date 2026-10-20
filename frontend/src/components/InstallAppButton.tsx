@@ -43,21 +43,29 @@ export function InstallAppButton({ variant = 'menu' }: { variant?: 'menu' | 'ico
         </button>
       )}
 
-      <Dialog open={iosHelpOpen} onOpenChange={setIosHelpOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('install.iosTitle')}</DialogTitle>
-            <DialogDescription>{t('install.iosIntro')}</DialogDescription>
-          </DialogHeader>
-          <ol className="space-y-3">
-            <Step n={1} icon={<Share className="w-4 h-4" />} text={t('install.iosStep1')} />
-            <Step n={2} icon={<SquarePlus className="w-4 h-4" />} text={t('install.iosStep2')} />
-            <Step n={3} text={t('install.iosStep3')} />
-          </ol>
-          <p className="text-caption text-text-secondary mt-4">{t('install.iosSafariOnly')}</p>
-        </DialogContent>
-      </Dialog>
+      <IosInstallDialog open={iosHelpOpen} onOpenChange={setIosHelpOpen} />
     </>
+  );
+}
+
+/** The steps to add Kiddoo to an iPhone's home screen (Safari has no install prompt). */
+export function IosInstallDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const { t } = useTranslation();
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('install.iosTitle')}</DialogTitle>
+          <DialogDescription>{t('install.iosIntro')}</DialogDescription>
+        </DialogHeader>
+        <ol className="space-y-3">
+          <Step n={1} icon={<Share className="w-4 h-4" />} text={t('install.iosStep1')} />
+          <Step n={2} icon={<SquarePlus className="w-4 h-4" />} text={t('install.iosStep2')} />
+          <Step n={3} text={t('install.iosStep3')} />
+        </ol>
+        <p className="text-caption text-text-secondary mt-4">{t('install.iosSafariOnly')}</p>
+      </DialogContent>
+    </Dialog>
   );
 }
 

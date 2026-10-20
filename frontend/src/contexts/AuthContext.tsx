@@ -1,5 +1,6 @@
 import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { apiClient, ApiRequestError } from '@/lib/api-client';
+import { forgetThisDevice } from '@/lib/push';
 import { clearQueryCache } from '@/lib/query-client';
 import { setMonitoredUser } from '@/lib/monitoring';
 
@@ -187,6 +188,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    // While still signed in: this device stops getting this account's notifications.
+    await forgetThisDevice();
     try {
       await apiClient.post('/auth/logout');
     } catch {

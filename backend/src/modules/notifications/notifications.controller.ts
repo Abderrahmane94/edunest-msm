@@ -1,12 +1,58 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../../lib/prisma';
 import { successResponse, paginatedResponse, errorResponse } from '../../utils/response';
-import type { ListNotificationsQuery } from './notifications.schema';
+import { pushDevices } from '../../services/push-devices.service';
+import type { ListNotificationsQuery, PushDeviceInput } from './notifications.schema';
 
 /** Read notifications older than this go by themselves, so the list never grows without end. */
 export const READ_NOTIFICATION_DAYS = 90;
 
+/** The test notification, in the person's language. */
+const TEST_MESSAGE = {
+  fr: { title: 'Kiddoo', body: 'Les notifications marchent sur cet appareil.' },
+  ar: { title: 'Kiddoo', body: 'الإشعارات تعمل على هذا الجهاز.' },
+} as const;
+
 export const notificationsController = {
+  /**
+   * POST /api/notifications/devices — This device gets the person's notifications
+   */
+  async registerDevice(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      await pushDevices.register(req.user!.userId, (req.body as PushDeviceInput).token);
+      res.status(200).json(successResponse({ registered: true }));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/notifications/devices/forget — Signing out: this device stops getting them
+   */
+  async forgetDevice(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      await pushDevices.unregister(req.user!.userId, (req.body as PushDeviceInput).token);
+      res.status(200).json(successResponse({ forgotten: true }));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/notifications/devices/test — A test notification to each of the person's devices
+   */
+  async testDevices(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { preferredLanguage: true, role: true } });
+      const text = TEST_MESSAGE[user?.preferredLanguage === 'ar' ? 'ar' : 'fr'];
+      const result = await pushDevices.send(userId, { ...text, data: { type: 'test', role: user?.role ?? '' } });
+      res.status(200).json(successResponse(result));
+    } catch (error) {
+      next(error);
+    }
+  },
+
   /**
    * GET /api/notifications — List the authenticated user's notifications (paginated)
    */

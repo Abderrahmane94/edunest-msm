@@ -199,6 +199,51 @@ export const schoolsController = {
   },
 
   /**
+   * PATCH /api/schools/:id/trial/extend — More days of trial (super_admin only)
+   */
+  async extendTrial(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      res.status(200).json(successResponse(await schoolsService.extendTrial(req.params.id, req.body.days)));
+    } catch (error) {
+      if (error instanceof SchoolServiceError) {
+        res.status(error.statusCode).json(errorResponse('SCHOOL_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * PATCH /api/schools/:id/trial/subscribed — The trial ends: the school subscribed (super_admin only)
+   */
+  async endTrialSubscribed(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      res.status(200).json(successResponse(await schoolsService.endTrialSubscribed(req.params.id)));
+    } catch (error) {
+      if (error instanceof SchoolServiceError) {
+        res.status(error.statusCode).json(errorResponse('SCHOOL_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/schools/:id/purge — Erase a school for good, with all its data (super_admin only)
+   */
+  async purge(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      res.status(200).json(successResponse(await schoolsService.purge(req.params.id, req.body.confirmName)));
+    } catch (error) {
+      if (error instanceof SchoolServiceError) {
+        res.status(error.statusCode).json(errorResponse('SCHOOL_ERROR', error.message));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  /**
    * DELETE /api/schools/:id — Soft delete school (super_admin only)
    */
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {

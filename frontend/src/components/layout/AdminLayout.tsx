@@ -47,7 +47,7 @@ export function AdminLayout({ navItems, sidebarHeader, sidebarFooter, sidebarSta
 
         <PageContainer>
           <LoadErrorBanner />
-          <DemoBanner />
+          <DemoBanner office />
           {yearBanner}
           <ErrorBoundary>
             <Outlet />

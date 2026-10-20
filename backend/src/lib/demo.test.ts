@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isDemoEmail, schoolIsOpen } from './demo';
+import { isDemoEmail, schoolIsOpen, trialIsOver } from './demo';
 
 describe('demonstration schools', () => {
   const now = new Date('2026-10-20T10:00:00Z');
@@ -12,6 +12,15 @@ describe('demonstration schools', () => {
   it('a demonstration closes at its end, even before anyone closes it', () => {
     expect(schoolIsOpen({ isActive: true, demoExpiresAt: new Date('2026-10-21T00:00:00Z') }, now)).toBe(true);
     expect(schoolIsOpen({ isActive: true, demoExpiresAt: new Date('2026-10-20T09:59:59Z') }, now)).toBe(false);
+  });
+
+  it('a school on trial closes when its trial ends, and stays open once subscribed', () => {
+    const trial = (end: string | null) => ({ isActive: true, demoExpiresAt: null, trialEndsAt: end ? new Date(end) : null });
+    expect(schoolIsOpen(trial('2026-10-21T00:00:00Z'), now)).toBe(true);
+    expect(schoolIsOpen(trial('2026-10-20T09:00:00Z'), now)).toBe(false);
+    expect(trialIsOver(trial('2026-10-20T09:00:00Z'), now)).toBe(true);
+    expect(schoolIsOpen(trial(null), now)).toBe(true);
+    expect(trialIsOver(trial(null), now)).toBe(false);
   });
 
   it("its accounts' addresses are recognised (no mail is ever sent to them)", () => {

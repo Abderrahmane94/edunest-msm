@@ -1,11 +1,15 @@
 import bcrypt from 'bcrypt';
 import { accessService } from '../access/access.service';
-import prisma from '../../lib/prisma';
+import prisma, { softDeleteStorage } from '../../lib/prisma';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { temporaryPassword } from '../users/users.service';
 import { schoolToday } from '../admin/dashboard.service';
 import { schoolYearOf } from '../../lib/school-year';
 import type { CreateSchoolInput, UpdateSchoolInput, SchoolResponse } from './schools.types';
+import { purgeSchool } from '../../lib/purge-school';
+import { trialIsOver } from '../../lib/demo';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const BCRYPT_ROUNDS = 10;
 
@@ -49,6 +53,8 @@ class SchoolsService {
           wilaya: input.wilaya,
           contactEmail: input.contactEmail,
           contactPhone: input.contactPhone,
+          // On trial: open until then, closed after until it subscribes.
+          trialEndsAt: input.trialDays ? new Date(Date.now() + input.trialDays * DAY_MS) : null,
         },
       });
 
@@ -122,10 +128,10 @@ class SchoolsService {
    * What every member of a school sees of it in their header: its name and
    * logo, nothing else (contacts and subscription stay with the office).
    */
-  async getBrand(id: string): Promise<{ name: string; logoUrl: string | null; demoExpiresAt: string | null }> {
+  async getBrand(id: string): Promise<{ name: string; logoUrl: string | null; demoExpiresAt: string | null; trialEndsAt: string | null }> {
     const school = await prisma.school.findUnique({
       where: { id },
-      select: { name: true, logoPublicId: true, demoExpiresAt: true },
+      select: { name: true, logoPublicId: true, demoExpiresAt: true, trialEndsAt: true },
     });
 
     if (!school) {
@@ -137,6 +143,8 @@ class SchoolsService {
       logoUrl: school.logoPublicId ? cloudinaryService.generateSignedUrl(school.logoPublicId, 'photo') : null,
       // A demonstration: everyone in it sees until when.
       demoExpiresAt: school.demoExpiresAt?.toISOString() ?? null,
+      // On trial: its office sees until when.
+      trialEndsAt: school.trialEndsAt?.toISOString() ?? null,
     };
   }
 
@@ -211,6 +219,62 @@ class SchoolsService {
     });
 
     return withLogoUrl(updated);
+  }
+
+  /**
+   * More days of trial, from today if it is already over (its people can sign in again).
+   */
+  async extendTrial(id: string, days: number): Promise<SchoolResponse> {
+    const school = await prisma.school.findUnique({ where: { id } });
+    if (!school) throw new SchoolServiceError('School not found', 404);
+    if (!school.trialEndsAt) throw new SchoolServiceError('This school is not on trial', 400);
+    const from = Math.max(Date.now(), school.trialEndsAt.getTime());
+    const updated = await prisma.school.update({ where: { id }, data: { trialEndsAt: new Date(from + days * DAY_MS) } });
+    return withLogoUrl(updated);
+  }
+
+  /**
+   * The director subscribed: the trial ends here, the school stays open with
+   * everything entered during it (its subscription is followed in Billing).
+   */
+  async endTrialSubscribed(id: string): Promise<SchoolResponse> {
+    const school = await prisma.school.findUnique({ where: { id } });
+    if (!school) throw new SchoolServiceError('School not found', 404);
+    if (!school.trialEndsAt) throw new SchoolServiceError('This school is not on trial', 400);
+    const updated = await prisma.school.update({ where: { id }, data: { trialEndsAt: null } });
+    return withLogoUrl(updated);
+  }
+
+  /**
+   * Erases a school for good, with all its data and files: only a trial that
+   * ended without subscribing, or a closed demonstration, and only when its
+   * name is typed again. A school that ever paid the platform is never erased.
+   */
+  async purge(id: string, confirmName: string): Promise<{ name: string; rows: number; files: number }> {
+    // A closed demonstration is also removed from the lists (soft-deleted): found all the same
+    // (awaited inside: a Prisma query runs when awaited, and must run within the bypass).
+    const school = await softDeleteStorage.run({ includeDeleted: true }, async () => await prisma.school.findUnique({ where: { id } }));
+    if (!school) throw new SchoolServiceError('School not found', 404);
+    const endedTrial = trialIsOver(school);
+    const closedDemo = !!school.demoExpiresAt && !school.isActive;
+    if (!endedTrial && !closedDemo) {
+      throw new SchoolServiceError('Only a school whose trial has ended, or a closed demonstration, can be erased', 400);
+    }
+    if (confirmName.trim() !== school.name.trim()) {
+      throw new SchoolServiceError('The name typed is not the name of this school', 400);
+    }
+    const paid = await prisma.subscriptionPayment.count({ where: { subscription: { schoolId: id } } });
+    if (paid > 0) throw new SchoolServiceError('This school has paid a subscription: it cannot be erased', 400);
+
+    const counts = await purgeSchool(id);
+    // Its files after its rows: a file left over is harmless, a row without its file is not.
+    let files = 0;
+    try {
+      files = await cloudinaryService.deleteFolder(`schools/${id}/`);
+    } catch (error) {
+      console.error(`[purge] files of school ${id} not all deleted:`, error);
+    }
+    return { name: school.name, rows: Object.values(counts).reduce((a, b) => a + b, 0), files };
   }
 
   /**

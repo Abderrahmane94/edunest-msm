@@ -3,7 +3,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Shield, ShieldOff, Users, UserPlus, Settings } from 'lucide-react';
+import { Hourglass, Shield, ShieldOff, Trash2, Users, UserPlus, Settings } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import { Button, DangerZone, DataTable, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, EditButton, EditFormActions, EmptyState, EntityDeleteButton, ErrorAlert, Input, ListSkeleton, PageHeader, ReadOnlyFieldset, RoleBadge, StatusBadge, Tabs, useConfirm, useEditMode } from '@/components/ui';
 
@@ -12,7 +12,7 @@ import type { Column } from '@/components/ui';
 import { FormField, FormSelect } from '@/components/forms';
 import { apiClient, apiError } from '@/lib/api-client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { schoolToggleConfirm, useToggleSchoolActive } from './SchoolsPage';
+import { schoolToggleConfirm, trialState, TrialBadge, useToggleSchoolActive } from './SchoolsPage';
 import type { SchoolItem } from '@/hooks/useSchools';
 import { useTabParam } from '@/hooks/useTabParam';
 
@@ -45,6 +45,139 @@ function useUpdateSchoolAdmin() {
       queryClient.invalidateQueries({ queryKey: ['school-detail', variables.id] });
     },
   });
+}
+
+/** The trial's three outcomes: more days, subscribed (kept), or erased for good. */
+function useTrialAction(schoolId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (action: { kind: 'extend'; days: number } | { kind: 'subscribed' } | { kind: 'purge'; confirmName: string }) => {
+      const res =
+        action.kind === 'extend'
+          ? await apiClient.patch<SchoolItem>(`/schools/${schoolId}/trial/extend`, { days: action.days })
+          : action.kind === 'subscribed'
+            ? await apiClient.patch<SchoolItem>(`/schools/${schoolId}/trial/subscribed`)
+            : await apiClient.post<SchoolItem>(`/schools/${schoolId}/purge`, { confirmName: action.confirmName });
+      if (!res.success) throw apiError(res.error, 'Failed to update the trial');
+      return res.data as SchoolItem;
+    },
+    onSuccess: (_data, action) => {
+      queryClient.invalidateQueries({ queryKey: ['schools-list'] });
+      if (action.kind !== 'purge') queryClient.invalidateQueries({ queryKey: ['school-detail', schoolId] });
+    },
+  });
+}
+
+/** A school on trial: until when (or since when it is closed), and what the platform does next. */
+function TrialSection({ school }: { school: SchoolItem }) {
+  const { t } = useTranslation();
+  const trialAction = useTrialAction(school.id);
+  const { confirm, dialog } = useConfirm();
+  const [notice, setNotice] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const state = trialState(school);
+  if (!state) return null;
+  const date = `⁨${formatDate(school.trialEndsAt!)}⁩`;
+  const daysLeft = Math.max(1, Math.ceil((new Date(school.trialEndsAt!).getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
+
+  function run(action: Parameters<typeof trialAction.mutate>[0], done: (data: SchoolItem) => string) {
+    setNotice(null);
+    setError(null);
+    trialAction.mutate(action, {
+      onSuccess: (data) => setNotice(done(data)),
+      onError: (err) => setError(errorMessage(err, t)),
+    });
+  }
+
+  return (
+    <section className="bg-card border border-warning/40 rounded-lg p-4 sm:p-6 space-y-3">
+      {dialog}
+      <h2 className="flex items-center gap-2 text-subsection font-semibold text-text-heading">
+        <Hourglass className="w-4 h-4 text-warning" />
+        {t('schools.trial.cardTitle')}
+      </h2>
+      <p className="text-body text-foreground">
+        {state === 'running' ? t('schools.trial.running', { date, count: daysLeft }) : t('schools.trial.ended', { date })}
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          disabled={trialAction.isPending}
+          onClick={async () => {
+            if (!(await confirm({ title: t('schools.trial.subscribeTitle', { name: school.name }), description: t('schools.trial.subscribeText'), confirmLabel: t('schools.trial.subscribe'), tone: 'default' }))) return;
+            run({ kind: 'subscribed' }, () => t('schools.trial.subscribed'));
+          }}
+        >
+          {t('schools.trial.subscribe')}
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={trialAction.isPending}
+          onClick={() => run({ kind: 'extend', days: 7 }, (data) => t('schools.trial.extended', { date: `⁨${formatDate(data.trialEndsAt!)}⁩` }))}
+        >
+          {t('schools.trial.extend')}
+        </Button>
+      </div>
+      {notice && <p className="text-body text-success animate-fade-in">{notice}</p>}
+      <ErrorAlert message={error} onDismiss={() => setError(null)} />
+    </section>
+  );
+}
+
+/** Erasing a trial that ended without subscribing: its name typed again, then everything goes. */
+function PurgeSchoolDialog({ school, open, onOpenChange }: { school: SchoolItem; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const trialAction = useTrialAction(school.id);
+  const [typed, setTyped] = React.useState('');
+  const [error, setError] = React.useState<string | null>(null);
+  const matches = typed.trim() === school.name.trim();
+
+  function close(v: boolean) {
+    if (!v) {
+      setTyped('');
+      setError(null);
+    }
+    onOpenChange(v);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={close}>
+      <DialogContent className="max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle>{t('schools.trial.purgeTitle', { name: school.name })}</DialogTitle>
+          <DialogDescription>{t('schools.trial.purgeText')}</DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!matches) return;
+            setError(null);
+            trialAction.mutate(
+              { kind: 'purge', confirmName: typed },
+              {
+                onSuccess: () => navigate('/admin/schools', { state: { notice: t('schools.trial.purgeDone', { name: school.name }) } }),
+                onError: (err) => setError(errorMessage(err, t)),
+              },
+            );
+          }}
+        >
+          <FormField label={t('schools.trial.purgeTypeName')} htmlFor="purge-name">
+            <Input id="purge-name" name="purge-name" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={school.name} autoComplete="off" />
+          </FormField>
+          {error && <p className="text-body text-danger">{error}</p>}
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => close(false)}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="danger" disabled={!matches || trialAction.isPending}>
+              <Trash2 className="w-4 h-4" />
+              {trialAction.isPending ? t('common.loading') : t('schools.trial.purge')}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 interface SchoolUser {
@@ -106,6 +239,7 @@ export function SchoolDetailPage() {
   const [saveSuccess, setSaveSuccess] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
   const [toggleError, setToggleError] = React.useState<string | null>(null);
+  const [purgeOpen, setPurgeOpen] = React.useState(false);
 
   const toForm = React.useCallback(
     (s: NonNullable<typeof school>) => ({
@@ -180,9 +314,12 @@ export function SchoolDetailPage() {
           </>
         }
         badge={
-          <StatusBadge variant={school.isActive ? 'success' : 'neutral'}>
-            {school.isActive ? t('schools.active') : t('schools.inactive')}
-          </StatusBadge>
+          <span className="inline-flex flex-wrap items-center gap-1">
+            <StatusBadge variant={school.isActive ? 'success' : 'neutral'}>
+              {school.isActive ? t('schools.active') : t('schools.inactive')}
+            </StatusBadge>
+            <TrialBadge school={school} />
+          </span>
         }
       />
 
@@ -233,6 +370,8 @@ export function SchoolDetailPage() {
             </div>
           </form>
 
+          <TrialSection school={school} />
+
           <DangerZone description={school.isActive ? t('schools.detail.deactivateWarning') : t('schools.detail.activateHint')}>
             <Button type="button" variant="secondary" onClick={handleToggle} disabled={toggleSchool.isPending}>
               {school.isActive
@@ -247,7 +386,18 @@ export function SchoolDetailPage() {
               hidden={!!school.deletedAt}
             />
             <ErrorAlert message={toggleError} className="w-full" />
+            {/* A trial over without subscribing: the school and all its data can go for good. */}
+            {trialState(school) === 'ended' && (
+              <div className="w-full border-t border-border pt-3 space-y-2">
+                <p className="text-body text-text-secondary">{t('schools.trial.purgeHint')}</p>
+                <Button type="button" variant="danger" onClick={() => setPurgeOpen(true)}>
+                  <Trash2 className="w-4 h-4" />
+                  {t('schools.trial.purge')}
+                </Button>
+              </div>
+            )}
           </DangerZone>
+          <PurgeSchoolDialog school={school} open={purgeOpen} onOpenChange={setPurgeOpen} />
         </>
       )}
 

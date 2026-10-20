@@ -4,7 +4,7 @@ import { schoolsController } from './schools.controller';
 import { requireSuperAdmin } from '../../middleware/rbac.middleware';
 import { requirePermission, requireAnyOffice } from '../../middleware/permission.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
-import { createSchoolSchema, updateSchoolSchema } from './schools.schema';
+import { createSchoolSchema, extendTrialSchema, purgeSchoolSchema, updateSchoolSchema } from './schools.schema';
 import { idParamSchema } from '../../utils/validators';
 
 const upload = multer({
@@ -50,6 +50,15 @@ router.post('/:id/users', requireSuperAdmin, validateParams(idParamSchema), scho
 
 // POST /api/schools/:id/logo — Upload school logo (admin, super_admin)
 router.post('/:id/logo', requirePermission('settings', 'edit'), validateParams(idParamSchema), upload.single('logo'), schoolsController.uploadLogo);
+
+// PATCH /api/schools/:id/trial/extend — More days of trial (super_admin only)
+router.patch('/:id/trial/extend', requireSuperAdmin, validateParams(idParamSchema), validate(extendTrialSchema), schoolsController.extendTrial);
+
+// PATCH /api/schools/:id/trial/subscribed — The school subscribed: its trial ends, it stays open (super_admin only)
+router.patch('/:id/trial/subscribed', requireSuperAdmin, validateParams(idParamSchema), schoolsController.endTrialSubscribed);
+
+// POST /api/schools/:id/purge — Erase a trial that ended (or a closed demonstration) for good (super_admin only)
+router.post('/:id/purge', requireSuperAdmin, validateParams(idParamSchema), validate(purgeSchoolSchema), schoolsController.purge);
 
 // DELETE /api/schools/:id — Soft delete school (super_admin only)
 router.delete('/:id', requireSuperAdmin, validateParams(idParamSchema), schoolsController.delete);

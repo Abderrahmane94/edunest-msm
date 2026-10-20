@@ -10,6 +10,8 @@ export interface SchoolItem {
   contactEmail: string;
   contactPhone: string;
   isActive: boolean;
+  /** On trial until then (closed after); null once subscribed. */
+  trialEndsAt?: string | null;
   createdAt: string;
   deletedAt?: string | null;
 }

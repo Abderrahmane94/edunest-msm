@@ -31,6 +31,8 @@ export interface NotificationPayload {
   referenceId?: string;
   referenceType?: string;
   channels: ('push' | 'email' | 'sms')[];
+  /** Push only: a picture shown with it (the sender's photo). */
+  icon?: string;
 }
 
 export interface INotificationService {
@@ -68,7 +70,7 @@ class NotificationService implements INotificationService {
    * Persists the notification to the database regardless of delivery success.
    */
   async notify(payload: NotificationPayload): Promise<void> {
-    const { userId, title, body, type, referenceId, referenceType, channels } = payload;
+    const { userId, title, body, type, referenceId, referenceType, channels, icon } = payload;
 
     // Persist notification to database
     const notification = await prisma.notification.create({
@@ -111,6 +113,10 @@ class NotificationService implements INotificationService {
           .send(userId, {
             title,
             body,
+            icon,
+            // One notification per conversation (or announcement...): a new one replaces it.
+            tag: referenceId ? `${referenceType ?? type}:${referenceId}` : undefined,
+            lang: user.preferredLanguage === 'ar' ? 'ar' : 'fr',
             data: {
               type,
               role: user.role,
@@ -246,6 +252,8 @@ class NotificationService implements INotificationService {
       void pushDevices.send(parent.id, {
         title: localized.title,
         body: localized.body,
+        tag: `attendance_record:${attendanceRecordId}`,
+        lang: parent.preferredLanguage === 'ar' ? 'ar' : 'fr',
         data: {
           type: 'absence_alert',
           role: parent.role,

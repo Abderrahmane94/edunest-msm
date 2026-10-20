@@ -58,10 +58,15 @@ export function usePushNotifications() {
     let cancelled = false;
 
     onForegroundMessage((payload) => {
-      const title = payload.notification?.title;
-      const body = payload.notification?.body;
+      const data = payload.data ?? {};
+      const title = data.title ?? payload.notification?.title;
       if (!title) return;
-      void showSystemNotification(title, body);
+      void showSystemNotification(title, data.body ?? payload.notification?.body, {
+        icon: data.icon,
+        tag: data.tag,
+        lang: data.lang,
+        data,
+      });
     }).then((unsub) => {
       if (cancelled) unsub();
       else unsubscribe = unsub;

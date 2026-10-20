@@ -25,6 +25,12 @@ interface PushNotificationOptions {
   title: string;
   body: string;
   data?: Record<string, string>;
+  /** A picture shown with it (the sender's photo): an absolute https link. */
+  icon?: string;
+  /** Notifications with the same tag replace each other (one per conversation). */
+  tag?: string;
+  /** The text's language: Arabic is shown right to left. */
+  lang?: 'fr' | 'ar';
 }
 
 class PushService {
@@ -87,18 +93,22 @@ class PushService {
     }
 
     try {
+      // Data only: the app's service worker draws the notification itself
+      // (icon, status-bar badge, direction, grouping), and it is shown once —
+      // a "notification" part would also be shown by the browser on its own.
       await this.messaging.send({
         token: options.token,
-        notification: {
+        data: {
+          ...(options.data || {}),
           title: options.title,
           body: options.body,
+          ...(options.icon && { icon: options.icon }),
+          ...(options.tag && { tag: options.tag }),
+          ...(options.lang && { lang: options.lang }),
         },
-        data: options.data || {},
         webpush: {
-          notification: {
-            title: options.title,
-            body: options.body,
-          },
+          // Delivered right away, even to a phone saving battery.
+          headers: { Urgency: 'high', TTL: String(24 * 60 * 60) },
         },
       });
     } catch (err) {

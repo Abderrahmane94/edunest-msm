@@ -15,9 +15,8 @@ import type {
   RefreshResponse,
   UserInfo,
 } from './auth.types';
-
-/** The account of the platform itself (a super admin's), in a reset link meant for one of several accounts. */
-const PLATFORM_ACCOUNT = Symbol('platform account');
+import { linkedAccountIds } from '../../lib/linked-accounts';
+import { tenantStorage } from '../../middleware/tenancy.middleware';
 import type {
   LoginInput,
   RefreshInput,
@@ -106,6 +105,28 @@ async function findAccounts(identifier: string) {
   return prisma.user.findMany({ where: { id: { in: ids }, deletedAt: null, role: { not: 'staff' } } });
 }
 
+/**
+ * The person's other accounts with the password this account had: the very
+ * same one (taken from it when the account was added — the person just
+ * proved they know it), or the current password they typed again.
+ */
+async function sameOldPassword(
+  user: { id: string; email: string | null; phone: string | null; passwordHash: string },
+  currentPassword: string | undefined,
+): Promise<string[]> {
+  const ids = await linkedAccountIds(user);
+  if (ids.length === 0) return [];
+  const accounts = await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, passwordHash: true } });
+  const checks = await Promise.all(
+    accounts.map(async (a) =>
+      a.passwordHash === user.passwordHash || (currentPassword !== undefined && (await bcrypt.compare(currentPassword, a.passwordHash)))
+        ? a.id
+        : null,
+    ),
+  );
+  return checks.filter((id): id is string => id !== null);
+}
+
 export const authService = {
   async login(input: LoginInput): Promise<LoginResponse | LoginChoiceRequired> {
     const candidates = await findAccounts(input.email);
@@ -141,9 +162,9 @@ export const authService = {
     if (matches.length > 1) {
       const schools = await Promise.all(
         matches.map(async (candidate) => {
-          if (!candidate.schoolId) return { schoolId: null, schoolName: null };
+          if (!candidate.schoolId) return { schoolId: null, schoolName: null, role: candidate.role };
           const school = await prisma.school.findUnique({ where: { id: candidate.schoolId } });
-          return { schoolId: candidate.schoolId, schoolName: school?.name ?? null };
+          return { schoolId: candidate.schoolId, schoolName: school?.name ?? null, role: candidate.role };
         }),
       );
       return { choiceRequired: true, schools };
@@ -198,6 +219,7 @@ export const authService = {
       role: user.role,
       schoolId: user.schoolId,
       mustChangePassword: user.mustChangePassword,
+      ...(user.mustChangePassword && (await linkedAccountIds(user)).length > 0 && { hasOtherAccounts: true }),
     };
 
     return { accessToken, refreshToken, user: userInfo };
@@ -300,25 +322,20 @@ export const authService = {
   },
 
   /**
-   * Emails a reset link (Arabic and French) to every account using this email (case-insensitive),
-   * one per school when the email has accounts in several. Each link is
-   * single-use and expires after PASSWORD_RESET_EXPIRY_HOURS; only a hash of
-   * it is stored. Returns how many links were sent.
+   * Emails a reset link (Arabic and French) for the accounts using this email
+   * (case-insensitive): one link, since a person has one password for all
+   * their accounts (see confirmPasswordReset). The link is single-use and
+   * expires after PASSWORD_RESET_EXPIRY_HOURS; only a hash of it is stored.
+   * Returns how many accounts it covers.
    */
   async sendPasswordResetLinks(email: string): Promise<number> {
     const users = await prisma.user.findMany({
-      where: { email: { equals: email.trim(), mode: 'insensitive' } },
-      include: { school: { select: { name: true } } },
-      orderBy: { createdAt: 'asc' },
+      where: { email: { equals: email.trim(), mode: 'insensitive' }, role: { not: 'staff' } },
+      orderBy: [{ lastActiveAt: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
     });
-
-    for (const user of users) {
-      // Tells the accounts apart when the email has several.
-      if (!user.email) continue;
-      // The platform's own account (no school) is named as such.
-      const account = users.length > 1 ? (user.school?.name ?? PLATFORM_ACCOUNT) : null;
-      await authService.sendPasswordResetLink({ ...user, email: user.email }, account);
-    }
+    const user = users[0];
+    if (!user?.email) return 0;
+    await authService.sendPasswordResetLink({ ...user, email: user.email }, users.length);
     return users.length;
   },
 
@@ -329,8 +346,8 @@ export const authService = {
    */
   async sendPasswordResetLink(
     user: { id: string; email: string; firstName: string },
-    /** When the email has several accounts: which one this link is for. */
-    account: string | typeof PLATFORM_ACCOUNT | null = null,
+    /** How many accounts the person has (the new password is for all of them). */
+    accounts = 1,
   ): Promise<boolean> {
     await prisma.passwordResetToken.updateMany({
       where: { userId: user.id, usedAt: null },
@@ -349,8 +366,7 @@ export const authService = {
         firstName: user.firstName,
         resetUrl: `${getFrontendUrl()}/reset-password/confirm?token=${token}`,
         expiresInHours: PASSWORD_RESET_EXPIRY_HOURS,
-        schoolName: account === PLATFORM_ACCOUNT ? null : account,
-        platformAccount: account === PLATFORM_ACCOUNT,
+        accounts,
       });
       return true;
     } catch (err) {
@@ -381,10 +397,17 @@ export const authService = {
     // Hash the new password
     const passwordHash = await bcrypt.hash(input.newPassword, BCRYPT_SALT_ROUNDS);
 
+    // The link went to the person's mailbox: proof enough for all their
+    // accounts with that email (other schools, the platform) — one password.
+    const userIds = [
+      resetToken.userId,
+      ...(resetToken.user.email ? await linkedAccountIds({ id: resetToken.userId, email: resetToken.user.email, phone: null }) : []),
+    ];
+
     // Update password and mark token as used
     await prisma.$transaction([
-      prisma.user.update({
-        where: { id: resetToken.userId },
+      prisma.user.updateMany({
+        where: { id: { in: userIds } },
         // The user chose this password: no need to change it again at login
         // (e.g. an invited user who forgot the temporary one).
         data: { passwordHash, mustChangePassword: false },
@@ -393,14 +416,14 @@ export const authService = {
         where: { id: resetToken.id },
         data: { usedAt: new Date() },
       }),
-      // Invalidate all refresh tokens for this user (force re-login)
+      // Invalidate all refresh tokens for these accounts (force re-login)
       prisma.refreshToken.deleteMany({
-        where: { userId: resetToken.userId },
+        where: { userId: { in: userIds } },
       }),
-      // And its devices stop getting the notifications until it signs in again
-      prisma.pushDevice.deleteMany({ where: { userId: resetToken.userId } }),
+      // And their devices stop getting the notifications until they sign in again
+      prisma.pushDevice.deleteMany({ where: { userId: { in: userIds } } }),
     ]);
-    cutSessions(resetToken.userId);
+    for (const id of userIds) cutSessions(id);
   },
 
   async changePassword(userId: string, newPassword: string, currentPassword?: string): Promise<{ accessToken: string; refreshToken: string }> {
@@ -421,6 +444,23 @@ export const authService = {
       where: { id: userId },
       data: { passwordHash, mustChangePassword: false },
     });
+
+    // The person's other accounts (other schools, the platform) that had the
+    // same password follow: one password for all. Only those — a temporary
+    // password one school gave after a reset opens nothing else (the person
+    // gets them back together by choosing their usual password, or by a
+    // forgotten-password link).
+    // Outside this session's school: the other accounts are in other schools.
+    const others = await tenantStorage.exit(() => sameOldPassword(user, user.mustChangePassword ? undefined : currentPassword));
+    if (others.length > 0) {
+      await tenantStorage.exit(() =>
+        prisma.$transaction([
+          prisma.user.updateMany({ where: { id: { in: others } }, data: { passwordHash, mustChangePassword: false } }),
+          prisma.refreshToken.deleteMany({ where: { userId: { in: others } } }),
+        ]),
+      );
+      for (const id of others) cutSessions(id);
+    }
 
     // Fresh tokens with mustChangePassword cleared, so the current session
     // isn't immediately blocked by the mustChangePassword gate.

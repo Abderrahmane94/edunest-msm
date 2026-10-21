@@ -181,8 +181,11 @@ export function LoginPage() {
                         className="accent-[var(--color-accent)]"
                       />
                       <Building2 className="w-4 h-4 text-text-secondary shrink-0" />
-                      <span className="text-body font-medium text-foreground">
-                        {school.schoolName ?? t('auth.schoolSelect.noSchool')}
+                      <span className="min-w-0 flex flex-col">
+                        <span className="text-body font-medium text-foreground">
+                          {school.schoolName ?? t('auth.schoolSelect.noSchool')}
+                        </span>
+                        {school.role && <span className="text-caption text-text-secondary">{t(`users.roles.${school.role}`)}</span>}
                       </span>
                     </label>
                   ))}

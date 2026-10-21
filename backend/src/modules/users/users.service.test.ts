@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { linkedPassword } from '../../lib/linked-accounts';
 import { usersService, UserServiceError } from './users.service';
 
 vi.mock('../../lib/prisma', () => ({
@@ -24,6 +25,10 @@ vi.mock('../../services/email.service', () => ({
   },
 }));
 
+vi.mock('../../lib/linked-accounts', () => ({
+  linkedAccountIds: vi.fn(async () => []),
+  linkedPassword: vi.fn(async () => null),
+}));
 import prisma from '../../lib/prisma';
 
 const mockPrisma = prisma as unknown as {
@@ -105,10 +110,9 @@ describe('UsersService', () => {
       mockPrisma.user.findFirst.mockResolvedValueOnce(null);
       mockPrisma.$queryRaw.mockResolvedValueOnce([]); // restorable check
       mockPrisma.user.create.mockResolvedValue({ id: 'new-user', email, schoolId });
-      mockPrisma.$queryRaw.mockResolvedValueOnce([{ n: 0 }]); // other accounts with this email
 
       const result = await usersService.createDirectly(schoolId, input);
-      expect(result.emailHasOtherAccount).toBe(false);
+      expect(result.linkedAccount).toBe(false);
 
       expect(result).toMatchObject({ id: 'new-user', email, schoolId });
       // Its own first password, never a shared one.
@@ -116,14 +120,18 @@ describe('UsersService', () => {
       expect(mockPrisma.user.create).toHaveBeenCalled();
     });
 
-    it('says when the email already has another account (another school, the platform)', async () => {
+    it('a person who already has an account keeps their password: no temporary one', async () => {
       mockPrisma.user.findFirst.mockResolvedValueOnce(null);
       mockPrisma.$queryRaw.mockResolvedValueOnce([]); // restorable check
       mockPrisma.user.create.mockResolvedValue({ id: 'new-user', email, schoolId });
-      mockPrisma.$queryRaw.mockResolvedValueOnce([{ n: 1 }]);
+      vi.mocked(linkedPassword).mockResolvedValueOnce({ passwordHash: 'their-hash', mustChangePassword: false });
 
       const result = await usersService.createDirectly(schoolId, input);
-      expect(result.emailHasOtherAccount).toBe(true);
+
+      expect(result).toMatchObject({ temporaryPassword: null, linkedAccount: true });
+      expect(mockPrisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ passwordHash: 'their-hash', mustChangePassword: false }) }),
+      );
     });
   });
 });

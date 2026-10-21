@@ -14,6 +14,8 @@ interface User {
   schoolId: string | null;
   preferredLanguage: 'ar' | 'fr';
   mustChangePassword?: boolean;
+  /** On a temporary password, with other accounts (schools, platform) whose password they keep. */
+  hasOtherAccounts?: boolean;
 }
 
 interface AuthState {
@@ -25,6 +27,8 @@ interface AuthState {
 export interface LoginSchoolOption {
   schoolId: string | null;
   schoolName: string | null;
+  /** The person's role there. */
+  role?: string;
 }
 
 export type LoginResult =
@@ -139,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           schoolId: string | null;
           preferredLanguage?: User['preferredLanguage'];
           mustChangePassword?: boolean;
+          hasOtherAccounts?: boolean;
         };
       }>(
         '/auth/login',
@@ -173,6 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       schoolId: userData.schoolId,
       preferredLanguage: userData.preferredLanguage || 'fr',
       mustChangePassword: userData.mustChangePassword ?? false,
+      ...(userData.hasOtherAccounts && { hasOtherAccounts: true }),
     };
     localStorage.setItem('user', JSON.stringify(user));
 

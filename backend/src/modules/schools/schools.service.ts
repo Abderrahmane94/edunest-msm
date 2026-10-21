@@ -7,7 +7,7 @@ import { schoolToday } from '../admin/dashboard.service';
 import { schoolYearOf } from '../../lib/school-year';
 import type { CreateSchoolInput, UpdateSchoolInput, SchoolResponse } from './schools.types';
 import { purgeSchool } from '../../lib/purge-school';
-import { emailHasOtherAccount } from '../../lib/email-accounts';
+import { linkedPassword } from '../../lib/linked-accounts';
 import { trialIsOver } from '../../lib/demo';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -37,13 +37,15 @@ class SchoolsService {
   /**
    * Create a new school (super_admin only).
    */
-  async create(input: CreateSchoolInput): Promise<SchoolResponse & { director: { id: string; email: string | null; phone: string | null; firstName: string; lastName: string; temporaryPassword: string; emailHasOtherAccount: boolean } }> {
+  async create(input: CreateSchoolInput): Promise<SchoolResponse & { director: { id: string; email: string | null; phone: string | null; firstName: string; lastName: string; temporaryPassword: string | null; linkedAccount: boolean } }> {
     // No pre-check needed: email is only unique per-school (see migration
     // 0011/0012), and this school doesn't exist yet, so the director's email
     // can't already be taken within it — the same person can direct multiple schools.
-    // The director's first password, told once to the platform.
-    const password = temporaryPassword();
-    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    // The director's first password, told once to the platform — or, when
+    // they already have an account (another school), their own password.
+    const linked = await linkedPassword({ email: input.director.email ?? null, phone: input.director.phone ?? null });
+    const password = linked ? null : temporaryPassword();
+    const passwordHash = linked ? linked.passwordHash : await bcrypt.hash(password!, BCRYPT_ROUNDS);
 
     const { school, director } = await prisma.$transaction(async (tx) => {
       const newSchool = await tx.school.create({
@@ -70,7 +72,7 @@ class SchoolsService {
           role: 'admin',
           preferredLanguage: (input.director.preferredLanguage ?? 'fr') as any,
           isActive: true,
-          mustChangePassword: true,
+          mustChangePassword: linked ? linked.mustChangePassword : true,
         },
         select: { id: true, email: true, phone: true, firstName: true, lastName: true },
       });
@@ -91,7 +93,7 @@ class SchoolsService {
 
     return {
       ...withLogoUrl(school),
-      director: { ...director, temporaryPassword: password, emailHasOtherAccount: await emailHasOtherAccount(director.email, director.id) },
+      director: { ...director, temporaryPassword: password, linkedAccount: linked !== null },
     };
   }
 

@@ -17,6 +17,8 @@ export interface LoginResponse {
 export interface LoginSchoolOption {
   schoolId: string | null;
   schoolName: string | null;
+  /** The person's role there (director, teacher, parent…). */
+  role: UserRole;
 }
 
 /** Returned instead of LoginResponse when email+password match accounts in more than one school. */
@@ -34,6 +36,12 @@ export interface UserInfo {
   role: UserRole;
   schoolId: string | null;
   mustChangePassword: boolean;
+  /**
+   * Set when it must change a temporary password and the person has other
+   * accounts (other schools, the platform): choosing their usual password
+   * keeps one password for all.
+   */
+  hasOtherAccounts?: boolean;
 }
 
 export interface RefreshResponse {

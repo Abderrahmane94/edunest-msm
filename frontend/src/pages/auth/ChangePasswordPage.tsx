@@ -67,6 +67,11 @@ export function ChangePasswordPage() {
               <p className="text-body text-text-secondary mt-1">
                 {t('auth.changePassword.subtitle', { name: user?.firstName })}
               </p>
+              {user?.hasOtherAccounts && (
+                <p data-testid="keep-usual-password" className="text-body text-foreground mt-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+                  {t('auth.changePassword.otherAccounts')}
+                </p>
+              )}
             </div>
           </div>
 

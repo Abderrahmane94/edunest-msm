@@ -13,6 +13,10 @@ vi.mock('../../lib/prisma', () => ({
 vi.mock('../../services/email.service', () => ({ emailService: {} }));
 vi.mock('../auth/auth.service', () => ({ authService: { sendPasswordResetLink: vi.fn() } }));
 
+vi.mock('../../lib/linked-accounts', () => ({
+  linkedAccountIds: vi.fn(async () => []),
+  linkedPassword: vi.fn(async () => null),
+}));
 import prisma from '../../lib/prisma';
 import { usersService, temporaryPassword } from './users.service';
 import { authService } from '../auth/auth.service';
@@ -85,7 +89,7 @@ describe('usersService.sendResetLink', () => {
     vi.mocked(authService.sendPasswordResetLink).mockResolvedValue(true);
 
     expect(await usersService.sendResetLink('parent-1', admin)).toEqual({ email: 'karim@example.dz' });
-    expect(authService.sendPasswordResetLink).toHaveBeenCalledWith(parent);
+    expect(authService.sendPasswordResetLink).toHaveBeenCalledWith(parent, 1); // the new password is for all the person's accounts: here one
     expect(db.$transaction).not.toHaveBeenCalled();
   });
 

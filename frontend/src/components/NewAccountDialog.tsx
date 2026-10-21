@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Copy, Info } from 'lucide-react';
+import { Check, Copy, UserCheck } from 'lucide-react';
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui';
 import { onNewAccount, type NewAccount } from '@/lib/newAccount';
 import { WhatsAppShareButton } from '@/components/WhatsAppShareButton';
@@ -38,51 +38,60 @@ export function NewAccountDialog() {
   return (
     <Dialog open={!!account} onOpenChange={(open) => { if (!open) close(); }}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('users.newAccount.title')}</DialogTitle>
-          <DialogDescription>
-            {t('users.newAccount.description')} <span dir="ltr" className="font-medium">{account?.login}</span>
-          </DialogDescription>
-        </DialogHeader>
-        {account && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <code
-                dir="ltr"
-                data-testid="new-account-password"
-                className="flex-1 text-center text-xl font-mono font-semibold tracking-wider bg-subtle border border-border rounded-lg px-4 py-3 select-all"
-              >
-                {account.temporaryPassword}
-              </code>
-              <Button type="button" variant="secondary" onClick={() => handleCopy(account.temporaryPassword)}>
-                {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
-                {copied ? t('users.resetPassword.copied') : t('users.resetPassword.copy')}
-              </Button>
+        {account?.linked ? (
+          // The person keeps the password of their other account(s).
+          <>
+            <DialogHeader>
+              <DialogTitle>{t('users.newAccount.linkedTitle')}</DialogTitle>
+              <DialogDescription>
+                <span dir="ltr" className="font-medium">{account.login}</span>
+              </DialogDescription>
+            </DialogHeader>
+            <div role="note" data-testid="new-account-linked" className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-body text-foreground">
+              <UserCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <p>{t('users.newAccount.linkedText')}</p>
             </div>
-            {account.otherAccount && (
-              <div role="note" data-testid="new-account-other" className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-caption text-foreground">
-                <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-                <p>
-                  <span className="font-semibold">{t('users.newAccount.otherAccountTitle')}</span>{' '}
-                  {t('users.newAccount.otherAccountText')}
-                </p>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>{t('users.newAccount.title')}</DialogTitle>
+              <DialogDescription>
+                {t('users.newAccount.description')} <span dir="ltr" className="font-medium">{account?.login}</span>
+              </DialogDescription>
+            </DialogHeader>
+            {account && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <code
+                    dir="ltr"
+                    data-testid="new-account-password"
+                    className="flex-1 text-center text-xl font-mono font-semibold tracking-wider bg-subtle border border-border rounded-lg px-4 py-3 select-all"
+                  >
+                    {account.temporaryPassword}
+                  </code>
+                  <Button type="button" variant="secondary" onClick={() => handleCopy(account.temporaryPassword!)}>
+                    {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+                    {copied ? t('users.resetPassword.copied') : t('users.resetPassword.copy')}
+                  </Button>
+                </div>
+                <WhatsAppShareButton
+                  phone={account.phone}
+                  name={account.firstName}
+                  role={account.role}
+                  schoolName={account.schoolName}
+                  login={account.login}
+                  password={account.temporaryPassword!}
+                  className="w-full"
+                />
+                <ul className="text-caption text-text-secondary list-disc ps-5 space-y-1">
+                  <li>{t('users.newAccount.shownOnce')}</li>
+                  <li>{t('users.newAccount.mustChange')}</li>
+                  <li>{t('users.newAccount.lost')}</li>
+                </ul>
               </div>
             )}
-            <WhatsAppShareButton
-              phone={account.phone}
-              name={account.firstName}
-              role={account.role}
-              schoolName={account.schoolName}
-              login={account.login}
-              password={account.temporaryPassword}
-              className="w-full"
-            />
-            <ul className="text-caption text-text-secondary list-disc ps-5 space-y-1">
-              <li>{t('users.newAccount.shownOnce')}</li>
-              <li>{t('users.newAccount.mustChange')}</li>
-              <li>{t('users.newAccount.lost')}</li>
-            </ul>
-          </div>
+          </>
         )}
         <DialogFooter>
           <Button type="button" onClick={close}>{t('users.newAccount.noted')}</Button>

@@ -76,7 +76,7 @@ class SubstitutionsService {
       let substituteId = input.substituteUserId;
       let newSubstitute = false;
       let temporaryPassword: string | null = null;
-      let emailHasOtherAccount = false;
+      let linkedAccount = false;
       if (input.newSubstitute) {
         const user = await usersService.createDirectly(
           schoolId,
@@ -85,8 +85,8 @@ class SubstitutionsService {
         );
         substituteId = user.id;
         newSubstitute = true;
-        temporaryPassword = user.temporaryPassword!; // a teacher: always one
-        emailHasOtherAccount = user.emailHasOtherAccount;
+        temporaryPassword = user.temporaryPassword; // none when the teacher already has an account elsewhere
+        linkedAccount = user.linkedAccount;
       }
       await this.check(tx, schoolId, classroom, substituteId, start, end, input.allowBusySubstitute);
       const substitution = await tx.substitution.create({
@@ -104,7 +104,7 @@ class SubstitutionsService {
         },
         include,
       });
-      return { substitution, newSubstitute, temporaryPassword, emailHasOtherAccount };
+      return { substitution, newSubstitute, temporaryPassword, linkedAccount };
     });
 
     void this.notify(result.substitution, input.notifyParents);

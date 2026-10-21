@@ -7,6 +7,10 @@ vi.mock('../../services/email.service', () => ({ emailService: {} }));
 vi.mock('../auth/auth.service', () => ({ authService: {} }));
 vi.mock('../../lib/phone-accounts', () => ({ accountIdsWithPhone: vi.fn().mockResolvedValue(['someone']) }));
 
+vi.mock('../../lib/linked-accounts', () => ({
+  linkedAccountIds: vi.fn(async () => []),
+  linkedPassword: vi.fn(async () => null),
+}));
 import prisma from '../../lib/prisma';
 import { usersService } from './users.service';
 import { accountIdsWithPhone } from '../../lib/phone-accounts';

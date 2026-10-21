@@ -9,7 +9,7 @@ import type { CreateUserDirectlyInput } from './users.schema';
 import { authService } from '../auth/auth.service';
 import { getFrontendUrl } from '../../lib/frontend-url';
 import { pushDevices } from '../../services/push-devices.service';
-import { emailHasOtherAccount } from '../../lib/email-accounts';
+import { linkedAccountIds, linkedPassword } from '../../lib/linked-accounts';
 import { accountIdsWithPhone } from '../../lib/phone-accounts';
 
 const INVITATION_EXPIRY_HOURS = 48;
@@ -214,8 +214,17 @@ export const usersService = {
         data: { usedAt: new Date() },
       });
 
-      return newUser;
+      // The invitation came to the person's mailbox: the password they chose
+      // is also that of their other accounts with this email — one password.
+      const others = await linkedAccountIds({ id: newUser.id, email: invitation.email, phone: null }, tx);
+      if (others.length > 0) {
+        await tx.user.updateMany({ where: { id: { in: others } }, data: { passwordHash, mustChangePassword: false } });
+        await tx.refreshToken.deleteMany({ where: { userId: { in: others } } });
+      }
+
+      return { ...newUser, others };
     });
+    for (const id of user.others) cutSessions(id);
 
     return {
       id: user.id,
@@ -458,7 +467,9 @@ export const usersService = {
   async sendResetLink(id: string, actor: ResetActor): Promise<{ email: string }> {
     const user = await this.findResettable(id, actor);
     if (!user.email) throw new UserServiceError('This account has no email: give it a temporary password instead', 400);
-    const sent = await authService.sendPasswordResetLink({ ...user, email: user.email });
+    // The person's new password will be for all their accounts with this email.
+    const accounts = (await linkedAccountIds({ id: user.id, email: user.email, phone: null })).length + 1;
+    const sent = await authService.sendPasswordResetLink({ ...user, email: user.email }, accounts);
     if (!sent) throw new UserServiceError('The reset email could not be sent', 502);
     return { email: user.email };
   },
@@ -505,9 +516,12 @@ export const usersService = {
       throw new UserServiceError('A user with this phone number already exists', 409);
     }
 
-    // Each account its own first password, told once to whoever creates it.
-    const password = temporaryPassword();
-    const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+    // A person who already has an account (another school, the platform)
+    // keeps their one password: this account takes it, nobody is told it.
+    // Otherwise its own first password, told once to whoever creates it.
+    const linked = isStaff ? null : await linkedPassword({ email: input.email ?? null, phone: input.phone ?? null }, db);
+    const password = linked ? null : temporaryPassword();
+    const passwordHash = linked ? linked.passwordHash : await bcrypt.hash(password!, BCRYPT_SALT_ROUNDS);
 
     const user = await db.user.create({
       data: {
@@ -519,7 +533,7 @@ export const usersService = {
         role: input.role as UserRole,
         preferredLanguage: (input.preferredLanguage ?? 'fr') as Language,
         isActive: true,
-        mustChangePassword: !isStaff,
+        mustChangePassword: linked ? linked.mustChangePassword : !isStaff,
         phone: input.phone,
         address: input.address,
         nationalId: input.nationalId,
@@ -535,7 +549,8 @@ export const usersService = {
     return {
       ...user,
       temporaryPassword: isStaff ? null : password,
-      emailHasOtherAccount: await emailHasOtherAccount(user.email, user.id, db),
+      /** The person signs in with the password of their other account(s), and chooses this school. */
+      linkedAccount: linked !== null,
     };
   },
 

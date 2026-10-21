@@ -5,7 +5,8 @@
 export interface NewAccount {
   /** What the account signs in with: its email, or its phone number when it has none. */
   login: string;
-  temporaryPassword: string;
+  /** None when the person already had an account: they keep their password (`linked`). */
+  temporaryPassword: string | null;
   /** To send it by WhatsApp. */
   phone?: string | null;
   firstName?: string;
@@ -14,10 +15,10 @@ export interface NewAccount {
   /** The school the account belongs to, when it is not the sender's own (a super admin creating it). */
   schoolName?: string;
   /**
-   * Its email already had another account (another school, the platform):
-   * this one opens with the temporary password, not the one the person knows.
+   * The person already had an account (another school, the platform): this
+   * one takes their password — they sign in as usual and choose this school.
    */
-  otherAccount?: boolean;
+  linked?: boolean;
 }
 
 /** What the server answers when it creates an account. */
@@ -26,8 +27,8 @@ export interface CreatedAccount {
   email?: string | null;
   phone?: string | null;
   role?: string;
-  temporaryPassword?: string;
-  emailHasOtherAccount?: boolean;
+  temporaryPassword?: string | null;
+  linkedAccount?: boolean;
 }
 
 type Listener = (account: NewAccount) => void;
@@ -38,11 +39,12 @@ export function announceNewAccount(
   about: { role?: string; schoolName?: string } = {},
 ): void {
   const login = account?.email || account?.phone;
-  if (!login || !account?.temporaryPassword) return;
-  const { temporaryPassword, phone, firstName } = account;
+  const linked = account?.linkedAccount === true;
+  if (!login || (!account?.temporaryPassword && !linked)) return;
+  const { phone, firstName } = account;
+  const temporaryPassword = linked ? null : account.temporaryPassword!;
   const role = about.role ?? account.role;
-  const otherAccount = account.emailHasOtherAccount === true;
-  for (const listener of listeners) listener({ login, temporaryPassword, phone, firstName, role, schoolName: about.schoolName, otherAccount });
+  for (const listener of listeners) listener({ login, temporaryPassword, phone, firstName, role, schoolName: about.schoolName, linked });
 }
 
 export function onNewAccount(listener: Listener): () => void {

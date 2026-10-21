@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Backpack, CalendarHeart, HeartHandshake, Languages, PiggyBank } from 'lucide-react';
+import { Backpack, Banknote, CalendarHeart, HeartHandshake, Languages } from 'lucide-react';
 import { BrandMark } from './BrandMark';
 import {
   NurseryBalloon,
@@ -35,7 +35,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
     { icon: Backpack, label: t('auth.features.students'), tint: 'bg-[#FFE1DD] text-[#D9534A]' },
     { icon: HeartHandshake, label: t('auth.features.people'), tint: 'bg-[#FFF0C7] text-[#C98A00]' },
     { icon: CalendarHeart, label: t('auth.features.attendance'), tint: 'bg-[#DDF3D8] text-[#3E9A45]' },
-    { icon: PiggyBank, label: t('auth.features.finance'), tint: 'bg-[#DCEFFB] text-[#2B8AC2]' },
+    { icon: Banknote, label: t('auth.features.finance'), tint: 'bg-[#DCEFFB] text-[#2B8AC2]' },
   ];
   const letters: [string, string, string] = isRtl ? ['أ', 'ب', 'ت'] : ['A', 'B', 'C'];
 

@@ -1,21 +1,47 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Backpack, Banknote, CalendarHeart, HeartHandshake, Languages } from 'lucide-react';
-import { BrandMark } from './BrandMark';
-import {
-  NurseryBalloon,
-  NurseryBlocks,
-  NurseryCloud,
-  NurseryHills,
-  NurseryRainbow,
-  NurserySun,
-} from './NurseryScene';
+import { cn } from '@/lib/utils';
+import { BRAND_COLORS, BrandMark, KiddooLogo } from './BrandMark';
+
+/** The website's heading face: straight and bold, in French and in Arabic. */
+const SITE_HEADING_FONT = "'Plus Jakarta Sans', 'Noto Sans Arabic', system-ui, sans-serif";
+
+/** The logo's four pebbles, as on the website: circle, bar, dome, bar. */
+const PEBBLES = {
+  circle: 'M12 2a10 10 0 1 1 0 20a10 10 0 1 1 0-20z',
+  slab: 'M2.6 8.6c0-1.6.7-2.1 2.2-2.1 5-.2 9.3.1 13.3 1.5 1.8.6 2.4 1.5 2.4 3.4 0 1.9-.6 2.6-2.2 3-3.4.7-6.6.8-9.6.7-2.3.1-5.2.1-5.6-1.2-.4-1.2-.5-3.1-.5-5.3z',
+  dome: 'M1.8 17.4c.6-3.6 3.4-8.4 8.2-8.7 5-.3 8.8 3.2 10.3 8.3.5 1.6-.3 2.3-2.1 2.3-4.1-.5-7.2-1-11-1.5-3.6-.4-5.6-.8-5.4-.4z',
+  slab2: 'M2.8 16.6c-.4-2.3 1-4 3.3-4.6 3.6-.9 7-1.3 10.6-.6 1.5.3 2.1 1 2.5 2.3.6 1.9.7 3.5.6 4.7 0 .6-.4.9-1 .9H5.4c-1.4 0-2.3-.6-2.6-2.7z',
+} as const;
+
+function Pebble({ shape, color, className, style }: { shape: keyof typeof PEBBLES; color: string; className?: string; style?: React.CSSProperties }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn('absolute pointer-events-none', className)} style={style} aria-hidden="true" focusable="false">
+      <path d={PEBBLES[shape]} fill={color} />
+    </svg>
+  );
+}
+
+/** Soft tints of the logo colours, for the large background pebbles. */
+const SOFT = ['#E7E5FA', '#DDF1E8', '#FBE7D9', '#FADDE4'] as const;
+
+/** The four colours as a short line, the site's signature above a title. */
+function Stripe({ className }: { className?: string }) {
+  return (
+    <span className={cn('kd-stripe flex gap-1', className)} aria-hidden="true">
+      {BRAND_COLORS.map((c) => (
+        <i key={c} className="block h-1 w-5 rounded-full" style={{ background: c }} />
+      ))}
+    </span>
+  );
+}
 
 /**
- * The frame of the sign-in pages (login, invitation, password reset): a
- * nursery scene on large screens (sky, sun, hills, letter blocks), a small
- * sky band on a phone, the language switch, and the form on a soft card.
- * On a phone the band stays short so the form's button stays in view.
+ * The frame of the sign-in pages (login, invitation, password reset), in the
+ * website's look: the logo, its four pebbles drifting behind the text, the
+ * features on pebble-shaped tiles. On a phone a short band carries the logo,
+ * so the form's button stays in view. The form sits on a white card.
  */
 export function AuthShell({ children }: { children: React.ReactNode }) {
   const { t, i18n } = useTranslation();
@@ -31,51 +57,50 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const [indigo, green, orange, red] = BRAND_COLORS;
+  // Each feature on one of the logo's pebbles, in its colour.
   const features = [
-    { icon: Backpack, label: t('auth.features.students'), tint: 'bg-[#FFE1DD] text-[#D9534A]' },
-    { icon: HeartHandshake, label: t('auth.features.people'), tint: 'bg-[#FFF0C7] text-[#C98A00]' },
-    { icon: CalendarHeart, label: t('auth.features.attendance'), tint: 'bg-[#DDF3D8] text-[#3E9A45]' },
-    { icon: Banknote, label: t('auth.features.finance'), tint: 'bg-[#DCEFFB] text-[#2B8AC2]' },
+    { icon: Backpack, label: t('auth.features.students'), color: indigo, radius: '50%' },
+    { icon: HeartHandshake, label: t('auth.features.people'), color: green, radius: '12px 22px 18px 10px / 12px 18px 20px 10px' },
+    { icon: CalendarHeart, label: t('auth.features.attendance'), color: orange, radius: '50% 50% 10px 10px / 60% 60% 10px 10px' },
+    { icon: Banknote, label: t('auth.features.finance'), color: red, radius: '20px 14px 8px 18px / 18px 12px 8px 16px' },
   ];
-  const letters: [string, string, string] = isRtl ? ['أ', 'ب', 'ت'] : ['A', 'B', 'C'];
 
   return (
-    <div className="min-h-screen flex bg-[#FFF9F1]" dir={isRtl ? 'rtl' : 'ltr'}>
-      {/* Nursery scene (large screens) */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col p-12 relative overflow-hidden bg-gradient-to-b from-[#CDE9FF] via-[#E6F4FF] to-[#FFF6E8]">
-        <NurserySun className="absolute top-8 end-10 w-32 h-32" />
-        <NurseryCloud className="nest-drift absolute top-28 start-[38%] w-36 opacity-90" />
-        <NurseryCloud className="nest-drift-slow absolute top-[42%] end-6 w-28 opacity-80" />
-        <NurseryRainbow className="absolute bottom-24 start-[8%] w-[42%] max-w-[300px] opacity-80" />
-        <NurseryHills className="absolute bottom-0 inset-x-0 w-full h-44" />
-        <NurseryBlocks letters={letters} className="absolute bottom-10 end-[14%] w-36" />
-        <NurseryBalloon className="absolute bottom-24 end-[6%] w-12" />
+    <div className="min-h-screen flex bg-[#FBFAFE]" dir={isRtl ? 'rtl' : 'ltr'}>
+      {/* Brand panel (large screens) */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col p-12 relative overflow-hidden isolate bg-gradient-to-br from-[#EEEDFB] via-[#F7F6FE] to-[#FFF4EA]">
+        <Pebble shape="circle" color={SOFT[0]} className="kd-drift -z-10 -top-32 -end-32 w-[30rem] h-[30rem]" />
+        <Pebble shape="slab" color={SOFT[1]} className="kd-drift-slow -z-10 -bottom-24 -start-24 w-[26rem] h-[26rem]" style={{ rotate: '-10deg' }} />
+        <Pebble shape="dome" color={SOFT[2]} className="kd-drift -z-10 top-[38%] -start-24 w-64 h-64" style={{ animationDelay: '-6s' }} />
+        <Pebble shape="slab2" color={SOFT[3]} className="kd-drift-slow -z-10 top-24 start-[42%] w-40 h-40" style={{ rotate: '8deg' }} />
 
-        <div className="relative z-10 flex items-center gap-3">
-          <BrandMark size={56} className="shrink-0" />
-          <span className="font-playful text-[#2E2A6B] text-2xl font-extrabold tracking-tight">{t('app.name')}</span>
-        </div>
+        {/* The logo's "i", large, floating */}
+        <BrandMark size={176} className="kd-bob absolute bottom-14 end-12 -z-10 drop-shadow-[0_20px_30px_rgba(79,73,207,0.18)]" />
 
-        <div className="relative z-10 mt-[12vh] max-w-xl space-y-8">
-          <div>
-            <h2 className="font-playful text-[2.75rem] font-extrabold text-[#2E2A6B] leading-[1.15] mb-3 whitespace-pre-line">
-              {t('auth.hero.title')}
-            </h2>
-            <p className="text-[#5B5A7A] text-lg leading-relaxed">{t('auth.hero.subtitle')}</p>
-          </div>
-          <ul className="space-y-3">
-            {features.map(({ icon: Icon, label, tint }) => (
-              <li key={label} className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${tint}`}>
-                  <Icon className="w-[18px] h-[18px]" />
-                </div>
-                <span className="text-[#3F3D5C] text-body font-medium">{label}</span>
+        <KiddooLogo className="relative h-10 kd-rise" />
+
+        <div className="relative mt-[14vh] max-w-xl">
+          <Stripe className="mb-6" />
+          <h2 className="kd-rise text-[2.75rem] font-extrabold text-[#111018] leading-[1.15] tracking-tight mb-4 whitespace-pre-line" style={{ animationDelay: '.08s', fontFamily: SITE_HEADING_FONT }}>
+            {t('auth.hero.title')}
+          </h2>
+          <p className="kd-rise text-[#5D5A6B] text-lg leading-relaxed max-w-md" style={{ animationDelay: '.16s' }}>
+            {t('auth.hero.subtitle')}
+          </p>
+          <ul className="mt-10 space-y-4">
+            {features.map(({ icon: Icon, label, color, radius }, i) => (
+              <li key={label} className="kd-rise flex items-center gap-4" style={{ animationDelay: `${0.24 + i * 0.07}s` }}>
+                <span className="w-11 h-10 flex items-center justify-center shrink-0 text-white shadow-[0_8px_18px_-10px_rgba(17,16,24,0.5)]" style={{ background: color, borderRadius: radius }}>
+                  <Icon className="w-5 h-5" />
+                </span>
+                <span className="text-[#2B2938] text-body-lg font-medium">{label}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <p className="absolute bottom-4 start-12 z-10 text-[#2F6B32]/60 text-caption">© {new Date().getFullYear()} Kiddoo</p>
+        <p className="absolute bottom-5 start-12 text-[#5D5A6B]/70 text-caption">© {new Date().getFullYear()} Kiddoo</p>
       </div>
 
       {/* Form column */}
@@ -83,7 +108,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         <button
           type="button"
           onClick={toggleLanguage}
-          className="absolute top-4 end-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#EADFCF] bg-white/90 hover:bg-white text-text-secondary hover:text-foreground text-label font-medium transition"
+          className="absolute top-4 end-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E4E2F2] bg-white/90 hover:bg-white text-text-secondary hover:text-foreground text-label font-medium transition"
           title={isRtl ? 'Français' : 'العربية'}
           aria-label={isRtl ? 'Français' : 'العربية'}
         >
@@ -91,31 +116,22 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           <span>{isRtl ? 'FR' : 'ع'}</span>
         </button>
 
-        {/* Sky band (phone and tablet) */}
-        <div className="lg:hidden relative h-32 shrink-0 overflow-hidden bg-gradient-to-b from-[#CDE9FF] to-[#EAF5FF]">
-          <NurserySun className="absolute -top-3 start-3 w-20 h-20" />
-          <NurseryCloud className="nest-drift absolute top-5 end-20 w-20" />
-          <NurseryCloud className="nest-drift-slow absolute top-3 start-[34%] w-12 opacity-80" />
-          <svg viewBox="0 0 400 40" preserveAspectRatio="none" className="absolute bottom-0 inset-x-0 w-full h-8" aria-hidden="true">
-            <path d="M0 22 Q100 2 200 20 T400 16 V40 H0Z" fill="#FFF9F1" />
-          </svg>
-          <div className="absolute bottom-6 inset-x-0 flex items-center justify-center gap-2">
-            <BrandMark size={48} className="shrink-0" />
-            <span className="font-playful text-[#2E2A6B] text-xl font-extrabold">{t('app.name')}</span>
+        {/* Logo band (phone and tablet) */}
+        <div className="lg:hidden relative h-32 shrink-0 overflow-hidden isolate bg-gradient-to-br from-[#EEEDFB] to-[#FFF4EA]">
+          <Pebble shape="circle" color={SOFT[0]} className="kd-drift -z-10 -top-16 -end-10 w-44 h-44" />
+          <Pebble shape="slab" color={SOFT[1]} className="kd-drift-slow -z-10 -bottom-14 -start-10 w-48 h-48" />
+          <Pebble shape="dome" color={SOFT[2]} className="-z-10 top-2 start-[30%] w-16 h-16" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <KiddooLogo className="h-9" />
+            <Stripe />
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 pt-2 pb-10 sm:px-6 sm:py-12">
-          <div className="auth-soft w-full max-w-[420px] bg-card rounded-3xl border border-[#F1E6D6] shadow-[0_10px_30px_-12px_rgba(120,90,40,0.18)] p-6 sm:p-8">
+        <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 pt-6 pb-10 sm:px-6 sm:py-12">
+          <div className="auth-soft kd-rise w-full max-w-[420px] bg-white rounded-3xl border border-[#ECEAF6] shadow-[0_24px_60px_-28px_rgba(79,73,207,0.35)] p-6 sm:p-8">
             {children}
           </div>
-        </div>
-
-        {/* Hills and blocks under the form (phone and tablet) */}
-        <div className="lg:hidden relative h-24 shrink-0 overflow-hidden" aria-hidden="true">
-          <NurseryHills className="absolute bottom-0 inset-x-0 w-full h-16" />
-          <NurseryBlocks letters={letters} className="absolute bottom-3 end-8 w-16" />
-          <NurseryBalloon className="absolute bottom-6 end-[30%] w-6" />
+          <p className="lg:hidden mt-8 text-[#5D5A6B]/70 text-caption">© {new Date().getFullYear()} Kiddoo</p>
         </div>
       </div>
     </div>

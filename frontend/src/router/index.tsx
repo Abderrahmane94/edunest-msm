@@ -61,7 +61,7 @@ const ProfilePage = React.lazy(() => import('@/pages/ProfilePage').then((m) => (
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { AdminLayout, ParentLayout } from '@/components/layout';
 import { YearBanner, YearSwitcher } from '@/components/layout/YearSwitcher';
-import { BrandMark, Wordmark } from '@/components/layout/BrandMark';
+import { BrandMark, KiddooLogo } from '@/components/layout/BrandMark';
 import { SchoolHeaderName } from '@/components/layout/SchoolHeaderName';
 import { useCurrentTeacherClass } from '@/hooks/useSubstitutions';
 import { Avatar } from '@/components/ui';
@@ -385,9 +385,8 @@ function AdminLayoutWrapper() {
           isAdmin ? (
             <SchoolSidebarHeader />
           ) : (
-            <div className="flex items-center gap-2 px-1">
-              <BrandMark size={34} className="shrink-0" />
-              <Wordmark />
+            <div className="flex items-center px-1">
+              <KiddooLogo className="h-7" />
             </div>
           )
         }

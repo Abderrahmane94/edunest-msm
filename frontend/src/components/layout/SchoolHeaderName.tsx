@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSchoolBrand } from '@/hooks/useSchool';
 import { cn } from '@/lib/utils';
-import { BrandMark, Wordmark } from './BrandMark';
+import { BrandMark, KiddooLogo } from './BrandMark';
 
 const ARABIC = /[؀-ۿ]/;
 
@@ -30,9 +30,8 @@ export function SchoolHeaderName({ nameClassName }: { nameClassName?: string }) 
 
   if (!brand) {
     return (
-      <div className="flex items-center gap-2 min-w-0">
-        <BrandMark size={30} className="shrink-0" />
-        <Wordmark className={nameClassName} />
+      <div className="flex items-center min-w-0">
+        <KiddooLogo className="h-6" />
       </div>
     );
   }

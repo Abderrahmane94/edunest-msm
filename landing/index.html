@@ -601,11 +601,47 @@ footer p { color: var(--muted); font-size: 14px; }
 :root[dir="rtl"] .split-link:hover svg { transform: scaleX(-1) translateX(5px); }
 @media (max-width: 600px) { .split-media { padding: 16px 8px 30px; } .split-media .mini.top { display: none; } }
 
+/* ── Phone: text over photos gets a full veil, sections sit closer ── */
+@media (max-width: 600px) {
+  section { padding-block: 52px; }
+  .hero { height: auto; }
+  .hero-inner { padding-block: 40px 22px; gap: 34px; }
+  /* Dense behind the words, lighter where only the photo shows, a little denser again under the slide tabs */
+  .hero::after, :root[dir="rtl"] .hero::after { background: linear-gradient(180deg, rgba(var(--ov), .92) 0%, rgba(var(--ov), .88) 46%, rgba(var(--ov), .55) 70%, rgba(var(--ov), .2) 84%, rgba(var(--ov), .62) 100%); }
+  .cta-box::after, :root[dir="rtl"] .cta-box::after { background: linear-gradient(180deg, rgba(var(--ov), .93) 0%, rgba(var(--ov), .85) 58%, rgba(var(--ov), .35) 100%); }
+  /* The two reassurances sit where the veil is lightest: a frosted badge keeps them readable on any photo */
+  .hero-meta { justify-self: start; background: rgba(var(--ov), .84); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid var(--ov-line); border-radius: 12px; padding: 8px 12px; gap: 6px 16px; color: var(--on-ov); font-weight: 500; }
+  .head { margin-bottom: 26px; }
+  .split + .split { margin-top: 56px; }
+  .numbers { padding-block: 8px; }
+  .price-ctrl { margin-bottom: 30px; }
+  footer .wrap { flex-direction: column; align-items: flex-start; }
+  footer .wrap > div:last-child { justify-items: start !important; }
+}
+
+/* Arabic figures: the unit follows the number in reading order (1 دقيقة), not the Latin order */
+:root[dir="rtl"] .stat b { direction: rtl; }
+:root[dir="rtl"] .stat b small { font-family: var(--f-body); font-size: .38em; font-weight: 600; }
+
 /* Arabic: the text sits on the right, so the photos behind it are mirrored to keep people on the free side */
 :root[dir="rtl"] .slide .ph, :root[dir="rtl"] .cta-box > .ph { transform: scaleX(-1); }
 .login { color: var(--ink); text-decoration: none; font-size: 14px; font-weight: 600; padding: 10px 12px; border-radius: 10px; }
 .login:hover { background: var(--band); }
-@media (max-width: 520px) { .login { display: none; } }
+.login { display: inline-flex; align-items: center; gap: 7px; }
+.login svg { width: 17px; height: 17px; flex: none; }
+:root[dir="rtl"] .login svg { transform: scaleX(-1); }
+.login .short, .lang .short { display: none; }
+/* Phone: the sign-in stays in the bar, in a compact form; the language button shows its initial */
+@media (max-width: 520px) {
+  .nav .wrap { gap: 10px; }
+  .nav-end { gap: 6px; }
+  .logo img { height: 24px; }
+  .lang { padding: 9px 11px; }
+  .lang .long, .login .long { display: none; }
+  .lang .short, .login .short { display: inline; }
+  .login { padding: 9px 10px; border: 1.5px solid var(--line); font-size: 13px; }
+  .nav .btn { padding: 10px 13px; }
+}
 
 /* Features shared by every plan */
 .allfeat { margin-top: 26px; display: grid; gap: 14px; justify-items: center; text-align: center; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px clamp(16px, 3vw, 28px); }
@@ -709,8 +745,8 @@ details[open] > p { animation: up .4s ease both; }
       <a href="#questions" data-t="nav.faq"></a>
     </nav>
     <div class="nav-end">
-      <button class="lang" id="lang-btn" type="button" data-t="lang.switch"></button>
-      <a class="login" href="https://app.kiddooschool.com" target="_blank" rel="noopener" data-t="nav.login"></a>
+      <button class="lang" id="lang-btn" type="button"><span class="long" data-t="lang.switch"></span><span class="short" data-t="lang.short"></span></button>
+      <a class="login" href="https://app.kiddooschool.com" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-door"/></svg><span class="long" data-t="nav.login"></span><span class="short" data-t="nav.loginShort"></span></a>
       <a class="btn btn-primary wa" href="#" target="_blank" rel="noopener"><span class="long" data-t="nav.cta"></span><span class="short" data-t="nav.ctaShort"></span></a>
     </div>
   </div>
@@ -915,9 +951,9 @@ const PHOTO_DIR = 'images/';
 /* ── Copy ─────────────────────────────────────────────────────── */
 const T = {
   fr: {
-    'lang.switch': 'العربية',
+    'lang.switch': 'العربية', 'lang.short': 'ع',
     'nav.product': 'Le produit', 'nav.day': 'Une journée', 'nav.pricing': 'Tarifs', 'nav.faq': 'Questions',
-    'nav.cta': 'Demander une démo', 'nav.ctaShort': 'Démo', 'nav.login': 'Se connecter',
+    'nav.cta': 'Demander une démo', 'nav.ctaShort': 'Démo', 'nav.login': 'Se connecter', 'nav.loginShort': 'Connexion',
     'hero.title': 'Toute votre crèche,<br><em>dans une seule application.</em>',
     'hero.sub': 'Présence, rapport du jour, messages, frais et équipe : Kiddoo relie la direction, les éducatrices et les parents, en arabe et en français.',
     'hero.cta1': 'Demander une démo', 'hero.cta2': 'Voir le produit',
@@ -1024,9 +1060,9 @@ const T = {
     ]
   },
   ar: {
-    'lang.switch': 'Français',
+    'lang.switch': 'Français', 'lang.short': 'FR',
     'nav.product': 'المنتج', 'nav.day': 'يوم في الروضة', 'nav.pricing': 'الأسعار', 'nav.faq': 'أسئلة',
-    'nav.cta': 'اطلب تجربة', 'nav.ctaShort': 'تجربة', 'nav.login': 'تسجيل الدخول',
+    'nav.cta': 'اطلب تجربة', 'nav.ctaShort': 'تجربة', 'nav.login': 'تسجيل الدخول', 'nav.loginShort': 'دخول',
     'hero.title': 'روضتك كلها،<br><em>في تطبيق واحد.</em>',
     'hero.sub': 'الحضور، التقرير اليومي، الرسائل، الرسوم والفريق: يربط Kiddoo الإدارة والمربيات والأولياء، بالعربية والفرنسية.',
     'hero.cta1': 'اطلب تجربة', 'hero.cta2': 'اكتشف المنتج',
@@ -1059,7 +1095,7 @@ const T = {
     before: ['دفتر حضور لكل قسم يُعاد نسخه مساءً', 'مجموعات واتساب يختلط فيها كل شيء', 'متابعة الرسوم في جدول إكسل', 'الأولياء يتصلون لمعرفة كيف مرّ اليوم'],
     after: [['i-roll', 'النداء من الهاتف في دقيقة'], ['i-chat', 'رسائل خاصة وإعلانات، كلٌّ في مكانه'], ['i-card', 'المقبوضات والوصولات والمتأخرات محدّثة'], ['i-sun', 'التقرير اليومي يصل إلى الأولياء كل مساء']],
     'nums.kicker': 'Kiddoo بالأرقام', 'nums.title': 'مصمَّم للسرعة في العمل اليومي',
-    nums: [[6, '', 'أدوات في تطبيق واحد'], [2, '', 'لغتان: العربية والفرنسية'], [1, 'د', 'لتسجيل حضور قسم'], [0, '', 'برنامج للتثبيت']],
+    nums: [[6, '', 'أدوات في تطبيق واحد'], [2, '', 'لغتان: العربية والفرنسية'], [1, 'دقيقة', 'لتسجيل حضور قسم'], [0, '', 'برنامج للتثبيت']],
     assure: [['i-check', 'تجربة مجانية جاهزة في اليوم نفسه'], ['i-check', 'تغيير الباقة في أي وقت'], ['i-shield', 'بياناتك محفوظة بعد التجربة']],
     splitsX: [
       { tag: 'للأولياء', icons: ['i-sun', 'i-chat', 'i-card'], top: ['i-chat', 'رسالة من الأستاذة فاطمة', 'أكلت سارة جيداً ولعبت مع زملائها.'], link: 'شاهد التقرير اليومي', tab: 2 },

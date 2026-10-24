@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Backpack, Banknote, CalendarHeart, HeartHandshake, Languages } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { BRAND_COLORS, BrandMark, KiddooLogo } from './BrandMark';
+import { BRAND_COLORS, KiddooLogo, PebbleStack } from './BrandMark';
 
 /** The website's heading face: straight and bold, in French and in Arabic. */
 const SITE_HEADING_FONT = "'Plus Jakarta Sans', 'Noto Sans Arabic', system-ui, sans-serif";
@@ -76,7 +76,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         <Pebble shape="slab2" color={SOFT[3]} className="kd-drift-slow -z-10 top-24 start-[42%] w-40 h-40" style={{ rotate: '8deg' }} />
 
         {/* The logo's "i", large, floating */}
-        <BrandMark size={176} className="kd-bob absolute bottom-14 end-12 -z-10 drop-shadow-[0_20px_30px_rgba(79,73,207,0.18)]" />
+        <PebbleStack size={176} className="kd-bob absolute bottom-14 end-12 -z-10 drop-shadow-[0_20px_30px_rgba(79,73,207,0.18)]" />
 
         <KiddooLogo className="relative h-10 kd-rise" />
 

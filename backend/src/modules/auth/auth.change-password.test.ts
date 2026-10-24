@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
 vi.mock('../../lib/prisma', () => ({
@@ -18,6 +19,8 @@ vi.mock('../../lib/session-cutoff', () => ({ cutSessions: vi.fn(), keepToken: vi
 import prisma from '../../lib/prisma';
 import { authService } from './auth.service';
 import { cutSessions } from '../../lib/session-cutoff';
+
+const sha256 = (token: string) => crypto.createHash('sha256').update(token).digest('hex');
 
 const db = prisma as unknown as {
   user: { findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
@@ -55,7 +58,7 @@ describe('authService.changePassword', () => {
     // Old sessions removed and the new one saved, together.
     const ops = db.$transaction.mock.calls[0][0] as Array<{ op: string; args: { data?: { token: string } } }>;
     expect(ops.map((o) => o.op)).toEqual(['deleteMany', 'create']);
-    expect(ops[1].args.data!.token).toBe(refreshToken);
+    expect(ops[1].args.data!.token).toBe(sha256(refreshToken));
 
     expect(jwt.verify(refreshToken, 'refresh-secret')).toMatchObject({ userId: 'u1', mustChangePassword: false });
     expect(jwt.verify(accessToken, 'access-secret')).toMatchObject({ userId: 'u1', mustChangePassword: false });

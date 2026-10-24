@@ -1,3 +1,4 @@
+import { isCut } from '../lib/session-cutoff';
 import { Server as HttpServer } from 'http';
 import { isOfficeRole } from '../middleware/rbac.middleware';
 import { Server, Socket } from 'socket.io';
@@ -65,6 +66,10 @@ class SocketService implements ISocketService {
 
       try {
         const payload = authService.verifyAccessToken(token);
+        // Logged out, password changed, account closed since: no live connection either.
+        if (isCut(payload.userId, (payload as { iat?: number }).iat, token)) {
+          return next(new Error('Invalid or expired authentication token'));
+        }
         (socket as AuthenticatedSocket).data = { user: payload };
         next();
       } catch {

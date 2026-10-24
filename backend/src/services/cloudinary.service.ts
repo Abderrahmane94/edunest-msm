@@ -8,10 +8,14 @@ const EXPIRY_SECONDS: Record<'photo' | 'document', number> = {
   document: 24 * 60 * 60, // 24 hours
 };
 
+/**
+ * A key of its own for file links, derived from the server secret: a file link
+ * says nothing about the key that signs the sessions, and the reverse.
+ */
 function getUploadsSigningSecret(): string {
   const secret = process.env.JWT_ACCESS_SECRET;
   if (!secret) throw new Error('JWT_ACCESS_SECRET is not configured');
-  return secret;
+  return crypto.createHmac('sha256', secret).update('kiddoo:upload-links').digest('hex');
 }
 
 /**

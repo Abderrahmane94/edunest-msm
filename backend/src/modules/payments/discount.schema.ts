@@ -3,7 +3,7 @@ import { isoDateSchema, END_BEFORE_START } from '../../utils/validators';
 
 export const createDiscountSchema = z.object({
   type: z.enum(['scholarship', 'sibling', 'staff', 'custom'], {
-    errorMap: () => ({ message: 'Type must be one of: scholarship, sibling, staff, custom' }),
+    error: 'Type must be one of: scholarship, sibling, staff, custom',
   }),
   // Exactly one of percentage / fixedAmount (checked below).
   percentage: z
@@ -29,7 +29,7 @@ export const createDiscountSchema = z.object({
     .nullable()
     .optional(),
   // The fee the discount applies to; null/omitted = every recurring fee.
-  branchFeeId: z.string().uuid('Invalid fee ID').nullable().optional(),
+  branchFeeId: z.string().guid('Invalid fee ID').nullable().optional(),
 }).refine((d) => (d.percentage != null) !== (d.fixedAmount != null), {
   message: 'Give either a percentage or a fixed amount',
   path: ['percentage'],
@@ -37,7 +37,7 @@ export const createDiscountSchema = z.object({
 
 export const updateDiscountSchema = z.object({
   type: z.enum(['scholarship', 'sibling', 'staff', 'custom'], {
-    errorMap: () => ({ message: 'Type must be one of: scholarship, sibling, staff, custom' }),
+    error: 'Type must be one of: scholarship, sibling, staff, custom',
   }).optional(),
   percentage: z
     .number()
@@ -62,7 +62,7 @@ export const updateDiscountSchema = z.object({
     .nullable()
     .optional(),
   // The fee the discount applies to; null/omitted = every recurring fee.
-  branchFeeId: z.string().uuid('Invalid fee ID').nullable().optional(),
+  branchFeeId: z.string().guid('Invalid fee ID').nullable().optional(),
 }).refine((d) => !(d.percentage != null && d.fixedAmount != null), {
   message: 'Give either a percentage or a fixed amount, not both',
   path: ['percentage'],

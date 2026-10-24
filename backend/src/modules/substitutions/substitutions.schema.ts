@@ -7,9 +7,9 @@ const date = isoDateSchema;
 
 export const createSubstitutionSchema = z
   .object({
-    classroomId: z.string().uuid(),
+    classroomId: z.string().guid(),
     /** null: nobody takes the class those days. */
-    substituteUserId: z.string().uuid().nullable(),
+    substituteUserId: z.string().guid().nullable(),
     /** A substitute from outside the school: a teacher account made with the replacement. */
     newSubstitute: z
       .object({
@@ -32,7 +32,7 @@ export const createSubstitutionSchema = z
 
 export const updateSubstitutionSchema = z
   .object({
-    substituteUserId: z.string().uuid().nullable().optional(),
+    substituteUserId: z.string().guid().nullable().optional(),
     startDate: date.optional(),
     endDate: date.optional(),
     reason: z.enum(SUBSTITUTION_REASONS).optional(),

@@ -21,7 +21,7 @@ export const setSalarySchema = z
   );
 
 export const recordPaymentSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string().guid(),
   month: z.number().int().min(1).max(12),
   year: z.number().int().min(2000).max(2100),
   baseSalary: money,

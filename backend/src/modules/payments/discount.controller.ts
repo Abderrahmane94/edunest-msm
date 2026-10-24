@@ -6,7 +6,7 @@ import { successResponse, errorResponse } from '../../utils/response';
 import { validateEnrollmentAccess } from './tenant-scope.middleware';
 
 function mapZodErrors(error: ZodError) {
-  return error.errors.map((e) => ({ field: e.path.join('.'), message: e.message }));
+  return error.issues.map((e) => ({ field: e.path.join('.'), message: e.message }));
 }
 
 export const discountController = {

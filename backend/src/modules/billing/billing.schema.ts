@@ -16,8 +16,8 @@ export const updatePlanSchema = createPlanSchema.partial().extend({
 });
 
 export const assignPlanSchema = z.object({
-  schoolId: z.string().uuid(),
-  planId: z.string().uuid(),
+  schoolId: z.string().guid(),
+  planId: z.string().guid(),
   billingCycle: z.enum(['monthly', 'annual']),
   startDate: isoDateSchema,
   trialDays: z.number().int().min(0).optional(),

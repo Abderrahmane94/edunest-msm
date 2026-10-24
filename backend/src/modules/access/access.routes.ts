@@ -22,14 +22,14 @@ const createSchema = z.object({
   permissions: permissionsSchema,
 });
 const updateSchema = createSchema.partial().extend({ isDefault: z.literal(true).optional() });
-const assignSchema = z.object({ profileId: z.string().uuid() });
+const assignSchema = z.object({ profileId: z.string().guid() });
 const exceptionSchema = z.object({
   area: z.enum(EXCEPTION_KEYS),
   level: level,
   endsOn: isoDateSchema.nullable().optional(),
   note: z.string().trim().max(200).nullable().optional(),
 });
-const exceptionParamsSchema = z.object({ id: z.string().uuid(), exceptionId: z.string().uuid() });
+const exceptionParamsSchema = z.object({ id: z.string().guid(), exceptionId: z.string().guid() });
 
 /** The director acting: kept in the journal. */
 const actor = (req: Request) => ({ userId: req.user!.userId, schoolId: req.user!.schoolId! });

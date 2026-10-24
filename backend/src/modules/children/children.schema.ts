@@ -3,7 +3,7 @@ import { uuidSchema, isoDateSchema, birthDateSchema, personNameSchema, optionalE
 
 const bloodTypeSchema = z.enum(
   ['a_positive', 'a_negative', 'b_positive', 'b_negative', 'ab_positive', 'ab_negative', 'o_positive', 'o_negative'],
-  { errorMap: () => ({ message: 'Invalid blood type' }) },
+  { error: 'Invalid blood type' },
 );
 
 const nationalIdSchema = z.string().min(1).max(50);
@@ -14,10 +14,10 @@ const placeOfBirthSchema = z.string().min(1).max(255);
 export const ENROLLED_BEFORE_BIRTH = 'The enrollment date cannot be before the date of birth';
 
 const medicalNoteTypeSchema = z.enum(['allergy', 'condition', 'medication'], {
-  errorMap: () => ({ message: 'Type must be allergy, condition, or medication' }),
+  error: 'Type must be allergy, condition, or medication',
 });
 const medicalNoteSeveritySchema = z.enum(['low', 'medium', 'high'], {
-  errorMap: () => ({ message: 'Severity must be low, medium, or high' }),
+  error: 'Severity must be low, medium, or high',
 });
 
 export const createChildSchema = z.object({
@@ -25,7 +25,7 @@ export const createChildSchema = z.object({
   lastName: personNameSchema(255),
   dateOfBirth: birthDateSchema,
   gender: z.enum(['male', 'female'], {
-    errorMap: () => ({ message: 'Gender must be either male or female' }),
+    error: 'Gender must be either male or female',
   }),
   enrollmentDate: isoDateSchema,
   academicYearId: uuidSchema,
@@ -46,7 +46,7 @@ export const updateChildSchema = z.object({
   dateOfBirth: birthDateSchema.optional(),
   gender: z
     .enum(['male', 'female'], {
-      errorMap: () => ({ message: 'Gender must be either male or female' }),
+      error: 'Gender must be either male or female',
     })
     .optional(),
   enrollmentDate: isoDateSchema.optional(),
@@ -67,14 +67,14 @@ export const enrollChildSchema = z.object({
 export const createParentLinkSchema = z.object({
   parentUserId: uuidSchema,
   relationship: z.enum(['mother', 'father', 'guardian'], {
-    errorMap: () => ({ message: 'Relationship must be mother, father, or guardian' }),
+    error: 'Relationship must be mother, father, or guardian',
   }),
   canPickup: z.boolean().optional(),
 });
 
 export const updateParentLinkSchema = z.object({
   relationship: z.enum(['mother', 'father', 'guardian'], {
-    errorMap: () => ({ message: 'Relationship must be mother, father, or guardian' }),
+    error: 'Relationship must be mother, father, or guardian',
   }),
   canPickup: z.boolean().optional(),
 });
@@ -150,7 +150,7 @@ export const medicalNoteParamsSchema = z.object({
 });
 
 const parentRelationshipSchema = z.enum(['mother', 'father', 'guardian'], {
-  errorMap: () => ({ message: 'Relationship must be mother, father, or guardian' }),
+  error: 'Relationship must be mother, father, or guardian',
 });
 
 /** Everything the creation wizard collects, saved in one transaction. */

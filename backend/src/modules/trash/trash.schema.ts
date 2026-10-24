@@ -8,7 +8,7 @@ export const trashListSchema = z.object({
 
 export const trashActionSchema = z.object({
   entityType: entityTypeEnum,
-  id: z.string().uuid(),
+  id: z.string().guid(),
 });
 
 export const trashQuerySchema = z.object({

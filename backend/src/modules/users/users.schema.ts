@@ -4,7 +4,7 @@ import { personNameSchema, phoneSchema, optionalEmailSchema, optionalPhoneSchema
 export const inviteUserSchema = z.object({
   email: z.string().email('Invalid email address'),
   role: z.enum(['admin', 'administrative', 'teacher', 'parent', 'student'], {
-    errorMap: () => ({ message: 'Role must be admin, teacher, parent, or student' }),
+    error: 'Role must be admin, teacher, parent, or student',
   }),
 });
 
@@ -24,7 +24,7 @@ export const updateFcmTokenSchema = z.object({
 
 export const updateLanguageSchema = z.object({
   preferredLanguage: z.enum(['ar', 'fr'], {
-    errorMap: () => ({ message: 'Preferred language must be ar or fr' }),
+    error: 'Preferred language must be ar or fr',
   }),
 });
 
@@ -32,7 +32,7 @@ export const updateUserSchema = z.object({
   firstName: personNameSchema(100).optional(),
   lastName: personNameSchema(100).optional(),
   role: z.enum(['admin', 'administrative', 'teacher', 'parent', 'staff'], {
-    errorMap: () => ({ message: 'Role must be admin, teacher, or parent' }),
+    error: 'Role must be admin, teacher, or parent',
   }).optional(),
   preferredLanguage: z.enum(['ar', 'fr']).optional(),
   phone: phoneSchema(20).optional(),
@@ -54,10 +54,10 @@ export const createUserDirectlySchema = z.object({
   email: optionalEmailSchema(),
   // staff: an employee who does not use the app (no email, no password).
   role: z.enum(['admin', 'administrative', 'teacher', 'parent', 'staff'], {
-    errorMap: () => ({ message: 'Role must be admin, teacher, or parent' }),
+    error: 'Role must be admin, teacher, or parent',
   }),
   preferredLanguage: z.enum(['ar', 'fr']).optional().default('fr'),
-  schoolId: z.string().uuid('Invalid school ID').optional(), // only used when super_admin provides it
+  schoolId: z.string().guid('Invalid school ID').optional(), // only used when super_admin provides it
   phone: optionalPhoneSchema(20),
   address: z.string().trim().min(1).max(500).optional(),
   nationalId: z.string().trim().min(1).max(50).optional(),

@@ -39,7 +39,7 @@ describe('Children Schemas', () => {
       const result = createChildSchema.safeParse(input);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('YYYY-MM-DD');
+        expect(result.error.issues[0].message).toContain('YYYY-MM-DD');
       }
     });
 
@@ -56,7 +56,7 @@ describe('Children Schemas', () => {
       const result = createChildSchema.safeParse(input);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('male or female');
+        expect(result.error.issues[0].message).toContain('male or female');
       }
     });
 

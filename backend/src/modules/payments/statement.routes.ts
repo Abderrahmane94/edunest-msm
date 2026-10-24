@@ -67,7 +67,7 @@ router.post('/children/:childId/statement/email', validateParams(childParamSchem
     if (!who) return;
     const parsed = emailSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
-      res.status(400).json(errorResponse('VALIDATION_ERROR', 'Request body validation failed', parsed.error.errors.map((e) => ({ field: e.path.join('.'), message: e.message }))));
+      res.status(400).json(errorResponse('VALIDATION_ERROR', 'Request body validation failed', parsed.error.issues.map((e) => ({ field: e.path.join('.'), message: e.message }))));
       return;
     }
     const input = parsed.data;

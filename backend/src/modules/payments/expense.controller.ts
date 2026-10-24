@@ -43,7 +43,7 @@ export const expenseController = {
       const { page, pageSize } = paginationSchema.parse(req.query);
       const filters = expenseListFiltersSchema.safeParse(req.query);
       if (!filters.success) {
-        res.status(400).json(errorResponse('VALIDATION_ERROR', filters.error.errors[0]?.message ?? 'Invalid filters'));
+        res.status(400).json(errorResponse('VALIDATION_ERROR', filters.error.issues[0]?.message ?? 'Invalid filters'));
         return;
       }
       const { expenses, total, totalAmount } = await expenseService.list(schoolId, page, pageSize, filters.data);

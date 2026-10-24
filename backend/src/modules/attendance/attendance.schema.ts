@@ -7,7 +7,7 @@ import { uuidSchema, isoDateSchema } from '../../utils/validators';
 const attendanceRecordItemSchema = z.object({
   childId: uuidSchema,
   status: z.enum(['present', 'absent', 'late'], {
-    errorMap: () => ({ message: 'Status must be one of: present, absent, late' }),
+    error: 'Status must be one of: present, absent, late',
   }),
   note: z.string().max(500, 'Note must not exceed 500 characters').optional(),
 });
@@ -41,7 +41,7 @@ export const saveAttendanceDaySchema = z.object({
  */
 export const updateAttendanceSchema = z.object({
   status: z.enum(['present', 'absent', 'late'], {
-    errorMap: () => ({ message: 'Status must be one of: present, absent, late' }),
+    error: 'Status must be one of: present, absent, late',
   }),
   note: z.string().max(500, 'Note must not exceed 500 characters').optional(),
 });

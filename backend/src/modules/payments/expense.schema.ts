@@ -22,11 +22,11 @@ export const createExpenseSchema = z.object({
     .refine((val) => val === 'DZD', { message: 'Currency must be DZD' }),
   date: pastDateSchema,
   /** The school year it counts in; by default the one its date falls in. */
-  academicYearId: z.string().uuid('Invalid academic year ID').optional(),
+  academicYearId: z.string().guid('Invalid academic year ID').optional(),
   /** Paid with money from the cash desk of whoever records it. */
   paidFromCash: z.boolean().optional(),
   /** Id made by the form: the same expense sent twice is saved once. */
-  clientId: z.string().uuid('Invalid client ID').optional(),
+  clientId: z.string().guid('Invalid client ID').optional(),
 });
 
 export const updateExpenseSchema = z.object({
@@ -52,7 +52,7 @@ export const updateExpenseSchema = z.object({
     .refine((val) => val === 'DZD', { message: 'Currency must be DZD' })
     .optional(),
   date: pastDateSchema.optional(),
-  academicYearId: z.string().uuid('Invalid academic year ID').optional(),
+  academicYearId: z.string().guid('Invalid academic year ID').optional(),
   paidFromCash: z.boolean().optional(),
 });
 
@@ -66,7 +66,7 @@ export const expenseListFiltersSchema = z.object({
   to: isoDate,
   search: z.string().trim().max(100).optional(),
   hasReceipt: z.enum(['true', 'false']).optional(),
-  academic_year_id: z.string().uuid().optional(),
+  academic_year_id: z.string().guid().optional(),
 });
 
 export type ExpenseListFilters = z.infer<typeof expenseListFiltersSchema>;

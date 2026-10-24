@@ -11,7 +11,7 @@ export const createDailyReportSchema = z.object({
   childId: uuidSchema,
   date: isoDateSchema,
   mood: z.enum(['happy', 'sad', 'tired', 'excited', 'calm'], {
-    errorMap: () => ({ message: 'Mood must be one of: happy, sad, tired, excited, calm' }),
+    error: 'Mood must be one of: happy, sad, tired, excited, calm',
   }),
   mealsEaten: z.number().int().min(0, 'Meals eaten must be a non-negative integer').max(10, 'Meals eaten must not exceed 10'),
   napDurationMinutes: z.number().int().min(0, 'Nap duration must be a non-negative integer').max(480, 'Nap duration must not exceed 480 minutes').optional().nullable(),
@@ -35,7 +35,7 @@ export const saveDailyReportSchema = createDailyReportSchema.extend({
 export const updateDailyReportSchema = z
   .object({
     mood: z.enum(['happy', 'sad', 'tired', 'excited', 'calm'], {
-      errorMap: () => ({ message: 'Mood must be one of: happy, sad, tired, excited, calm' }),
+      error: 'Mood must be one of: happy, sad, tired, excited, calm',
     }).optional(),
     mealsEaten: z.number().int().min(0, 'Meals eaten must be a non-negative integer').max(10, 'Meals eaten must not exceed 10').optional(),
     napDurationMinutes: z.number().int().min(0, 'Nap duration must be a non-negative integer').max(480, 'Nap duration must not exceed 480 minutes').optional().nullable(),
@@ -111,11 +111,11 @@ export const sendMessageSchema = z
   .object({
     content: z.string().max(5000, 'Message content must not exceed 5000 characters').optional(),
     messageType: z.enum(['text', 'photo', 'document'], {
-      errorMap: () => ({ message: 'Message type must be one of: text, photo, document' }),
+      error: 'Message type must be one of: text, photo, document',
     }),
     cloudinaryPublicId: z.string().max(500, 'Cloudinary public ID must not exceed 500 characters').optional(),
     // The sending device's id: a message sent again (e.g. written offline) is only saved once.
-    clientId: z.string().uuid().optional(),
+    clientId: z.string().guid().optional(),
   })
   .refine(
     (data) => {
@@ -239,7 +239,7 @@ export const consentResponseParamSchema = z.object({
  */
 export const respondConsentSchema = z.object({
   status: z.enum(['approved', 'declined'], {
-    errorMap: () => ({ message: 'Status must be one of: approved, declined' }),
+    error: 'Status must be one of: approved, declined',
   }),
 });
 

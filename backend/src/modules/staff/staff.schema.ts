@@ -9,7 +9,7 @@ export const createStaffProfileSchema = z.object({
     .min(1, 'Position is required')
     .max(200, 'Position must not exceed 200 characters'),
   contractType: z.enum(['full_time', 'part_time', 'contract'], {
-    errorMap: () => ({ message: 'Contract type must be full_time, part_time, or contract' }),
+    error: 'Contract type must be full_time, part_time, or contract',
   }),
   contractStart: isoDateSchema,
   contractEnd: isoDateSchema.optional(),
@@ -24,7 +24,7 @@ export const updateStaffProfileSchema = z.object({
     .optional(),
   contractType: z
     .enum(['full_time', 'part_time', 'contract'], {
-      errorMap: () => ({ message: 'Contract type must be full_time, part_time, or contract' }),
+      error: 'Contract type must be full_time, part_time, or contract',
     })
     .optional(),
   contractStart: isoDateSchema.optional(),

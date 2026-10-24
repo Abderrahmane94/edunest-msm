@@ -10,7 +10,7 @@ const fields = {
   quantity: z.number().int().min(1).max(100_000),
   condition: z.enum(EQUIPMENT_CONDITIONS),
   /** null: in no room (storage). */
-  roomId: z.string().uuid().nullable(),
+  roomId: z.string().guid().nullable(),
   purchaseDate: pastDateSchema.nullable(),
   unitValue: z.number().min(0).max(99_999_999.99).nullable(),
   notes: z.string().trim().max(500).nullable(),

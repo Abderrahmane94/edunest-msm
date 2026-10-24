@@ -39,11 +39,11 @@ export const updateBranchConfigSchema = z.object({
 export const createBranchCalendarSchema = z
   .object({
     label: z
-      .string({ required_error: 'Label is required' })
+      .string({ error: (issue) => (issue.input === undefined ? 'Label is required' : undefined) })
       .min(1, 'Label must be at least 1 character')
       .max(100, 'Label must be at most 100 characters'),
-    period_start: z.coerce.date({ required_error: 'Period start is required' }),
-    period_end: z.coerce.date({ required_error: 'Period end is required' }),
+    period_start: z.coerce.date({ error: (issue) => (issue.input === undefined ? 'Period start is required' : undefined) }),
+    period_end: z.coerce.date({ error: (issue) => (issue.input === undefined ? 'Period end is required' : undefined) }),
   })
   .refine((data) => data.period_end >= data.period_start, {
     message: 'Period end must be on or after period start',
@@ -53,60 +53,58 @@ export const createBranchCalendarSchema = z
 // --- Enrollment ---
 
 export const createEnrollmentSchema = z.object({
-  childId: z.string().uuid('Invalid child ID'),
-  branchId: z.string().uuid('Invalid branch ID'),
-  academicYearId: z.string().uuid('Invalid academic year ID'),
-  startDate: z.coerce.date({ required_error: 'Start date is required' }),
+  childId: z.string().guid('Invalid child ID'),
+  branchId: z.string().guid('Invalid branch ID'),
+  academicYearId: z.string().guid('Invalid academic year ID'),
+  startDate: z.coerce.date({ error: (issue) => (issue.input === undefined ? 'Start date is required' : undefined) }),
   // Fees to apply besides the whole-school ones (recurring billed from startDate).
-  feeIds: z.array(z.string().uuid('Invalid fee ID')).max(50).optional(),
+  feeIds: z.array(z.string().guid('Invalid fee ID')).max(50).optional(),
 });
 
 // --- Payment Recording ---
 
 const paymentAllocationSchema = z.object({
-  billingPeriodId: z.string().uuid('Invalid billing period ID'),
+  billingPeriodId: z.string().guid('Invalid billing period ID'),
   amount: decimalAmount(-9999999.99, 9999999.99),
 });
 
 export const recordPaymentSchema = z.object({
-  childId: z.string().uuid('Invalid child ID'),
+  childId: z.string().guid('Invalid child ID'),
   totalAmount: decimalAmount(0.01, 9999999.99),
   channel: z.enum(['cash', 'ccp', 'baridimob'], {
-    required_error: 'Payment channel is required',
-    invalid_type_error: 'Must be one of: cash, ccp, baridimob',
+    error: (issue) => (issue.input === undefined ? 'Payment channel is required' : 'Must be one of: cash, ccp, baridimob'),
   }),
-  valueDate: z.coerce.date({ required_error: 'Value date is required' }),
+  valueDate: z.coerce.date({ error: (issue) => (issue.input === undefined ? 'Value date is required' : undefined) }),
   referenceNote: z.string().min(1).max(500).optional(),
   allocations: z
     .array(paymentAllocationSchema)
     .min(1, 'At least one allocation is required'),
-  clientId: z.string().uuid('Invalid client ID').optional(),
+  clientId: z.string().guid('Invalid client ID').optional(),
 });
 
 export const recordCorrectionSchema = z.object({
-  childId: z.string().uuid('Invalid child ID'),
+  childId: z.string().guid('Invalid child ID'),
   totalAmount: decimalAmount(-9999999.99, -0.01),
   channel: z.enum(['cash', 'ccp', 'baridimob'], {
-    required_error: 'Payment channel is required',
-    invalid_type_error: 'Must be one of: cash, ccp, baridimob',
+    error: (issue) => (issue.input === undefined ? 'Payment channel is required' : 'Must be one of: cash, ccp, baridimob'),
   }),
-  valueDate: z.coerce.date({ required_error: 'Value date is required' }),
+  valueDate: z.coerce.date({ error: (issue) => (issue.input === undefined ? 'Value date is required' : undefined) }),
   referenceNote: z
-    .string({ required_error: 'Reference note is required for corrections' })
+    .string({ error: (issue) => (issue.input === undefined ? 'Reference note is required for corrections' : undefined) })
     .min(1, 'Reference note is required for corrections')
     .max(500),
-  correctsPaymentId: z.string().uuid('Invalid payment ID'),
+  correctsPaymentId: z.string().guid('Invalid payment ID'),
   allocations: z
     .array(paymentAllocationSchema)
     .min(1, 'At least one allocation is required'),
   /** Id made by the form: the same correction sent twice is saved once. */
-  clientId: z.string().uuid('Invalid client ID').optional(),
+  clientId: z.string().guid('Invalid client ID').optional(),
 });
 
 // --- Enrollment Withdrawal ---
 
 export const withdrawEnrollmentSchema = z.object({
-  withdrawalDate: z.coerce.date({ required_error: 'Withdrawal date is required' }),
+  withdrawalDate: z.coerce.date({ error: (issue) => (issue.input === undefined ? 'Withdrawal date is required' : undefined) }),
   currentPeriodAmountDue: decimalAmount(0, 9999999.99).optional(),
 });
 

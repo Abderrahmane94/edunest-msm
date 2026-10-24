@@ -791,7 +791,7 @@ async function defaultReceiptRecipient(req: Request, childId: string): Promise<s
  * Map Zod validation errors to the standard FieldError[] format.
  */
 function mapZodErrors(error: ZodError) {
-  return error.errors.map((e) => ({
+  return error.issues.map((e) => ({
     field: e.path.join('.'),
     message: e.message,
   }));

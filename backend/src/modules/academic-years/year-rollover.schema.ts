@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { isoDateSchema } from '../../utils/validators';
 
-const uuid = z.string().uuid();
+const uuid = z.string().guid();
 const date = isoDateSchema;
 
 /** Where the children of a class go: a copy made by this run, or a class the year already has. */

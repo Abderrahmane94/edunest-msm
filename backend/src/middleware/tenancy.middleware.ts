@@ -28,9 +28,20 @@ export async function tenancyMiddleware(req: Request, res: Response, next: NextF
   // token is refused (the client asks for a new one, or signs in again).
   const account = await prisma.user.findUnique({
     where: { id: userId },
-    select: { isActive: true, role: true, school: { select: { isActive: true, demoExpiresAt: true, trialEndsAt: true } } },
+    select: { isActive: true, role: true, schoolId: true, school: { select: { isActive: true, demoExpiresAt: true, trialEndsAt: true } } },
   });
   if (!account || !account.isActive || account.role !== role) {
+    res.status(401).json({
+      success: false,
+      error: { code: 'UNAUTHORIZED', message: 'Invalid or expired access token' },
+    });
+    return;
+  }
+
+  // The school is read from the account, never trusted from the token: a token
+  // whose schoolId was tampered with (or left over after the account was moved)
+  // does not reach another school. A mismatch means re-login.
+  if ((account.schoolId ?? null) !== (schoolId ?? null)) {
     res.status(401).json({
       success: false,
       error: { code: 'UNAUTHORIZED', message: 'Invalid or expired access token' },
@@ -45,7 +56,8 @@ export async function tenancyMiddleware(req: Request, res: Response, next: NextF
     return;
   }
 
-  if (!schoolId) {
+  const tenantSchoolId = account.schoolId;
+  if (!tenantSchoolId) {
     res.status(403).json({
       success: false,
       error: { code: 'FORBIDDEN', message: 'No school association found for this user' },
@@ -90,8 +102,8 @@ export async function tenancyMiddleware(req: Request, res: Response, next: NextF
     return;
   }
 
-  // Run the rest of the request within the tenant context
-  tenantStorage.run({ schoolId }, () => {
+  // Run the rest of the request within the tenant context (the account's school)
+  tenantStorage.run({ schoolId: tenantSchoolId }, () => {
     next();
   });
 }

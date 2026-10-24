@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
 vi.mock('../../lib/prisma', () => ({
@@ -13,6 +14,8 @@ vi.mock('../../services/email.service', () => ({ emailService: {} }));
 
 import prisma from '../../lib/prisma';
 import { authService, AuthError } from './auth.service';
+
+const sha256 = (token: string) => crypto.createHash('sha256').update(token).digest('hex');
 
 const mockPrisma = prisma as unknown as {
   user: { findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
@@ -72,7 +75,8 @@ describe('refresh', () => {
 
     expect(result.refreshToken).toBeTruthy();
     const created = mockPrisma.refreshToken.create.mock.calls[0][0].data;
-    expect(created).toMatchObject({ userId: 'u1', token: result.refreshToken });
+    // Stored as its hash, never as such.
+    expect(created).toMatchObject({ userId: 'u1', token: sha256(result.refreshToken!) });
     expect(created.expiresAt.getTime() - Date.now()).toBeGreaterThan(29 * DAY);
 
     const ended = mockPrisma.refreshToken.updateMany.mock.calls[0][0];

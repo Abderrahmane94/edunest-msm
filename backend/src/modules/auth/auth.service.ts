@@ -57,6 +57,20 @@ function hashResetToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
+/** Sessions too: the database keeps a hash of each refresh token, never the token. */
+function hashRefreshToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+/**
+ * Compared against when no account has the login, so that a wrong login takes
+ * as long as a wrong password: the answer's timing says nothing either.
+ */
+let noAccountHash: Promise<string> | undefined;
+function decoyHash(): Promise<string> {
+  return (noAccountHash ??= bcrypt.hash(crypto.randomBytes(16).toString('hex'), BCRYPT_SALT_ROUNDS));
+}
+
 function generateAccessToken(payload: TokenPayload): string {
   return jwt.sign(payload, getAccessSecret(), { expiresIn: ACCESS_TOKEN_EXPIRY });
 }
@@ -132,6 +146,7 @@ export const authService = {
     const candidates = await findAccounts(input.email);
 
     if (candidates.length === 0) {
+      await bcrypt.compare(input.password, await decoyHash());
       throw new AuthError('Invalid email or password', 401);
     }
 
@@ -205,7 +220,7 @@ export const authService = {
     await prisma.refreshToken.create({
       data: {
         userId: user.id,
-        token: refreshToken,
+        token: hashRefreshToken(refreshToken),
         expiresAt,
       },
     });
@@ -235,7 +250,7 @@ export const authService = {
 
     // Check if refresh token exists in database
     const storedToken = await prisma.refreshToken.findUnique({
-      where: { token: input.refreshToken },
+      where: { token: hashRefreshToken(input.refreshToken) },
     });
 
     if (!storedToken) {
@@ -286,7 +301,7 @@ export const authService = {
     expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
     const graceEnd = new Date(Date.now() + REPLACED_REFRESH_TOKEN_GRACE_MS);
     await prisma.$transaction([
-      prisma.refreshToken.create({ data: { userId: user.id, token: newRefreshToken, expiresAt } }),
+      prisma.refreshToken.create({ data: { userId: user.id, token: hashRefreshToken(newRefreshToken), expiresAt } }),
       prisma.refreshToken.updateMany({
         where: { id: storedToken.id, expiresAt: { gt: graceEnd } },
         data: { expiresAt: graceEnd },
@@ -305,7 +320,7 @@ export const authService = {
     }
     // Delete the refresh token from database to invalidate it
     await prisma.refreshToken.deleteMany({
-      where: { token: input.refreshToken },
+      where: { token: hashRefreshToken(input.refreshToken) },
     });
   },
 
@@ -480,7 +495,7 @@ export const authService = {
     // token, 15 minutes later).
     await prisma.$transaction([
       prisma.refreshToken.deleteMany({ where: { userId } }),
-      prisma.refreshToken.create({ data: { userId, token: refreshToken, expiresAt } }),
+      prisma.refreshToken.create({ data: { userId, token: hashRefreshToken(refreshToken), expiresAt } }),
     ]);
     cutSessions(userId, accessToken);
 

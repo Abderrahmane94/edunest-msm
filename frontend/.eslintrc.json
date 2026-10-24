@@ -21,6 +21,7 @@
     "react-refresh/only-export-components": ["warn", { "allowConstantExport": true }],
     "no-console": ["warn", { "allow": ["warn", "error"] }]
   },
+  "ignorePatterns": ["**/*.test.ts", "**/*.test.tsx"],
   "settings": {
     "react": {
       "version": "18"

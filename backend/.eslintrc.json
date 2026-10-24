@@ -16,8 +16,10 @@
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "@typescript-eslint/explicit-function-return-type": "warn",
     "@typescript-eslint/no-explicit-any": "error",
-    "no-console": ["warn", { "allow": ["warn", "error"] }]
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": { "arguments": false } }]
   },
+  "ignorePatterns": ["**/*.test.ts"],
   "env": {
     "node": true,
     "es2022": true

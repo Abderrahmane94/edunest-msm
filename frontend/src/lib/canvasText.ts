@@ -9,9 +9,9 @@
  *   carrying a bracket in a right-to-left paragraph comes out as ")test(":
  *   such runs are given their own left-to-right direction.
  */
-const ARABIC = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/;
+const ARABIC = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-\uFEFF]/;
 /** A stretch of text with no Arabic letter in it. */
-const NON_ARABIC_RUN = /[^؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]+/g;
+const NON_ARABIC_RUN = /[^؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-\uFEFF]+/g;
 /** Characters the bidi algorithm mirrors, with a Latin letter or a digit beside them. */
 const NEEDS_OWN_DIRECTION = /[()[\]{}<>«»]/;
 const LATIN_OR_DIGIT = /[A-Za-z0-9À-ɏ]/;

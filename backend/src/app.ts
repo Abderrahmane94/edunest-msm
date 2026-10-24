@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { authMiddleware } from './middleware/auth.middleware';
 import { tenancyMiddleware } from './middleware/tenancy.middleware';
+import { requireSchoolContext } from './middleware/school-context.middleware';
 import { errorResponse } from './utils/response';
 import { verifyUploadPath } from './services/cloudinary.service';
 import { checkDatabase } from './lib/db-health';
@@ -136,32 +137,36 @@ app.use('/api', rateLimiter);
 app.use('/api', authMiddleware);
 app.use('/api', tenancyMiddleware);
 
-// API routes
+// API routes. A school's own routes go through requireSchoolContext: the
+// platform account (no school) gets a clear 400 there instead of a 500.
+const school = requireSchoolContext();
 app.use('/api/auth', authRoutes);
 app.use('/api/schools', schoolRoutes);
 app.use('/api/demos', demoRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/staff', staffRoutes);
-app.use('/api/academic-years', academicYearRoutes);
-app.use('/api/classrooms', classroomRoutes);
-app.use('/api/rooms', roomRoutes);
-app.use('/api/inventory', inventoryRoutes);
-app.use('/api/equipment', equipmentRoutes);
-app.use('/api/substitutions', substitutionRoutes);
-app.use('/api/cash-desks', cashDeskRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/planning', planningRoutes);
-app.use('/api/access-profiles', accessRoutes);
-app.use('/api/children', childrenRoutes);
-app.use('/api/attendance', attendanceRoutes);
-app.use('/api/communication', communicationRoutes);
+app.use('/api/staff', school, staffRoutes);
+app.use('/api/academic-years', school, academicYearRoutes);
+app.use('/api/classrooms', school, classroomRoutes);
+app.use('/api/rooms', school, roomRoutes);
+app.use('/api/inventory', school, inventoryRoutes);
+app.use('/api/equipment', school, equipmentRoutes);
+app.use('/api/substitutions', school, substitutionRoutes);
+app.use('/api/cash-desks', school, cashDeskRoutes);
+app.use('/api/documents', school, documentRoutes);
+app.use('/api/planning', school, planningRoutes);
+// Everyone reads their own rights (/me), the platform account included.
+app.use('/api/access-profiles', requireSchoolContext({ except: [/^\/me\/?$/] }), accessRoutes);
+app.use('/api/children', school, childrenRoutes);
+app.use('/api/attendance', school, attendanceRoutes);
+app.use('/api/communication', school, communicationRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', requireSchoolContext({ except: [/^\/platform-stats\/?$/] }), adminRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/trash', trashRoutes);
-app.use('/api/timetable', timetableRoutes);
-app.use('/api/payroll', payrollRoutes);
-app.use('/api/payments', paymentRoutes);
+app.use('/api/timetable', school, timetableRoutes);
+app.use('/api/payroll', school, payrollRoutes);
+// The branches and their billing setup take the school in the body for the platform account.
+app.use('/api/payments', requireSchoolContext({ except: [/^\/branches(\/[^/]+(\/config)?)?\/?$/] }), paymentRoutes);
 
 // 404 handler for unmatched routes
 app.use((_req: Request, res: Response) => {

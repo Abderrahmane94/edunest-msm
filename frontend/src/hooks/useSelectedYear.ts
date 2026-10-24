@@ -58,8 +58,8 @@ export function useSelectedYear(): SelectedYear {
   const { user } = useAuth();
   // The school office (director and administrative staff) chooses a year.
   const enabled = user?.role === 'admin' || user?.role === 'administrative';
-  // super_admin pages read the year too (without choosing one); teachers and parents can't list years.
-  const query = useAcademicYears({ enabled: enabled || user?.role === 'super_admin' });
+  // Teachers and parents can't list years; the platform account has no school, so no years either.
+  const query = useAcademicYears({ enabled });
   const chosenId = useSyncExternalStore(subscribe, () => storedYearId);
 
   return useMemo(() => {

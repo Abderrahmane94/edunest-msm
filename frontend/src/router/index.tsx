@@ -479,8 +479,14 @@ export const routes: RouteObject[] = [
                 children: [
                   { path: 'users', element: <UsersPage /> },
                   { path: 'users/:userId', element: <UserDetailPage /> },
-                  { path: 'staff', element: <StaffListPage /> },
-                  { path: 'staff/:userId', element: <StaffProfilePage /> },
+                  // A school's team: not for the platform account (it has no school).
+                  {
+                    element: <SchoolRoute />,
+                    children: [
+                      { path: 'staff', element: <StaffListPage /> },
+                      { path: 'staff/:userId', element: <StaffProfilePage /> },
+                    ],
+                  },
                 ],
               },
               { element: <PermissionRoute area="payroll" />, children: [{ path: 'payroll', element: <PayrollPage /> }] },
@@ -492,14 +498,20 @@ export const routes: RouteObject[] = [
               {
                 element: <PermissionRoute area="settings" />,
                 children: [
-                  // Academic years moved into Settings; old links still land there.
-                  { path: 'academic-years', element: <Navigate to="/admin/settings?tab=years" replace /> },
-                  { path: 'academic-years/:yearId', element: <OldAcademicYearRedirect /> },
-                  { path: 'timetable', element: <Navigate to="/admin/settings?tab=days" replace /> },
                   { path: 'trash', element: <TrashRoute /> },
-                  { path: 'settings', element: <SchoolSettingsPage /> },
-                  { path: 'settings/academic-years/:yearId', element: <AcademicYearDetailPage /> },
-                  { path: 'settings/academic-years/:yearId/prepare', element: <YearRolloverPage /> },
+                  // A school's settings and years: not for the platform account (it has no school).
+                  {
+                    element: <SchoolRoute />,
+                    children: [
+                      // Academic years moved into Settings; old links still land there.
+                      { path: 'academic-years', element: <Navigate to="/admin/settings?tab=years" replace /> },
+                      { path: 'academic-years/:yearId', element: <OldAcademicYearRedirect /> },
+                      { path: 'timetable', element: <Navigate to="/admin/settings?tab=days" replace /> },
+                      { path: 'settings', element: <SchoolSettingsPage /> },
+                      { path: 'settings/academic-years/:yearId', element: <AcademicYearDetailPage /> },
+                      { path: 'settings/academic-years/:yearId/prepare', element: <YearRolloverPage /> },
+                    ],
+                  },
                 ],
               },
               {

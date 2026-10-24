@@ -1,6 +1,6 @@
 # Quality gate: on every push and pull request to main / production, the things
-# that must stay green before anything deploys — type checking, the backend test
-# suite, and the frontend lint. The backend lint runs too but does not block yet:
+# that must stay green before anything deploys — type checking, the backend and
+# frontend test suites, and the frontend lint. The backend lint runs too but does not block yet:
 # it still carries pre-existing type-safety debt (unbound-method, no-unsafe-*),
 # tracked separately. No database or secrets are needed — the tests mock Prisma
 # and set their own JWT secrets.
@@ -49,6 +49,9 @@ jobs:
 
       - name: Backend tests
         run: npm run test --workspace=backend
+
+      - name: Frontend tests
+        run: npm run test --workspace=frontend
 
       - name: Frontend lint
         run: npm run lint --workspace=frontend

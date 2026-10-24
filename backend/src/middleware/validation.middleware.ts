@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { ZodSchema, ZodError } from 'zod';
+import { z, ZodSchema, ZodError } from 'zod';
 import { errorResponse } from '../utils/response';
+
+// A missing field says "Required", as it always has (zod 4 would say "Invalid input: expected string, received undefined").
+z.config({ customError: (issue) => (issue.code === 'invalid_type' && issue.input === undefined ? 'Required' : undefined) });
 
 /**
  * Creates middleware that validates the request body against a Zod schema.

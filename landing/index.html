@@ -403,11 +403,12 @@ main { position: relative; isolation: isolate; overflow-x: clip; }
 @media (max-width: 520px) { .steps { grid-template-columns: 1fr; } }
 
 /* Pricing */
-.price-ctrl { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: center; margin-bottom: 40px; }
-.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 4px; }
-.seg button { font: 500 14px/1 var(--f-body); border: 0; background: none; color: var(--muted); padding: 10px 16px; border-radius: 7px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+.price-ctrl { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: center; margin-bottom: 52px; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 5px; box-shadow: 0 1px 2px rgba(17,16,24,.05); }
+.seg button { font: 600 14.5px/1 var(--f-body); border: 0; background: none; color: var(--muted); padding: 12px 20px; border-radius: 999px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; transition: background .2s, color .2s; }
+.seg button:hover { color: var(--ink); }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--canvas); }
-.save { font-size: 12px; font-weight: 600; color: var(--green); background: var(--green-soft); padding: 3px 7px; border-radius: 6px; }
+.save { font-size: 12px; font-weight: 600; color: var(--green); background: var(--green-soft); padding: 4px 8px; border-radius: 999px; }
 .cur { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
 .cur select { font: 500 14px/1 var(--f-body); color: var(--ink); background: var(--card); border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 12px; }
 .plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
@@ -421,6 +422,7 @@ main { position: relative; isolation: isolate; overflow-x: clip; }
 .amount b { font: 800 clamp(1.9rem, 3vw, 2.3rem)/1.1 var(--f-display); color: var(--ink); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .amount .per { color: var(--muted); font-size: 14.5px; }
 .amount .was { flex-basis: 100%; font-size: 13px; color: var(--muted); }
+.amount .child { flex-basis: 100%; font-size: 13.5px; font-weight: 600; color: var(--green); }
 .plan .ticks { flex: 1; font-size: 14.5px; gap: 10px; }
 .plan .btn { width: 100%; }
 .price-note { text-align: center; color: var(--muted); font-size: 14px; margin-top: 22px; }
@@ -651,11 +653,19 @@ footer p { color: var(--muted); font-size: 14px; }
 }
 
 /* Features shared by every plan */
-.allfeat { margin-top: 26px; display: grid; gap: 14px; justify-items: center; text-align: center; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px clamp(16px, 3vw, 28px); }
-.allfeat > b { font: 700 15px/1.3 var(--f-display); color: var(--ink); }
-#allfeat { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-#allfeat span { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: var(--band); font-size: 14px; color: var(--ink); }
-#allfeat svg { width: 16px; height: 16px; color: var(--c); flex: none; }
+/* One card under the plans: what every plan includes, in an even grid (no pill that looks clickable,
+   no orphan on the last line), then the reassurances and the currency note as its footer. */
+.allfeat { margin-top: 26px; display: grid; gap: 22px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: clamp(20px, 3vw, 28px) clamp(18px, 3vw, 32px); }
+.allfeat > b { justify-self: center; font: 700 16px/1.3 var(--f-display); color: var(--ink); }
+#allfeat { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 24px; }
+#allfeat span { display: flex; align-items: center; gap: 12px; font-size: 14.5px; font-weight: 500; color: var(--ink); line-height: 1.35; }
+#allfeat i { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 12%, transparent); }
+#allfeat svg { width: 18px; height: 18px; color: var(--c); }
+.allfeat-foot { display: grid; gap: 10px; justify-items: center; border-top: 1px solid var(--line); padding-top: 20px; }
+.allfeat-foot .assure { margin-top: 0; }
+.allfeat-foot .price-note { margin-top: 0; font-size: 13px; }
+@media (max-width: 960px) { #allfeat { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 360px) { #allfeat { grid-template-columns: 1fr; } }
 
 /* Inline logo in text: cap height of the wordmark matches the surrounding letters */
 .kd { display: inline-block; direction: ltr; vertical-align: -0.17em; line-height: 0; margin-inline: .05em; }
@@ -882,9 +892,11 @@ details[open] > p { animation: up .4s ease both; }
         </div>
       </div>
       <div class="plans" id="plans"></div>
-      <div class="allfeat"><b data-t="price.all"></b><div id="allfeat"></div></div>
-      <div class="assure" id="assure"></div>
-      <p class="price-note" data-t="price.note"></p>
+      <div class="allfeat">
+        <b data-t="price.all"></b>
+        <div id="allfeat"></div>
+        <div class="allfeat-foot"><div class="assure" id="assure"></div><p class="price-note" data-t="price.note"></p></div>
+      </div>
     </div>
   </section>
 
@@ -953,8 +965,10 @@ details[open] > p { animation: up .4s ease both; }
 /* ── Settings to edit ─────────────────────────────────────────── */
 const WHATSAPP = '213796101154';
 const WHATSAPP_DISPLAY = '+213 796 10 11 54';
-// Monthly price per plan [Starter, Professionnel], in Algerian dinars. Yearly = 10 months (19 000 / 49 000).
-const PRICES = { DZD: [1900, 4900] };
+// Monthly price per plan [Petite crèche, Crèche], in Algerian dinars. Yearly = 10 months (49 000 / 89 000).
+const PRICES = { DZD: [4900, 8900] };
+// Children allowed per plan, for the price-per-child line.
+const CAPS = [50, 120];
 // Photos: drop files at images/<name>.jpg next to the page and publish them; each slot fills itself.
 const PHOTO_DIR = 'images/';
 
@@ -985,6 +999,7 @@ const T = {
     'price.perMonth': '/ mois', 'price.perYear': '/ an', 'price.instead': 'au lieu de',
     'price.quote': 'Sur devis', 'price.choose': 'Choisir cette formule', 'price.contact': 'Nous contacter', 'price.rec': 'Recommandé',
     'price.note': 'Prix en dinars algériens.',
+    'price.perChild': 'dès {n} par enfant / mois',
     'faq.kicker': 'Questions', 'faq.title': 'Questions fréquentes', 'faq.sub': 'Une autre question ? Écrivez-nous sur WhatsApp, nous répondons dans la journée.',
     'faq.photo': 'Photo : livres, pomme et cubes sur un bureau',
     'cta.title': 'Montrez Kiddoo à votre équipe cette semaine.', 'cta.sub': 'Écrivez-nous sur WhatsApp et nous préparons votre crèche de démonstration.',
@@ -1056,9 +1071,9 @@ const T = {
       ['Invitez les parents', 'Chaque parent reçoit son accès et suit la journée de son enfant dès le lendemain.']
     ],
     plans: [
-      { name: 'Petite crèche', for: 'Jusqu’à 200 enfants', items: ['Jusqu’à 200 enfants', 'Jusqu’à 30 utilisateurs', 'Toutes les fonctionnalités incluses', 'Démo gratuite avant de vous abonner'] },
-      { name: 'Grande crèche', for: 'Jusqu’à 600 enfants', items: ['Jusqu’à 600 enfants', 'Jusqu’à 60 utilisateurs', 'Toutes les fonctionnalités incluses', 'Démo gratuite avant de vous abonner'] },
-      { name: 'Réseau', for: 'Plus de 600 enfants, plusieurs sites ou un besoin particulier', items: ['Une offre construite avec vous', 'Plusieurs sites, une seule direction', 'Saisie de vos données de départ', 'Formation de l’équipe', 'Support prioritaire'] }
+      { name: 'Petite crèche', for: 'Jusqu’à 50 enfants', items: ['Jusqu’à 50 enfants', 'Toutes les fonctionnalités incluses', 'Démo gratuite avant de vous abonner'] },
+      { name: 'Crèche', for: 'De 51 à 120 enfants', items: ['De 51 à 120 enfants', 'Toutes les fonctionnalités incluses', 'Démo gratuite avant de vous abonner'] },
+      { name: 'Réseau', for: 'Plus de 120 enfants, plusieurs sites ou un besoin particulier', items: ['Une offre construite avec vous', 'Plusieurs sites, une seule direction', 'Saisie de vos données de départ', 'Formation de l’équipe', 'Support prioritaire'] }
     ],
     faqs: [
       ['Combien de temps faut-il pour démarrer ?', 'La démo est prête le jour même, remplie d’exemples. Ensuite, nous ouvrons votre crèche et vous ajoutez vos classes, vos enfants et votre équipe.'],
@@ -1094,6 +1109,7 @@ const T = {
     'price.perMonth': '/ شهرياً', 'price.perYear': '/ سنوياً', 'price.instead': 'بدلاً من',
     'price.quote': 'حسب الطلب', 'price.choose': 'اختر هذه الباقة', 'price.contact': 'تواصل معنا', 'price.rec': 'الأنسب',
     'price.note': 'الأسعار بالدينار الجزائري.',
+    'price.perChild': 'ابتداءً من {n} للطفل شهرياً',
     'faq.kicker': 'أسئلة', 'faq.title': 'أسئلة شائعة', 'faq.sub': 'لديك سؤال آخر؟ راسلنا على واتساب ونجيبك في اليوم نفسه.',
     'faq.photo': 'صورة: كتب وتفاحة ومكعبات على مكتب',
     'cta.title': 'اعرض Kiddoo على فريقك هذا الأسبوع.', 'cta.sub': 'راسلنا على واتساب ونجهّز لك روضة تجريبية.',
@@ -1165,9 +1181,9 @@ const T = {
       ['ادعُ الأولياء', 'يتلقى كل ولي وصوله ويتابع يوم طفله ابتداءً من الغد.']
     ],
     plans: [
-      { name: 'روضة صغيرة', for: 'حتى 200 طفل', items: ['حتى 200 طفل', 'حتى 30 مستخدماً', 'كل المزايا مشمولة', 'تجربة مجانية قبل الاشتراك'] },
-      { name: 'روضة كبيرة', for: 'حتى 600 طفل', items: ['حتى 600 طفل', 'حتى 60 مستخدماً', 'كل المزايا مشمولة', 'تجربة مجانية قبل الاشتراك'] },
-      { name: 'الشبكة', for: 'أكثر من 600 طفل، عدة فروع أو حاجة خاصة', items: ['عرض نبنيه معك', 'عدة فروع بإدارة واحدة', 'إدخال بياناتك الأولى', 'تكوين الفريق', 'دعم ذو أولوية'] }
+      { name: 'روضة صغيرة', for: 'حتى 50 طفلاً', items: ['حتى 50 طفلاً', 'كل المزايا مشمولة', 'تجربة مجانية قبل الاشتراك'] },
+      { name: 'روضة', for: 'من 51 إلى 120 طفلاً', items: ['من 51 إلى 120 طفلاً', 'كل المزايا مشمولة', 'تجربة مجانية قبل الاشتراك'] },
+      { name: 'الشبكة', for: 'أكثر من 120 طفلاً، عدة فروع أو حاجة خاصة', items: ['عرض نبنيه معك', 'عدة فروع بإدارة واحدة', 'إدخال بياناتك الأولى', 'تكوين الفريق', 'دعم ذو أولوية'] }
     ],
     faqs: [
       ['كم يستغرق الانطلاق؟', 'تكون التجربة جاهزة في اليوم نفسه ومليئة بالأمثلة. بعدها نفتح روضتك وتضيف أقسامك وأطفالك وفريقك.'],
@@ -1365,7 +1381,7 @@ function renderSections() {
   loadPhotos();
 }
 function renderPlans() {
-  $('#allfeat').innerHTML = L().allFeat.map(([ic, t], i) => `<span style="--c:${COLORS[i % 4]}">${ico(ic)}${esc(t)}</span>`).join('');
+  $('#allfeat').innerHTML = L().allFeat.map(([ic, t], i) => `<span style="--c:${COLORS[i % 4]}"><i>${ico(ic)}</i>${esc(t)}</span>`).join('');
   const D = L(), p = PRICES[state.cur];
   $('#bill-m').setAttribute('aria-pressed', String(!state.yearly));
   $('#bill-y').setAttribute('aria-pressed', String(state.yearly));
@@ -1376,6 +1392,9 @@ function renderPlans() {
       amount = state.yearly
         ? `<b>${money(m * 10, state.cur)}</b><span class="per">${esc(D['price.perYear'])}</span><span class="was">${esc(D['price.instead'])} <s>${money(m * 12, state.cur)}</s></span>`
         : `<b>${money(m, state.cur)}</b><span class="per">${esc(D['price.perMonth'])}</span>`;
+      // What one child costs per month at the plan's limit (a yearly plan spread over 12 months), to the nearest 5 DA.
+      const perChild = Math.round((state.yearly ? m * 10 / 12 : m) / CAPS[i] / 5) * 5;
+      amount += `<span class="child">${esc(D['price.perChild'].replace('{n}', money(perChild, state.cur)).replace('{cap}', CAPS[i]))}</span>`;
     } else amount = `<b>${esc(D['price.quote'])}</b>`;
     const c = [COLORS[1], COLORS[0], COLORS[2]][i];
     return `<article class="plan${i === 1 ? ' featured' : ''}" style="--c:${c}">
@@ -1480,12 +1499,22 @@ function renderPebbles() {
 renderPebbles();
 if (!reduced) {
   const pebbles = [...document.querySelectorAll('#bg-pebbles svg')];
+  // Each pebble drifts by how far it is from the middle of the screen, not by the whole scroll,
+  // so the ones far down the page are still where they were placed when they come into view.
+  let centers = [];
+  const measure = () => {
+    const box = $('#bg-pebbles'), top = box.getBoundingClientRect().top + scrollY;
+    centers = PEBBLES.map(([, pct, , , size]) => top + box.offsetHeight * pct / 100 + size / 2);
+  };
   let ticking = false;
   const parallax = () => {
     ticking = false;
-    const y = scrollY;
-    pebbles.forEach((p) => p.style.setProperty('--py', `${(y * Number(p.dataset.speed)).toFixed(1)}px`));
+    const mid = scrollY + innerHeight / 2;
+    pebbles.forEach((p, i) => p.style.setProperty('--py', `${((mid - centers[i]) * Number(p.dataset.speed)).toFixed(1)}px`));
   };
+  measure(); parallax();
+  addEventListener('resize', () => { measure(); parallax(); });
+  addEventListener('load', () => { measure(); parallax(); });
   addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(parallax); } }, { passive: true });
 }
 

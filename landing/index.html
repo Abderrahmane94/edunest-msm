@@ -540,10 +540,24 @@ footer p { color: var(--muted); font-size: 14px; }
 .step:hover .si { transform: rotate(-6deg) scale(1.05); }
 
 /* Floating WhatsApp contact */
-.fab { position: fixed; z-index: 40; inset-block-end: calc(20px + env(safe-area-inset-bottom, 0px)); inset-inline-end: calc(20px + env(safe-area-inset-right, 0px)); display: inline-flex; align-items: center; gap: 10px; background: #1E9E52; color: #FFFFFF; text-decoration: none; font: 600 15px/1 var(--f-body); padding: 14px 18px; border-radius: 999px; box-shadow: 0 16px 32px -12px rgba(14, 80, 44, .65); transition: transform .2s ease; }
+/* WhatsApp and e-mail, stacked in the corner; the e-mail one is quieter so WhatsApp stays the main call */
+.fabs { position: fixed; z-index: 40; inset-block-end: calc(20px + env(safe-area-inset-bottom, 0px)); inset-inline-end: calc(20px + env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
+.fabs .fab { justify-content: center; }
+.fab { position: relative; display: inline-flex; align-items: center; gap: 10px; background: #1E9E52; color: #FFFFFF; text-decoration: none; font: 600 15px/1 var(--f-body); padding: 14px 18px; border-radius: 999px; box-shadow: 0 16px 32px -12px rgba(14, 80, 44, .65); transition: transform .2s ease; }
 .fab:hover { transform: translateY(-2px); }
 .fab svg { width: 22px; height: 22px; flex: none; }
-.fab::before { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 2px solid #1E9E52; animation: ring 2.6s ease-out infinite; }
+.fab::before { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 2px solid var(--fab, #1E9E52); animation: ring 2.6s ease-out infinite; }
+/* Same button as WhatsApp, in the brand indigo with an envelope; its ring pulses half a beat later */
+.fab.mail { --fab: #4F49CF; background: var(--fab); box-shadow: 0 16px 32px -12px rgba(47, 42, 154, .65); }
+.fab.mail::before { animation-delay: 1.3s; }
+button.fab { border: 0; cursor: pointer; }
+/* A plain mailto link does nothing on a computer without a mail app: the button offers webmail or a copy */
+.mail-pop { position: absolute; inset-block-end: calc(100% + 12px); inset-inline-end: 0; display: grid; gap: 2px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 10px; min-width: 240px; }
+.mail-pop[hidden] { display: none; }
+.mail-pop b { font-size: 13.5px; color: var(--ink); padding: 6px 10px 8px; direction: ltr; unicode-bidi: isolate; text-align: start; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.mail-pop a, .mail-pop button { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; border: 0; background: none; color: var(--ink); font: 500 14.5px/1.2 var(--f-body); text-decoration: none; cursor: pointer; text-align: start; }
+.mail-pop a:hover, .mail-pop button:hover { background: var(--band); }
+.mail-pop svg { width: 18px; height: 18px; color: var(--indigo); flex: none; }
 @keyframes ring { from { transform: scale(1); opacity: .7; } to { transform: scale(1.35); opacity: 0; } }
 @media (max-width: 600px) { .fab .lbl { display: none; } .fab { padding: 15px; } }
 
@@ -955,7 +969,16 @@ details[open] > p { animation: up .4s ease both; }
   </div>
 </footer>
 
-<a class="fab wa" href="#" target="_blank" rel="noopener" aria-label="WhatsApp"><svg aria-hidden="true"><use href="#i-wa"/></svg><span class="lbl" data-t="fab"></span></a>
+<div class="fabs">
+  <div class="mail-pop" id="mail-pop" hidden>
+    <b id="mail-addr">contact@kiddooschool.com</b>
+    <a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=contact@kiddooschool.com" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-mail"/></svg>Gmail</a>
+    <a href="https://outlook.live.com/mail/0/deeplink/compose?to=contact@kiddooschool.com" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-mail"/></svg>Outlook</a>
+    <button type="button" id="mail-copy"><svg aria-hidden="true"><use href="#i-check"/></svg><span data-t="mail.copy"></span></button>
+  </div>
+  <button class="fab mail" id="fab-mail" type="button" aria-label="E-mail" aria-expanded="false" aria-controls="mail-pop"><svg aria-hidden="true"><use href="#i-mail"/></svg><span class="lbl" data-t="fab.mail"></span></button>
+  <a class="fab wa" href="#" target="_blank" rel="noopener" aria-label="WhatsApp"><svg aria-hidden="true"><use href="#i-wa"/></svg><span class="lbl" data-t="fab"></span></a>
+</div>
 <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true">
   <button class="lb-close" type="button" id="lb-close"><svg aria-hidden="true"><use href="#i-x"/></svg><span hidden data-t="lb.close"></span></button>
   <img id="lb-img" alt="">
@@ -1017,7 +1040,7 @@ const T = {
       { tag: 'Pour les parents', icons: ['i-sun', 'i-chat', 'i-card'], top: ['i-chat', 'Message de Mme Fatima', 'Sara a bien mangé et a joué avec ses camarades.'], link: 'Voir le rapport du jour', tab: 2 },
       { tag: 'Pour la direction', icons: ['i-grid', 'i-card', 'i-cal'], chart: ['Présence de la semaine', ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu'], [92, 95, 89, 96, 96]], link: 'Voir le tableau de bord', tab: 0 }
     ],
-    'fab': 'Une question ?', 'lb.close': 'Fermer', 'zoom': 'Agrandir',
+    'fab': 'Une question ?', 'fab.mail': 'Écrivez-nous', 'mail.copy': 'Copier l’adresse', 'mail.copied': 'Adresse copiée', 'lb.close': 'Fermer', 'zoom': 'Agrandir',
     'foot.tag': 'Le logiciel des crèches et jardins d’enfants, en arabe et en français.', 'foot.copy': '© 2026 Kiddoo · Fait en Algérie',
     'wa.demo': 'Bonjour, je souhaite une démonstration de Kiddoo pour ma crèche.',
     'wa.plan': 'Bonjour, la formule {plan} de Kiddoo m’intéresse pour ma crèche.',
@@ -1127,7 +1150,7 @@ const T = {
       { tag: 'للأولياء', icons: ['i-sun', 'i-chat', 'i-card'], top: ['i-chat', 'رسالة من الأستاذة فاطمة', 'أكلت سارة جيداً ولعبت مع زملائها.'], link: 'شاهد التقرير اليومي', tab: 2 },
       { tag: 'للإدارة', icons: ['i-grid', 'i-card', 'i-cal'], chart: ['حضور الأسبوع', ['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس'], [92, 95, 89, 96, 96]], link: 'شاهد لوحة القيادة', tab: 0 }
     ],
-    'fab': 'لديك سؤال؟', 'lb.close': 'إغلاق', 'zoom': 'تكبير',
+    'fab': 'لديك سؤال؟', 'fab.mail': 'راسلنا', 'mail.copy': 'نسخ العنوان', 'mail.copied': 'تم نسخ العنوان', 'lb.close': 'إغلاق', 'zoom': 'تكبير',
     'foot.tag': 'نظام تسيير الروضات ورياض الأطفال، بالعربية والفرنسية.', 'foot.copy': '© 2026 Kiddoo · صُنع في الجزائر',
     'wa.demo': 'السلام عليكم، أريد تجربة Kiddoo لروضتي.',
     'wa.plan': 'السلام عليكم، أنا مهتم بباقة {plan} من Kiddoo لروضتي.',
@@ -1563,6 +1586,19 @@ $('#copy-num').addEventListener('click', (e) => {
   const done = () => { btn.textContent = L()['cta.copied']; setTimeout(() => { btn.textContent = L()['cta.copy']; }, 1600); };
   const fallback = () => { const r = document.createRange(); r.selectNodeContents($('#wa-num')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
   try { navigator.clipboard.writeText(WHATSAPP_DISPLAY).then(done, fallback); } catch (err) { fallback(); }
+});
+// E-mail button: opens the little menu above it; a click elsewhere or Escape closes it.
+const mailPop = $('#mail-pop'), mailBtn = $('#fab-mail');
+const setMailPop = (open) => { mailPop.hidden = !open; mailBtn.setAttribute('aria-expanded', String(open)); };
+mailBtn.addEventListener('click', () => setMailPop(mailPop.hidden));
+mailPop.addEventListener('click', (e) => { if (e.target.closest('a')) setMailPop(false); });
+document.addEventListener('click', (e) => { if (!mailPop.hidden && !e.target.closest('#mail-pop, #fab-mail')) setMailPop(false); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !mailPop.hidden) { setMailPop(false); mailBtn.focus(); } });
+$('#mail-copy').addEventListener('click', (e) => {
+  const label = e.currentTarget.querySelector('span');
+  const done = () => { label.textContent = L()['mail.copied']; setTimeout(() => { label.textContent = L()['mail.copy']; }, 1600); };
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents($('#mail-addr')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+  try { navigator.clipboard.writeText('contact@kiddooschool.com').then(done, fallback); } catch (err) { fallback(); }
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { clearTimeout(slideTimer); clearTimeout(showTimer); }

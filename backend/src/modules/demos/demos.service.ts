@@ -48,6 +48,7 @@ export interface CreatedDemo {
   expiresAt: string;
   phone: string;
   firstName: string;
+  lastName: string;
   language: 'fr' | 'ar';
   content: 'sample' | 'empty';
   accounts: DemoAccounts;
@@ -427,6 +428,7 @@ class DemosService {
       expiresAt: expiresAt.toISOString(),
       phone: input.phone,
       firstName: input.firstName,
+      lastName: input.lastName,
       language: input.language,
       content,
       accounts,

@@ -31,12 +31,15 @@ export interface CreateDemoInput {
   /** The name the demonstration school takes; by default "Crèche démo". */
   schoolName?: string;
   language: 'fr' | 'ar';
+  /** 'sample': weeks of fictitious life; 'empty': the director's account only, to set up the school themselves. */
+  content?: 'sample' | 'empty';
 }
 
 export interface DemoAccounts {
   director: string;
-  teacher: string;
-  parent: string;
+  /** Only in a demonstration with sample data: an empty one has nobody else. */
+  teacher?: string;
+  parent?: string;
 }
 
 export interface CreatedDemo {
@@ -46,6 +49,7 @@ export interface CreatedDemo {
   phone: string;
   firstName: string;
   language: 'fr' | 'ar';
+  content: 'sample' | 'empty';
   accounts: DemoAccounts;
   /** The same for the three accounts, told once. */
   password: string;
@@ -185,11 +189,13 @@ class DemosService {
    * A demonstration school for one director: its own accounts (director,
    * teacher, parent) and weeks of fictitious life (classes, children,
    * attendance, payments, late families, expenses, announcements), dated from
-   * the start of the school year to today. Nobody else's data is touched; it
-   * closes after DEMO_DAYS days.
+   * the start of the school year to today. Or, empty, the school alone (its
+   * year and branch) with the director's account, for the director to fill.
+   * Nobody else's data is touched; it closes after DEMO_DAYS days.
    */
   async create(input: CreateDemoInput): Promise<CreatedDemo> {
     const T = TEXT[input.language];
+    const content = input.content ?? 'sample';
     const today = schoolToday();
     const year = schoolYearOf(today);
     // The weeks the school has been running: from the year's start, at least three weeks back.
@@ -198,7 +204,8 @@ class DemosService {
     const rnd = randomFrom(code);
     const password = temporaryPassword();
     const login = (who: string) => `${who}.${code}@${DEMO_EMAIL_DOMAIN}`;
-    const accounts: DemoAccounts = { director: login('directeur'), teacher: login('enseignant'), parent: login('parent') };
+    const accounts: DemoAccounts =
+      content === 'empty' ? { director: login('directeur') } : { director: login('directeur'), teacher: login('enseignant'), parent: login('parent') };
     const expiresAt = new Date(Date.now() + DEMO_DAYS * 24 * 60 * 60 * 1000);
     const schoolName = input.schoolName?.trim() || T.school;
 
@@ -245,10 +252,12 @@ class DemosService {
           });
 
         const director = await person({ firstName: input.firstName, lastName: input.lastName, role: 'admin', email: accounts.director, hash: passwordHash });
+        if (content === 'empty') return { school, director, sample: null };
+
         const secretary = await person({ firstName: T.secretary[0], lastName: T.secretary[1], role: 'administrative', email: login(`secretariat`), hash: nobodyHash });
         const teachers = await Promise.all(
           TEACHERS.map(([firstName, lastName], i) =>
-            person({ firstName, lastName, role: 'teacher', email: i === 0 ? accounts.teacher : login(`enseignant${i + 1}`), hash: i === 0 ? passwordHash : nobodyHash }),
+            person({ firstName, lastName, role: 'teacher', email: i === 0 ? login('enseignant') : login(`enseignant${i + 1}`), hash: i === 0 ? passwordHash : nobodyHash }),
           ),
         );
 
@@ -318,7 +327,7 @@ class DemosService {
               parentId = demoParentId;
             } else {
               const mother = MOTHERS[n % MOTHERS.length];
-              const parent = await person({ firstName: mother, lastName, role: 'parent', email: n === 0 ? accounts.parent : login(`parent${n + 1}`), hash: n === 0 ? passwordHash : nobodyHash });
+              const parent = await person({ firstName: mother, lastName, role: 'parent', email: n === 0 ? login('parent') : login(`parent${n + 1}`), hash: n === 0 ? passwordHash : nobodyHash });
               parentId = parent.id;
               if (n === 0) demoParentId = parent.id;
             }
@@ -401,13 +410,16 @@ class DemosService {
           });
         }
 
-        return { school, branch, academicYear, director, secretary, children };
+        return { school, director, sample: { branch, academicYear, secretary, children } };
       },
       { timeout: 60_000, maxWait: 10_000 },
     );
 
-    await this.fillMoney(built, T, rnd, today, opened);
-    await this.addPictures(built, T, rnd, `${input.firstName} ${input.lastName}`.trim());
+    if (built.sample) {
+      const filled = { school: built.school, director: built.director, ...built.sample };
+      await this.fillMoney(filled, T, rnd, today, opened);
+      await this.addPictures(filled, T, rnd, `${input.firstName} ${input.lastName}`.trim());
+    }
 
     return {
       schoolId: built.school.id,
@@ -416,6 +428,7 @@ class DemosService {
       phone: input.phone,
       firstName: input.firstName,
       language: input.language,
+      content,
       accounts,
       password,
     };

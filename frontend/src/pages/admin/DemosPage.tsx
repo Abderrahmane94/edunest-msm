@@ -42,6 +42,7 @@ interface CreatedDemo {
   expiresAt: string;
   phone: string;
   firstName: string;
+  lastName: string;
   language: 'fr' | 'ar';
   content: DemoContent;
   /** An empty demonstration has the director's account only. */
@@ -75,7 +76,7 @@ function demoMessage(t: (key: string, o?: Record<string, unknown>) => string, de
   const o = { lng: demo.language };
   const empty = demo.content === 'empty';
   return [
-    t('demos.whatsapp.greeting', { ...o, name: demo.firstName }),
+    t('demos.whatsapp.greeting', { ...o, name: `${demo.firstName} ${demo.lastName}`.trim() }),
     t(empty ? 'demos.whatsapp.introEmpty' : 'demos.whatsapp.intro', o),
     [
       t('demos.whatsapp.link', { ...o, url: `${window.location.origin}/login` }),

@@ -24,6 +24,17 @@ export const adminController = {
   },
 
   /**
+   * GET /api/admin/setup — The director's first steps, done or not
+   */
+  async getSetup(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      res.status(200).json(successResponse(await dashboardService.getSetup(req.user!.schoolId!)));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
    * GET /api/admin/platform-stats — The platform admin's dashboard (super_admin)
    */
   async getPlatformStats(_req: Request, res: Response, next: NextFunction): Promise<void> {

@@ -23,6 +23,7 @@ import { FormField, FormSelect } from '@/components/forms';
 import { apiClient, apiError } from '@/lib/api-client';
 import { errorMessage } from '@/lib/errorMessage';
 import { formatDate, formatDateTime } from '@/lib/formatters';
+import { cn } from '@/lib/utils';
 import { whatsappLink } from '@/lib/whatsapp';
 
 interface DemoRow {
@@ -42,9 +43,15 @@ interface CreatedDemo {
   phone: string;
   firstName: string;
   language: 'fr' | 'ar';
-  accounts: { director: string; teacher: string; parent: string };
+  content: DemoContent;
+  /** An empty demonstration has the director's account only. */
+  accounts: { director: string; teacher?: string; parent?: string };
   password: string;
 }
+
+type DemoContent = 'sample' | 'empty';
+const CONTENTS: DemoContent[] = ['sample', 'empty'];
+const WHO = ['director', 'teacher', 'parent'] as const;
 
 function useDemos() {
   return useQuery({
@@ -66,16 +73,18 @@ function useDemoAction<T>(fn: (input: T) => Promise<unknown>) {
 /** The message that gives the director their demonstration, in the demonstration's language. */
 function demoMessage(t: (key: string, o?: Record<string, unknown>) => string, demo: CreatedDemo): string {
   const o = { lng: demo.language };
+  const empty = demo.content === 'empty';
   return [
     t('demos.whatsapp.greeting', { ...o, name: demo.firstName }),
-    t('demos.whatsapp.intro', o),
-    [t('demos.whatsapp.link', { ...o, url: `${window.location.origin}/login` }), t('demos.whatsapp.password', { ...o, password: demo.password })].join('\n'),
+    t(empty ? 'demos.whatsapp.introEmpty' : 'demos.whatsapp.intro', o),
     [
-      t('demos.whatsapp.director', { ...o, login: demo.accounts.director }),
-      t('demos.whatsapp.teacher', { ...o, login: demo.accounts.teacher }),
-      t('demos.whatsapp.parent', { ...o, login: demo.accounts.parent }),
+      t('demos.whatsapp.link', { ...o, url: `${window.location.origin}/login` }),
+      t(empty ? 'demos.whatsapp.passwordOne' : 'demos.whatsapp.password', { ...o, password: demo.password }),
     ].join('\n'),
-    t('demos.whatsapp.tip', o),
+    WHO.filter((who) => demo.accounts[who])
+      .map((who) => t(`demos.whatsapp.${who}`, { ...o, login: demo.accounts[who] }))
+      .join('\n'),
+    t(empty ? 'demos.whatsapp.tipEmpty' : 'demos.whatsapp.tip', o),
     t('demos.whatsapp.until', { ...o, date: formatDate(demo.expiresAt, demo.language) }),
     `— ${t('whatsapp.msg.team', o)}`,
   ].join('\n\n');
@@ -189,7 +198,7 @@ export function DemosPage() {
   );
 }
 
-const emptyForm = { firstName: '', lastName: '', phone: '', schoolName: '', language: 'fr' as 'fr' | 'ar' };
+const emptyForm = { firstName: '', lastName: '', phone: '', schoolName: '', language: 'fr' as 'fr' | 'ar', content: 'sample' as DemoContent };
 
 function CreateDemoDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { t } = useTranslation();
@@ -233,13 +242,15 @@ function CreateDemoDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
       <DialogContent className="max-w-[520px]">
         <DialogHeader>
           <DialogTitle>{created ? t('demos.ready.title') : t('demos.form.title')}</DialogTitle>
-          <DialogDescription>{created ? t('demos.ready.description') : t('demos.form.description')}</DialogDescription>
+          <DialogDescription>
+            {created ? t(created.content === 'empty' ? 'demos.ready.descriptionEmpty' : 'demos.ready.description') : t('demos.form.description')}
+          </DialogDescription>
         </DialogHeader>
 
         {created ? (
           <div className="space-y-4">
             <dl className="rounded-lg border border-border divide-y divide-border text-body">
-              {(['director', 'teacher', 'parent'] as const).map((who) => (
+              {WHO.filter((who) => created.accounts[who]).map((who) => (
                 <div key={who} className="flex items-center justify-between gap-3 px-3 py-2">
                   <dt className="text-text-secondary">{t(`demos.accounts.${who}`)}</dt>
                   <dd className="font-mono text-caption break-all text-end" dir="ltr">{created.accounts[who]}</dd>
@@ -280,6 +291,24 @@ function CreateDemoDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-1">
+            <div role="radiogroup" aria-label={t('demos.form.content')} className="grid grid-cols-1 sm:grid-cols-2 gap-2 pb-3">
+              {CONTENTS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  role="radio"
+                  aria-checked={form.content === c}
+                  onClick={() => setForm((f) => ({ ...f, content: c }))}
+                  className={cn(
+                    'rounded-lg border px-3 py-2 text-start focus-visible:outline-none focus-visible:shadow-focus-ring',
+                    form.content === c ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40',
+                  )}
+                >
+                  <span className="block text-body font-medium text-foreground">{t(`demos.form.contents.${c}`)}</span>
+                  <span className="block text-caption text-text-secondary">{t(`demos.form.contents.${c}Hint`)}</span>
+                </button>
+              ))}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
               <FormField label={t('demos.form.firstName')} htmlFor="demo-first" required>
                 <Input id="demo-first" value={form.firstName} onChange={set('firstName')} dir="auto" />

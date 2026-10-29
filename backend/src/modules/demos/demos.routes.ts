@@ -12,6 +12,7 @@ const createDemoSchema = z.object({
   phone: z.string().trim().min(8).max(20).regex(/^[0-9+ ().-]+$/, 'Invalid phone number'),
   schoolName: z.string().trim().max(100).optional(),
   language: z.enum(['fr', 'ar']).default('fr'),
+  content: z.enum(['sample', 'empty']).default('sample'),
 });
 
 const extendSchema = z.object({ days: z.number().int().min(1).max(30) });
@@ -37,7 +38,7 @@ router.get('/', requireSuperAdmin, handle(async (_req, res) => {
   res.status(200).json(successResponse(await demosService.list()));
 }));
 
-// POST /api/demos — A demonstration school for one director, filled with fictitious data
+// POST /api/demos — A demonstration school for one director, filled with fictitious data or empty
 router.post('/', requireSuperAdmin, validate(createDemoSchema), handle(async (req, res) => {
   res.status(201).json(successResponse(await demosService.create(req.body)));
 }));

@@ -1,5 +1,6 @@
 import { NewAccountDialog } from '@/components/NewAccountDialog';
 import { DemoBanner } from '@/components/DemoBanner';
+import { FirstStepsGuide } from '@/components/FirstStepsGuide';
 import { PushNotificationsBanner } from '@/components/PushNotifications';
 import * as React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
@@ -55,6 +56,7 @@ export function AdminLayout({ navItems, sidebarHeader, sidebarFooter, sidebarSta
             <Outlet />
           </ErrorBoundary>
           <NewAccountDialog />
+          <FirstStepsGuide />
         </PageContainer>
       </div>
 

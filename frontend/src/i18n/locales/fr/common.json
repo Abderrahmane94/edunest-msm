@@ -83,6 +83,14 @@
         "progress": "{{done}} sur {{total}} étapes faites — tout se coche tout seul.",
         "hide": "Masquer",
         "done": "Fait",
+        "guide": {
+          "open": "Ouvrir les premiers pas",
+          "close": "Réduire",
+          "here": "Vous êtes ici",
+          "next": "Suivant : {{step}}",
+          "justDone": "{{step}} : c'est fait !",
+          "allDone": "Bravo, votre crèche est prête !"
+        },
         "steps": {
           "year": {
             "title": "L'année scolaire",
@@ -4134,7 +4142,7 @@
   },
   "demos": {
     "title": "Démonstrations",
-    "description": "Une crèche fictive déjà remplie pour chaque directeur qui veut essayer Kiddoo. Chacune est séparée des autres et se ferme seule au bout de 14 jours.",
+    "description": "Une crèche de démonstration pour chaque directeur qui veut essayer Kiddoo : déjà remplie de données fictives, ou vide pour qu'il la configure lui-même. Chacune est séparée des autres et se ferme seule au bout de 14 jours.",
     "create": "Nouvelle démo",
     "empty": "Aucune démonstration en cours.",
     "neverUsed": "Pas encore connecté",
@@ -4142,7 +4150,7 @@
     "end": "Fermer",
     "endConfirm": {
       "title": "Fermer la démo de {{name}} ?",
-      "description": "Ses comptes ne pourront plus se connecter. Les données fictives ne seront plus visibles."
+      "description": "Ses comptes ne pourront plus se connecter. Ses données ne seront plus visibles."
     },
     "columns": {
       "director": "Directeur",
@@ -4153,7 +4161,14 @@
     },
     "form": {
       "title": "Nouvelle démo",
-      "description": "Kiddoo prépare une crèche fictive (classes, enfants, présences, paiements, dépenses) rien que pour ce directeur.",
+      "description": "Kiddoo prépare une crèche rien que pour ce directeur.",
+      "content": "Contenu de la démo",
+      "contents": {
+        "sample": "Avec données fictives",
+        "sampleHint": "Classes, enfants, présences, paiements et dépenses déjà là.",
+        "empty": "Crèche vide",
+        "emptyHint": "Le compte Directeur seul : il crée ses classes, ses enfants et son équipe."
+      },
       "firstName": "Prénom du directeur",
       "lastName": "Nom",
       "phone": "Téléphone (WhatsApp)",
@@ -4168,6 +4183,7 @@
     "ready": {
       "title": "La démo est prête",
       "description": "Trois comptes pour voir chaque écran, avec le même mot de passe.",
+      "descriptionEmpty": "Une crèche vide et le compte Directeur, pour tout configurer soi-même.",
       "once": "Le mot de passe ne sera plus affiché : envoyez-le maintenant.",
       "whatsapp": "Envoyer par WhatsApp",
       "copy": "Copier le message",
@@ -4181,17 +4197,20 @@
     },
     "banner": {
       "title": "Démonstration.",
-      "text": "Les enfants, les familles et les paiements sont fictifs : essayez tout librement. Ouverte jusqu'au {{date}}."
+      "text": "Cette crèche sert à essayer Kiddoo : essayez tout librement. Ouverte jusqu'au {{date}}."
     },
     "whatsapp": {
       "greeting": "Bonjour {{name}},",
       "intro": "Voici votre démonstration de Kiddoo : une crèche fictive déjà remplie (classes, enfants, présences, paiements), rien que pour vous. Essayez tout, vous ne pouvez rien casser.",
       "link": "🔗 {{url}}",
+      "introEmpty": "Voici votre démonstration de Kiddoo : une crèche vide, rien que pour vous. Créez vos classes, ajoutez vos enfants et votre équipe, et voyez comment Kiddoo s'adapte à votre crèche.",
       "password": "Mot de passe (le même pour les 3 comptes) : *{{password}}*",
+      "passwordOne": "Mot de passe : *{{password}}*",
       "director": "👩‍💼 Directeur : {{login}}",
       "teacher": "👩‍🏫 Enseignante : {{login}}",
       "parent": "👪 Parent : {{login}}",
       "tip": "Commencez par le compte Directeur. Ouvrez ensuite le compte Parent sur votre téléphone pour voir ce que voient les familles.",
+      "tipEmpty": "Sur le tableau de bord, suivez les « Premiers pas » : salles, classes, frais, équipe, puis enfants.",
       "until": "La démonstration reste ouverte jusqu'au {{date}}."
     }
   }

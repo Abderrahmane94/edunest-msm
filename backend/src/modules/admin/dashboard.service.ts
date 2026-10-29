@@ -170,7 +170,27 @@ export function collectedByMonth(
 
 // ─── Data ───
 
+/** Rooms, active fees and staff: three of the first steps. */
+const setupCounts = (schoolId: string) =>
+  Promise.all([
+    prisma.room.count({ where: { schoolId } }),
+    prisma.branchFee.count({ where: { branch: { schoolId }, isActive: true } }),
+    prisma.user.count({ where: { schoolId, deletedAt: null, role: { in: ['teacher', 'administrative', 'staff'] } } }),
+  ]);
+
 export const dashboardService = {
+  /** The first steps alone (the dashboard's `setup`), light enough for the guide that follows the director. */
+  async getSetup(schoolId: string): Promise<AdminDashboard['setup']> {
+    const activeYear = await prisma.academicYear.findFirst({ where: { schoolId, isActive: true }, select: { id: true } });
+    const [classes, children, [rooms, fees, team]] = await Promise.all([
+      prisma.classroom.count({ where: { schoolId, deletedAt: null, ...(activeYear && { academicYearId: activeYear.id }) } }),
+      prisma.child.count({ where: { schoolId, isActive: true, deletedAt: null } }),
+      setupCounts(schoolId),
+    ]);
+    return { year: !!activeYear, rooms: rooms > 0, classes: classes > 0, fees: fees > 0, team: team > 0, children: children > 0 };
+  },
+
+
   async getAdminDashboard(schoolId: string, now: Date = new Date()): Promise<AdminDashboard> {
     const today = schoolToday(now);
     const todayDate = asDate(today);
@@ -299,11 +319,7 @@ export const dashboardService = {
       activeYear?.id ?? null,
     );
 
-    const [rooms, fees, team] = await Promise.all([
-      prisma.room.count({ where: { schoolId } }),
-      prisma.branchFee.count({ where: { branch: { schoolId }, isActive: true } }),
-      prisma.user.count({ where: { schoolId, deletedAt: null, role: { in: ['teacher', 'administrative', 'staff'] } } }),
-    ]);
+    const [rooms, fees, team] = await setupCounts(schoolId);
 
     const monthly = collectedByMonth(payments, chartMonths);
     const collected = monthly[monthly.length - 1].collected;

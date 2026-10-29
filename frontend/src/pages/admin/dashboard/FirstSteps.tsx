@@ -1,55 +1,23 @@
-import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronRight, Rocket, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import type { AdminDashboard as Dashboard } from '@/hooks/useAdminDashboard';
-
-type Step = keyof Dashboard['setup'];
-
-/** In the order a new school sets itself up, each with where it is done. */
-const STEPS: { key: Step; to: string }[] = [
-  { key: 'year', to: '/admin/settings?tab=years' },
-  { key: 'rooms', to: '/admin/settings?tab=rooms' },
-  { key: 'classes', to: '/admin/classrooms' },
-  { key: 'fees', to: '/admin/payments?tab=config' },
-  { key: 'team', to: '/admin/users' },
-  { key: 'children', to: '/admin/children' },
-];
-
-const hiddenKey = (schoolId: string) => `kiddoo:first-steps-hidden:${schoolId}`;
-
-function readHidden(schoolId: string): boolean {
-  try {
-    return localStorage.getItem(hiddenKey(schoolId)) === '1';
-  } catch {
-    return false;
-  }
-}
+import { STEPS, useFirstStepsHidden, type Setup } from '@/lib/firstSteps';
 
 /**
  * A new school's first steps on the director's dashboard: each one ticks
- * itself when done, and the card goes once all are (or when put away).
+ * itself when done, and the card goes once all are (or when put away). On
+ * the other pages, FirstStepsGuide carries them.
  */
-export function FirstSteps({ setup }: { setup: Dashboard['setup'] }) {
+export function FirstSteps({ setup }: { setup: Setup }) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const schoolId = user?.schoolId ?? '';
-  const [hidden, setHidden] = React.useState(() => readHidden(schoolId));
+  const [hidden, hide] = useFirstStepsHidden(user?.schoolId ?? '');
 
   const done = STEPS.filter((s) => setup[s.key]).length;
   if (hidden || done === STEPS.length) return null;
   const next = STEPS.find((s) => !setup[s.key]);
-
-  function hide() {
-    setHidden(true);
-    try {
-      localStorage.setItem(hiddenKey(schoolId), '1');
-    } catch {
-      // No device storage: it shows again next time, nothing else.
-    }
-  }
 
   return (
     <section className="bg-card border border-border rounded-2xl p-5 sm:p-6" aria-labelledby="first-steps-title">

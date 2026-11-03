@@ -5,6 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Kiddoo réunit la direction, les éducatrices et les parents : présence, rapport du jour, messages, frais et équipe, en arabe et en français.">
 <link rel="icon" href="https://app.kiddooschool.com/favicon.svg" type="image/svg+xml">
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '2354393235321830');
+fbq('track', 'PageView');
+// A click on any WhatsApp button (demo or plan) is a Contact: the demo requests the ads bring.
+document.addEventListener('click', function (e) {
+  var a = e.target.closest && e.target.closest('a[href^="https://wa.me/"]');
+  if (a) fbq('track', 'Contact');
+});
+</script>
+<!-- End Meta Pixel Code -->
 <style>
   :root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
   body { margin: 0; font-size: 14px; font-family: system-ui, sans-serif; }
@@ -726,6 +745,9 @@ details[open] > p { animation: up .4s ease both; }
 </style>
 </head>
 <body>
+<noscript><img height="1" width="1" style="display:none" alt=""
+src="https://www.facebook.com/tr?id=2354393235321830&ev=PageView&noscript=1"
+/></noscript>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -1236,7 +1258,7 @@ function detectCurrency() {
 }
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const state = {
-  lang: store.get('kdp-lang') || ((navigator.language || '').toLowerCase().startsWith('ar') ? 'ar' : 'fr'),
+  lang: (/^(ar|fr)$/.test(new URLSearchParams(location.search).get('lang')) && new URLSearchParams(location.search).get('lang')) || store.get('kdp-lang') ||((navigator.language || '').toLowerCase().startsWith('ar') ? 'ar' : 'fr'),
   slide: 0, show: 0, yearly: false,
   cur: 'DZD'
 };

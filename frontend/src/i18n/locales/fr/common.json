@@ -649,6 +649,7 @@
     "dashboard": "Tableau de bord",
     "schools": "Écoles",
     "demos": "Démos",
+    "associations": "Associations",
     "children": "Enfants",
     "classrooms": "Classes",
     "academicYears": "Années",
@@ -1101,6 +1102,10 @@
     "nextPage": "Page suivante"
   },
   "schoolSettings": {
+    "association": {
+      "title": "Ce club fait partie de l'association « {{name}} »",
+      "sees": "Ses responsables voient vos chiffres : enfants inscrits, équipe, classes, présences, encaissements, dépenses et impayés. Jamais de noms, et ils ne peuvent rien modifier."
+    },
     "title": "Paramètres de l'école",
     "logo": "Logo de l'école",
     "uploadLogo": "Télécharger le logo",
@@ -1194,7 +1199,8 @@
       "administrative": "Agent administratif",
       "teacher": "Enseignant",
       "parent": "Parent",
-      "staff": "Employé sans accès"
+      "staff": "Employé sans accès",
+      "association": "Responsable d'association"
     },
     "notFound": "Utilisateur introuvable",
     "detail": {
@@ -4127,6 +4133,7 @@
         "teacher": "*{{school}}* vous a créé un compte sur *Kiddoo* : faites l'appel, rédigez les comptes rendus et échangez avec les parents, depuis votre téléphone.",
         "admin": "Votre établissement *{{school}}* est prêt sur *Kiddoo* : enfants, équipe, paiements et communication avec les parents, tout au même endroit.",
         "administrative": "*{{school}}* vous a créé un compte sur *Kiddoo* pour le travail administratif.",
+        "association": "L'espace de *{{school}}* est prêt sur *Kiddoo* : les chiffres de vos clubs (enfants, équipes, présences, finances), en un coup d'œil.",
         "other": "Un compte a été créé pour vous sur *Kiddoo*."
       },
       "reset": "Voici un nouveau mot de passe temporaire pour votre compte *Kiddoo*.",
@@ -4213,5 +4220,109 @@
       "tipEmpty": "Sur le tableau de bord, suivez les « Premiers pas » : salles, classes, frais, équipe, puis enfants.",
       "until": "La démonstration reste ouverte jusqu'au {{date}}."
     }
+  },
+  "associations": {
+    "title": "Associations",
+    "description": "Les associations qui gèrent plusieurs clubs : leurs responsables voient les chiffres de chaque club, rien d'autre.",
+    "create": "Nouvelle association",
+    "name": "Nom de l'association",
+    "empty": {
+      "title": "Aucune association",
+      "description": "Créez une association, rattachez-y ses clubs, puis créez le compte de ses responsables."
+    },
+    "rename": "Renommer",
+    "remove": "Supprimer l'association",
+    "removeNotEmpty": "Retirez d'abord ses clubs et ses responsables",
+    "removeConfirm": "Supprimer l'association « {{name}} » ?",
+    "clubs": {
+      "title": "Clubs",
+      "none": "Aucun club rattaché pour l'instant.",
+      "add": "Rattacher un club",
+      "addShort": "Rattacher",
+      "pick": "Choisir une école…",
+      "noneLeft": "Toutes les écoles sont déjà rattachées",
+      "remove": "Retirer {{name}}",
+      "removeShort": "Retirer",
+      "removeConfirm": "Retirer « {{name}} » de l'association ?",
+      "removeHint": "Le club garde toutes ses données ; l'association ne verra plus ses chiffres."
+    },
+    "officers": {
+      "title": "Responsables",
+      "none": "Aucun responsable : créez un compte pour que l'association voie ses chiffres.",
+      "add": "Ajouter un responsable",
+      "create": "Créer le compte",
+      "formHint": "Il verra les chiffres des clubs de « {{name}} », sans aucun nom ni modification possible.",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "loginHint": "Il se connecte avec son e-mail, ou avec son téléphone s'il n'en a pas.",
+      "lastActive": "actif le {{date}}",
+      "never": "jamais connecté",
+      "remove": "Fermer le compte",
+      "removeConfirm": "Fermer le compte de {{name}} ?",
+      "removeHint": "Il est déconnecté tout de suite et ne pourra plus se connecter."
+    },
+    "summary_one": "{{clubs}} club(s) · {{count}} responsable",
+    "summary_other": "{{clubs}} club(s) · {{count}} responsables"
+  },
+  "associationDashboard": {
+    "title": "Association",
+    "export": "Exporter (Excel)",
+    "print": "Imprimer / PDF",
+    "month": "Mois",
+    "monthHint": "Le mois choisi vaut pour l'argent, les nouvelles inscriptions et le taux de présence. Le reste est à la date d'aujourd'hui.",
+    "noClubs": "Aucun club n'est encore rattaché à votre association.",
+    "byClub": "Club par club",
+    "footnote": "Chiffres uniquement : les clubs gèrent eux-mêmes leurs enfants, leur équipe et leur argent.",
+    "closed": "Fermé",
+    "dayOff": "Jour non travaillé",
+    "staffDetail": "{{teachers}} enseignants, {{office}} au bureau, {{other}} autres",
+    "columns": {
+      "club": "Club",
+      "children": "Enfants",
+      "staff": "Équipe",
+      "classrooms": "Classes",
+      "today": "Présents aujourd'hui",
+      "monthAttendance": "Présence du mois",
+      "collected": "Encaissé",
+      "spent": "Dépenses + salaires",
+      "net": "Solde",
+      "late": "Impayés",
+      "recovery": "Recouvrement"
+    },
+    "kpi": {
+      "children": "Enfants inscrits",
+      "staff": "Membres de l'équipe",
+      "today": "Présence aujourd'hui",
+      "monthAttendance": "Taux de présence — {{month}}",
+      "collected": "Encaissé — {{month}}",
+      "spent": "Dépenses + salaires — {{month}}",
+      "net": "Solde — {{month}}",
+      "late": "Impayés à ce jour",
+      "newInMonth_one": "+{{count}} ce mois",
+      "newInMonth_other": "+{{count}} ce mois"
+    },
+    "csv": {
+      "wilaya": "Wilaya",
+      "newInMonth": "Nouveaux ce mois",
+      "teachers": "Enseignants",
+      "office": "Bureau",
+      "otherStaff": "Autre personnel",
+      "capacity": "Places",
+      "enrolled": "Inscrits en classe",
+      "presentToday": "Présents aujourd'hui",
+      "expectedToday": "Attendus aujourd'hui",
+      "expenses": "Dépenses",
+      "salaries": "Salaires",
+      "lateChildren": "Enfants en retard de paiement",
+      "total": "Total"
+    },
+    "description_one": "Les chiffres de votre club",
+    "description_other": "Les chiffres de vos {{count}} clubs",
+    "totals_one": "Total (1 club)",
+    "totals_other": "Total ({{count}} clubs)",
+    "teachersShort_one": "{{count}} enseignant",
+    "teachersShort_other": "{{count}} enseignants",
+    "lateChildren_one": "{{count}} enfant",
+    "lateChildren_other": "{{count}} enfants"
   }
 }

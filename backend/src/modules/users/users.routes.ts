@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { protectDirectors } from './users.guards';
 import { usersController } from './users.controller';
-import { requireActiveRole } from '../../middleware/rbac.middleware';
+import { requireActiveRole, requireOwnAccount } from '../../middleware/rbac.middleware';
 import { requirePermission, requireAnyOffice } from '../../middleware/permission.middleware';
 import { validate, validateParams } from '../../middleware/validation.middleware';
 import {
@@ -34,13 +34,13 @@ const avatarUpload = multer({
 const router = Router();
 
 // "Mon profil" — every account, on itself only (before /:id, which would take "me").
-router.get('/me/profile', requireActiveRole, profileController.get);
-router.patch('/me/profile', requireActiveRole, validate(updateMyProfileSchema), profileController.update);
-router.post('/me/avatar', requireActiveRole, avatarUpload.single('avatar'), profileController.setAvatar);
-router.delete('/me/avatar', requireActiveRole, profileController.removeAvatar);
+router.get('/me/profile', requireOwnAccount, profileController.get);
+router.patch('/me/profile', requireOwnAccount, validate(updateMyProfileSchema), profileController.update);
+router.post('/me/avatar', requireOwnAccount, avatarUpload.single('avatar'), profileController.setAvatar);
+router.delete('/me/avatar', requireOwnAccount, profileController.removeAvatar);
 
 // POST /api/users/change-password — Change own password (authenticated, first-login forced change)
-router.post('/change-password', requireActiveRole, validate(changePasswordSchema), authController.changePassword);
+router.post('/change-password', requireOwnAccount, validate(changePasswordSchema), authController.changePassword);
 
 // POST /api/users — Create user directly in admin's school (admin only)
 router.post('/', requirePermission('staff', 'edit'), protectDirectors, validate(createUserDirectlySchema), usersController.create);

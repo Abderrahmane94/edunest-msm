@@ -10,7 +10,7 @@ interface User {
   email: string | null;
   firstName: string;
   lastName: string;
-  role: 'super_admin' | 'admin' | 'administrative' | 'teacher' | 'parent';
+  role: 'super_admin' | 'association' | 'admin' | 'administrative' | 'teacher' | 'parent';
   schoolId: string | null;
   preferredLanguage: 'ar' | 'fr';
   mustChangePassword?: boolean;

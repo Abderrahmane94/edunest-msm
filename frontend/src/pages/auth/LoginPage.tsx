@@ -27,6 +27,7 @@ function getDefaultRoute(role?: string): string {
     case 'super_admin':
     case 'admin':
     case 'administrative': return '/admin';
+    case 'association': return '/association';
     case 'teacher': return '/teacher';
     case 'parent': return '/parent';
     default: return '/admin';

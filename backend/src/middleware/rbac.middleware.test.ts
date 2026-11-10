@@ -243,8 +243,9 @@ describe('rbac middleware', () => {
       expect(ROLE_HIERARCHY.parent).toBeGreaterThan(ROLE_HIERARCHY.student);
     });
 
-    it('should include all seven roles', () => {
-      expect(Object.keys(ROLE_HIERARCHY)).toHaveLength(7);
+    it('should include all eight roles', () => {
+      expect(Object.keys(ROLE_HIERARCHY)).toHaveLength(8);
+      expect(ROLE_HIERARCHY).toHaveProperty('association');
       expect(ROLE_HIERARCHY).toHaveProperty('super_admin');
       expect(ROLE_HIERARCHY).toHaveProperty('admin');
       expect(ROLE_HIERARCHY).toHaveProperty('administrative');

@@ -58,7 +58,7 @@ export function Sidebar({ items, header, status, footer }: SidebarProps) {
           )}
           <NavLink
             to={item.href}
-            end={item.href === '/admin' || item.href === '/teacher' || item.href === '/parent'}
+            end={item.href === '/admin' || item.href === '/association' || item.href === '/teacher' || item.href === '/parent'}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 px-2 py-1.5 rounded-xl text-body font-medium transition-all duration-150 shrink-0',

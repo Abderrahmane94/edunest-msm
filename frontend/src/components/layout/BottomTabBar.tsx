@@ -17,7 +17,7 @@ interface BottomTabBarProps {
 const MAX_VISIBLE_WITH_OVERFLOW = 4;
 
 function isItemActive(item: NavItem, pathname: string): boolean {
-  const isRoot = item.href === '/admin' || item.href === '/teacher' || item.href === '/parent';
+  const isRoot = item.href === '/admin' || item.href === '/association' || item.href === '/teacher' || item.href === '/parent';
   return isRoot ? pathname === item.href : pathname.startsWith(item.href);
 }
 
@@ -62,7 +62,7 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
           <NavLink
             key={item.href}
             to={item.href}
-            end={item.href === '/admin' || item.href === '/teacher' || item.href === '/parent'}
+            end={item.href === '/admin' || item.href === '/association' || item.href === '/teacher' || item.href === '/parent'}
             className={({ isActive }) =>
               cn(
                 'flex flex-col items-center justify-center gap-0.5 px-2 py-1 min-w-[48px] min-h-[48px] rounded-md transition-colors duration-150',
@@ -152,7 +152,7 @@ export function BottomTabBar({ items }: BottomTabBarProps) {
                 )}
                 <NavLink
                   to={item.href}
-                  end={item.href === '/admin' || item.href === '/teacher' || item.href === '/parent'}
+                  end={item.href === '/admin' || item.href === '/association' || item.href === '/teacher' || item.href === '/parent'}
                   className={({ isActive }) =>
                     cn(
                       'flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl text-center transition-colors duration-150',

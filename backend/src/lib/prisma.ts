@@ -89,6 +89,7 @@ function createTenantScopedClient() {
 /** Models that don't have a schoolId field */
 const MODELS_WITHOUT_SCHOOL_ID = new Set([
   'School',
+  'Association',
   'RefreshToken',
   'PasswordResetToken',
   'InvitationToken',

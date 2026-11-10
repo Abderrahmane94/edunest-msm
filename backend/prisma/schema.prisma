@@ -19,6 +19,9 @@ enum SchoolType {
 
 enum UserRole {
   super_admin
+  /// An association's officer: sees the figures of its clubs (each a school
+  /// run on its own), nothing else: no names, no changes.
+  association
   admin
   /// إداري: office staff (registration, attendance, communication, inventory,
   /// collecting payments) without the director's management rights.
@@ -146,6 +149,19 @@ enum NotificationType {
 
 // ─── Models ──────────────────────────────────────────────────────────────────
 
+/// An association running several clubs (each a school of its own): its
+/// officers see the clubs' figures side by side. The platform links the clubs.
+model Association {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  schools School[]
+  users   User[]
+
+  @@map("associations")
+}
+
 model School {
   id           String     @id @default(uuid())
   name         String
@@ -167,6 +183,8 @@ model School {
   /// subscribe): closed from this moment on, its data kept until the platform
   /// erases it. Null once subscribed, and for every other school.
   trialEndsAt     DateTime? @map("trial_ends_at")
+  /// The association this school (a club) belongs to: it sees the club's figures.
+  associationId   String?   @map("association_id")
   deletedAt    DateTime?  @map("deleted_at")
   createdAt    DateTime   @default(now()) @map("created_at")
 
@@ -189,8 +207,10 @@ model School {
   expenses       Expense[]
   subscription   SchoolSubscription?
   branches       Branch[]
+  association    Association? @relation(fields: [associationId], references: [id])
 
   @@index([deletedAt])
+  @@index([associationId])
   @@map("schools")
 }
 
@@ -220,11 +240,14 @@ model User {
   preferredLanguage  Language  @default(fr) @map("preferred_language")
   // When the user last used the app (login or session renewal, at most daily).
   lastActiveAt       DateTime? @map("last_active_at")
+  /// The association an officer (role association) sees; null for every other role.
+  associationId      String?   @map("association_id")
   deletedAt          DateTime? @map("deleted_at")
   createdAt          DateTime  @default(now()) @map("created_at")
 
   school                      School?              @relation(fields: [schoolId], references: [id])
   branch                      Branch?              @relation(fields: [branchId], references: [id])
+  association                 Association?         @relation(fields: [associationId], references: [id])
   staffProfile                StaffProfile?
   staffShifts                 StaffShift[]         @relation("StaffShifts")
   staffAbsences               StaffAbsence[]       @relation("StaffAbsences")

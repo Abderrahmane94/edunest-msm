@@ -177,7 +177,13 @@ export const authService = {
     if (matches.length > 1) {
       const schools = await Promise.all(
         matches.map(async (candidate) => {
-          if (!candidate.schoolId) return { schoolId: null, schoolName: null, role: candidate.role };
+          if (!candidate.schoolId) {
+            // An association's officer: the association names the choice.
+            const association = candidate.associationId
+              ? await prisma.association.findUnique({ where: { id: candidate.associationId }, select: { name: true } })
+              : null;
+            return { schoolId: null, schoolName: association?.name ?? null, role: candidate.role };
+          }
           const school = await prisma.school.findUnique({ where: { id: candidate.schoolId } });
           return { schoolId: candidate.schoolId, schoolName: school?.name ?? null, role: candidate.role };
         }),

@@ -11,6 +11,8 @@ export interface School {
   contact_phone: string;
   logo_url?: string;
   is_active: boolean;
+  /** The association that sees this club's figures; null when none. */
+  association_name: string | null;
 }
 
 function mapSchool(raw: Record<string, unknown>): School {
@@ -23,6 +25,7 @@ function mapSchool(raw: Record<string, unknown>): School {
     contact_phone: (raw.contactPhone ?? raw.contact_phone) as string,
     logo_url: (raw.logoUrl ?? raw.logo_url) as string | undefined,
     is_active: (raw.isActive ?? raw.is_active) as boolean,
+    association_name: (raw.associationName ?? null) as string | null,
   };
 }
 

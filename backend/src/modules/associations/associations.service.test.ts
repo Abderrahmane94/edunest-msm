@@ -6,11 +6,11 @@ vi.mock('../../lib/prisma', () => ({
     user: { findUnique: vi.fn(), groupBy: vi.fn(), count: vi.fn(), create: vi.fn(), update: vi.fn() },
     school: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn(), count: vi.fn() },
     association: { findUnique: vi.fn(), delete: vi.fn() },
-    child: { count: vi.fn() },
+    child: { count: vi.fn(), findMany: vi.fn() },
     attendanceRecord: { groupBy: vi.fn() },
-    paymentRecord: { aggregate: vi.fn() },
-    expense: { aggregate: vi.fn() },
-    salaryPayment: { aggregate: vi.fn() },
+    paymentRecord: { aggregate: vi.fn(), findMany: vi.fn() },
+    expense: { aggregate: vi.fn(), findMany: vi.fn() },
+    salaryPayment: { aggregate: vi.fn(), findMany: vi.fn() },
     refreshToken: { deleteMany: vi.fn() },
     $transaction: vi.fn(),
   },
@@ -26,7 +26,7 @@ import { dashboardService } from '../admin/dashboard.service';
 import { getCurrentSchoolId } from '../../middleware/tenancy.middleware';
 import { cutSessions } from '../../lib/session-cutoff';
 import { associationsService } from './associations.service';
-import { totalsOf } from './associations.figures';
+import { monthsEnding, pointsOf, totalsOf } from './associations.figures';
 
 const db = prisma as unknown as Record<string, Record<string, ReturnType<typeof vi.fn>>> & { $transaction: ReturnType<typeof vi.fn> };
 const getDashboard = dashboardService.getAdminDashboard as unknown as ReturnType<typeof vi.fn>;
@@ -179,5 +179,54 @@ describe('totalsOf', () => {
     expect(totals.clubs).toBe(0);
     expect(totals.attendance.month.rate).toBeNull();
     expect(totals.finance.collected).toBe(0);
+  });
+});
+
+describe('associations — the evolution, month by month', () => {
+  const d = (day: string) => new Date(`${day}T00:00:00.000Z`);
+
+  it('counts twelve months back, across the new year', () => {
+    expect(monthsEnding('2026-02', 4)).toEqual(['2025-11', '2025-12', '2026-01', '2026-02']);
+    expect(monthsEnding('2026-11', 12)).toHaveLength(12);
+    expect(monthsEnding('2026-11', 12)[0]).toBe('2025-12');
+  });
+
+  it('puts each row in its month and leaves out the others', () => {
+    const points = pointsOf(['2026-10', '2026-11'], {
+      payments: [{ date: d('2026-10-05'), amount: 1000 }, { date: d('2026-11-02'), amount: 500 }, { date: d('2026-11-03'), amount: -100 }, { date: d('2026-09-30'), amount: 999 }],
+      expenses: [{ date: d('2026-11-10'), amount: 200 }],
+      salaries: [{ date: d('2026-10-31'), amount: 300 }],
+      children: [{ date: d('2026-11-01') }],
+      marks: [{ date: d('2026-11-02'), status: 'present', count: 8 }, { date: d('2026-11-02'), status: 'late', count: 1 }, { date: d('2026-11-02'), status: 'absent', count: 1 }],
+    });
+    expect(points[0]).toMatchObject({ month: '2026-10', collected: 1000, salaries: 300, net: 700, newChildren: 0, rate: null });
+    expect(points[1]).toMatchObject({ month: '2026-11', collected: 400, expenses: 200, net: 200, newChildren: 1, marks: 10, attended: 9, rate: 90 });
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    db.user.findUnique.mockResolvedValue(officer);
+    db.school.findMany.mockResolvedValue([clubA, clubB]);
+    db.paymentRecord.findMany.mockImplementation(async () => [{ valueDate: d('2026-11-05'), totalAmount: dec(getCurrentSchoolId() === 'school-A' ? 1000 : 500) }]);
+    db.expense.findMany.mockResolvedValue([]);
+    db.salaryPayment.findMany.mockResolvedValue([{ paidAt: d('2026-10-28'), netSalary: dec(400) }]);
+    db.child.findMany.mockResolvedValue([]);
+    db.attendanceRecord.groupBy.mockImplementation(async () =>
+      getCurrentSchoolId() === 'school-A' ? [{ date: d('2026-11-03'), status: 'present', _count: { _all: 3 } }] : [{ date: d('2026-11-03'), status: 'absent', _count: { _all: 1 } }],
+    );
+  });
+
+  it('gives each club’s months and the association’s, each club read in its own context', async () => {
+    const trend = await associationsService.trend('o1');
+    expect(trend.months).toHaveLength(12);
+    expect(trend.months[11]).toBe('2026-11');
+    expect(trend.clubs.map((c) => c.name)).toEqual(['Club A', 'Club B']);
+    const november = trend.totals[11];
+    expect(november).toMatchObject({ collected: 1500, marks: 4, attended: 3, rate: 75 });
+    expect(trend.totals[10]).toMatchObject({ month: '2026-10', salaries: 800, net: -800 });
+  });
+
+  it('refuses a month to come', async () => {
+    await expect(associationsService.trend('o1', '2027-01')).rejects.toMatchObject({ statusCode: 400 });
   });
 });

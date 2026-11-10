@@ -4265,6 +4265,25 @@
     "summary_other": "{{clubs}} club(s) · {{count}} responsables"
   },
   "associationDashboard": {
+    "evolution": {
+      "title": "Évolution sur 12 mois",
+      "hint": "Les douze mois jusqu'au mois choisi.",
+      "for": "Pour",
+      "all": "Toute l'association",
+      "collected": "Encaissé",
+      "spent": "Dépenses + salaires",
+      "attendance": "Taux de présence",
+      "newChildren": "Nouvelles inscriptions",
+      "empty": "Rien sur cette période"
+    },
+    "xlsx": {
+      "summary": "Synthèse",
+      "evolution": "Évolution",
+      "month": "Mois",
+      "asOf": "Effectifs, présence du jour et impayés au {{date}}",
+      "collectedByClub": "Encaissé par club",
+      "attendanceByClub": "Taux de présence par club"
+    },
     "title": "Association",
     "export": "Exporter (Excel)",
     "print": "Imprimer / PDF",

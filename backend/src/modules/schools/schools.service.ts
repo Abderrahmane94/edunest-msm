@@ -121,13 +121,16 @@ class SchoolsService {
   async getById(id: string): Promise<SchoolResponse> {
     const school = await prisma.school.findUnique({
       where: { id },
+      include: { association: { select: { name: true } } },
     });
 
     if (!school) {
       throw new SchoolServiceError('School not found', 404);
     }
 
-    return withLogoUrl(school);
+    // The director is told which association sees the club's figures.
+    const { association, ...rest } = school;
+    return { ...withLogoUrl(rest), associationName: association?.name ?? null };
   }
 
   /**

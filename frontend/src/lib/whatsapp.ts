@@ -15,7 +15,7 @@ export function whatsappNumber(phone: string | null | undefined): string | null 
   return digits.length >= 8 ? digits : null;
 }
 
-const INTRO_ROLES = ['parent', 'teacher', 'admin', 'administrative'];
+const INTRO_ROLES = ['parent', 'teacher', 'admin', 'administrative', 'association'];
 
 /**
  * The message that gives someone their access: who writes, what Kiddoo is

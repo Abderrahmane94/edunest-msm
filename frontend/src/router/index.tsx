@@ -38,6 +38,8 @@ const PayrollPage = lazyPage('office', () => import('@/pages/admin/PayrollPage')
 const TrashPage = lazyPage('platform', () => import('@/pages/admin/TrashPage').then((m) => m.TrashPage));
 const SchoolsPage = lazyPage('platform', () => import('@/pages/admin/SchoolsPage').then((m) => m.SchoolsPage));
 const DemosPage = lazyPage('platform', () => import('@/pages/admin/DemosPage').then((m) => m.DemosPage));
+const AssociationsPage = lazyPage('platform', () => import('@/pages/admin/AssociationsPage').then((m) => m.AssociationsPage));
+const AssociationDashboardPage = lazyPage('association', () => import('@/pages/association/AssociationDashboardPage').then((m) => m.AssociationDashboardPage));
 const SchoolDetailPage = lazyPage('platform', () => import('@/pages/admin/SchoolDetailPage').then((m) => m.SchoolDetailPage));
 const BillingPage = lazyPage('platform', () => import('@/pages/admin/BillingPage').then((m) => m.BillingPage));
 const PaymentManagementPage = lazyPage('office', () => import('@/pages/admin/payments/PaymentManagementPage').then((m) => m.PaymentManagementPage));
@@ -69,6 +71,7 @@ import type { NavItem } from '@/components/layout';
 import { useSchoolBrand } from '@/hooks/useSchool';
 import { useOfficeNavCounts, usePersonalNavCounts } from '@/hooks/useNavCounts';
 import { useMyProfile } from '@/hooks/useMyProfile';
+import { useMyAssociation } from '@/hooks/useAssociations';
 import {
   LayoutDashboard,
   Users,
@@ -85,6 +88,7 @@ import {
   LogOut,
   Building2,
   FlaskConical,
+  Network,
   Languages,
   Trash2,
   Banknote,
@@ -146,6 +150,8 @@ function getDefaultPath(role?: string): string {
     case 'admin':
     case 'administrative':
       return '/admin';
+    case 'association':
+      return '/association';
     case 'teacher':
       return '/teacher';
     case 'parent':
@@ -165,6 +171,7 @@ function getAdminNavItems(role: string, can: (area: Area) => boolean): NavItem[]
       { label: 'nav.dashboard', href: '/admin', icon: LayoutDashboard },
       { label: 'nav.schools',   href: '/admin/schools', icon: Building2 },
       { label: 'nav.demos',     href: '/admin/demos', icon: FlaskConical },
+      { label: 'nav.associations', href: '/admin/associations', icon: Network },
       { label: 'nav.users',     href: '/admin/users', icon: Users },
       { label: 'nav.billing',   href: '/admin/billing', icon: Wallet },
       { label: 'nav.trash',     href: '/admin/trash', icon: Trash2 },
@@ -420,6 +427,28 @@ function TeacherLayoutWrapper() {
   );
 }
 
+const associationNavItems: NavItem[] = [{ label: 'nav.dashboard', href: '/association', icon: LayoutDashboard }];
+
+/** The officer's menu: the association's name, its figures, their own account. */
+function AssociationLayoutWrapper() {
+  usePreloadPages('association');
+  const { data: association } = useMyAssociation();
+  return (
+    <AdminLayout
+      navItems={associationNavItems}
+      sidebarHeader={
+        <div className="flex items-center gap-2 px-1 min-w-0">
+          <BrandMark size={34} className="shrink-0" />
+          <span className="font-playful text-body-lg font-bold leading-tight text-text-heading truncate" dir="auto">
+            {association?.name || 'Kiddoo'}
+          </span>
+        </div>
+      }
+      sidebarFooter={<SidebarFooterContent />}
+    />
+  );
+}
+
 function ParentLayoutWrapper() {
   usePreloadPages('parent');
   const counts = usePersonalNavCounts();
@@ -471,7 +500,10 @@ export const routes: RouteObject[] = [
               // Demonstration schools: the platform's only.
               {
                 element: <RoleRoute allowedRoles={['super_admin']} />,
-                children: [{ path: 'demos', element: <DemosPage /> }],
+                children: [
+                  { path: 'demos', element: <DemosPage /> },
+                  { path: 'associations', element: <AssociationsPage /> },
+                ],
               },
               // Each area's pages, open to the office staff whose profile allows it.
               {
@@ -541,6 +573,21 @@ export const routes: RouteObject[] = [
               { element: <PermissionRoute area="documents" />, children: [{ path: 'documents', element: <DocumentsPage /> }] },
               { element: <SchoolRoute />, children: [{ path: 'planning', element: <PlanningPage /> }] },
               { element: <PermissionRoute area={PAYMENT_AREAS} />, children: [{ path: 'payments', element: <PaymentManagementPage /> }] },
+            ],
+          },
+        ],
+      },
+
+      // An association's officer: the clubs' figures, nothing else
+      {
+        path: '/association',
+        element: <RoleRoute allowedRoles={['association']} />,
+        children: [
+          {
+            element: <AssociationLayoutWrapper />,
+            children: [
+              { index: true, element: <AssociationDashboardPage /> },
+              { path: 'profile', element: <React.Suspense fallback={null}><ProfilePage /></React.Suspense> },
             ],
           },
         ],

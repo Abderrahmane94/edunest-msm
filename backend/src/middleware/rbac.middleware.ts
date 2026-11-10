@@ -12,6 +12,8 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
   administrative: 3.5,
   teacher: 3,
   parent: 2,
+  // Reads its clubs' figures, nothing else (see the tenancy middleware).
+  association: 1.5,
   // Never signs in.
   staff: 0,
   student: 1,
@@ -99,3 +101,9 @@ export const requireParentOrAdmin = rbac(['super_admin', 'admin', 'parent']);
  * Excludes the inactive student role.
  */
 export const requireActiveRole = rbac(['super_admin', 'admin', 'administrative', 'teacher', 'parent']);
+
+/**
+ * Any account's own matters (its profile, its password): the active roles and
+ * an association's officer.
+ */
+export const requireOwnAccount = rbac(['super_admin', 'association', 'admin', 'administrative', 'teacher', 'parent']);

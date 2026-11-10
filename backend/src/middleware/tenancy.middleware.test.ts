@@ -79,3 +79,44 @@ describe('tenancy middleware — the school comes from the account, not the toke
     expect(mockFindUnique).not.toHaveBeenCalled();
   });
 });
+
+describe('tenancy middleware — an association account reaches its figures, nothing of a school', () => {
+  let next: NextFunction;
+  const officer = { userId: 'o1', schoolId: null, role: 'association' };
+  const at = (path: string) => ({ ...req(officer), path }) as Request;
+  beforeEach(() => {
+    next = vi.fn();
+    mockFindUnique.mockReset();
+    mockFindUnique.mockResolvedValue({ isActive: true, role: 'association', schoolId: null, associationId: 'asso-1', school: null });
+  });
+
+  it('reaches its figures and its own account, without a school context', async () => {
+    for (const path of ['/associations/me', '/associations/me/overview', '/users/me/profile', '/users/change-password']) {
+      const r = res();
+      let seen: string | undefined = 'unset';
+      (next as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => { seen = getCurrentSchoolId(); });
+      await tenancyMiddleware(at(path), r as Response, next);
+      expect(next, path).toHaveBeenCalled();
+      expect(seen).toBeUndefined();
+      expect(r.status).not.toHaveBeenCalled();
+    }
+  });
+
+  it('is refused everywhere else: a school’s pages, the users, the platform’s association pages', async () => {
+    for (const path of ['/children', '/staff', '/payments/records', '/users', '/schools/s1', '/associations', '/associations/a1/officers', '/associations/meX', '/notifications']) {
+      const r = res();
+      next = vi.fn();
+      await tenancyMiddleware(at(path), r as Response, next);
+      expect(next, path).not.toHaveBeenCalled();
+      expect(r.status, path).toHaveBeenCalledWith(403);
+    }
+  });
+
+  it('is refused once its association is gone', async () => {
+    mockFindUnique.mockResolvedValue({ isActive: true, role: 'association', schoolId: null, associationId: null, school: null });
+    const r = res();
+    await tenancyMiddleware(at('/associations/me'), r as Response, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(r.status).toHaveBeenCalledWith(403);
+  });
+});

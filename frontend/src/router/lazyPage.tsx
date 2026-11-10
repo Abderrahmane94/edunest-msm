@@ -1,10 +1,10 @@
 import * as React from 'react';
 
 /** Whose pages: each role downloads its own, never the others'. */
-export type PageGroup = 'office' | 'platform' | 'teacher' | 'parent';
+export type PageGroup = 'office' | 'platform' | 'association' | 'teacher' | 'parent';
 
 type Loader = () => Promise<unknown>;
-const loaders: Record<PageGroup, Loader[]> = { office: [], platform: [], teacher: [], parent: [] };
+const loaders: Record<PageGroup, Loader[]> = { office: [], platform: [], association: [], teacher: [], parent: [] };
 
 const RELOADED_KEY = 'kiddoo:page-reloaded';
 

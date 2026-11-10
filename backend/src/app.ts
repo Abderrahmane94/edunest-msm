@@ -35,6 +35,7 @@ import payrollRoutes from './modules/payroll/payroll.routes';
 import paymentRoutes from './modules/payments';
 import documentRoutes from './modules/documents/documents.routes';
 import planningRoutes from './modules/planning/planning.routes';
+import associationRoutes from './modules/associations/associations.routes';
 
 const app = express();
 
@@ -143,6 +144,8 @@ const school = requireSchoolContext();
 app.use('/api/auth', authRoutes);
 app.use('/api/schools', schoolRoutes);
 app.use('/api/demos', demoRoutes);
+// The platform manages the associations; their officers read their clubs' figures.
+app.use('/api/associations', associationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/staff', school, staffRoutes);
 app.use('/api/academic-years', school, academicYearRoutes);

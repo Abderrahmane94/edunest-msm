@@ -1,7 +1,7 @@
 import { errorMessage } from '@/lib/errorMessage';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Building2, Upload, Camera, GraduationCap, Clock, DoorOpen, ShieldCheck, Trash2 } from 'lucide-react';
+import { Building2, Upload, Camera, GraduationCap, Clock, DoorOpen, ShieldCheck, Trash2, Network } from 'lucide-react';
 import {
   Button,
   EditButton,
@@ -159,6 +159,17 @@ function SchoolTab() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* The association this club belongs to sees its figures: said plainly. */}
+      {school?.association_name && (
+        <div role="note" className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
+          <Network className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+          <div className="text-body text-foreground">
+            <p className="font-medium">{t('schoolSettings.association.title', { name: school.association_name })}</p>
+            <p className="text-caption text-text-secondary mt-0.5">{t('schoolSettings.association.sees')}</p>
+          </div>
+        </div>
+      )}
+
       {/* Logo Upload Section */}
       <div className="bg-card border border-border rounded-lg p-6">
         <div className="flex items-center justify-between gap-3 mb-4">

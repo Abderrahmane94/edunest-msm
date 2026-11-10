@@ -75,7 +75,7 @@ export function formatRelativeTime(dateStr: string, locale: string): string {
  */
 export function notificationLink(
   n: { type: NotificationType; reference_type?: string; reference_id?: string },
-  role: 'super_admin' | 'admin' | 'administrative' | 'teacher' | 'parent',
+  role: 'super_admin' | 'association' | 'admin' | 'administrative' | 'teacher' | 'parent',
 ): string | null {
   const base = role === 'parent' ? '/parent' : role === 'teacher' ? '/teacher' : '/admin';
   const isAdmin = role === 'admin' || role === 'administrative' || role === 'super_admin';

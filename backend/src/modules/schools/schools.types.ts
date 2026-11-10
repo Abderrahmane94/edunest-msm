@@ -40,5 +40,7 @@ export interface SchoolResponse {
   /** On trial until then; null once subscribed (and for every school that never was). */
   trialEndsAt?: Date | null;
   demoExpiresAt?: Date | null;
+  /** The association that sees this club's figures (getById only). */
+  associationName?: string | null;
   createdAt: Date;
 }

@@ -10,6 +10,14 @@ export interface TenantContext {
 export const tenantStorage = new AsyncLocalStorage<TenantContext>();
 
 /**
+ * All an association's officer reaches (relative to /api): their clubs'
+ * figures and their own account. Nothing of a school: no names, no changes.
+ */
+const ASSOCIATION_PATHS = ['/associations/me', '/users/me/profile', '/users/me/avatar', '/users/change-password'];
+
+const reachableByAssociation = (path: string) => ASSOCIATION_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
+
+/**
  * Express middleware that extracts school_id from the authenticated user's JWT
  * and stores it in AsyncLocalStorage for automatic tenant scoping.
  * Also rejects requests where body.school_id differs from the JWT-derived school_id.
@@ -28,7 +36,7 @@ export async function tenancyMiddleware(req: Request, res: Response, next: NextF
   // token is refused (the client asks for a new one, or signs in again).
   const account = await prisma.user.findUnique({
     where: { id: userId },
-    select: { isActive: true, role: true, schoolId: true, school: { select: { isActive: true, demoExpiresAt: true, trialEndsAt: true } } },
+    select: { isActive: true, role: true, schoolId: true, associationId: true, school: { select: { isActive: true, demoExpiresAt: true, trialEndsAt: true } } },
   });
   if (!account || !account.isActive || account.role !== role) {
     res.status(401).json({
@@ -46,6 +54,20 @@ export async function tenancyMiddleware(req: Request, res: Response, next: NextF
       success: false,
       error: { code: 'UNAUTHORIZED', message: 'Invalid or expired access token' },
     });
+    return;
+  }
+
+  // An association's officer belongs to no school: their figures and their
+  // own account only, and only while the account has an association.
+  if (role === 'association') {
+    if (!account.associationId || !reachableByAssociation(req.path)) {
+      res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'An association account only sees the figures of its clubs' },
+      });
+      return;
+    }
+    next();
     return;
   }
 

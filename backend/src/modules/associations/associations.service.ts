@@ -6,7 +6,20 @@ import { cutSessions } from '../../lib/session-cutoff';
 import { tenantStorage } from '../../middleware/tenancy.middleware';
 import { dashboardService, schoolToday } from '../admin/dashboard.service';
 import { temporaryPassword } from '../users/users.service';
-import { attendanceRate, totalsOf, type AssociationOverview, type ClubFigures } from './associations.figures';
+import {
+  attendanceRate,
+  monthsEnding,
+  pointsOf,
+  sumPoints,
+  totalsOf,
+  type AssociationOverview,
+  type AssociationTrend,
+  type ClubFigures,
+  type MonthPoint,
+} from './associations.figures';
+
+/** How many months the evolution covers, at most. */
+export const TREND_MONTHS = 12;
 
 const BCRYPT_ROUNDS = 10;
 
@@ -124,6 +137,27 @@ async function figuresOf(club: Club, month: string): Promise<ClubFigures> {
   };
 }
 
+/** One club's months, read in its tenant context: amounts and counts only. */
+async function pointsOfClub(club: Club, months: string[]): Promise<MonthPoint[]> {
+  const schoolId = club.id;
+  const start = monthBounds(months[0]).start;
+  const end = monthBounds(months[months.length - 1]).end;
+  const [payments, expenses, salaries, children, marks] = await Promise.all([
+    prisma.paymentRecord.findMany({ where: { branch: { schoolId }, valueDate: { gte: start, lt: end } }, select: { valueDate: true, totalAmount: true } }),
+    prisma.expense.findMany({ where: { schoolId, date: { gte: start, lt: end } }, select: { date: true, amount: true } }),
+    prisma.salaryPayment.findMany({ where: { schoolId, deletedAt: null, paidAt: { gte: start, lt: end } }, select: { paidAt: true, netSalary: true } }),
+    prisma.child.findMany({ where: { schoolId, isActive: true, deletedAt: null, enrollmentDate: { gte: start, lt: end } }, select: { enrollmentDate: true } }),
+    prisma.attendanceRecord.groupBy({ by: ['date', 'status'], where: { schoolId, date: { gte: start, lt: end } }, _count: { _all: true } }),
+  ]);
+  return pointsOf(months, {
+    payments: payments.map((r) => ({ date: r.valueDate, amount: r.totalAmount.toNumber() })),
+    expenses: expenses.map((r) => ({ date: r.date, amount: r.amount.toNumber() })),
+    salaries: salaries.map((r) => ({ date: r.paidAt, amount: r.netSalary.toNumber() })),
+    children: children.map((r) => ({ date: r.enrollmentDate })),
+    marks: marks.map((r) => ({ date: r.date, status: r.status, count: r._count._all })),
+  });
+}
+
 /** The officer's association; refused when the account has none (or isn't an officer). */
 async function officerAssociation(userId: string): Promise<{ id: string; name: string }> {
   const officer = await prisma.user.findUnique({
@@ -160,6 +194,23 @@ export const associationsService = {
       figures.push(await tenantStorage.run({ schoolId: club.id }, () => figuresOf(club, chosen)));
     }
     return { association, month: chosen, today, totals: totalsOf(figures), clubs: figures };
+  },
+
+  /** The months up to `until` (YYYY-MM, this month by default): each club's and the total. */
+  async trend(userId: string, until?: string): Promise<AssociationTrend> {
+    const association = await officerAssociation(userId);
+    const thisMonth = schoolToday().slice(0, 7);
+    const last = until ?? thisMonth;
+    if (last > thisMonth) throw new AssociationServiceError('This month has not started yet', 400);
+    const months = monthsEnding(last, TREND_MONTHS);
+
+    const clubs = await clubsOf(association.id);
+    const perClub: { id: string; name: string; points: MonthPoint[] }[] = [];
+    for (const club of clubs) {
+      const points = await tenantStorage.run({ schoolId: club.id }, () => pointsOfClub(club, months));
+      perClub.push({ id: club.id, name: club.name, points });
+    }
+    return { months, totals: sumPoints(months, perClub.map((c) => c.points)), clubs: perClub };
   },
 
   // ─── The platform (super_admin) ───

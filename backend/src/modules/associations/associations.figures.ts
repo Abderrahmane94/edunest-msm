@@ -88,3 +88,97 @@ export function totalsOf(clubs: ClubFigures[]): AssociationTotals {
     },
   };
 }
+
+// ─── The evolution, month by month ───
+
+export interface MonthPoint {
+  /** YYYY-MM */
+  month: string;
+  collected: number;
+  expenses: number;
+  salaries: number;
+  net: number;
+  /** Children whose enrolment date falls in the month (among those still enrolled). */
+  newChildren: number;
+  marks: number;
+  attended: number;
+  /** Present or late over the month's marks; null without marks. */
+  rate: number | null;
+}
+
+export interface AssociationTrend {
+  months: string[];
+  totals: MonthPoint[];
+  clubs: { id: string; name: string; points: MonthPoint[] }[];
+}
+
+/** The `count` months ending with `until` (YYYY-MM), oldest first. */
+export function monthsEnding(until: string, count: number): string[] {
+  const [year, month] = until.split('-').map(Number);
+  return Array.from({ length: count }, (_, i) => {
+    const d = new Date(Date.UTC(year, month - 1 - (count - 1 - i), 1));
+    return d.toISOString().slice(0, 7);
+  });
+}
+
+const monthOf = (d: Date) => d.toISOString().slice(0, 7);
+
+/** One club's rows, put in their months. Rows outside the months are left out. */
+export function pointsOf(
+  months: string[],
+  rows: {
+    payments: { date: Date; amount: number }[];
+    expenses: { date: Date; amount: number }[];
+    salaries: { date: Date; amount: number }[];
+    children: { date: Date }[];
+    marks: { date: Date; status: string; count: number }[];
+  },
+): MonthPoint[] {
+  const points = new Map(
+    months.map((month) => [month, { month, collected: 0, expenses: 0, salaries: 0, net: 0, newChildren: 0, marks: 0, attended: 0, rate: null as number | null }]),
+  );
+  const at = (d: Date) => points.get(monthOf(d));
+  for (const r of rows.payments) { const p = at(r.date); if (p) p.collected += r.amount; }
+  for (const r of rows.expenses) { const p = at(r.date); if (p) p.expenses += r.amount; }
+  for (const r of rows.salaries) { const p = at(r.date); if (p) p.salaries += r.amount; }
+  for (const r of rows.children) { const p = at(r.date); if (p) p.newChildren += 1; }
+  for (const r of rows.marks) {
+    const p = at(r.date);
+    if (!p) continue;
+    p.marks += r.count;
+    if (r.status !== 'absent') p.attended += r.count;
+  }
+  return months.map((month) => finish(points.get(month)!));
+}
+
+function finish(p: MonthPoint): MonthPoint {
+  const collected = round2(p.collected);
+  const expenses = round2(p.expenses);
+  const salaries = round2(p.salaries);
+  return { ...p, collected, expenses, salaries, net: round2(collected - expenses - salaries), rate: attendanceRate(p.attended, p.marks) };
+}
+
+/** The association's months: each club's added up, the rate over all the marks. */
+export function sumPoints(months: string[], clubs: MonthPoint[][]): MonthPoint[] {
+  return months.map((month, i) =>
+    finish(
+      clubs.reduce<MonthPoint>(
+        (total, points) => {
+          const p = points[i];
+          return {
+            month,
+            collected: total.collected + p.collected,
+            expenses: total.expenses + p.expenses,
+            salaries: total.salaries + p.salaries,
+            net: 0,
+            newChildren: total.newChildren + p.newChildren,
+            marks: total.marks + p.marks,
+            attended: total.attended + p.attended,
+            rate: null,
+          };
+        },
+        { month, collected: 0, expenses: 0, salaries: 0, net: 0, newChildren: 0, marks: 0, attended: 0, rate: null },
+      ),
+    ),
+  );
+}

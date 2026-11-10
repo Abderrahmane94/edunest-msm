@@ -4454,6 +4454,25 @@
     "summary_other": "{{clubs}} نادٍ · {{count}} مسؤول"
   },
   "associationDashboard": {
+    "evolution": {
+      "title": "التطور على 12 شهرًا",
+      "hint": "الأشهر الاثنا عشر حتى الشهر المختار.",
+      "for": "لـ",
+      "all": "كل الجمعية",
+      "collected": "المحصَّل",
+      "spent": "المصاريف + الأجور",
+      "attendance": "نسبة الحضور",
+      "newChildren": "التسجيلات الجديدة",
+      "empty": "لا شيء في هذه الفترة"
+    },
+    "xlsx": {
+      "summary": "الملخص",
+      "evolution": "التطور",
+      "month": "الشهر",
+      "asOf": "الأعداد، حضور اليوم وغير المدفوع بتاريخ {{date}}",
+      "collectedByClub": "المحصَّل حسب النادي",
+      "attendanceByClub": "نسبة الحضور حسب النادي"
+    },
     "title": "الجمعية",
     "export": "تصدير (Excel)",
     "print": "طباعة / PDF",

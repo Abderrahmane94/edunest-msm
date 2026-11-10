@@ -56,6 +56,12 @@ router.get('/me/overview', requireOfficer, validateQuery(overviewQuerySchema), h
   res.status(200).json(successResponse(await associationsService.overview(req.user!.userId, month)));
 }));
 
+// GET /api/associations/me/trend?month=YYYY-MM — The 12 months up to that one, per club and in total
+router.get('/me/trend', requireOfficer, validateQuery(overviewQuerySchema), handle(async (req, res) => {
+  const month = typeof req.query.month === 'string' ? req.query.month : undefined;
+  res.status(200).json(successResponse(await associationsService.trend(req.user!.userId, month)));
+}));
+
 // ─── The platform (super_admin) ───
 
 // GET /api/associations — The associations, their clubs and officers

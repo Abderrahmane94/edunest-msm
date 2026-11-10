@@ -133,3 +133,33 @@ export function useMyAssociation(enabled = true) {
     },
   });
 }
+
+export interface MonthPoint {
+  month: string;
+  collected: number;
+  expenses: number;
+  salaries: number;
+  net: number;
+  newChildren: number;
+  marks: number;
+  attended: number;
+  rate: number | null;
+}
+
+export interface AssociationTrend {
+  months: string[];
+  totals: MonthPoint[];
+  clubs: { id: string; name: string; points: MonthPoint[] }[];
+}
+
+/** The 12 months up to `month`: each club's and the association's. */
+export function useAssociationTrend(month: string) {
+  return useQuery({
+    queryKey: ['association-trend', month],
+    queryFn: async () => {
+      const res = await apiClient.get<AssociationTrend>(`/associations/me/trend?month=${month}`);
+      if (!res.success || !res.data) throw apiError(res.error, 'Failed to load the evolution');
+      return res.data;
+    },
+  });
+}

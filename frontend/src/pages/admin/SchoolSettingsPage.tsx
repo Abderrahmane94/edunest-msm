@@ -21,6 +21,7 @@ import { RoomsSection } from './RoomsPage';
 import { TrashPage } from './TrashPage';
 import { AccessProfilesSection } from './AccessProfilesSection';
 import { useIsDirector } from '@/lib/roles';
+import { groupWords } from '@/lib/groupWords';
 
 type SettingsTab = 'school' | 'years' | 'rooms' | 'days' | 'profiles' | 'trash';
 const SETTINGS_TABS: SettingsTab[] = ['school', 'years', 'rooms', 'days', 'profiles', 'trash'];
@@ -164,7 +165,7 @@ function SchoolTab() {
         <div role="note" className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
           <Network className="w-5 h-5 text-primary shrink-0 mt-0.5" />
           <div className="text-body text-foreground">
-            <p className="font-medium">{t('schoolSettings.association.title', { name: school.association_name })}</p>
+            <p className="font-medium">{t('schoolSettings.association.title', { name: school.association_name, ...groupWords(t, school.association_group_term, school.association_member_term) })}</p>
             <p className="text-caption text-text-secondary mt-0.5">{t('schoolSettings.association.sees')}</p>
           </div>
         </div>

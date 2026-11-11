@@ -23,11 +23,13 @@ import { apiClient } from '@/lib/api-client';
 import { errorMessage } from '@/lib/errorMessage';
 import { formatDateTime } from '@/lib/formatters';
 import { announceNewAccount } from '@/lib/newAccount';
+import { GROUP_TERMS, MEMBER_TERMS, groupWords } from '@/lib/groupWords';
 import type { SchoolItem } from '@/hooks/useSchools';
 import {
   associationApi,
   useAssociationAction,
   useAssociations,
+  type AssociationNaming,
   type AssociationRow,
   type OfficerInput,
 } from '@/hooks/useAssociations';
@@ -47,14 +49,14 @@ export function AssociationsPage() {
   const { t } = useTranslation();
   const { data, isLoading } = useAssociations();
   const [error, setError] = React.useState<string | null>(null);
-  const [naming, setNaming] = React.useState<{ id?: string; name: string } | null>(null);
+  const [editing, setEditing] = React.useState<(AssociationNaming & { id?: string }) | null>(null);
 
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title={t('associations.title')}
         description={t('associations.description')}
-        actions={<CreateButton label={t('associations.create')} onClick={() => setNaming({ name: '' })} />}
+        actions={<CreateButton label={t('associations.create')} onClick={() => setEditing({ name: '', groupTerm: 'group', memberTerm: 'nursery' })} />}
       />
       <ErrorAlert message={error} onDismiss={() => setError(null)} />
       {isLoading ? (
@@ -68,13 +70,13 @@ export function AssociationsPage() {
               key={association.id}
               association={association}
               linkedSchoolIds={new Set(data.flatMap((a) => a.clubs.map((c) => c.id)))}
-              onRename={() => setNaming({ id: association.id, name: association.name })}
+              onEdit={() => setEditing(association)}
               onError={(err) => setError(errorMessage(err, t))}
             />
           ))}
         </div>
       )}
-      <NameDialog value={naming} onClose={() => setNaming(null)} />
+      <AssociationDialog value={editing} onClose={() => setEditing(null)} />
     </div>
   );
 }
@@ -82,12 +84,12 @@ export function AssociationsPage() {
 function AssociationCard({
   association,
   linkedSchoolIds,
-  onRename,
+  onEdit,
   onError,
 }: {
   association: AssociationRow;
   linkedSchoolIds: Set<string>;
-  onRename: () => void;
+  onEdit: () => void;
   onError: (err: unknown) => void;
 }) {
   const { t } = useTranslation();
@@ -103,6 +105,7 @@ function AssociationCard({
   // A school is in one association at most: those already linked are not offered.
   const available = (schools ?? []).filter((s) => !linkedSchoolIds.has(s.id));
   const empty = association.clubs.length === 0 && association.officers.length === 0;
+  const words = groupWords(t, association.groupTerm, association.memberTerm);
 
   return (
     <section className="bg-card border border-border rounded-lg p-5 space-y-5">
@@ -110,13 +113,14 @@ function AssociationCard({
         <div className="min-w-0">
           <h2 className="text-subsection font-semibold text-text-heading truncate" dir="auto">{association.name}</h2>
           <p className="text-caption text-text-secondary">
-            {t('associations.summary', { clubs: association.clubs.length, officers: association.officers.length })}
+            {t('associations.summary', { clubs: association.clubs.length, count: association.officers.length })}
           </p>
+          <p className="text-caption text-text-secondary">{t('associations.terms.shown', { group: words.group, members: words.memberOther })}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <Button variant="ghost" size="sm" onClick={onRename} title={t('associations.rename')}>
+          <Button variant="ghost" size="sm" onClick={onEdit} title={t('associations.edit')}>
             <Pencil className="w-4 h-4" />
-            <span className="max-sm:hidden">{t('associations.rename')}</span>
+            <span className="max-sm:hidden">{t('associations.edit')}</span>
           </Button>
           <Button
             variant="ghost"
@@ -246,44 +250,66 @@ function AssociationCard({
   );
 }
 
-/** Create an association, or rename one. */
-function NameDialog({ value, onClose }: { value: { id?: string; name: string } | null; onClose: () => void }) {
+/** Create a group, or change its name and the words its client sees. */
+function AssociationDialog({ value, onClose }: { value: (AssociationNaming & { id?: string }) | null; onClose: () => void }) {
   const { t } = useTranslation();
-  const [name, setName] = React.useState('');
+  const [form, setForm] = React.useState<AssociationNaming>({ name: '', groupTerm: 'group', memberTerm: 'nursery' });
   const [error, setError] = React.useState<string | null>(null);
   const create = useAssociationAction(associationApi.create);
-  const rename = useAssociationAction(associationApi.rename);
-  const pending = create.isPending || rename.isPending;
+  const update = useAssociationAction(associationApi.update);
+  const pending = create.isPending || update.isPending;
 
   React.useEffect(() => {
-    setName(value?.name ?? '');
+    if (value) setForm({ name: value.name, groupTerm: value.groupTerm, memberTerm: value.memberTerm });
     setError(null);
   }, [value]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!value || !name.trim()) return;
+    if (!value || !form.name.trim()) return;
+    const input = { ...form, name: form.name.trim() };
     const done = { onSuccess: onClose, onError: (err: unknown) => setError(errorMessage(err, t)) };
-    if (value.id) rename.mutate({ id: value.id, name: name.trim() }, done);
-    else create.mutate(name.trim(), done);
+    if (value.id) update.mutate({ id: value.id, ...input }, done);
+    else create.mutate(input, done);
   }
 
   return (
     <Dialog open={!!value} onOpenChange={(o) => !o && !pending && onClose()}>
-      <DialogContent className="max-w-[440px]">
+      <DialogContent className="max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>{value?.id ? t('associations.rename') : t('associations.create')}</DialogTitle>
+          <DialogTitle>{value?.id ? t('associations.edit') : t('associations.create')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-1">
           <FormField label={t('associations.name')} htmlFor="association-name" required>
-            <Input id="association-name" value={name} onChange={(e) => setName(e.target.value)} dir="auto" autoFocus />
+            <Input id="association-name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} dir="auto" autoFocus />
           </FormField>
+          {/* The client's own words: Kiddoo's pages keep saying group and nurseries. */}
+          <fieldset className="rounded-lg border border-border p-3 pb-0 mb-3">
+            <legend className="px-1 text-body font-semibold text-text-heading">{t('associations.terms.title')}</legend>
+            <p className="text-caption text-text-secondary mb-2">{t('associations.terms.hint')}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+              <FormSelect
+                label={t('associations.terms.group')}
+                name="association-group-term"
+                value={form.groupTerm}
+                onChange={(e) => setForm((f) => ({ ...f, groupTerm: e.target.value }))}
+                options={GROUP_TERMS.map((term) => ({ value: term, label: t(`groupTerms.${term}.label`) }))}
+              />
+              <FormSelect
+                label={t('associations.terms.member')}
+                name="association-member-term"
+                value={form.memberTerm}
+                onChange={(e) => setForm((f) => ({ ...f, memberTerm: e.target.value }))}
+                options={MEMBER_TERMS.map((term) => ({ value: term, label: t(`memberTerms.${term}.other`) }))}
+              />
+            </div>
+          </fieldset>
           <ErrorAlert message={error} onDismiss={() => setError(null)} />
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={onClose} disabled={pending}>
               {t('common.cancel')}
             </Button>
-            <Button type="submit" disabled={!name.trim() || pending}>
+            <Button type="submit" disabled={!form.name.trim() || pending}>
               {t('common.save')}
             </Button>
           </DialogFooter>

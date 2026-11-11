@@ -4,9 +4,20 @@ import { rbac, requireSuperAdmin } from '../../middleware/rbac.middleware';
 import { validate, validateParams, validateQuery } from '../../middleware/validation.middleware';
 import { idParamSchema, uuidSchema, personNameSchema, optionalEmailSchema, optionalPhoneSchema, EMAIL_OR_PHONE } from '../../utils/validators';
 import { successResponse, errorResponse } from '../../utils/response';
-import { associationsService, AssociationServiceError, type OfficerInput } from './associations.service';
+import {
+  associationsService,
+  AssociationServiceError,
+  GROUP_TERMS,
+  MEMBER_TERMS,
+  type AssociationInput,
+  type OfficerInput,
+} from './associations.service';
 
-const nameSchema = z.object({ name: z.string().trim().min(1, 'Name is required').max(255) });
+const associationSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(255),
+  groupTerm: z.enum(GROUP_TERMS).optional(),
+  memberTerm: z.enum(MEMBER_TERMS).optional(),
+});
 
 const officerSchema = z
   .object({
@@ -69,14 +80,14 @@ router.get('/', requireSuperAdmin, handle(async (_req, res) => {
   res.status(200).json(successResponse(await associationsService.list()));
 }));
 
-// POST /api/associations — A new association
-router.post('/', requireSuperAdmin, validate(nameSchema), handle(async (req, res) => {
-  res.status(201).json(successResponse(await associationsService.create((req.body as { name: string }).name)));
+// POST /api/associations — A new group, with the words its client uses
+router.post('/', requireSuperAdmin, validate(associationSchema), handle(async (req, res) => {
+  res.status(201).json(successResponse(await associationsService.create(req.body as AssociationInput)));
 }));
 
-// PATCH /api/associations/:id — Rename it
-router.patch('/:id', requireSuperAdmin, validateParams(idParamSchema), validate(nameSchema), handle(async (req, res) => {
-  res.status(200).json(successResponse(await associationsService.rename(req.params.id, (req.body as { name: string }).name)));
+// PATCH /api/associations/:id — Its name, or its client's words
+router.patch('/:id', requireSuperAdmin, validateParams(idParamSchema), validate(associationSchema.partial()), handle(async (req, res) => {
+  res.status(200).json(successResponse(await associationsService.update(req.params.id, req.body as Partial<AssociationInput>)));
 }));
 
 // DELETE /api/associations/:id — Remove an empty association

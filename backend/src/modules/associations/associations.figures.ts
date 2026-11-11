@@ -34,8 +34,16 @@ export type AssociationTotals = Omit<ClubFigures, 'id' | 'name' | 'wilaya' | 'is
   finance: Omit<ClubFigures['finance'], 'recoveryRate'>;
 };
 
+/** A group as its officer sees it: its name, and what its client calls it and its nurseries. */
+export interface AssociationView {
+  id: string;
+  name: string;
+  groupTerm: string;
+  memberTerm: string;
+}
+
 export interface AssociationOverview {
-  association: { id: string; name: string };
+  association: AssociationView;
   /** YYYY-MM: the month the money, the new children and the month's attendance cover. */
   month: string;
   /** The date today (YYYY-MM-DD): what today's attendance and the late payments are as of. */

@@ -121,7 +121,7 @@ class SchoolsService {
   async getById(id: string): Promise<SchoolResponse> {
     const school = await prisma.school.findUnique({
       where: { id },
-      include: { association: { select: { name: true } } },
+      include: { association: { select: { name: true, groupTerm: true, memberTerm: true } } },
     });
 
     if (!school) {
@@ -130,7 +130,12 @@ class SchoolsService {
 
     // The director is told which association sees the club's figures.
     const { association, ...rest } = school;
-    return { ...withLogoUrl(rest), associationName: association?.name ?? null };
+    return {
+      ...withLogoUrl(rest),
+      associationName: association?.name ?? null,
+      associationGroupTerm: association?.groupTerm ?? null,
+      associationMemberTerm: association?.memberTerm ?? null,
+    };
   }
 
   /**

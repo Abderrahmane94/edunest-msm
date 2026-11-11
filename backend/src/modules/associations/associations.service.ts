@@ -14,9 +14,25 @@ import {
   totalsOf,
   type AssociationOverview,
   type AssociationTrend,
+  type AssociationView,
   type ClubFigures,
   type MonthPoint,
 } from './associations.figures';
+
+/** What a client may call its group, and its nurseries, on its own screens. */
+export const GROUP_TERMS = ['group', 'association', 'network', 'federation'] as const;
+export const MEMBER_TERMS = ['nursery', 'club', 'establishment', 'daycare'] as const;
+export type GroupTerm = (typeof GROUP_TERMS)[number];
+export type MemberTerm = (typeof MEMBER_TERMS)[number];
+
+export interface AssociationInput {
+  name: string;
+  groupTerm?: GroupTerm;
+  memberTerm?: MemberTerm;
+}
+
+/** A group as its officer sees it: its name and its own words. */
+const ASSOCIATION_FIELDS = { id: true, name: true, groupTerm: true, memberTerm: true } as const;
 
 /** How many months the evolution covers, at most. */
 export const TREND_MONTHS = 12;
@@ -159,10 +175,10 @@ async function pointsOfClub(club: Club, months: string[]): Promise<MonthPoint[]>
 }
 
 /** The officer's association; refused when the account has none (or isn't an officer). */
-async function officerAssociation(userId: string): Promise<{ id: string; name: string }> {
+async function officerAssociation(userId: string): Promise<AssociationView> {
   const officer = await prisma.user.findUnique({
     where: { id: userId },
-    select: { role: true, association: { select: { id: true, name: true } } },
+    select: { role: true, association: { select: ASSOCIATION_FIELDS } },
   });
   if (!officer || officer.role !== 'association' || !officer.association) {
     throw new AssociationServiceError('No association for this account', 403);
@@ -173,7 +189,7 @@ async function officerAssociation(userId: string): Promise<{ id: string; name: s
 export const associationsService = {
   // ─── The officer's own view ───
 
-  async mine(userId: string): Promise<{ association: { id: string; name: string }; clubs: { id: string; name: string; wilaya: string }[] }> {
+  async mine(userId: string): Promise<{ association: AssociationView; clubs: { id: string; name: string; wilaya: string }[] }> {
     const association = await officerAssociation(userId);
     const clubs = await clubsOf(association.id);
     return { association, clubs: clubs.map(({ id, name, wilaya }) => ({ id, name, wilaya })) };
@@ -219,8 +235,7 @@ export const associationsService = {
     const associations = await prisma.association.findMany({
       orderBy: { name: 'asc' },
       select: {
-        id: true,
-        name: true,
+        ...ASSOCIATION_FIELDS,
         createdAt: true,
         schools: { where: { demoExpiresAt: null }, select: { id: true, name: true, wilaya: true }, orderBy: { name: 'asc' } },
         users: {
@@ -233,13 +248,14 @@ export const associationsService = {
     return associations.map(({ schools, users, ...a }) => ({ ...a, clubs: schools, officers: users }));
   },
 
-  async create(name: string) {
-    return prisma.association.create({ data: { name }, select: { id: true, name: true, createdAt: true } });
+  async create(input: AssociationInput) {
+    return prisma.association.create({ data: input, select: { ...ASSOCIATION_FIELDS, createdAt: true } });
   },
 
-  async rename(id: string, name: string) {
+  /** Its name, or the words its client uses. */
+  async update(id: string, input: Partial<AssociationInput>) {
     await this.ensureExists(id);
-    return prisma.association.update({ where: { id }, data: { name }, select: { id: true, name: true, createdAt: true } });
+    return prisma.association.update({ where: { id }, data: input, select: { ...ASSOCIATION_FIELDS, createdAt: true } });
   },
 
   /** Only an empty association goes: its clubs and officers are taken off first. */

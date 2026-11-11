@@ -42,5 +42,8 @@ export interface SchoolResponse {
   demoExpiresAt?: Date | null;
   /** The association that sees this club's figures (getById only). */
   associationName?: string | null;
+  /** The words that association uses for itself and its nurseries (getById only). */
+  associationGroupTerm?: string | null;
+  associationMemberTerm?: string | null;
   createdAt: Date;
 }

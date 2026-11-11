@@ -8,6 +8,8 @@ import { Input } from '@/components/ui';
 import { errorMessage } from '@/lib/errorMessage';
 import { formatDateIn, formatDZD, formatMonthYear } from '@/lib/formatters';
 import { downloadXlsx, type Cell, type CellValue, type Sheet } from '@/lib/xlsx';
+import { groupWords } from '@/lib/groupWords';
+import type { TFunction } from 'i18next';
 import { BarChart, Tile } from '@/pages/admin/dashboard/parts';
 import { useNumbers } from '@/pages/admin/dashboard/theme';
 import {
@@ -46,10 +48,13 @@ export function AssociationDashboardPage() {
   const money = (n: number) => formatDZD(n, lang);
   const monthLabel = formatMonthYear(`${month}-01`, lang);
 
+  // The client's own words (its association and clubs, its network and establishments…).
+  const words = groupWords(t, data?.association.groupTerm, data?.association.memberTerm, data?.clubs.length);
+
   const columns: Column<ClubFigures>[] = [
     {
       key: 'name',
-      header: t('associationDashboard.columns.club'),
+      header: t('associationDashboard.columns.club', words),
       mobile: 'title',
       render: (c) => (
         <span className="block">
@@ -144,8 +149,8 @@ export function AssociationDashboardPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title={data?.association.name ?? t('associationDashboard.title')}
-        description={t('associationDashboard.description', { count: data?.clubs.length ?? 0 })}
+        title={data?.association.name ?? t('associationDashboard.title', words)}
+        description={t('associationDashboard.description', { ...words, count: data?.clubs.length ?? 0 })}
         actions={
           <div className="flex flex-wrap items-center gap-2 print:hidden">
             <Button variant="secondary" disabled={!data} onClick={() => data && downloadWorkbook(data, trend, t, monthLabel, lang)}>
@@ -180,16 +185,16 @@ export function AssociationDashboardPage() {
       {isLoading || !data ? (
         !isError && <ListSkeleton />
       ) : data.clubs.length === 0 ? (
-        <div className="bg-card border border-border rounded-lg p-6 text-body text-text-secondary">{t('associationDashboard.noClubs')}</div>
+        <div className="bg-card border border-border rounded-lg p-6 text-body text-text-secondary">{t('associationDashboard.noClubs', words)}</div>
       ) : (
         <>
           <Totals data={data} monthLabel={monthLabel} money={money} />
           <section className="space-y-2">
-            <h2 className="text-subsection font-semibold text-text-heading">{t('associationDashboard.byClub')}</h2>
+            <h2 className="text-subsection font-semibold text-text-heading">{t('associationDashboard.byClub', words)}</h2>
             <DataTable<ClubFigures> columns={columns} data={data.clubs} keyExtractor={(c) => c.id} />
-            <p className="text-caption text-text-secondary">{t('associationDashboard.footnote')}</p>
+            <p className="text-caption text-text-secondary">{t('associationDashboard.footnote', words)}</p>
           </section>
-          {trend && <Evolution trend={trend} />}
+          {trend && <Evolution trend={trend} words={words} />}
         </>
       )}
     </div>
@@ -199,9 +204,10 @@ export function AssociationDashboardPage() {
 function Totals({ data, monthLabel, money }: { data: AssociationOverview; monthLabel: string; money: (n: number) => string }) {
   const { t } = useTranslation();
   const { totals } = data;
+  const words = groupWords(t, data.association.groupTerm, data.association.memberTerm, totals.clubs);
   return (
     <section className="space-y-3">
-      <h2 className="text-subsection font-semibold text-text-heading">{t('associationDashboard.totals', { count: totals.clubs })}</h2>
+      <h2 className="text-subsection font-semibold text-text-heading">{t('associationDashboard.totals', { ...words, count: totals.clubs })}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <KPICard
           label={t('associationDashboard.kpi.children')}
@@ -244,7 +250,7 @@ function Totals({ data, monthLabel, money }: { data: AssociationOverview; monthL
 }
 
 /** The twelve months up to the chosen one, for the association or one of its clubs. */
-function Evolution({ trend }: { trend: AssociationTrend }) {
+function Evolution({ trend, words }: { trend: AssociationTrend; words: Record<string, string> }) {
   const { t, i18n } = useTranslation();
   const n = useNumbers();
   const [clubId, setClubId] = React.useState('');
@@ -269,7 +275,7 @@ function Evolution({ trend }: { trend: AssociationTrend }) {
             name="evolution-club"
             value={clubId}
             onChange={(e) => setClubId(e.target.value)}
-            options={[{ value: '', label: t('associationDashboard.evolution.all') }, ...trend.clubs.map((c) => ({ value: c.id, label: c.name }))]}
+            options={[{ value: '', label: t('associationDashboard.evolution.all', words) }, ...trend.clubs.map((c) => ({ value: c.id, label: c.name }))]}
           />
         </div>
       </div>
@@ -300,6 +306,7 @@ type Figures = Omit<ClubFigures, 'id' | 'name' | 'wilaya' | 'isOpen'>;
  */
 function downloadWorkbook(data: AssociationOverview, trend: AssociationTrend | undefined, t: Translate, monthLabel: string, lang: 'fr' | 'ar') {
   const head = (labels: string[]): Cell[] => labels.map((value) => ({ value, style: 'header' }));
+  const words = groupWords(t as TFunction, data.association.groupTerm, data.association.memberTerm, data.clubs.length);
   const money = (value: number, total = false): Cell => ({ value, style: total ? 'totalMoney' : 'money' });
   const pct = (value: number | null | undefined, total = false): Cell => ({ value: value ?? null, style: total ? 'totalPercent' : 'percent' });
   const num = (value: number, total = false): Cell => ({ value, style: total ? 'total' : 'plain' });
@@ -338,7 +345,7 @@ function downloadWorkbook(data: AssociationOverview, trend: AssociationTrend | u
         [{ value: `${data.association.name} — ${monthLabel}`, style: 'title' }],
         [t('associationDashboard.xlsx.asOf', { date: formatDateIn(data.today, lang, { day: 'numeric', month: 'long', year: 'numeric' }) })],
         head([
-          t('associationDashboard.columns.club'),
+          t('associationDashboard.columns.club', words),
           t('associationDashboard.csv.wilaya'),
           t('associationDashboard.columns.children'),
           t('associationDashboard.csv.newInMonth'),
@@ -390,10 +397,10 @@ function downloadWorkbook(data: AssociationOverview, trend: AssociationTrend | u
         ]),
         ...trend.totals.map((p) => [monthName(p.month), money(p.collected), money(p.expenses), money(p.salaries), money(p.net), p.newChildren, pct(p.rate)]),
         [],
-        [{ value: t('associationDashboard.xlsx.collectedByClub'), style: 'title' }],
+        [{ value: t('associationDashboard.xlsx.collectedByClub', words), style: 'title' }],
         ...byClub((p) => p.collected, (v, total) => money(v ?? 0, total)),
         [],
-        [{ value: t('associationDashboard.xlsx.attendanceByClub'), style: 'title' }],
+        [{ value: t('associationDashboard.xlsx.attendanceByClub', words), style: 'title' }],
         ...byClub((p) => p.rate, (v, total) => pct(v, total)),
       ],
     });

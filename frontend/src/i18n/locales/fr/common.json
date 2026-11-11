@@ -649,7 +649,7 @@
     "dashboard": "Tableau de bord",
     "schools": "Écoles",
     "demos": "Démos",
-    "associations": "Associations",
+    "associations": "Groupes",
     "children": "Enfants",
     "classrooms": "Classes",
     "academicYears": "Années",
@@ -1103,7 +1103,7 @@
   },
   "schoolSettings": {
     "association": {
-      "title": "Ce club fait partie de l'association « {{name}} »",
+      "title": "{{memberThisBelongs}} {{groupOf}} « {{name}} »",
       "sees": "Ses responsables voient vos chiffres : enfants inscrits, équipe, classes, présences, encaissements, dépenses et impayés. Jamais de noms, et ils ne peuvent rien modifier."
     },
     "title": "Paramètres de l'école",
@@ -1200,7 +1200,7 @@
       "teacher": "Enseignant",
       "parent": "Parent",
       "staff": "Employé sans accès",
-      "association": "Responsable d'association"
+      "association": "Responsable de groupe"
     },
     "notFound": "Utilisateur introuvable",
     "detail": {
@@ -4133,7 +4133,7 @@
         "teacher": "*{{school}}* vous a créé un compte sur *Kiddoo* : faites l'appel, rédigez les comptes rendus et échangez avec les parents, depuis votre téléphone.",
         "admin": "Votre établissement *{{school}}* est prêt sur *Kiddoo* : enfants, équipe, paiements et communication avec les parents, tout au même endroit.",
         "administrative": "*{{school}}* vous a créé un compte sur *Kiddoo* pour le travail administratif.",
-        "association": "L'espace de *{{school}}* est prêt sur *Kiddoo* : les chiffres de vos clubs (enfants, équipes, présences, finances), en un coup d'œil.",
+        "association": "L'espace de *{{school}}* est prêt sur *Kiddoo* : vos chiffres (enfants, équipes, présences, finances), en un coup d'œil.",
         "other": "Un compte a été créé pour vous sur *Kiddoo*."
       },
       "reset": "Voici un nouveau mot de passe temporaire pour votre compte *Kiddoo*.",
@@ -4222,36 +4222,43 @@
     }
   },
   "associations": {
-    "title": "Associations",
-    "description": "Les associations qui gèrent plusieurs clubs : leurs responsables voient les chiffres de chaque club, rien d'autre.",
-    "create": "Nouvelle association",
-    "name": "Nom de l'association",
+    "title": "Groupes",
+    "description": "Les groupes qui gèrent plusieurs crèches : leurs responsables voient les chiffres de chaque crèche, rien d'autre.",
+    "create": "Nouveau groupe",
+    "edit": "Modifier",
+    "name": "Nom du groupe",
     "empty": {
-      "title": "Aucune association",
-      "description": "Créez une association, rattachez-y ses clubs, puis créez le compte de ses responsables."
+      "title": "Aucun groupe",
+      "description": "Créez un groupe, rattachez-y ses crèches, puis créez le compte de ses responsables."
     },
-    "rename": "Renommer",
-    "remove": "Supprimer l'association",
-    "removeNotEmpty": "Retirez d'abord ses clubs et ses responsables",
-    "removeConfirm": "Supprimer l'association « {{name}} » ?",
+    "remove": "Supprimer le groupe",
+    "removeNotEmpty": "Retirez d'abord ses crèches et ses responsables",
+    "removeConfirm": "Supprimer le groupe « {{name}} » ?",
+    "terms": {
+      "title": "Chez le client",
+      "hint": "Les mots que le client verra sur ses écrans, en français et en arabe.",
+      "group": "Le groupe y est appelé",
+      "member": "Ses crèches y sont appelées",
+      "shown": "Chez le client : {{group}} · {{members}}"
+    },
     "clubs": {
-      "title": "Clubs",
-      "none": "Aucun club rattaché pour l'instant.",
-      "add": "Rattacher un club",
+      "title": "Crèches",
+      "none": "Aucune crèche rattachée pour l'instant.",
+      "add": "Rattacher une crèche",
       "addShort": "Rattacher",
       "pick": "Choisir une école…",
       "noneLeft": "Toutes les écoles sont déjà rattachées",
       "remove": "Retirer {{name}}",
       "removeShort": "Retirer",
-      "removeConfirm": "Retirer « {{name}} » de l'association ?",
-      "removeHint": "Le club garde toutes ses données ; l'association ne verra plus ses chiffres."
+      "removeConfirm": "Retirer « {{name}} » du groupe ?",
+      "removeHint": "La crèche garde toutes ses données ; le groupe ne verra plus ses chiffres."
     },
     "officers": {
       "title": "Responsables",
-      "none": "Aucun responsable : créez un compte pour que l'association voie ses chiffres.",
+      "none": "Aucun responsable : créez un compte pour que le groupe voie ses chiffres.",
       "add": "Ajouter un responsable",
       "create": "Créer le compte",
-      "formHint": "Il verra les chiffres des clubs de « {{name}} », sans aucun nom ni modification possible.",
+      "formHint": "Il verra les chiffres des crèches de « {{name}} », sans aucun nom ni modification possible.",
       "email": "E-mail",
       "phone": "Téléphone",
       "loginHint": "Il se connecte avec son e-mail, ou avec son téléphone s'il n'en a pas.",
@@ -4261,15 +4268,15 @@
       "removeConfirm": "Fermer le compte de {{name}} ?",
       "removeHint": "Il est déconnecté tout de suite et ne pourra plus se connecter."
     },
-    "summary_one": "{{clubs}} club(s) · {{count}} responsable",
-    "summary_other": "{{clubs}} club(s) · {{count}} responsables"
+    "summary_one": "{{clubs}} crèche(s) · {{count}} responsable",
+    "summary_other": "{{clubs}} crèche(s) · {{count}} responsables"
   },
   "associationDashboard": {
     "evolution": {
       "title": "Évolution sur 12 mois",
       "hint": "Les douze mois jusqu'au mois choisi.",
       "for": "Pour",
-      "all": "Toute l'association",
+      "all": "{{groupAll}}",
       "collected": "Encaissé",
       "spent": "Dépenses + salaires",
       "attendance": "Taux de présence",
@@ -4281,22 +4288,22 @@
       "evolution": "Évolution",
       "month": "Mois",
       "asOf": "Effectifs, présence du jour et impayés au {{date}}",
-      "collectedByClub": "Encaissé par club",
-      "attendanceByClub": "Taux de présence par club"
+      "collectedByClub": "Encaissé {{memberPer}}",
+      "attendanceByClub": "Taux de présence {{memberPer}}"
     },
-    "title": "Association",
+    "title": "{{group}}",
     "export": "Exporter (Excel)",
     "print": "Imprimer / PDF",
     "month": "Mois",
     "monthHint": "Le mois choisi vaut pour l'argent, les nouvelles inscriptions et le taux de présence. Le reste est à la date d'aujourd'hui.",
-    "noClubs": "Aucun club n'est encore rattaché à votre association.",
-    "byClub": "Club par club",
-    "footnote": "Chiffres uniquement : les clubs gèrent eux-mêmes leurs enfants, leur équipe et leur argent.",
+    "noClubs": "Rien n'est encore rattaché à {{groupYour}}.",
+    "byClub": "{{member}} par {{memberOne}}",
+    "footnote": "Chiffres uniquement : chaque {{memberOne}} gère ses enfants, son équipe et son argent.",
     "closed": "Fermé",
     "dayOff": "Jour non travaillé",
     "staffDetail": "{{teachers}} enseignants, {{office}} au bureau, {{other}} autres",
     "columns": {
-      "club": "Club",
+      "club": "{{member}}",
       "children": "Enfants",
       "staff": "Équipe",
       "classrooms": "Classes",
@@ -4335,13 +4342,71 @@
       "lateChildren": "Enfants en retard de paiement",
       "total": "Total"
     },
-    "description_one": "Les chiffres de votre club",
-    "description_other": "Les chiffres de vos {{count}} clubs",
-    "totals_one": "Total (1 club)",
-    "totals_other": "Total ({{count}} clubs)",
     "teachersShort_one": "{{count}} enseignant",
     "teachersShort_other": "{{count}} enseignants",
     "lateChildren_one": "{{count}} enfant",
-    "lateChildren_other": "{{count}} enfants"
+    "lateChildren_other": "{{count}} enfants",
+    "description": "Les chiffres de {{membersYour}} ({{count}})",
+    "totals": "Total ({{count}} {{members}})"
+  },
+  "groupTerms": {
+    "group": {
+      "label": "Groupe",
+      "your": "votre groupe",
+      "all": "Tout le groupe",
+      "of": "du groupe"
+    },
+    "association": {
+      "label": "Association",
+      "your": "votre association",
+      "all": "Toute l'association",
+      "of": "de l'association"
+    },
+    "network": {
+      "label": "Réseau",
+      "your": "votre réseau",
+      "all": "Tout le réseau",
+      "of": "du réseau"
+    },
+    "federation": {
+      "label": "Fédération",
+      "your": "votre fédération",
+      "all": "Toute la fédération",
+      "of": "de la fédération"
+    }
+  },
+  "memberTerms": {
+    "nursery": {
+      "label": "Crèche",
+      "one": "crèche",
+      "other": "crèches",
+      "your": "vos crèches",
+      "thisBelongs": "Cette crèche fait partie",
+      "per": "par crèche"
+    },
+    "club": {
+      "label": "Club",
+      "one": "club",
+      "other": "clubs",
+      "your": "vos clubs",
+      "thisBelongs": "Ce club fait partie",
+      "per": "par club"
+    },
+    "establishment": {
+      "label": "Établissement",
+      "one": "établissement",
+      "other": "établissements",
+      "your": "vos établissements",
+      "thisBelongs": "Cet établissement fait partie",
+      "per": "par établissement"
+    },
+    "daycare": {
+      "label": "Garderie",
+      "one": "garderie",
+      "other": "garderies",
+      "your": "vos garderies",
+      "thisBelongs": "Cette garderie fait partie",
+      "per": "par garderie"
+    }
   }
 }

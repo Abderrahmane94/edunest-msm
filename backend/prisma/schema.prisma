@@ -154,6 +154,10 @@ enum NotificationType {
 model Association {
   id        String   @id @default(uuid())
   name      String
+  /// What the client calls it (group, association, network, federation): its own words on its screens.
+  groupTerm  String  @default("group") @map("group_term")
+  /// What the client calls its members (nursery, club, establishment, daycare).
+  memberTerm String  @default("nursery") @map("member_term")
   createdAt DateTime @default(now()) @map("created_at")
 
   schools School[]

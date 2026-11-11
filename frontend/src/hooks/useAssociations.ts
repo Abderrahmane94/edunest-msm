@@ -14,9 +14,15 @@ export interface AssociationOfficer {
   lastActiveAt: string | null;
 }
 
-export interface AssociationRow {
-  id: string;
+/** A group's name and the words its client uses for it and its nurseries. */
+export interface AssociationNaming {
   name: string;
+  groupTerm: string;
+  memberTerm: string;
+}
+
+export interface AssociationRow extends AssociationNaming {
+  id: string;
   createdAt: string;
   clubs: { id: string; name: string; wilaya: string }[];
   officers: AssociationOfficer[];
@@ -64,8 +70,8 @@ async function send<T = unknown>(request: Promise<Answer<T>>, fallback: string):
 }
 
 export const associationApi = {
-  create: (name: string) => send(apiClient.post('/associations', { name }), 'Failed to create the association'),
-  rename: ({ id, name }: { id: string; name: string }) => send(apiClient.patch(`/associations/${id}`, { name }), 'Failed to rename'),
+  create: (input: AssociationNaming) => send(apiClient.post('/associations', input), 'Failed to create the group'),
+  update: ({ id, ...input }: AssociationNaming & { id: string }) => send(apiClient.patch(`/associations/${id}`, input), 'Failed to save the group'),
   remove: (id: string) => send(apiClient.delete(`/associations/${id}`), 'Failed to remove the association'),
   addClub: ({ id, schoolId }: { id: string; schoolId: string }) =>
     send(apiClient.put(`/associations/${id}/clubs/${schoolId}`, {}), 'Failed to add the club'),
@@ -102,7 +108,7 @@ export interface ClubFigures {
 }
 
 export interface AssociationOverview {
-  association: { id: string; name: string };
+  association: AssociationNaming & { id: string };
   month: string;
   today: string;
   totals: Omit<ClubFigures, 'id' | 'name' | 'wilaya' | 'isOpen'> & { clubs: number };
@@ -127,7 +133,7 @@ export function useMyAssociation(enabled = true) {
     enabled,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const res = await apiClient.get<{ association: { id: string; name: string } }>('/associations/me');
+      const res = await apiClient.get<{ association: AssociationNaming & { id: string } }>('/associations/me');
       if (!res.success || !res.data) throw apiError(res.error, 'Failed to load the association');
       return res.data.association;
     },

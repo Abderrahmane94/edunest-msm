@@ -1549,3 +1549,51 @@ model StaffAbsence {
   @@index([userId, startDate])
   @@map("staff_absences")
 }
+
+// ─── Orders from the landing pages ───────────────────────────────────────────
+
+enum OrderStatus {
+  new
+  contacted
+  won
+  lost
+}
+
+/// An order left on a landing page (Kiddoo's site or the Shopify page): only the platform sees it.
+model Order {
+  id           String      @id @default(uuid())
+  /// Shown as K-0001: what the director and the team say on the phone.
+  number       Int         @unique @default(autoincrement())
+  status       OrderStatus @default(new)
+  /// small, standard or network (a quote: no amount).
+  plan         String
+  /// monthly or annual (a year costs ten months).
+  cycle        String
+  /// In DA, worked out by the server from the plan and the cycle.
+  amount       Int?
+  directorName String      @map("director_name")
+  nurseryName  String?     @map("nursery_name")
+  phone        String
+  /// Two-digit wilaya code (01–58).
+  wilaya       String
+  childrenCount Int?       @map("children_count")
+  language     String      @default("fr")
+  /// What the team wrote about the call.
+  note         String?
+  /// Where it came from: the page, the campaign (utm), Meta's cookies, the event id shared with the browser.
+  source       String?
+  pageUrl      String?     @map("page_url")
+  utm          Json?
+  eventId      String?     @map("event_id")
+  fbp          String?
+  fbc          String?
+  ip           String?
+  userAgent    String?     @map("user_agent")
+  contactedAt  DateTime?   @map("contacted_at")
+  wonAt        DateTime?   @map("won_at")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@map("orders")
+}

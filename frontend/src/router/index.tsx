@@ -38,6 +38,7 @@ const PayrollPage = lazyPage('office', () => import('@/pages/admin/PayrollPage')
 const TrashPage = lazyPage('platform', () => import('@/pages/admin/TrashPage').then((m) => m.TrashPage));
 const SchoolsPage = lazyPage('platform', () => import('@/pages/admin/SchoolsPage').then((m) => m.SchoolsPage));
 const DemosPage = lazyPage('platform', () => import('@/pages/admin/DemosPage').then((m) => m.DemosPage));
+const OrdersPage = lazyPage('platform', () => import('@/pages/admin/OrdersPage').then((m) => m.OrdersPage));
 const AssociationsPage = lazyPage('platform', () => import('@/pages/admin/AssociationsPage').then((m) => m.AssociationsPage));
 const AssociationDashboardPage = lazyPage('association', () => import('@/pages/association/AssociationDashboardPage').then((m) => m.AssociationDashboardPage));
 const SchoolDetailPage = lazyPage('platform', () => import('@/pages/admin/SchoolDetailPage').then((m) => m.SchoolDetailPage));
@@ -88,6 +89,7 @@ import {
   LogOut,
   Building2,
   FlaskConical,
+  ShoppingBag,
   Network,
   Languages,
   Trash2,
@@ -170,6 +172,7 @@ function getAdminNavItems(role: string, can: (area: Area) => boolean): NavItem[]
     return [
       { label: 'nav.dashboard', href: '/admin', icon: LayoutDashboard },
       { label: 'nav.schools',   href: '/admin/schools', icon: Building2 },
+      { label: 'nav.orders',    href: '/admin/orders', icon: ShoppingBag },
       { label: 'nav.demos',     href: '/admin/demos', icon: FlaskConical },
       { label: 'nav.associations', href: '/admin/associations', icon: Network },
       { label: 'nav.users',     href: '/admin/users', icon: Users },
@@ -502,6 +505,7 @@ export const routes: RouteObject[] = [
                 element: <RoleRoute allowedRoles={['super_admin']} />,
                 children: [
                   { path: 'demos', element: <DemosPage /> },
+                  { path: 'orders', element: <OrdersPage /> },
                   { path: 'associations', element: <AssociationsPage /> },
                 ],
               },

@@ -649,6 +649,7 @@
     "dashboard": "Tableau de bord",
     "schools": "Écoles",
     "demos": "Démos",
+    "orders": "Commandes",
     "associations": "Groupes",
     "children": "Enfants",
     "classrooms": "Classes",
@@ -4146,6 +4147,42 @@
       "reply": "Une question ? Répondez simplement à ce message.",
       "team": "L'équipe Kiddoo"
     }
+  },
+  "orders": {
+    "title": "Commandes",
+    "description": "Les commandes laissées sur les pages de Kiddoo (le site, la page Shopify). Rappelez chaque directeur, puis suivez la commande jusqu’au bout : gagnée, Meta reçoit la vente.",
+    "filter": "Filtrer les commandes",
+    "all": "Toutes",
+    "empty": "Aucune commande pour le moment.",
+    "columns": {
+      "director": "Directeur",
+      "plan": "Formule",
+      "phone": "Téléphone",
+      "received": "Reçue",
+      "status": "Suivi"
+    },
+    "status": {
+      "new": "Nouvelle",
+      "contacted": "Contactée",
+      "won": "Gagnée",
+      "lost": "Perdue"
+    },
+    "plans": {
+      "small": "Petite crèche",
+      "standard": "Crèche",
+      "network": "Réseau"
+    },
+    "cycles": {
+      "monthly": "par mois",
+      "annual": "par an"
+    },
+    "quote": "Sur devis",
+    "changeStatus": "Suivi de la commande {{ref}}",
+    "write": "WhatsApp",
+    "note": "Note",
+    "noteTitle": "Note · {{ref}}",
+    "notePlaceholder": "Ce qui a été dit au téléphone, la date de la démo…",
+    "whatsapp": "Bonjour {{name}}, merci pour votre commande Kiddoo ({{ref}}). Je suis de l’équipe Kiddoo : quand êtes-vous disponible pour un appel de quelques minutes ?"
   },
   "demos": {
     "title": "Démonstrations",

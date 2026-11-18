@@ -4,7 +4,7 @@ import { isCut } from '../lib/session-cutoff';
 
 // Route prefixes that don't require authentication.
 // These are relative to the mount point (e.g., if mounted on /api, /auth matches /api/auth).
-const PUBLIC_ROUTE_PREFIXES = ['/auth', '/users/register', '/users/invitation'];
+const PUBLIC_ROUTE_PREFIXES = ['/auth', '/users/register', '/users/invitation', '/orders/public'];
 
 // Routes an authenticated user must still be able to reach while mustChangePassword is set.
 const PASSWORD_CHANGE_ALLOWED_PREFIXES = ['/users/change-password'];

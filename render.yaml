@@ -38,6 +38,13 @@ services:
       # Sentry project of the API (crash reports); unset, nothing is sent.
       - key: SENTRY_DSN
         sync: false
+      # Landing-page orders: Meta Conversions API (unset: nothing is sent) and the pages allowed to post.
+      - key: META_PIXEL_ID
+        value: "2354393235321830"
+      - key: META_CAPI_TOKEN
+        sync: false
+      - key: LANDING_ORIGINS
+        sync: false
       - key: TWILIO_ACCOUNT_SID
         sync: false
       - key: TWILIO_AUTH_TOKEN

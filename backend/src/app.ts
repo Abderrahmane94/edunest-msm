@@ -13,6 +13,7 @@ import { checkDatabase } from './lib/db-health';
 import authRoutes from './modules/auth/auth.routes';
 import schoolRoutes from './modules/schools/schools.routes';
 import demoRoutes from './modules/demos/demos.routes';
+import orderRoutes from './modules/orders/orders.routes';
 import userRoutes from './modules/users/users.routes';
 import staffRoutes from './modules/staff/staff.routes';
 import academicYearRoutes from './modules/academic-years/academic-years.routes';
@@ -59,6 +60,14 @@ app.use((req, _res, next) => {
 
 // Security headers
 app.use(helmet());
+
+// The landing pages (Kiddoo's site, the Shopify page) send their orders from their own address.
+// Answered first, so the app's own CORS list below stays the app's.
+const landingOrigins = (process.env.LANDING_ORIGINS || 'https://kiddooschool.com,https://www.kiddooschool.com,https://danubee.online,https://kdamvs-4z.myshopify.com')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+app.use('/api/orders/public', cors({ origin: landingOrigins, methods: ['POST'], credentials: false }));
 
 // CORS configuration
 app.use(
@@ -144,6 +153,8 @@ const school = requireSchoolContext();
 app.use('/api/auth', authRoutes);
 app.use('/api/schools', schoolRoutes);
 app.use('/api/demos', demoRoutes);
+// The landing pages' orders: left without an account, read by the platform only.
+app.use('/api/orders', orderRoutes);
 // The platform manages the associations; their officers read their clubs' figures.
 app.use('/api/associations', associationRoutes);
 app.use('/api/users', userRoutes);

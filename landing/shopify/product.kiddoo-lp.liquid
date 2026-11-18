@@ -1,0 +1,697 @@
+{%- comment -%}
+  Kiddoo order landing: a page of its own (no theme header, footer or styles), in French and Arabic.
+  Its form puts the chosen plan in the cart with the nursery's details (line item properties, cart
+  attributes and note), then opens Shopify's checkout: the order lands in Orders, with no shipping
+  (the plans are not physical). Images are in Settings > Files; the variants are found by their SKU.
+{%- endcomment -%}
+{%- layout none -%}
+<!doctype html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kiddoo · Logiciel de gestion de crèche</title>
+<meta name="description" content="Kiddoo réunit la direction, les éducatrices et les parents : présence, rapport du jour, messages, frais et équipe, en arabe et en français. Démo gratuite le jour même.">
+<link rel="canonical" href="{{ canonical_url }}">
+<meta property="og:title" content="Kiddoo · Toute votre crèche, dans une seule application">
+<meta property="og:image" content="https:{{ 'kiddoo-hero-classe.jpg' | file_img_url: '1200x' }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap">
+{{ content_for_header }}
+<script>
+// Meta Pixel (Kiddoo). PageView and ViewContent here; InitiateCheckout when the form is started; Lead when the order is saved,
+// with the same event id as the platform's Conversions API (Meta keeps one). Purchase: sent by the platform when the order is won.
+// The store's apps load other pixels on this page: Kiddoo's events go to Kiddoo's pixel only (kdTrack).
+var KD_PIXEL = '2354393235321830';
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', KD_PIXEL);
+// One event, to Kiddoo's pixel only (the Single variant of track).
+function kdTrack(name, data, options) { if (window.fbq) fbq(['track', 'Single'].join(''), KD_PIXEL, name, data || {}, options || {}); }
+kdTrack('PageView');
+kdTrack('ViewContent', { content_ids: ['{{ product.id }}'], content_type: 'product', content_name: 'Kiddoo', currency: 'DZD', value: 8900 });
+</script>
+<style>
+:root {
+  --ink: #111018; --text: #34323D; --muted: #6A6775; --line: #E7E3DD; --band: #F6F4F0; --cream: #FEF4EC;
+  --indigo: #4F49CF; --indigo-d: #3D37B0; --green: #13855F; --orange: #C25A12; --red: #CF2A50;
+  --indigo-soft: #ECEBFB; --green-soft: #E2F3EC; --orange-soft: #FBEDE2; --red-soft: #FBE6EB;
+  --shadow: 0 1px 2px rgba(17,16,24,.06), 0 22px 44px -22px rgba(17,16,24,.30);
+  --shadow-lg: 0 2px 4px rgba(17,16,24,.06), 0 40px 80px -36px rgba(30,26,90,.45);
+  --f-display: "Manrope", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "IBM Plex Sans Arabic", "Segoe UI", system-ui, sans-serif;
+  --ls: -0.03em; --r: 20px; color-scheme: light;
+}
+:root[lang="ar"] { --f-display: "IBM Plex Sans Arabic", system-ui, sans-serif; --f-body: "IBM Plex Sans Arabic", system-ui, sans-serif; --ls: 0; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: #fff; color: var(--text); font: 16px/1.65 var(--f-body); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+h1, h2, h3 { font-family: var(--f-display); color: var(--ink); letter-spacing: var(--ls); margin: 0; text-wrap: balance; }
+p { margin: 0; } img { max-width: 100%; display: block; } a { color: inherit; }
+:focus-visible { outline: 3px solid var(--indigo); outline-offset: 3px; border-radius: 6px; }
+.wrap { max-width: 1180px; margin-inline: auto; padding-inline: max(20px, env(safe-area-inset-left, 0px)); }
+section { padding-block: clamp(64px, 8vw, 108px); scroll-margin-top: 70px; }
+.stripe { display: flex; gap: 4px; width: 72px; height: 4px; }
+.stripe i { flex: 1; border-radius: 4px; } .stripe i:nth-child(1) { background: var(--indigo); } .stripe i:nth-child(2) { background: var(--green); } .stripe i:nth-child(3) { background: var(--orange); } .stripe i:nth-child(4) { background: var(--red); }
+.head { max-width: 720px; margin: 0 auto clamp(36px, 5vw, 56px); text-align: center; }
+.head .stripe { margin: 0 auto 18px; }
+.eyebrow { font-size: 13px; font-weight: 700; color: var(--indigo); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; display: block; }
+:root[lang="ar"] .eyebrow { letter-spacing: 0; }
+.head h2 { font-size: clamp(30px, 3.8vw, 44px); line-height: 1.1; margin-bottom: 14px; }
+.head p { color: var(--muted); font-size: 18px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; font: 600 16px/1 var(--f-body); text-decoration: none; padding: 16px 24px; border-radius: 14px; border: 1.5px solid transparent; cursor: pointer; transition: transform .2s, background .2s, box-shadow .2s; }
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { background: var(--indigo); color: #fff; box-shadow: 0 12px 24px -12px rgba(79,73,207,.8); }
+.btn-primary:hover { background: var(--indigo-d); }
+.btn-light { background: #fff; color: var(--ink); border-color: var(--line); }
+.btn-ghost { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.4); backdrop-filter: blur(6px); }
+.btn svg { width: 18px; height: 18px; flex: none; }
+
+/* Top bar */
+.top { position: sticky; top: 0; z-index: 40; background: rgba(255,255,255,.94); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; gap: 28px; height: 66px; }
+.logo { display: inline-flex; direction: ltr; } .logo img { height: 28px; width: auto; }
+.links { display: flex; gap: 24px; } .links a { text-decoration: none; color: var(--muted); font-weight: 500; font-size: 15px; } .links a:hover { color: var(--ink); }
+.top-end { margin-inline-start: auto; display: flex; gap: 10px; align-items: center; }
+.lang { background: #fff; border: 1.5px solid var(--line); color: var(--ink); font: 500 14px/1 var(--f-body); padding: 10px 14px; border-radius: 12px; cursor: pointer; }
+.top .btn { padding: 12px 18px; font-size: 14px; }
+
+/* Hero: a real classroom behind, the order card in front */
+.hero { position: relative; padding-block: clamp(40px, 6vw, 80px) clamp(56px, 7vw, 96px); color: #fff; isolation: isolate; }
+.hero-bg { position: absolute; inset: 0; z-index: -2; }
+.hero-bg img { width: 100%; height: 100%; object-fit: cover; object-position: 70% 40%; }
+.hero::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(100deg, rgba(14,12,40,.92) 0%, rgba(14,12,40,.80) 42%, rgba(14,12,40,.35) 100%); }
+:root[dir="rtl"] .hero::before { background: linear-gradient(260deg, rgba(14,12,40,.92) 0%, rgba(14,12,40,.80) 42%, rgba(14,12,40,.35) 100%); }
+.hero-grid { display: grid; grid-template-columns: 1.08fr .92fr; gap: clamp(28px, 4vw, 64px); align-items: center; }
+.pill { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25); backdrop-filter: blur(6px); }
+.pill i { width: 8px; height: 8px; border-radius: 50%; background: #7FE0BC; box-shadow: 0 0 0 4px rgba(127,224,188,.25); }
+.hero h1 { color: #fff; font-size: clamp(38px, 5vw, 62px); line-height: 1.03; font-weight: 800; margin: 20px 0 18px; }
+:root[lang="ar"] .hero h1 { line-height: 1.28; font-weight: 700; }
+.hero h1 em { font-style: normal; color: #B5B1FF; }
+.hero .sub { font-size: 19px; color: rgba(255,255,255,.82); max-width: 560px; }
+.hero .ticks { list-style: none; padding: 0; margin: 26px 0 30px; display: grid; gap: 12px; }
+.hero .ticks li { display: flex; gap: 12px; align-items: center; font-weight: 500; }
+.hero .ticks li::before { content: "✓"; flex: none; width: 26px; height: 26px; border-radius: 9px; display: grid; place-items: center; background: rgba(127,224,188,.18); color: #7FE0BC; font-weight: 700; font-size: 14px; }
+.hero .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.proof { display: flex; gap: 22px; margin-top: 34px; flex-wrap: wrap; }
+.proof div { font-size: 14px; color: rgba(255,255,255,.7); }
+.proof b { display: block; font: 800 26px/1.1 var(--f-display); color: #fff; }
+
+/* Order card */
+.order { background: #fff; color: var(--text); border-radius: 24px; box-shadow: var(--shadow-lg); padding: clamp(22px, 3vw, 32px); scroll-margin-top: 86px; position: relative; }
+.order h2 { font-size: 25px; margin-bottom: 4px; }
+.order .lead { color: var(--muted); font-size: 15px; margin-bottom: 18px; }
+.plans { display: grid; gap: 10px; margin: 0 0 14px; border: 0; padding: 0; }
+.plans legend, .field label { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 8px; padding: 0; }
+.plan { position: relative; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 16px; cursor: pointer; transition: border-color .15s, background .15s; }
+.plan input { position: absolute; opacity: 0; pointer-events: none; }
+.plan .dot { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #CFCAD6; display: grid; place-items: center; }
+.plan .dot::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--indigo); transform: scale(0); transition: transform .15s; }
+.plan .nm { font-weight: 600; color: var(--ink); line-height: 1.25; display: block; }
+.plan .for { font-size: 13px; color: var(--muted); }
+.plan .pr { margin-inline-start: auto; text-align: end; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.plan .pr small { display: block; font-weight: 500; font-size: 12px; color: var(--muted); }
+.plan .rec { position: absolute; top: -10px; inset-inline-end: 14px; font-size: 11px; font-weight: 700; background: var(--indigo); color: #fff; padding: 3px 9px; border-radius: 999px; }
+.plan:has(input:checked) { border-color: var(--indigo); background: #FAFAFF; }
+.plan:has(input:checked) .dot { border-color: var(--indigo); } .plan:has(input:checked) .dot::after { transform: scale(1); }
+.plan:has(input:focus-visible) { outline: 3px solid var(--indigo); outline-offset: 2px; }
+.cycle { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--band); padding: 4px; border-radius: 14px; margin-bottom: 16px; }
+.cycle[hidden] { display: none; }
+.cycle label { text-align: center; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; color: var(--muted); position: relative; }
+.cycle input { position: absolute; opacity: 0; }
+.cycle label:has(input:checked) { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(17,16,24,.14); }
+.cycle .save { display: block; font-size: 11px; color: var(--green); font-weight: 700; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; position: relative; }
+.field { display: flex; flex-direction: column; min-width: 0; } .field.full { grid-column: 1 / -1; }
+.field input, .field select { font: 500 16px/1.2 var(--f-body); color: var(--ink); padding: 13px 14px; border: 1.5px solid var(--line); border-radius: 12px; background: #fff; width: 100%; min-width: 0; }
+.field input:focus, .field select:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 4px var(--indigo-soft); }
+.field [aria-invalid="true"] { border-color: var(--red); }
+.field .err { color: var(--red); font-size: 13px; margin-top: 4px; }
+.field .err:empty { display: none; }
+.hp { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.total { display: flex; justify-content: space-between; align-items: baseline; margin: 18px 0 12px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.total span { color: var(--muted); font-size: 14px; } .total b { font: 800 24px/1 var(--f-display); color: var(--ink); }
+.order .submit { width: 100%; padding: 19px; font-size: 17px; }
+.order .submit[disabled] { opacity: .75; cursor: progress; }
+.done { text-align: center; padding: 8px 0; }
+.done img { width: 140px; height: auto; margin: 0 auto 8px; border-radius: 50%; background: #FEF4EC; }
+.done .ref { display: inline-block; margin: 6px 0 10px; padding: 4px 12px; border-radius: 999px; background: var(--green-soft, #E7F6EE); color: var(--green); font-weight: 700; }
+.done .next { text-align: start; margin: 16px 0 20px; padding-inline-start: 20px; display: grid; gap: 8px; color: var(--muted); }
+.done:focus { outline: none; }
+.reassure { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.reassure span::before { content: "✓ "; color: var(--green); font-weight: 700; }
+.form-error { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--red-soft); color: var(--red); font-size: 14px; }
+
+/* Adam */
+.adam { background: var(--cream); padding-block: 0; overflow: hidden; }
+.adam-grid { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(20px, 4vw, 56px); align-items: end; }
+/* Adam's picture has the section's cream behind him: its sides and top fade out, so no edge shows. */
+.adam-pic img, .tip img { height: auto; }
+.adam-pic img { width: 100%; max-width: 440px; margin-inline: auto;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent), linear-gradient(to bottom, transparent, #000 12%);
+  -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent), linear-gradient(to bottom, transparent, #000 12%); mask-composite: intersect; }
+.tip img { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%); mask-image: linear-gradient(to bottom, transparent, #000 14%); }
+.adam-say { padding-block: clamp(48px, 6vw, 80px); }
+.bubble { position: relative; background: #fff; border-radius: 26px; padding: clamp(24px, 3vw, 36px); box-shadow: var(--shadow); }
+.bubble::before { content: ""; position: absolute; bottom: 34px; inset-inline-start: -14px; width: 28px; height: 28px; background: #fff; transform: rotate(45deg); border-radius: 4px; }
+.bubble h2 { font-size: clamp(26px, 3.2vw, 36px); line-height: 1.15; margin-bottom: 12px; }
+.bubble p { font-size: 17px; }
+.bubble .sign { margin-top: 16px; font-weight: 700; color: var(--indigo); }
+.adam-points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
+.adam-points div { background: rgba(255,255,255,.7); border: 1px solid #F3E3D5; border-radius: 16px; padding: 14px 16px; font-size: 14.5px; font-weight: 500; color: var(--ink); }
+.adam-points b { display: block; font: 800 22px/1.1 var(--f-display); color: var(--indigo); margin-bottom: 2px; }
+
+/* Before / after */
+.ba { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.card { background: #fff; border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); padding: 28px; }
+.tag { display: inline-block; font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 999px; margin-bottom: 18px; }
+.before .tag { background: var(--red-soft); color: var(--red); } .after .tag { background: var(--green-soft); color: var(--green); }
+.after { border-color: #B9DCCD; background: linear-gradient(180deg, #F7FCFA, #fff 60%); }
+.ba ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.ba li { display: flex; gap: 12px; align-items: flex-start; font-size: 16.5px; }
+.ba li::before { flex: none; width: 26px; height: 26px; border-radius: 9px; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+.before li::before { content: "×"; background: var(--red-soft); color: var(--red); } .after li::before { content: "✓"; background: var(--green-soft); color: var(--green); }
+
+/* A day */
+.band { background: var(--band); }
+.day { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+.moment { background: #fff; border-radius: var(--r); overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); display: flex; flex-direction: column; }
+.moment .ph { aspect-ratio: 4 / 5; position: relative; overflow: hidden; }
+.moment .ph img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s; }
+.moment:hover .ph img { transform: scale(1.04); }
+.moment .time { position: absolute; top: 12px; inset-inline-start: 12px; background: rgba(255,255,255,.94); color: var(--ink); font: 800 14px/1 var(--f-display); padding: 8px 10px; border-radius: 10px; direction: ltr; }
+.moment .bd { padding: 16px 16px 18px; border-top: 4px solid var(--c); flex: 1; }
+.moment:nth-child(4n+1) { --c: var(--indigo); } .moment:nth-child(4n+2) { --c: var(--green); } .moment:nth-child(4n+3) { --c: var(--orange); } .moment:nth-child(4n+4) { --c: var(--red); }
+.moment h3 { font-size: 17px; margin-bottom: 4px; } .moment p { font-size: 14px; }
+.moment .rec { display: block; margin-top: 10px; font-size: 12.5px; font-weight: 600; color: var(--c); }
+
+/* Modules: tabs with the real screen */
+.mods { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(24px, 4vw, 56px); align-items: center; }
+.tabs { display: grid; gap: 10px; }
+.tab { text-align: start; background: #fff; border: 1.5px solid var(--line); border-radius: 16px; padding: 16px 18px; cursor: pointer; font: inherit; color: inherit; transition: border-color .15s, box-shadow .15s; }
+.tab h3 { font-size: 17px; display: flex; gap: 10px; align-items: center; }
+.tab h3::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--indigo)); flex: none; }
+.tab p { font-size: 14.5px; color: var(--muted); margin-top: 6px; display: none; padding-inline-start: 20px; }
+.tab[aria-selected="true"] { border-color: var(--c, var(--indigo)); box-shadow: var(--shadow); } .tab[aria-selected="true"] p { display: block; }
+.tab:nth-child(4n+1) { --c: var(--indigo); } .tab:nth-child(4n+2) { --c: var(--green); } .tab:nth-child(4n+3) { --c: var(--orange); } .tab:nth-child(4n+4) { --c: var(--red); }
+.screen { background: linear-gradient(160deg, var(--indigo-soft), #fff); border-radius: 26px; padding: clamp(14px, 2vw, 24px); box-shadow: var(--shadow-lg); }
+.screen img { border-radius: 14px; border: 1px solid var(--line); width: 100%; height: auto; background: #fff; }
+
+/* Parents */
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 5vw, 72px); align-items: center; }
+.duo .photo { position: relative; }
+/* The father and his son are on the right of the photo. */
+.duo .photo > img { border-radius: 26px; width: 100%; aspect-ratio: 4 / 3.4; object-fit: cover; object-position: 95% 50%; box-shadow: var(--shadow-lg); }
+.notif { position: absolute; bottom: -22px; inset-inline-end: -10px; width: min(300px, 80%); background: #fff; border-radius: 18px; box-shadow: var(--shadow-lg); padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
+.notif .ic { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--orange-soft); font-size: 20px; }
+.notif b { display: block; color: var(--ink); font-size: 14px; } .notif span { font-size: 13px; color: var(--muted); }
+.duo h2 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.12; margin-bottom: 14px; }
+.duo .txt > p { font-size: 17px; color: var(--muted); }
+.duo ul { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 12px; }
+.duo li { display: flex; gap: 12px; align-items: center; font-weight: 500; color: var(--ink); }
+.duo li::before { content: "✓"; flex: none; width: 26px; height: 26px; border-radius: 9px; display: grid; place-items: center; background: var(--green-soft); color: var(--green); font-weight: 700; font-size: 14px; }
+
+/* Steps */
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; list-style: none; margin: 0; padding: 0; counter-reset: s; }
+.steps li { counter-increment: s; }
+.steps li::before { content: counter(s); display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; margin-bottom: 14px; font: 800 18px/1 var(--f-display); background: var(--indigo); color: #fff; }
+.steps h3 { font-size: 18px; margin-bottom: 6px; } .steps p { font-size: 15px; }
+
+/* Tip from Adam + included */
+.tip { display: grid; grid-template-columns: 220px 1fr; gap: 0; align-items: end; background: var(--cream); border-radius: 28px; overflow: hidden; margin-top: clamp(36px, 5vw, 56px); }
+.tip img { width: 100%; }
+.tip .t { padding: 28px clamp(20px, 3vw, 36px) 30px; }
+.tip h3 { font-size: 22px; margin-bottom: 8px; } .tip p { color: var(--text); }
+.chips { list-style: none; padding: 0; margin: 16px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.chips li { background: #fff; border: 1px solid #F0DECF; border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 600; color: var(--ink); }
+
+/* FAQ */
+.faq-grid { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(28px, 5vw, 72px); align-items: start; }
+.faq-grid .head { text-align: start; margin: 0 0 22px; } .faq-grid .head .stripe { margin: 0 0 18px; }
+.faq-grid .ph img { border-radius: 22px; aspect-ratio: 4 / 3; object-fit: cover; width: 100%; }
+.faqs { border-top: 1px solid var(--line); }
+.faqs details { border-bottom: 1px solid var(--line); }
+.faqs summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 16px; padding: 20px 2px; font: 600 17px/1.4 var(--f-body); color: var(--ink); }
+.faqs summary::-webkit-details-marker { display: none; }
+.faqs summary::after { content: "+"; font-size: 24px; line-height: 1; color: var(--indigo); transition: transform .2s; flex: none; }
+.faqs details[open] summary::after { transform: rotate(45deg); }
+.faqs details p { padding: 0 2px 20px; color: var(--muted); }
+
+/* Final */
+.final { position: relative; border-radius: 30px; overflow: hidden; color: #fff; padding: clamp(44px, 7vw, 84px) clamp(22px, 5vw, 64px); isolation: isolate; text-align: center; }
+.final img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+.final::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(20,17,60,.72), rgba(20,17,60,.88)); }
+.final h2 { color: #fff; font-size: clamp(28px, 3.8vw, 44px); margin-bottom: 12px; }
+.final p { color: rgba(255,255,255,.82); font-size: 18px; }
+.final .stripe { margin: 0 auto 20px; }
+.final .cta { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+footer { padding: 34px 0 calc(34px + env(safe-area-inset-bottom, 0px)); color: var(--muted); font-size: 14px; text-align: center; }
+footer .logo { justify-content: center; margin-bottom: 10px; } footer .logo img { height: 24px; }
+
+/* Mobile order bar */
+.mbar { display: none; }
+@media (max-width: 1000px) {
+  .links { display: none; }
+  .hero-grid, .mods, .duo, .faq-grid { grid-template-columns: 1fr; }
+  .hero { padding-bottom: 40px; }
+  .day { grid-template-columns: repeat(3, 1fr); }
+  .steps { grid-template-columns: 1fr 1fr; }
+  .adam-grid { grid-template-columns: 1fr; }
+  .adam-pic { order: 2; } .adam-pic img { max-width: 320px; }
+  .adam-say { padding-bottom: 0; }
+  .bubble::before { bottom: -12px; inset-inline-start: 50%; margin-inline-start: -14px; }
+  .notif { inset-inline-end: 10px; }
+  .mbar { display: flex; position: fixed; inset: auto 0 0 0; z-index: 50; gap: 12px; align-items: center; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -12px 30px -18px rgba(17,16,24,.4); transform: translateY(110%); transition: transform .25s; }
+  .mbar.on { transform: none; }
+  .mbar .p { font-size: 13px; color: var(--muted); line-height: 1.2; } .mbar .p b { display: block; font: 800 18px/1.2 var(--f-display); color: var(--ink); }
+  .mbar .btn { margin-inline-start: auto; padding: 14px 20px; }
+  footer { padding-bottom: 100px; }
+}
+@media (max-width: 640px) {
+  .top .btn { display: none; }
+  .ba, .steps, .fields, .adam-points { grid-template-columns: 1fr; }
+  .day { grid-template-columns: 1fr 1fr; } .day .moment:last-child { grid-column: 1 / -1; } .day .moment:last-child .ph { aspect-ratio: 16 / 10; }
+  .tip { grid-template-columns: 120px 1fr; } .tip .t { padding: 20px 18px 22px; }
+  .hero .sub { font-size: 17px; }
+  .card { padding: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Kiddoo"><img src="{{ 'kiddoo-logo.png' | file_img_url: '400x' }}" alt="Kiddoo" width="140" height="31"></a>
+    <nav class="links" aria-label="Sections">
+      <a href="#journee" data-i="nav.day"></a><a href="#produit" data-i="nav.product"></a><a href="#faq" data-i="nav.faq"></a>
+    </nav>
+    <div class="top-end">
+      <button class="lang" id="lang" type="button"></button>
+      <a class="btn btn-primary" href="#commande" data-i="nav.cta"></a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="hero-bg"><img src="{{ 'kiddoo-hero-classe.jpg' | file_img_url: '2000x' }}" alt="" fetchpriority="high" width="1672" height="941"></div>
+    <div class="wrap hero-grid">
+      <div>
+        <span class="pill"><i></i><span data-i="hero.pill"></span></span>
+        <h1 data-i="hero.title" data-html></h1>
+        <p class="sub" data-i="hero.sub"></p>
+        <ul class="ticks" id="ticks"></ul>
+        <div class="cta">
+          <a class="btn btn-primary" href="#commande" data-i="final.btn"></a>
+          <a class="btn btn-ghost" href="#produit" data-i="hero.cta2"></a>
+        </div>
+        <div class="proof" id="proof"></div>
+      </div>
+
+      <div class="order" id="commande">
+        <form id="form" novalidate>
+          <h2 data-i="form.title"></h2>
+          <p class="lead" data-i="form.lead"></p>
+          <fieldset class="plans" id="plans"><legend data-i="form.plan"></legend></fieldset>
+          <div class="cycle" id="cycle" role="radiogroup">
+            <label><input type="radio" name="cycle" value="monthly" checked><span data-i="form.monthly"></span></label>
+            <label><input type="radio" name="cycle" value="annual"><span data-i="form.annual"></span><span class="save" data-i="form.save"></span></label>
+          </div>
+          <div class="fields">
+            <div class="field full"><label for="f-name" data-i="form.name"></label><input id="f-name" autocomplete="name" maxlength="80" required><span class="err" id="e-name" role="alert"></span></div>
+            <div class="field full"><label for="f-nursery" data-i="form.nursery"></label><input id="f-nursery" autocomplete="organization" maxlength="100" required><span class="err" id="e-nursery" role="alert"></span></div>
+            <div class="field full"><label for="f-phone" data-i="form.phone"></label><input id="f-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" dir="ltr" placeholder="05 55 12 34 56" required><span class="err" id="e-phone" role="alert"></span></div>
+            <div class="field full"><label for="f-wilaya" data-i="form.wilaya"></label><select id="f-wilaya" required></select><span class="err" id="e-wilaya" role="alert"></span></div>
+            <div class="hp" aria-hidden="true"><label for="f-website">Website</label><input id="f-website" tabindex="-1" autocomplete="off"></div>
+          </div>
+          <div class="total"><span data-i="form.total"></span><b id="total"></b></div>
+          <button class="btn btn-primary submit" type="submit" id="submit"><span data-i="form.submit"></span></button>
+          <div class="reassure" id="reassure"></div>
+          <div class="form-error" id="form-error" role="alert" hidden></div>
+        </form>
+        <div class="done" id="done" tabindex="-1" hidden>
+          <img src="{{ 'kiddoo-adam-coucou.jpg' | file_img_url: '400x' }}" alt="" width="160" height="192">
+          <h2 data-i="done.title"></h2>
+          <p class="ref" id="done-ref" dir="ltr" hidden></p>
+          <p data-i="done.text"></p>
+          <ol class="next" id="done-next"></ol>
+          <a class="btn btn-primary submit" id="done-wa" href="#" target="_blank" rel="noopener"><span data-i="done.wa"></span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="adam">
+    <div class="wrap adam-grid">
+      <div class="adam-pic"><img src="{{ 'kiddoo-adam-coucou.jpg' | file_img_url: '900x' }}" alt="" loading="lazy" width="820" height="984" data-alt="adam.alt"></div>
+      <div class="adam-say">
+        <div class="bubble">
+          <h2 data-i="adam.title"></h2>
+          <p data-i="adam.text"></p>
+          <p class="sign" data-i="adam.sign"></p>
+        </div>
+        <div class="adam-points" id="adam-points"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="head"><div class="stripe" aria-hidden="true"><i></i><i></i><i></i><i></i></div><h2 data-i="ba.title"></h2><p data-i="ba.sub"></p></div>
+      <div class="ba">
+        <div class="card before"><span class="tag" data-i="ba.before"></span><ul id="before"></ul></div>
+        <div class="card after"><span class="tag" data-i="ba.after"></span><ul id="after"></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="journee">
+    <div class="wrap">
+      <div class="head"><span class="eyebrow" data-i="day.kicker"></span><h2 data-i="day.title"></h2><p data-i="day.sub"></p></div>
+      <div class="day" id="day"></div>
+    </div>
+  </section>
+
+  <section id="produit">
+    <div class="wrap">
+      <div class="head"><span class="eyebrow" data-i="mods.kicker"></span><h2 data-i="mods.title"></h2><p data-i="mods.sub"></p></div>
+      <div class="mods">
+        <div class="tabs" id="tabs" role="tablist"></div>
+        <div class="screen"><img id="screen" alt="" width="1600" height="1000"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap duo">
+      <div class="photo">
+        <img src="{{ 'kiddoo-hero-parent.jpg' | file_img_url: '1400x' }}" alt="" loading="lazy" data-alt="parents.alt">
+        <div class="notif"><span class="ic" aria-hidden="true">☀️</span><div><b data-i="notif.title"></b><span data-i="notif.text"></span></div></div>
+      </div>
+      <div class="txt">
+        <span class="eyebrow" data-i="parents.kicker"></span>
+        <h2 data-i="parents.title"></h2>
+        <p data-i="parents.text"></p>
+        <ul id="parents-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="head"><div class="stripe" aria-hidden="true"><i></i><i></i><i></i><i></i></div><h2 data-i="steps.title"></h2></div>
+      <ol class="steps" id="steps"></ol>
+      <div class="tip">
+        <img src="{{ 'kiddoo-adam-idee.jpg' | file_img_url: '500x' }}" alt="" loading="lazy" width="820" height="984">
+        <div class="t"><h3 data-i="tip.title"></h3><p data-i="tip.text"></p><ul class="chips" id="chips"></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="faq">
+    <div class="wrap faq-grid">
+      <div>
+        <div class="head"><div class="stripe" aria-hidden="true"><i></i><i></i><i></i><i></i></div><h2 data-i="faq.title"></h2><p data-i="faq.sub"></p></div>
+        <div class="ph"><img src="{{ 'kiddoo-faq-equipe.jpg' | file_img_url: '1000x' }}" alt="" loading="lazy"></div>
+      </div>
+      <div class="faqs" id="faqs"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="final">
+        <img src="{{ 'kiddoo-cta-cour.jpg' | file_img_url: '1800x' }}" alt="" loading="lazy">
+        <div class="stripe" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <h2 data-i="final.title"></h2>
+        <p data-i="final.sub"></p>
+        <div class="cta"><a class="btn btn-primary" href="#commande" data-i="final.btn"></a><a class="btn btn-ghost" id="final-wa" target="_blank" rel="noopener" data-i="final.wa"></a></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><a class="logo" href="#top" aria-label="Kiddoo"><img src="{{ 'kiddoo-logo.png' | file_img_url: '300x' }}" alt="Kiddoo" width="108" height="24"></a><span data-i="foot"></span></footer>
+
+<div class="mbar" id="mbar" aria-hidden="true"><div class="p"><span data-i="mbar.from"></span><b id="mbar-price"></b></div><a class="btn btn-primary" href="#commande" data-i="nav.cta" tabindex="-1"></a></div>
+
+<script>
+/* ── From Shopify ─────────────────────────────────────────────────────────── */
+var ROOT = (window.Shopify && Shopify.routes && Shopify.routes.root) || '/';
+var IMG = {
+{%- assign screens = 'dash,roll,report,msg,pay,plan' | split: ',' -%}
+{%- for k in screens -%}
+  {%- assign fr = 'kiddoo-' | append: k | append: '.jpg' -%}{%- assign ar = 'kiddoo-' | append: k | append: '-ar.jpg' -%}
+  "{{ k }}-fr": {{ fr | file_img_url: '1600x' | json }}, "{{ k }}-ar": {{ ar | file_img_url: '1600x' | json }},
+{%- endfor -%}
+{%- assign day = 'accueil,activite,repas,sieste,sortie' | split: ',' -%}
+{%- for k in day -%}{%- assign f = 'kiddoo-jour-' | append: k | append: '.jpg' -%}
+  "jour-{{ k }}": {{ f | file_img_url: '700x' | json }}{% unless forloop.last %},{% endunless %}
+{%- endfor -%}
+};
+</script>
+<script>
+/* ── Settings ─────────────────────────────────────────────────────────────── */
+var WHATSAPP = '213542518643', WHATSAPP_DISPLAY = '+213 542 51 86 43';
+// The Kiddoo platform's API: the order goes to POST {API_URL}/orders/public.
+var API_URL = 'https://api.kiddooschool.com/api';
+// Monthly price in DA, and the SKU of each billing (a year costs 10 months).
+var PLANS = [
+  { id: 'small', monthly: 4900, sku: { monthly: 'KIDDOO-PETITE', annual: 'KIDDOO-PETITE-AN' } },
+  { id: 'standard', monthly: 8900, rec: true, sku: { monthly: 'KIDDOO-CRECHE', annual: 'KIDDOO-CRECHE-AN' } },
+  { id: 'network', monthly: null },
+];
+var WILAYAS = [['Adrar','أدرار'],['Chlef','الشلف'],['Laghouat','الأغواط'],['Oum El Bouaghi','أم البواقي'],['Batna','باتنة'],['Béjaïa','بجاية'],['Biskra','بسكرة'],['Béchar','بشار'],['Blida','البليدة'],['Bouira','البويرة'],['Tamanrasset','تمنراست'],['Tébessa','تبسة'],['Tlemcen','تلمسان'],['Tiaret','تيارت'],['Tizi Ouzou','تيزي وزو'],['Alger','الجزائر'],['Djelfa','الجلفة'],['Jijel','جيجل'],['Sétif','سطيف'],['Saïda','سعيدة'],['Skikda','سكيكدة'],['Sidi Bel Abbès','سيدي بلعباس'],['Annaba','عنابة'],['Guelma','قالمة'],['Constantine','قسنطينة'],['Médéa','المدية'],['Mostaganem','مستغانم'],["M'Sila",'المسيلة'],['Mascara','معسكر'],['Ouargla','ورقلة'],['Oran','وهران'],['El Bayadh','البيض'],['Illizi','إليزي'],['Bordj Bou Arréridj','برج بوعريريج'],['Boumerdès','بومرداس'],['El Tarf','الطارف'],['Tindouf','تندوف'],['Tissemsilt','تيسمسيلت'],['El Oued','الوادي'],['Khenchela','خنشلة'],['Souk Ahras','سوق أهراس'],['Tipaza','تيبازة'],['Mila','ميلة'],['Aïn Defla','عين الدفلى'],['Naâma','النعامة'],['Aïn Témouchent','عين تموشنت'],['Ghardaïa','غرداية'],['Relizane','غليزان'],['Timimoun','تيميمون'],['Bordj Badji Mokhtar','برج باجي مختار'],['Ouled Djellal','أولاد جلال'],['Béni Abbès','بني عباس'],['In Salah','عين صالح'],['In Guezzam','عين قزام'],['Touggourt','تقرت'],['Djanet','جانت'],["El M'Ghair",'المغير'],['El Meniaa','المنيعة']];
+
+var COPY = {
+  fr: {
+    'lang.switch': 'العربية', 'nav.cta': 'Commander', 'nav.day': 'Une journée', 'nav.product': 'Le produit', 'nav.faq': 'Questions',
+    'hero.pill': 'Logiciel de gestion de crèche · Algérie',
+    'hero.title': 'Toute votre crèche,<br><em>dans une seule application.</em>',
+    'hero.sub': 'Présence, rapport du jour, messages, frais et équipe : Kiddoo relie la direction, les éducatrices et les parents, en arabe et en français.',
+    ticks: ['Démo gratuite, prête le jour même', 'Aucun paiement en ligne : vous payez à l’activation', 'Sans installation : téléphone, tablette, ordinateur'],
+    'hero.cta2': 'Découvrir le produit',
+    proof: [['1 min', 'pour faire l’appel'], ['6', 'outils réunis'], ['2', 'langues : AR et FR']],
+    'form.title': 'Commandez Kiddoo', 'form.lead': 'Choisissez votre formule, nous vous appelons dans la journée.',
+    'form.plan': 'Votre formule', 'form.monthly': 'Au mois', 'form.annual': 'À l’année', 'form.save': '2 mois offerts',
+    plans: [['Petite crèche', 'Jusqu’à 50 enfants'], ['Crèche', 'De 51 à 120 enfants'], ['Réseau', 'Plus de 120 enfants ou plusieurs sites']],
+    'plan.rec': 'Le plus choisi', 'plan.quote': 'Sur devis', 'per.month': '/ mois', 'per.year': '/ an',
+    'form.name': 'Votre nom', 'form.nursery': 'Nom de la crèche', 'form.phone': 'Téléphone', 'form.children': 'Nombre d’enfants', 'form.wilaya': 'Wilaya', 'form.wilayaPick': 'Choisissez votre wilaya',
+    'form.total': 'À payer à l’activation', 'form.submit': 'Commander maintenant', 'form.submitQuote': 'Demander un devis sur WhatsApp', 'form.sending': 'Un instant…',
+    reassure: ['Sans paiement en ligne', 'Démo le jour même', 'Sans engagement'],
+    'err.name': 'Indiquez votre nom.', 'err.nursery': 'Indiquez le nom de la crèche.', 'err.phone': 'Un numéro algérien, par exemple 05 55 12 34 56.', 'err.children': 'Indiquez le nombre d’enfants.', 'err.wilaya': 'Choisissez votre wilaya.',
+    'err.send': 'La commande n’a pas pu partir. Réessayez, ou écrivez-nous sur WhatsApp :',
+    'done.title': 'Merci, votre commande est reçue !', 'done.ref': 'Commande {num}', 'done.text': 'Adam a transmis votre demande à l’équipe Kiddoo. Voici la suite :', 'done.wa': 'Nous écrire sur WhatsApp',
+    'done.next': ['Nous vous appelons dans la journée pour confirmer.', 'Vous recevez votre démo le jour même, déjà remplie.', 'Vous payez seulement à l’activation, sans engagement.'],
+    'wa.after': 'Bonjour, je viens de commander Kiddoo ({num}) pour {nursery}.',
+    'adam.title': 'Salut, moi c’est Adam !', 'adam.text': 'Je vais vous montrer comment Kiddoo enlève les cahiers, les tableurs et les groupes WhatsApp de votre journée, pour que l’équipe passe plus de temps avec les enfants.', 'adam.sign': 'Adam, de l’équipe Kiddoo', 'adam.alt': 'Adam, la mascotte de Kiddoo, qui fait coucou',
+    adamPoints: [['Le jour même', 'votre démo est prête'], ['Arabe et français', 'chacun choisit sa langue'], ['Chaque nuit', 'vos données sauvegardées']],
+    'ba.title': 'Fini les cahiers et les groupes WhatsApp', 'ba.sub': 'Ce qui prend du temps aujourd’hui se fait en quelques touches avec Kiddoo.', 'ba.before': 'Aujourd’hui', 'ba.after': 'Avec Kiddoo',
+    before: ['Un cahier d’appel par classe, recopié le soir', 'Des groupes WhatsApp où tout se mélange', 'Les frais suivis sur un tableur', 'Les parents appellent pour savoir comment s’est passée la journée'],
+    after: ['L’appel fait sur le téléphone en une minute', 'Messages privés et annonces, chacun à sa place', 'Encaissements, reçus et retards à jour', 'Le rapport du jour envoyé aux parents chaque soir'],
+    'day.kicker': 'Une journée avec Kiddoo', 'day.title': 'De l’accueil du matin à la sortie', 'day.sub': 'À chaque moment de la journée, Kiddoo garde une trace et prévient les bonnes personnes.',
+    day: [['07:30', 'accueil', 'Accueil', 'Les enfants arrivent, l’éducatrice fait l’appel sur son téléphone.', 'Absents signalés aux parents'], ['10:00', 'activite', 'Activités', 'Peinture, lecture, jeux : l’activité du jour est notée avec une photo.', 'Photos ajoutées au rapport'], ['12:00', 'repas', 'Repas', 'Ce que chaque enfant a mangé est noté en une touche.', 'Repas noté pour chaque enfant'], ['13:00', 'sieste', 'Sieste', 'Les heures de sieste sont enregistrées, sans cahier.', 'Heures de sieste enregistrées'], ['16:00', 'sortie', 'Sortie', 'Le rapport du jour part chez les parents avant qu’ils arrivent.', 'Parents notifiés']],
+    'mods.kicker': 'Le produit', 'mods.title': 'Les outils de toute l’équipe, réunis', 'mods.sub': 'Chaque module est pensé pour le quotidien d’une crèche algérienne. Choisissez un écran.',
+    mods: [['dash', 'Tableau de bord', 'Présents du jour, inscrits, encaissements et impayés : la direction voit tout en ouvrant Kiddoo.'], ['roll', 'Appel du matin', 'Présents, retards et absences depuis le téléphone, en moins d’une minute. Les parents des absents sont prévenus.'], ['report', 'Rapport du jour', 'Repas, sieste, humeur, activités et photos de chaque enfant, chez les parents avant la sortie.'], ['msg', 'Messages', 'Conversations privées parents–équipe, annonces par classe et autorisations signées en ligne.'], ['pay', 'Encaissements', 'Barèmes, réductions fratrie, reçus numérotés et suivi des retards, au dinar près.'], ['plan', 'Planning et paie', 'Le planning de la semaine, les absences et les remplacements, au même endroit que la paie.']],
+    'parents.kicker': 'Pour les parents', 'parents.title': 'Des parents rassurés, une équipe tranquille', 'parents.text': 'Chaque soir, les parents reçoivent la journée de leur enfant sur leur téléphone. Moins d’appels à la crèche, plus de confiance.', 'parents.alt': 'Papa qui lit le rapport du jour en sortant de la crèche avec son fils',
+    parentsList: ['Rapport du jour avec photos, visible par la seule famille', 'Messages privés avec l’éducatrice', 'Les frais à régler, toujours à jour'],
+    'notif.title': 'Rapport du jour · Yasmine', 'notif.text': 'Tout mangé · Sieste 13:10 · Peinture 🎨',
+    'steps.title': 'Votre crèche sur Kiddoo en quatre étapes',
+    steps: [['Commandez', 'Remplissez le formulaire : le nom de la crèche et votre téléphone suffisent.'], ['Explorez la démo', 'Le jour même, une crèche d’exemple déjà remplie, à tester avec votre équipe.'], ['Ouvrez votre crèche', 'Nous créons votre espace, vous ajoutez vos classes, vos enfants et votre équipe.'], ['Invitez les parents', 'Chaque parent reçoit son accès et suit la journée de son enfant dès le lendemain.']],
+    'tip.title': 'L’astuce d’Adam : prenez l’année', 'tip.text': 'À l’année, vous payez 10 mois et profitez de 12. Toutes les fonctionnalités sont incluses dans chaque formule :',
+    chips: ['Présence et appel', 'Rapport du jour et photos', 'Messages et annonces', 'Frais et encaissements', 'Paie et planning', 'Stock et documents', 'Espace parents', 'Arabe et français'],
+    'faq.title': 'Questions fréquentes', 'faq.sub': 'Une autre question ? Écrivez-nous sur WhatsApp, nous répondons dans la journée.',
+    faqs: [['Comment se passe le paiement ?', 'Vous commandez ici sans payer en ligne. Nous vous appelons, nous préparons votre crèche, puis vous payez à l’activation : en espèces, par CCP ou BaridiMob.'], ['Combien de temps faut-il pour démarrer ?', 'La démo est prête le jour même, remplie d’exemples. Ensuite, nous ouvrons votre crèche et vous ajoutez vos classes, vos enfants et votre équipe.'], ['Les parents doivent-ils installer une application ?', 'Non. Kiddoo s’ouvre dans le navigateur du téléphone et s’ajoute à l’écran d’accueil comme une application, avec les notifications.'], ['Que deviennent nos données à la fin de l’essai ?', 'Elles sont conservées. Si vous vous abonnez, vous retrouvez tout comme vous l’avez laissé.'], ['Qui voit les photos des enfants ?', 'Seuls les parents de l’enfant et l’équipe autorisée. Les photos sont stockées à part et ne s’ouvrent qu’avec un lien temporaire.'], ['Pouvons-nous changer de formule ?', 'Oui, à tout moment, quand le nombre d’enfants évolue.']],
+    'final.title': 'Montrez Kiddoo à votre équipe cette semaine.', 'final.sub': 'Commandez maintenant : votre crèche de démonstration est prête le jour même.', 'final.btn': 'Commander maintenant', 'final.wa': 'Écrire sur WhatsApp',
+    'mbar.from': 'Dès', 'foot': '© 2026 Kiddoo · Le logiciel des crèches, en arabe et en français',
+    'wa.ask': 'Bonjour, j’ai une question sur Kiddoo pour ma crèche.', 'wa.quote': 'Bonjour, je souhaite un devis Kiddoo pour un réseau de crèches.',
+    'note': 'Commande Kiddoo · {plan} ({cycle}) · {nursery}, {wilaya} · {name}, {phone}', 'cycle.monthly': 'mensuel', 'cycle.annual': 'annuel',
+  },
+  ar: {
+    'lang.switch': 'Français', 'nav.cta': 'اطلب الآن', 'nav.day': 'يوم في الروضة', 'nav.product': 'المنتج', 'nav.faq': 'أسئلة',
+    'hero.pill': 'برنامج تسيير الروضة · الجزائر',
+    'hero.title': 'روضتك كلها،<br><em>في تطبيق واحد.</em>',
+    'hero.sub': 'الحضور، التقرير اليومي، الرسائل، الرسوم والفريق: يربط Kiddoo الإدارة والمربيات والأولياء، بالعربية والفرنسية.',
+    ticks: ['تجربة مجانية جاهزة في اليوم نفسه', 'لا دفع عبر الإنترنت: تدفع عند التفعيل', 'دون أي تثبيت: هاتف، لوحة، حاسوب'],
+    'hero.cta2': 'اكتشف المنتج',
+    proof: [['دقيقة', 'لتسجيل الحضور'], ['6', 'أدوات في مكان واحد'], ['2', 'لغتان: العربية والفرنسية']],
+    'form.title': 'اطلب Kiddoo', 'form.lead': 'اختر باقتك، ونتصل بك في اليوم نفسه.',
+    'form.plan': 'باقتك', 'form.monthly': 'شهرياً', 'form.annual': 'سنوياً', 'form.save': 'شهران مجاناً',
+    plans: [['روضة صغيرة', 'حتى 50 طفلاً'], ['روضة', 'من 51 إلى 120 طفلاً'], ['الشبكة', 'أكثر من 120 طفلاً أو عدة فروع']],
+    'plan.rec': 'الأكثر اختياراً', 'plan.quote': 'حسب الطلب', 'per.month': '/ شهرياً', 'per.year': '/ سنوياً',
+    'form.name': 'اسمك', 'form.nursery': 'اسم الروضة', 'form.phone': 'رقم الهاتف', 'form.children': 'عدد الأطفال', 'form.wilaya': 'الولاية', 'form.wilayaPick': 'اختر ولايتك',
+    'form.total': 'المبلغ عند التفعيل', 'form.submit': 'اطلب الآن', 'form.submitQuote': 'اطلب عرضاً على واتساب', 'form.sending': 'لحظة…',
+    reassure: ['دون دفع عبر الإنترنت', 'تجربة في اليوم نفسه', 'دون التزام'],
+    'err.name': 'اكتب اسمك.', 'err.nursery': 'اكتب اسم الروضة.', 'err.phone': 'رقم جزائري، مثلاً 05 55 12 34 56.', 'err.children': 'اكتب عدد الأطفال.', 'err.wilaya': 'اختر ولايتك.',
+    'err.send': 'لم يُرسل الطلب. أعد المحاولة، أو راسلنا على واتساب:',
+    'done.title': 'شكراً، وصلنا طلبك!', 'done.ref': 'الطلب {num}', 'done.text': 'أرسل آدم طلبك إلى فريق Kiddoo. هذه هي الخطوات التالية:', 'done.wa': 'راسلنا على واتساب',
+    'done.next': ['نتصل بك في اليوم نفسه للتأكيد.', 'تحصل على النسخة التجريبية في اليوم نفسه، مليئة بالبيانات.', 'تدفع عند التفعيل فقط، دون أي التزام.'],
+    'wa.after': 'السلام عليكم، طلبت Kiddoo للتو ({num}) لروضة {nursery}.',
+    'adam.title': 'مرحباً، أنا آدم!', 'adam.text': 'سأريك كيف يُبعد Kiddoo الدفاتر والجداول ومجموعات واتساب عن يومك، ليقضي الفريق وقتاً أطول مع الأطفال.', 'adam.sign': 'آدم، من فريق Kiddoo', 'adam.alt': 'آدم، شخصية Kiddoo، يلوّح بيده',
+    adamPoints: [['في اليوم نفسه', 'تجربتك جاهزة'], ['العربية والفرنسية', 'كلٌّ يختار لغته'], ['كل ليلة', 'نسخ احتياطي لبياناتك']],
+    'ba.title': 'وداعاً للدفاتر ومجموعات واتساب', 'ba.sub': 'ما يأخذ وقتاً اليوم يتم بلمسات قليلة مع Kiddoo.', 'ba.before': 'اليوم', 'ba.after': 'مع Kiddoo',
+    before: ['دفتر حضور لكل قسم يُعاد نسخه مساءً', 'مجموعات واتساب يختلط فيها كل شيء', 'متابعة الرسوم في جدول إكسل', 'الأولياء يتصلون لمعرفة كيف مرّ اليوم'],
+    after: ['النداء من الهاتف في دقيقة', 'رسائل خاصة وإعلانات، كلٌّ في مكانه', 'المقبوضات والوصولات والمتأخرات محدّثة', 'التقرير اليومي يصل إلى الأولياء كل مساء'],
+    'day.kicker': 'يوم مع Kiddoo', 'day.title': 'من استقبال الصباح إلى الخروج', 'day.sub': 'في كل لحظة من اليوم، يحتفظ Kiddoo بالأثر ويُعلم الأشخاص المعنيين.',
+    day: [['07:30', 'accueil', 'الاستقبال', 'يصل الأطفال، وتسجّل المربية الحضور من هاتفها.', 'إعلام أولياء الغائبين'], ['10:00', 'activite', 'النشاطات', 'رسم، قراءة، ألعاب: يُسجَّل نشاط اليوم مع صورة.', 'الصور تُضاف إلى التقرير'], ['12:00', 'repas', 'الغداء', 'ما أكله كل طفل يُسجَّل بلمسة واحدة.', 'وجبة كل طفل مسجّلة'], ['13:00', 'sieste', 'القيلولة', 'تُسجَّل أوقات القيلولة دون دفتر.', 'أوقات القيلولة مسجّلة'], ['16:00', 'sortie', 'الخروج', 'يصل التقرير اليومي إلى الأولياء قبل وصولهم.', 'إعلام الأولياء']],
+    'mods.kicker': 'المنتج', 'mods.title': 'أدوات الفريق كله، في مكان واحد', 'mods.sub': 'كل وحدة صُممت ليوميات روضة جزائرية. اختر شاشة.',
+    mods: [['dash', 'لوحة القيادة', 'حضور اليوم، المسجلون، المقبوضات والمستحقات: ترى الإدارة كل شيء بمجرد فتح Kiddoo.'], ['roll', 'حضور الصباح', 'الحاضرون والمتأخرون والغائبون من الهاتف في أقل من دقيقة، ويُعلَم أولياء الغائبين.'], ['report', 'التقرير اليومي', 'الوجبات والقيلولة والمزاج والنشاطات والصور، عند الأولياء قبل الخروج.'], ['msg', 'الرسائل', 'محادثات خاصة بين الأولياء والفريق، إعلانات حسب القسم، وموافقات توقَّع إلكترونياً.'], ['pay', 'المقبوضات', 'جداول الرسوم، تخفيضات الإخوة، وصولات مرقّمة ومتابعة المتأخرين، بالدينار.'], ['plan', 'الجدول والأجور', 'جدول الأسبوع، الغيابات والتعويضات، في المكان نفسه مع الأجور.']],
+    'parents.kicker': 'للأولياء', 'parents.title': 'أولياء مطمئنون، وفريق مرتاح', 'parents.text': 'كل مساء، يتلقى الأولياء يوم طفلهم على هواتفهم. اتصالات أقل بالروضة، وثقة أكبر.', 'parents.alt': 'أب يقرأ التقرير اليومي عند خروجه من الروضة مع ابنه',
+    parentsList: ['تقرير يومي بالصور لا تراه إلا العائلة', 'رسائل خاصة مع المربية', 'الرسوم المستحقة محدّثة دائماً'],
+    'notif.title': 'التقرير اليومي · ياسمين', 'notif.text': 'أكلت كل شيء · قيلولة 13:10 · رسم 🎨',
+    'steps.title': 'روضتك على Kiddoo في أربع خطوات',
+    steps: [['اطلب', 'املأ الاستمارة: يكفي اسم الروضة ورقم هاتفك.'], ['جرّب النسخة التجريبية', 'في اليوم نفسه، روضة نموذجية مليئة بالبيانات لتجربتها مع فريقك.'], ['افتح روضتك', 'ننشئ فضاءك، وتضيف أقسامك وأطفالك وفريقك.'], ['ادعُ الأولياء', 'يتلقى كل ولي وصوله ويتابع يوم طفله ابتداءً من الغد.']],
+    'tip.title': 'نصيحة آدم: اختر السنة', 'tip.text': 'في الاشتراك السنوي تدفع 10 أشهر وتستفيد من 12. كل المزايا مشمولة في كل باقة:',
+    chips: ['الحضور والنداء', 'التقرير اليومي والصور', 'الرسائل والإعلانات', 'الرسوم والمقبوضات', 'الأجور والجداول', 'المخزون والوثائق', 'فضاء الأولياء', 'العربية والفرنسية'],
+    'faq.title': 'أسئلة شائعة', 'faq.sub': 'لديك سؤال آخر؟ راسلنا على واتساب ونجيبك في اليوم نفسه.',
+    faqs: [['كيف يتم الدفع؟', 'تطلب هنا دون دفع عبر الإنترنت. نتصل بك ونجهّز روضتك، ثم تدفع عند التفعيل: نقداً أو عبر CCP أو BaridiMob.'], ['كم يستغرق الانطلاق؟', 'تكون التجربة جاهزة في اليوم نفسه ومليئة بالأمثلة. بعدها نفتح روضتك وتضيف أقسامك وأطفالك وفريقك.'], ['هل يحتاج الأولياء إلى تثبيت تطبيق؟', 'لا. يُفتح Kiddoo في متصفح الهاتف ويُضاف إلى الشاشة الرئيسية كتطبيق، مع الإشعارات.'], ['ماذا يحدث لبياناتنا بعد التجربة؟', 'تبقى محفوظة، وإن اشتركت تجد كل شيء كما تركته.'], ['من يرى صور الأطفال؟', 'أولياء الطفل والفريق المخوَّل فقط. تُحفظ الصور بشكل منفصل ولا تُفتح إلا برابط مؤقت.'], ['هل يمكن تغيير الباقة؟', 'نعم، في أي وقت حسب تطوّر عدد الأطفال.']],
+    'final.title': 'اعرض Kiddoo على فريقك هذا الأسبوع.', 'final.sub': 'اطلب الآن: روضتك التجريبية جاهزة في اليوم نفسه.', 'final.btn': 'اطلب الآن', 'final.wa': 'راسلنا على واتساب',
+    'mbar.from': 'ابتداءً من', 'foot': '© 2026 Kiddoo · برنامج الروضات بالعربية والفرنسية',
+    'wa.ask': 'السلام عليكم، لدي سؤال عن Kiddoo لروضتي.', 'wa.quote': 'السلام عليكم، أريد عرضاً لـ Kiddoo لشبكة روضات.',
+    'note': 'طلب Kiddoo · {plan} ({cycle}) · {nursery}، {wilaya} · {name}، {phone}', 'cycle.monthly': 'شهري', 'cycle.annual': 'سنوي',
+  },
+};
+
+/* ── Page ─────────────────────────────────────────────────────────────────── */
+var $ = function (s) { return document.querySelector(s); };
+var params = new URLSearchParams(location.search);
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+var lang = params.get('lang') === 'ar' || params.get('lang') === 'fr' ? params.get('lang') : (lsGet('kd-lang') || 'fr');
+var screen = 0;
+function T() { return COPY[lang]; }
+function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function fmt(n) { return new Intl.NumberFormat('fr-FR').format(n).replace(/ | /g, ' '); }
+// In Arabic the amount stays in reading order: a left-to-right isolate around the number.
+function money(n) { return lang === 'ar' ? '⁦' + fmt(n) + '⁩ دج' : fmt(n) + ' DA'; }
+function wa(text) { return 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(text); }
+function fill(s, o) { return s.replace(/\{(\w+)\}/g, function (_, k) { return o[k] == null ? '' : o[k]; }); }
+function plan() { var v = (document.querySelector('input[name=plan]:checked') || {}).value || 'standard'; return PLANS.filter(function (p) { return p.id === v; })[0]; }
+function cycle() { return (document.querySelector('input[name=cycle]:checked') || {}).value || 'monthly'; }
+function amount() { var p = plan(); return p.monthly == null ? null : (cycle() === 'annual' ? p.monthly * 10 : p.monthly); }
+function list(sel, items) { $(sel).innerHTML = items.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join(''); }
+
+function renderPlans() {
+  var D = T(), c = cycle(), cur = plan().id, box = $('#plans');
+  box.querySelectorAll('.plan').forEach(function (n) { n.remove(); });
+  PLANS.forEach(function (p, i) {
+    var price = p.monthly == null ? D['plan.quote'] : money(c === 'annual' ? p.monthly * 10 : p.monthly);
+    var per = p.monthly == null ? '' : '<small>' + esc(c === 'annual' ? D['per.year'] : D['per.month']) + '</small>';
+    var el = document.createElement('label'); el.className = 'plan';
+    el.innerHTML = '<input type="radio" name="plan" value="' + p.id + '"' + (p.id === cur ? ' checked' : '') + '>' + (p.rec ? '<span class="rec">' + esc(D['plan.rec']) + '</span>' : '') +
+      '<span class="dot" aria-hidden="true"></span><span><span class="nm">' + esc(D.plans[i][0]) + '</span><span class="for">' + esc(D.plans[i][1]) + '</span></span><span class="pr">' + esc(price) + per + '</span>';
+    box.appendChild(el);
+  });
+  renderTotal();
+}
+function renderTotal() {
+  var D = T(), a = amount();
+  $('#total').textContent = a == null ? D['plan.quote'] : money(a);
+  $('#cycle').hidden = plan().monthly == null;
+  $('#submit').firstElementChild.textContent = D['form.submit'];
+}
+function renderScreen() {
+  var D = T();
+  $('#tabs').querySelectorAll('.tab').forEach(function (b, i) { b.setAttribute('aria-selected', i === screen ? 'true' : 'false'); b.tabIndex = i === screen ? 0 : -1; });
+  var m = D.mods[screen]; $('#screen').src = IMG[m[0] + '-' + lang]; $('#screen').alt = 'Kiddoo · ' + m[1];
+}
+
+function apply() {
+  var D = T();
+  document.documentElement.lang = lang; document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-i]').forEach(function (el) { var v = D[el.dataset.i]; if (v == null) return; if (el.hasAttribute('data-html')) el.innerHTML = v; else el.textContent = v; });
+  document.querySelectorAll('[data-alt]').forEach(function (el) { el.alt = D[el.dataset.alt] || ''; });
+  $('#lang').textContent = D['lang.switch'];
+  list('#ticks', D.ticks); list('#before', D.before); list('#after', D.after); list('#parents-list', D.parentsList); list('#chips', D.chips);
+  $('#proof').innerHTML = D.proof.map(function (p) { return '<div><b>' + esc(p[0]) + '</b>' + esc(p[1]) + '</div>'; }).join('');
+  $('#adam-points').innerHTML = D.adamPoints.map(function (p) { return '<div><b>' + esc(p[0]) + '</b>' + esc(p[1]) + '</div>'; }).join('');
+  $('#reassure').innerHTML = D.reassure.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('');
+  $('#day').innerHTML = D.day.map(function (d) { return '<article class="moment"><div class="ph"><img src="' + IMG['jour-' + d[1]] + '" alt="" loading="lazy"><span class="time">' + d[0] + '</span></div><div class="bd"><h3>' + esc(d[2]) + '</h3><p>' + esc(d[3]) + '</p><span class="rec">✓ ' + esc(d[4]) + '</span></div></article>'; }).join('');
+  $('#tabs').innerHTML = D.mods.map(function (m, i) { return '<button class="tab" type="button" role="tab" data-k="' + i + '"><h3>' + esc(m[1]) + '</h3><p>' + esc(m[2]) + '</p></button>'; }).join('');
+  $('#steps').innerHTML = D.steps.map(function (s) { return '<li class="card"><h3>' + esc(s[0]) + '</h3><p>' + esc(s[1]) + '</p></li>'; }).join('');
+  $('#faqs').innerHTML = D.faqs.map(function (f, i) { return '<details' + (i === 0 ? ' open' : '') + '><summary>' + esc(f[0]) + '</summary><p>' + esc(f[1]) + '</p></details>'; }).join('');
+  var sel = $('#f-wilaya'), keep = sel.value;
+  sel.innerHTML = '<option value="">' + esc(D['form.wilayaPick']) + '</option>' + WILAYAS.map(function (w, i) { var c = String(i + 1).padStart(2, '0'); return '<option value="' + c + '">' + c + ' · ' + esc(lang === 'ar' ? w[1] : w[0]) + '</option>'; }).join('');
+  sel.value = keep;
+  $('#final-wa').href = wa(D['wa.ask']);
+  $('#mbar-price').textContent = money(PLANS[0].monthly) + ' ' + D['per.month'];
+  document.title = lang === 'ar' ? 'Kiddoo · برنامج تسيير الروضة' : 'Kiddoo · Logiciel de gestion de crèche';
+  renderPlans(); renderScreen();
+}
+
+$('#lang').addEventListener('click', function () { lang = lang === 'fr' ? 'ar' : 'fr'; lsSet('kd-lang', lang); apply(); });
+$('#form').addEventListener('change', function (e) { if (e.target.name === 'cycle') renderPlans(); if (e.target.name === 'plan') renderTotal(); });
+$('#tabs').addEventListener('click', function (e) { var b = e.target.closest('.tab'); if (!b) return; screen = +b.dataset.k; renderScreen(); });
+$('#tabs').addEventListener('keydown', function (e) {
+  var n = T().mods.length, d = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key]; if (!d) return;
+  e.preventDefault(); screen = (screen + d + n) % n; renderScreen(); $('#tabs').children[screen].focus();
+});
+
+/* ── Order: saved on the Kiddoo platform (only the platform sees it) ────────── */
+function normPhone(s) { var d = s.replace(/\D/g, ''); if (d.indexOf('00213') === 0) d = '0' + d.slice(5); else if (d.indexOf('213') === 0 && d.length === 12) d = '0' + d.slice(3); return d; }
+function setErr(id, field, msg) { $(id).textContent = msg || ''; $(field).setAttribute('aria-invalid', msg ? 'true' : 'false'); return !msg; }
+function validate() {
+  var D = T();
+  var ok = [
+    setErr('#e-name', '#f-name', $('#f-name').value.trim().length >= 2 ? '' : D['err.name']),
+    setErr('#e-nursery', '#f-nursery', $('#f-nursery').value.trim().length >= 2 ? '' : D['err.nursery']),
+    setErr('#e-phone', '#f-phone', /^0[5-7]\d{8}$|^0[2-4]\d{7,8}$/.test(normPhone($('#f-phone').value)) ? '' : D['err.phone']),
+    setErr('#e-wilaya', '#f-wilaya', $('#f-wilaya').value ? '' : D['err.wilaya']),
+  ].every(Boolean);
+  var first = document.querySelector('[aria-invalid="true"]'); if (first) first.focus();
+  return ok;
+}
+function uuid() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'ev-' + Date.now() + '-' + Math.random().toString(36).slice(2); }
+function cookie(name) { var m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : undefined; }
+// Meta's click id: the _fbc cookie, or built from ?fbclid= when the pixel has not written it yet.
+function fbc() { return cookie('_fbc') || (params.get('fbclid') ? 'fb.1.' + Date.now() + '.' + params.get('fbclid') : undefined); }
+
+// InitiateCheckout once, when the visitor starts the form.
+var started = false;
+$('#form').addEventListener('focusin', function () { if (started) return; started = true; kdTrack('InitiateCheckout', { content_name: plan().id, currency: 'DZD', value: amount() || 0 }); });
+
+$('#form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  $('#form-error').hidden = true;
+  if (!validate()) return;
+  var D = T(), p = plan(), c = cycle();
+  var btn = $('#submit'); btn.disabled = true; btn.firstElementChild.textContent = D['form.sending'];
+  var eventId = uuid(), utm = {};
+  ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid'].forEach(function (k) { if (params.get(k)) utm[k] = params.get(k).slice(0, 200); });
+  var body = {
+    plan: p.id, cycle: c,
+    directorName: $('#f-name').value.trim(), nurseryName: $('#f-nursery').value.trim(),
+    phone: $('#f-phone').value.trim(), wilaya: $('#f-wilaya').value,
+    language: lang, source: 'shopify', website: $('#f-website').value,
+    tracking: { eventId: eventId, fbp: cookie('_fbp'), fbc: fbc(), pageUrl: location.href.split('#')[0].slice(0, 500), utm: utm },
+  };
+  fetch(API_URL + '/orders/public', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || !j.success) throw new Error('send'); return j.data || {}; }); })
+    .then(function (data) {
+      // The browser's Lead with the platform's event id: Meta keeps one of the two.
+      kdTrack('Lead', { content_name: p.id, currency: 'DZD', value: amount() || 0 }, { eventID: eventId });
+      showDone(data.number || '', body.nurseryName);
+    })
+    .catch(function () { showError(); })
+    .then(function () { btn.disabled = false; renderTotal(); });
+});
+function showDone(num, nursery) {
+  var D = T();
+  $('#done-ref').textContent = num ? fill(D['done.ref'], { num: num }) : ''; $('#done-ref').hidden = !num;
+  $('#done-next').innerHTML = D['done.next'].map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
+  $('#done-wa').href = wa(fill(D['wa.after'], { num: num, nursery: nursery }));
+  $('#form').hidden = true; $('#done').hidden = false;
+  $('#commande').scrollIntoView({ behavior: 'smooth', block: 'start' }); $('#done').focus({ preventScroll: true });
+}
+function showError() {
+  var D = T(); $('#form-error').innerHTML = esc(D['err.send']) + ' <a href="' + wa(D['wa.ask']) + '" target="_blank" rel="noopener" dir="ltr">' + esc(WHATSAPP_DISPLAY) + '</a>'; $('#form-error').hidden = false;
+}
+
+// Mobile order bar: shown once the order card is out of view.
+if ('IntersectionObserver' in window) {
+  new IntersectionObserver(function (en) { $('#mbar').classList.toggle('on', !en[0].isIntersecting && window.scrollY > 300); }).observe($('#commande'));
+}
+apply();
+</script>
+</body>
+</html>

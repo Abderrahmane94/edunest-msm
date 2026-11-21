@@ -25,7 +25,9 @@
 // The store's apps load other pixels on this page: Kiddoo's events go to Kiddoo's pixel only (kdTrack).
 var KD_PIXEL = '2354393235321830';
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', KD_PIXEL);
+// Advanced matching: the visitor's data from an earlier order, if any (the pixel hashes it, SHA-256).
+var kdMatch = {}; try { kdMatch = JSON.parse(localStorage.getItem('kd-match')) || {}; } catch (e) {}
+fbq('init', KD_PIXEL, kdMatch);
 // One event, to Kiddoo's pixel only (the Single variant of track).
 function kdTrack(name, data, options) { if (window.fbq) fbq(['track', 'Single'].join(''), KD_PIXEL, name, data || {}, options || {}); }
 kdTrack('PageView');
@@ -629,6 +631,16 @@ $('#tabs').addEventListener('keydown', function (e) {
 
 /* ── Order: saved on the Kiddoo platform (only the platform sees it) ────────── */
 function normPhone(s) { var d = s.replace(/\D/g, ''); if (d.indexOf('00213') === 0) d = '0' + d.slice(5); else if (d.indexOf('213') === 0 && d.length === 12) d = '0' + d.slice(3); return d; }
+// Meta's advanced matching fields, normalised as Meta asks (lowercase, no punctuation, phone with country code).
+function matchData(name, phone, wilaya) {
+  var words = name.toLowerCase().replace(/[^\p{L}\s]/gu, '').trim().split(/\s+/).filter(Boolean);
+  var w = WILAYAS[Number(wilaya) - 1];
+  var m = { ph: '213' + normPhone(phone).replace(/^0/, ''), country: 'dz' };
+  if (words[0]) m.fn = words[0];
+  if (words.length > 1) m.ln = words[words.length - 1];
+  if (w) m.ct = w[0].toLowerCase().normalize('NFD').replace(/[^a-z]/g, '');
+  return m;
+}
 function setErr(id, field, msg) { $(id).textContent = msg || ''; $(field).setAttribute('aria-invalid', msg ? 'true' : 'false'); return !msg; }
 function validate() {
   var D = T();
@@ -668,7 +680,10 @@ $('#form').addEventListener('submit', function (e) {
   fetch(API_URL + '/orders/public', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || !j.success) throw new Error('send'); return j.data || {}; }); })
     .then(function (data) {
-      // The browser's Lead with the platform's event id: Meta keeps one of the two.
+      // Advanced matching with the form's data, then the browser's Lead with the platform's event id: Meta keeps one of the two.
+      var match = matchData(body.directorName, body.phone, body.wilaya);
+      lsSet('kd-match', JSON.stringify(match));
+      if (window.fbq) fbq('init', KD_PIXEL, match);
       kdTrack('Lead', { content_name: p.id, currency: 'DZD', value: amount() || 0 }, { eventID: eventId });
       showDone(data.number || '', body.nurseryName);
     })
